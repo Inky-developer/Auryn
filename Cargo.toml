@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 
+[dev-dependencies]
+insta = "1.44.3"
