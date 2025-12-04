@@ -11,7 +11,7 @@ pub struct JVMVersion {
 
 /// Constant pool indexes are 1-indexed, ie. the first element in the constant pool has index 1.
 #[derive(Debug, Clone, Copy)]
-pub struct ConstantPoolIndex(NonZeroU16);
+pub struct ConstantPoolIndex(pub NonZeroU16);
 
 impl ConstantPoolIndex {
     pub fn new(value: u16) -> Self {
@@ -269,6 +269,25 @@ pub const JVM_VERSION: JVMVersion = JVMVersion {
 pub const ACCESSS_FLAG: u16 = (ClassAccessFlag::Public as u16) | (ClassAccessFlag::Final as u16);
 
 impl ClassData {
+    pub fn new(class_name: String) -> Self {
+        let constant_pool = vec![
+            ConstantPoolEntry::Utf8(class_name),
+            ConstantPoolEntry::Class {
+                name_index: ConstantPoolIndex::new(1),
+            },
+            ConstantPoolEntry::Utf8("java/lang/Object".to_string()),
+            ConstantPoolEntry::Class {
+                name_index: ConstantPoolIndex::new(3),
+            },
+        ];
+        Self {
+            constant_pool,
+            this_class: ConstantPoolIndex::new(2),
+            super_class: ConstantPoolIndex::new(4),
+            methods: Vec::new(),
+        }
+    }
+
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
         buf.write_all(&MAGIC)?;
 
