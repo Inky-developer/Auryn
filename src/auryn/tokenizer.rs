@@ -15,7 +15,7 @@ impl BinaryOperatorToken {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenKind {
-    Number(i32),
+    Number,
     Plus,
     Times,
     Whitespace,
@@ -34,9 +34,9 @@ impl TokenKind {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Token {
+pub struct Token<'a> {
     pub kind: TokenKind,
-    pub len: u32,
+    pub text: &'a str,
 }
 
 pub struct Tokenizer<'a> {
@@ -48,78 +48,55 @@ impl<'a> Tokenizer<'a> {
         Self { input }
     }
 
-    fn advance(&mut self, num_bytes: usize) {
-        self.input = &self.input[num_bytes..];
+    fn consume_while<F: FnMut(char) -> bool>(&mut self, mut predicate: F) -> &'a str {
+        let first_non_matching_byte = match self.input.find(|char| !predicate(char)) {
+            Some(index) => index,
+            None => self.input.len(),
+        };
+
+        let (fit, rest) = self.input.split_at(first_non_matching_byte);
+        self.input = rest;
+        fit
     }
 
-    fn consume_while<F: FnMut(char) -> bool>(&self, mut predicate: F) -> Option<u32> {
-        let Some((len, char)) = self
-            .input
-            .char_indices()
-            .take_while(move |(_, char)| predicate(*char))
-            .last()
-        else {
-            return None;
-        };
-        let len = len + char.len_utf8();
-        let len = len.try_into().expect("Token too long");
-        Some(len)
-    }
-
-    fn get_whitespace(&mut self) -> Option<Token> {
-        let Some(len) = self.consume_while(char::is_whitespace) else {
-            return None;
-        };
+    fn consume_whitespace(&mut self) -> Option<Token<'a>> {
         Some(Token {
             kind: TokenKind::Whitespace,
-            len,
+            text: self.consume_while(char::is_whitespace),
         })
     }
 
-    fn get_number(&mut self) -> Option<Token> {
-        let Some(len) = self.consume_while(|char| char.is_digit(10)) else {
-            return None;
-        };
-        let value = self.input[..(len as usize)]
-            .parse()
-            .expect("Should be a valid number");
+    fn consume_number(&mut self) -> Option<Token<'a>> {
         Some(Token {
-            kind: TokenKind::Number(value),
-            len,
+            kind: TokenKind::Number,
+            text: self.consume_while(|char| char.is_digit(10)),
         })
     }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
-    type Item = Token;
+    type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let Some(first_char) = self.input.chars().next() else {
             return None;
         };
 
-        let token = match first_char {
-            '+' => Token {
-                kind: TokenKind::Plus,
-                len: 1,
-            },
-            '*' => Token {
-                kind: TokenKind::Times,
-                len: 1,
-            },
-            char if char.is_whitespace() => self
-                .get_whitespace()
-                .expect("Contains at least one whitespace character"),
-            char if char.is_digit(10) => self.get_number().expect("Contains at least one digit"),
-            _ => Token {
-                kind: TokenKind::Error,
-                len: 1,
-            },
+        let kind = match first_char {
+            '+' => TokenKind::Plus,
+            '*' => TokenKind::Times,
+            char if char.is_whitespace() => return self.consume_whitespace(),
+            char if char.is_digit(10) => return self.consume_number(),
+            _ => TokenKind::Error,
         };
 
-        self.advance(token.len as usize);
+        let (char_text, rest) = self.input.split_at(first_char.len_utf8());
+        self.input = rest;
 
-        Some(token)
+        Some(Token {
+            kind,
+            text: char_text,
+        })
     }
 }
 
@@ -127,7 +104,7 @@ impl<'a> Iterator for Tokenizer<'a> {
 mod tests {
     use super::{Token, Tokenizer};
 
-    fn tokenize(input: &str) -> Vec<Token> {
+    fn tokenize(input: &str) -> Vec<Token<'_>> {
         Tokenizer::new(input).collect()
     }
 

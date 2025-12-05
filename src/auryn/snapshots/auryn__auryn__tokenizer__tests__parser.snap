@@ -5,30 +5,26 @@ expression: "tokenize(\" 1 +4  \\n\")"
 [
     Token {
         kind: Whitespace,
-        len: 1,
+        text: " ",
     },
     Token {
-        kind: Number(
-            1,
-        ),
-        len: 1,
+        kind: Number,
+        text: "1",
     },
     Token {
         kind: Whitespace,
-        len: 1,
+        text: " ",
     },
     Token {
         kind: Plus,
-        len: 1,
+        text: "+",
     },
     Token {
-        kind: Number(
-            4,
-        ),
-        len: 1,
+        kind: Number,
+        text: "4",
     },
     Token {
         kind: Whitespace,
-        len: 3,
+        text: "  \n",
     },
 ]

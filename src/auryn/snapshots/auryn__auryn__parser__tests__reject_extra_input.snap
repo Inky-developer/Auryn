@@ -14,12 +14,7 @@ AnnotatedParserOutput {
             kind: Error(
                 UnexpectedToken {
                     expected: EndOfInput,
-                    got: Token {
-                        kind: Number(
-                            1,
-                        ),
-                        len: 1,
-                    },
+                    got: Number,
                 },
             ),
             offset: 2,

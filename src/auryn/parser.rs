@@ -8,9 +8,9 @@ use crate::auryn::{
 #[derive(Debug, Clone, Copy)]
 pub enum DiagnosticError {
     UnknownError,
-    ExpectedNumber { got: Token },
-    UnexpectedToken { expected: TokenKind, got: Token },
-    ExpectedBinaryOperator { got: Token },
+    ExpectedNumber { got: TokenKind },
+    UnexpectedToken { expected: TokenKind, got: TokenKind },
+    ExpectedBinaryOperator { got: TokenKind },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -67,11 +67,11 @@ impl<'a> Parser<'a> {
         if let Err(()) = self.parse_expression() {
             self.diagnostic(DiagnosticError::UnknownError);
         }
-        let next_token = self.peek();
-        if next_token.kind != TokenKind::EndOfInput {
+        let next_token_kind = self.peek().kind;
+        if next_token_kind != TokenKind::EndOfInput {
             self.diagnostic(DiagnosticError::UnexpectedToken {
                 expected: TokenKind::EndOfInput,
-                got: next_token,
+                got: next_token_kind,
             });
         }
         let Some(root_node) = self.pop_node(SyntaxNodeKind::Root) else {
@@ -111,23 +111,27 @@ impl<'a> Parser<'a> {
         self.diagnostics.push(Diagnostic { kind, offset, len });
     }
 
-    fn peek(&mut self) -> Token {
+    fn peek(&mut self) -> Token<'a> {
         self.input.peek().copied().unwrap_or(Token {
             kind: TokenKind::EndOfInput,
-            len: 0,
+            text: "",
         })
     }
 
-    fn consume(&mut self) -> Token {
+    fn consume(&mut self) -> Token<'a> {
         let token = self.input.next().unwrap_or(Token {
             kind: TokenKind::EndOfInput,
-            len: 0,
+            text: "",
         });
-        self.node_stack.last_mut().expect("Should have a node").len += token.len;
+        let len: u32 = token.text.len().try_into().expect("Token too long");
+        self.node_stack.last_mut().expect("Should have a node").len += len;
         token
     }
 
-    fn consume_if<T, F: FnOnce(Token) -> Option<T>>(&mut self, predicate: F) -> Result<T, Token> {
+    fn consume_if<T, F: FnOnce(Token<'a>) -> Option<T>>(
+        &mut self,
+        predicate: F,
+    ) -> Result<T, Token<'a>> {
         let received = self.peek();
         if let Some(result) = predicate(received) {
             self.consume();
@@ -139,7 +143,7 @@ impl<'a> Parser<'a> {
 
     fn consume_whitespace(&mut self) -> u32 {
         match self.consume_if(|token| (token.kind == TokenKind::Whitespace).then_some(token)) {
-            Ok(token) => token.len,
+            Ok(token) => token.text.len().try_into().expect("Token too long"),
             Err(_) => 0,
         }
     }
@@ -234,7 +238,7 @@ impl Parser<'_> {
         let op = match self.consume_if(|token| token.kind.to_binary_operator()) {
             Ok(op) => op,
             Err(token) => {
-                self.diagnostic(DiagnosticError::ExpectedBinaryOperator { got: token });
+                self.diagnostic(DiagnosticError::ExpectedBinaryOperator { got: token.kind });
                 self.finish_node_with_error();
                 return Err(());
             }
@@ -250,11 +254,12 @@ impl Parser<'_> {
 
         let value = match self.consume() {
             Token {
-                kind: TokenKind::Number(value),
-                ..
-            } => value,
+                kind: TokenKind::Number,
+                text,
+            } => text.parse().expect("Should be a valid number"),
             other => {
-                self.diagnostic(DiagnosticError::ExpectedNumber { got: other });
+                let kind = other.kind;
+                self.diagnostic(DiagnosticError::ExpectedNumber { got: kind });
                 self.finish_node_with_error();
                 return Err(());
             }
