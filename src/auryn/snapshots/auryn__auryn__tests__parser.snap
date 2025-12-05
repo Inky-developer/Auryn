@@ -1,0 +1,34 @@
+---
+source: src/auryn/mod.rs
+expression: "tokenize(\" 1 +4  \\n\")"
+---
+[
+    Token {
+        kind: Whitespace,
+        len: 1,
+    },
+    Token {
+        kind: Number(
+            1,
+        ),
+        len: 1,
+    },
+    Token {
+        kind: Whitespace,
+        len: 1,
+    },
+    Token {
+        kind: Plus,
+        len: 1,
+    },
+    Token {
+        kind: Number(
+            4,
+        ),
+        len: 1,
+    },
+    Token {
+        kind: Whitespace,
+        len: 3,
+    },
+]

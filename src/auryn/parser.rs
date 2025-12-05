@@ -1,0 +1,286 @@
+use std::iter::Peekable;
+
+use crate::auryn::{
+    BinaryOperatorToken, Token, TokenKind, Tokenizer,
+    syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxTree},
+};
+
+#[derive(Debug, Clone, Copy)]
+pub enum DiagnosticError {
+    UnknownError,
+    ExpectedNumber { got: Token },
+    UnexpectedToken { expected: TokenKind, got: Token },
+    ExpectedBinaryOperator { got: Token },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum DiagnosticKind {
+    Error(DiagnosticError),
+}
+
+impl From<DiagnosticError> for DiagnosticKind {
+    fn from(value: DiagnosticError) -> Self {
+        Self::Error(value)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Diagnostic {
+    pub kind: DiagnosticKind,
+    pub offset: u32,
+    pub len: u32,
+}
+
+#[derive(Debug)]
+pub struct ParserOutput {
+    pub ast: Option<SyntaxTree>,
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+struct ParserStackNode {
+    len: u32,
+    children: Vec<SyntaxNode>,
+}
+
+pub struct Parser<'a> {
+    input: Peekable<Tokenizer<'a>>,
+    diagnostics: Vec<Diagnostic>,
+    node_stack: Vec<ParserStackNode>,
+}
+
+type ParseResult<T = ()> = Result<T, ()>;
+
+impl<'a> Parser<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Self {
+            input: Tokenizer::new(input).into_iter().peekable(),
+            diagnostics: Vec::new(),
+            node_stack: Vec::new(),
+        }
+    }
+
+    pub fn parse(mut self) -> ParserOutput {
+        self.push_node();
+
+        let leading_whitespace = self.consume_whitespace();
+        if let Err(()) = self.parse_expression() {
+            self.diagnostic(DiagnosticError::UnknownError);
+        }
+        let Some(root_node) = self.pop_node(SyntaxNodeKind::Root) else {
+            return ParserOutput {
+                ast: None,
+                diagnostics: self.diagnostics,
+            };
+        };
+
+        ParserOutput {
+            ast: Some(SyntaxTree {
+                root_node,
+                leading_whitespace,
+            }),
+            diagnostics: self.diagnostics,
+        }
+    }
+}
+
+/// Utility methods
+impl<'a> Parser<'a> {
+    fn current_offset(&self) -> u32 {
+        let mut offset = 0u32;
+        for node in &self.node_stack {
+            offset += node.len;
+        }
+        offset
+    }
+
+    fn diagnostic(&mut self, kind: impl Into<DiagnosticKind>) {
+        let kind = kind.into();
+        let offset = self.current_offset();
+        let len = 1;
+        self.diagnostics.push(Diagnostic { kind, offset, len });
+    }
+
+    fn peek(&mut self) -> Token {
+        self.input.peek().copied().unwrap_or(Token {
+            kind: TokenKind::EndOfInput,
+            len: 0,
+        })
+    }
+
+    fn consume(&mut self) -> Token {
+        let token = self.input.next().unwrap_or(Token {
+            kind: TokenKind::EndOfInput,
+            len: 0,
+        });
+        self.node_stack.last_mut().expect("Should have a node").len += token.len;
+        token
+    }
+
+    fn consume_if<T, F: FnOnce(Token) -> Option<T>>(&mut self, predicate: F) -> Result<T, Token> {
+        let received = self.peek();
+        if let Some(result) = predicate(received) {
+            self.consume();
+            Ok(result)
+        } else {
+            Err(received)
+        }
+    }
+
+    fn consume_whitespace(&mut self) -> u32 {
+        match self.consume_if(|token| (token.kind == TokenKind::Whitespace).then_some(token)) {
+            Ok(token) => token.len,
+            Err(_) => 0,
+        }
+    }
+
+    // fn expect(&mut self, kind: TokenKind) -> ParseResult<Token> {
+    //     match self.consume_if(|token| (token.kind == kind).then_some(token)) {
+    //         Ok(token) => Ok(token),
+    //         Err(token) => {
+    //             self.diagnostic(DiagnosticError::UnexpectedToken {
+    //                 expected: kind,
+    //                 got: token,
+    //             });
+    //             Err(())
+    //         }
+    //     }
+    // }
+
+    fn push_node(&mut self) {
+        self.node_stack.push(ParserStackNode {
+            len: 0,
+            children: Vec::new(),
+        });
+    }
+
+    fn pop_node(&mut self, kind: SyntaxNodeKind) -> Option<SyntaxNode> {
+        let Some(ParserStackNode { children, len }) = self.node_stack.pop() else {
+            return None;
+        };
+
+        let trailing_whitespace = self.consume_whitespace();
+
+        Some(SyntaxNode {
+            kind,
+            len: len + children.iter().map(|child| child.len).sum::<u32>(),
+            trailing_whitespace,
+            children: children.into_boxed_slice(),
+        })
+    }
+
+    fn finish_node(&mut self, kind: SyntaxNodeKind) {
+        let Some(node) = self.pop_node(kind) else {
+            panic!("Expected node")
+        };
+        let parent = self.node_stack.last_mut().expect("Parent should exist");
+        parent.children.push(node);
+    }
+
+    fn finish_node_with_error(&mut self) {
+        self.finish_node(SyntaxNodeKind::Error);
+    }
+}
+
+/// Parsing methods
+impl Parser<'_> {
+    fn parse_expression(&mut self) -> ParseResult {
+        self.parse_expression_pratt(0)
+    }
+
+    fn parse_expression_pratt(&mut self, min_binding_power: u32) -> ParseResult {
+        self.push_node();
+
+        self.parse_value()?;
+
+        loop {
+            let Some(operator) = self.peek().kind.to_binary_operator() else {
+                self.finish_node(SyntaxNodeKind::Expression);
+                return Ok(());
+            };
+            let binding_power = operator.binding_power();
+            if binding_power < min_binding_power {
+                break;
+            }
+
+            self.parse_binary_operator()?;
+            self.parse_expression_pratt(binding_power)?;
+        }
+
+        self.finish_node(SyntaxNodeKind::Expression);
+        Ok(())
+    }
+
+    fn parse_binary_operator(&mut self) -> ParseResult<BinaryOperatorToken> {
+        self.push_node();
+
+        let op = match self.consume_if(|token| token.kind.to_binary_operator()) {
+            Ok(op) => op,
+            Err(token) => {
+                self.diagnostic(DiagnosticError::ExpectedBinaryOperator { got: token });
+                self.finish_node_with_error();
+                return Err(());
+            }
+        };
+
+        self.finish_node(SyntaxNodeKind::BinaryOperator(op));
+
+        Ok(op)
+    }
+
+    fn parse_value(&mut self) -> ParseResult {
+        self.push_node();
+
+        let value = match self.consume() {
+            Token {
+                kind: TokenKind::Number(value),
+                ..
+            } => value,
+            other => {
+                self.diagnostic(DiagnosticError::ExpectedNumber { got: other });
+                self.finish_node_with_error();
+                return Err(());
+            }
+        };
+
+        self.finish_node(SyntaxNodeKind::Number(value));
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fmt::Debug;
+
+    use crate::auryn::parser::{Parser, ParserOutput};
+
+    fn parse(input: &str) -> ParserOutput {
+        Parser::new(input).parse()
+    }
+
+    struct AnnotatedParserOutput<'a> {
+        output: ParserOutput,
+        input: &'a str,
+    }
+
+    impl Debug for AnnotatedParserOutput<'_> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let ParserOutput { ast, diagnostics } = &self.output;
+            f.debug_struct("AnnotatedParserOutput")
+                .field("ast", &ast.as_ref().map(|ast| ast.display(self.input)))
+                .field("diagnostics", diagnostics)
+                .finish()
+        }
+    }
+
+    fn verify(input: &str) -> impl Debug {
+        let output = parse(input);
+        AnnotatedParserOutput { output, input }
+    }
+
+    #[test]
+    fn test_parse_expression() {
+        insta::assert_debug_snapshot!(verify("1 + 2 * 3"));
+        insta::assert_debug_snapshot!(verify("1 * 2 + 3"));
+    }
+}
