@@ -1,21 +1,45 @@
-use std::fs::OpenOptions;
+use std::{fs::OpenOptions, io::Write};
 
-use auryn::auryn::{ast::query_ast, codegen_java::query_class, parser::Parser};
+use auryn::{
+    auryn::{ast::query_ast, codegen_java::query_class, parser::Parser},
+    java::class::ClassData,
+};
 
 fn main() {
-    let input = "1 + 2 * 3";
+    repl();
+}
+
+fn repl() {
+    let mut input = String::new();
+    let stdin = std::io::stdin();
+    loop {
+        print!("> ");
+        std::io::stdout().flush().unwrap();
+        stdin.read_line(&mut input).unwrap();
+        let class = get_class(&input);
+        input.clear();
+
+        let mut f = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open("Helloworld.class")
+            .unwrap();
+        class.serialize(&mut f).unwrap();
+
+        let mut handle = std::process::Command::new("java")
+            .arg("Helloworld")
+            .spawn()
+            .unwrap();
+        handle.wait().unwrap();
+
+        std::fs::remove_file("Helloworld.class").unwrap();
+    }
+}
+
+fn get_class(input: &str) -> ClassData {
     let result = Parser::new(input).parse();
-    println!("{}", result.syntax_tree.as_ref().unwrap().display(input));
     let ast = query_ast(result.syntax_tree.as_ref().unwrap());
     let class = query_class("Helloworld".to_string(), &ast).unwrap();
-
-    dbg!(&class);
-
-    let mut f = OpenOptions::new()
-        .create(true)
-        .truncate(true)
-        .write(true)
-        .open("Helloworld.class")
-        .unwrap();
-    class.serialize(&mut f).unwrap();
+    class
 }
