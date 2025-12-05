@@ -67,6 +67,13 @@ impl<'a> Parser<'a> {
         if let Err(()) = self.parse_expression() {
             self.diagnostic(DiagnosticError::UnknownError);
         }
+        let next_token = self.peek();
+        if next_token.kind != TokenKind::EndOfInput {
+            self.diagnostic(DiagnosticError::UnexpectedToken {
+                expected: TokenKind::EndOfInput,
+                got: next_token,
+            });
+        }
         let Some(root_node) = self.pop_node(SyntaxNodeKind::Root) else {
             return ParserOutput {
                 syntax_tree: None,
@@ -90,6 +97,9 @@ impl<'a> Parser<'a> {
         let mut offset = 0u32;
         for node in &self.node_stack {
             offset += node.len;
+            for child in &node.children {
+                offset += child.len;
+            }
         }
         offset
     }
@@ -293,5 +303,10 @@ mod tests {
     fn test_parse_expression() {
         insta::assert_debug_snapshot!(verify("1 + 2 * 3"));
         insta::assert_debug_snapshot!(verify("1 * 2 + 3"));
+    }
+
+    #[test]
+    fn test_reject_extra_input() {
+        insta::assert_debug_snapshot!(verify("1 1 1 1 11 1"));
     }
 }

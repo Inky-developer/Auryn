@@ -1,0 +1,29 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"1 1 1 1 11 1\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..2 Root
+        |0..2 Expression
+        ||0..1 Number(1) '1'
+        ,
+    ),
+    diagnostics: [
+        Diagnostic {
+            kind: Error(
+                UnexpectedToken {
+                    expected: EndOfInput,
+                    got: Token {
+                        kind: Number(
+                            1,
+                        ),
+                        len: 1,
+                    },
+                },
+            ),
+            offset: 2,
+            len: 1,
+        },
+    ],
+}
