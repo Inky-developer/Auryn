@@ -33,10 +33,11 @@ pub struct Diagnostic {
 
 #[derive(Debug)]
 pub struct ParserOutput {
-    pub ast: Option<SyntaxTree>,
+    pub syntax_tree: Option<SyntaxTree>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
+#[derive(Debug)]
 struct ParserStackNode {
     len: u32,
     children: Vec<SyntaxNode>,
@@ -68,13 +69,13 @@ impl<'a> Parser<'a> {
         }
         let Some(root_node) = self.pop_node(SyntaxNodeKind::Root) else {
             return ParserOutput {
-                ast: None,
+                syntax_tree: None,
                 diagnostics: self.diagnostics,
             };
         };
 
         ParserOutput {
-            ast: Some(SyntaxTree {
+            syntax_tree: Some(SyntaxTree {
                 root_node,
                 leading_whitespace,
             }),
@@ -146,11 +147,12 @@ impl<'a> Parser<'a> {
     //     }
     // }
 
-    fn push_node(&mut self) {
+    fn push_node(&mut self) -> &mut ParserStackNode {
         self.node_stack.push(ParserStackNode {
             len: 0,
             children: Vec::new(),
         });
+        self.node_stack.last_mut().expect("Was just pushed")
     }
 
     fn pop_node(&mut self, kind: SyntaxNodeKind) -> Option<SyntaxNode> {
@@ -201,6 +203,12 @@ impl Parser<'_> {
             if binding_power < min_binding_power {
                 break;
             }
+
+            let node = self
+                .pop_node(SyntaxNodeKind::Expression)
+                .expect("Node was started");
+            let parent = self.push_node();
+            parent.children.push(node);
 
             self.parse_binary_operator()?;
             self.parse_expression_pratt(binding_power)?;
@@ -265,7 +273,10 @@ mod tests {
 
     impl Debug for AnnotatedParserOutput<'_> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            let ParserOutput { ast, diagnostics } = &self.output;
+            let ParserOutput {
+                syntax_tree: ast,
+                diagnostics,
+            } = &self.output;
             f.debug_struct("AnnotatedParserOutput")
                 .field("ast", &ast.as_ref().map(|ast| ast.display(self.input)))
                 .field("diagnostics", diagnostics)

@@ -42,10 +42,12 @@
 //     Ok(())
 // }
 
-use auryn::auryn::parser::Parser;
+use auryn::auryn::{ast::query_ast, parser::Parser};
 
 fn main() {
-    let input = "1 + 2 * 3";
+    let input = "1 * 2 + 3";
     let result = Parser::new(input).parse();
-    println!("{}", result.ast.unwrap().display(input));
+    println!("{}", result.syntax_tree.as_ref().unwrap().display(input));
+    let ast = query_ast(result.syntax_tree.as_ref().unwrap());
+    println!("{ast:#?}");
 }

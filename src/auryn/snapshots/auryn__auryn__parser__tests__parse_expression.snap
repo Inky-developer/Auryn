@@ -6,10 +6,12 @@ AnnotatedParserOutput {
     ast: Some(
         0..9 Root
          0..9 Expression
-          0..1 Number(1) '1'
+          0..2 Expression
+           0..1 Number(1) '1'
           2..3 BinaryOperator(Plus) '+'
           4..9 Expression
-           4..5 Number(2) '2'
+           4..6 Expression
+            4..5 Number(2) '2'
            6..7 BinaryOperator(Times) '*'
            8..9 Expression
             8..9 Number(3) '3'
