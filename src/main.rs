@@ -39,6 +39,9 @@ fn repl() {
 
 fn get_class(input: &str) -> ClassData {
     let result = Parser::new(input).parse();
+    if !result.diagnostics.is_empty() {
+        println!("Warn: {:?}", result.diagnostics);
+    }
     let ast = query_ast(result.syntax_tree.as_ref().unwrap());
     let class = query_class("Helloworld".to_string(), &ast).unwrap();
     class
