@@ -18,6 +18,8 @@ pub enum TokenKind {
     Number,
     Plus,
     Times,
+    ParensOpen,
+    ParensClose,
     Whitespace,
     Error,
     EndOfInput,
@@ -85,6 +87,8 @@ impl<'a> Iterator for Tokenizer<'a> {
         let kind = match first_char {
             '+' => TokenKind::Plus,
             '*' => TokenKind::Times,
+            '(' => TokenKind::ParensOpen,
+            ')' => TokenKind::ParensClose,
             char if char.is_whitespace() => return self.consume_whitespace(),
             char if char.is_digit(10) => return self.consume_number(),
             _ => TokenKind::Error,

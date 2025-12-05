@@ -149,18 +149,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // fn expect(&mut self, kind: TokenKind) -> ParseResult<Token> {
-    //     match self.consume_if(|token| (token.kind == kind).then_some(token)) {
-    //         Ok(token) => Ok(token),
-    //         Err(token) => {
-    //             self.diagnostic(DiagnosticError::UnexpectedToken {
-    //                 expected: kind,
-    //                 got: token,
-    //             });
-    //             Err(())
-    //         }
-    //     }
-    // }
+    fn expect(&mut self, kind: TokenKind) -> ParseResult<Token<'a>> {
+        match self.consume_if(|token| (token.kind == kind).then_some(token)) {
+            Ok(token) => Ok(token),
+            Err(token) => {
+                let kind = token.kind;
+                self.diagnostic(DiagnosticError::UnexpectedToken {
+                    expected: kind,
+                    got: kind,
+                });
+                Err(())
+            }
+        }
+    }
 
     fn push_node(&mut self) -> &mut ParserStackNode {
         self.node_stack.push(ParserStackNode {
@@ -204,14 +205,31 @@ impl Parser<'_> {
         self.parse_expression_pratt(0)
     }
 
-    fn parse_expression_pratt(&mut self, min_binding_power: u32) -> ParseResult {
+    fn parse_expression_pratt(&mut self, mut min_binding_power: u32) -> ParseResult {
         self.push_node();
 
+        let is_parenthesis = self.peek().kind == TokenKind::ParensOpen;
+        if is_parenthesis {
+            self.consume();
+            min_binding_power = 0;
+        }
+
+        self.parse_expression_pratt_inner(min_binding_power)?;
+
+        if is_parenthesis {
+            self.expect(TokenKind::ParensClose)?;
+        }
+
+        self.finish_node(SyntaxNodeKind::Expression);
+
+        Ok(())
+    }
+
+    fn parse_expression_pratt_inner(&mut self, min_binding_power: u32) -> ParseResult {
         self.parse_value()?;
 
         loop {
             let Some(operator) = self.peek().kind.to_binary_operator() else {
-                self.finish_node(SyntaxNodeKind::Expression);
                 return Ok(());
             };
             let binding_power = operator.binding_power();
@@ -229,7 +247,6 @@ impl Parser<'_> {
             self.parse_expression_pratt(binding_power)?;
         }
 
-        self.finish_node(SyntaxNodeKind::Expression);
         Ok(())
     }
 
@@ -316,6 +333,13 @@ mod tests {
     fn test_parse_expression() {
         insta::assert_debug_snapshot!(verify("1 + 2 * 3"));
         insta::assert_debug_snapshot!(verify("1 * 2 + 3"));
+    }
+
+    #[test]
+    fn test_parse_parenthesis() {
+        insta::assert_debug_snapshot!(verify("(3)"));
+        insta::assert_debug_snapshot!(verify("1 + (2 + 3)"));
+        insta::assert_debug_snapshot!(verify("1 * (2 + 3)"));
     }
 
     #[test]
