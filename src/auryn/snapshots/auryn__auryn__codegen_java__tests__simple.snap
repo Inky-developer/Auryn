@@ -1,0 +1,161 @@
+---
+source: src/auryn/codegen_java.rs
+expression: "generate_class(\"1 + 2 * 3\")"
+---
+ClassData {
+    constant_pool: [
+        Utf8(
+            "Helloworld",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+        },
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                3,
+            ),
+        },
+        Integer {
+            integer: 1,
+        },
+        Integer {
+            integer: 2,
+        },
+        Integer {
+            integer: 3,
+        },
+        Utf8(
+            "java/lang/System",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                8,
+            ),
+        },
+        Utf8(
+            "out",
+        ),
+        Utf8(
+            "Ljava/io/PrintStream;",
+        ),
+        NameAndType {
+            name_index: ConstantPoolIndex(
+                10,
+            ),
+            type_index: ConstantPoolIndex(
+                11,
+            ),
+        },
+        FieldRef {
+            class_index: ConstantPoolIndex(
+                9,
+            ),
+            name_and_type_index: ConstantPoolIndex(
+                12,
+            ),
+        },
+        Utf8(
+            "java/io/PrintStream",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                14,
+            ),
+        },
+        Utf8(
+            "println",
+        ),
+        Utf8(
+            "(I)V",
+        ),
+        NameAndType {
+            name_index: ConstantPoolIndex(
+                16,
+            ),
+            type_index: ConstantPoolIndex(
+                17,
+            ),
+        },
+        MethodRef {
+            class_index: ConstantPoolIndex(
+                15,
+            ),
+            name_and_type_index: ConstantPoolIndex(
+                18,
+            ),
+        },
+        Utf8(
+            "main",
+        ),
+        Utf8(
+            "([Ljava/lang/String;)V",
+        ),
+        Utf8(
+            "Code",
+        ),
+    ],
+    this_class: ConstantPoolIndex(
+        2,
+    ),
+    super_class: ConstantPoolIndex(
+        4,
+    ),
+    methods: [
+        Method {
+            flags: 9,
+            name_index: ConstantPoolIndex(
+                20,
+            ),
+            descriptor_index: ConstantPoolIndex(
+                21,
+            ),
+            attributes: [
+                AttributeInfo {
+                    name_index: ConstantPoolIndex(
+                        22,
+                    ),
+                    attribute: Code(
+                        CodeAttribute {
+                            max_locals: 1,
+                            code: [
+                                Ldc(
+                                    5,
+                                ),
+                                Ldc(
+                                    6,
+                                ),
+                                Ldc(
+                                    7,
+                                ),
+                                IMul,
+                                IAdd,
+                                IStore(
+                                    0,
+                                ),
+                                GetStatic(
+                                    ConstantPoolIndex(
+                                        13,
+                                    ),
+                                ),
+                                ILoad(
+                                    0,
+                                ),
+                                InvokeVirtual(
+                                    ConstantPoolIndex(
+                                        19,
+                                    ),
+                                ),
+                                Return,
+                            ],
+                        },
+                    ),
+                },
+            ],
+        },
+    ],
+}

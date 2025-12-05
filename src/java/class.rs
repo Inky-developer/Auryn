@@ -48,6 +48,9 @@ pub enum ConstantPoolEntry {
     String {
         string_index: ConstantPoolIndex,
     },
+    Integer {
+        integer: i32,
+    },
 }
 
 impl ConstantPoolEntry {
@@ -82,6 +85,9 @@ impl ConstantPoolEntry {
             ConstantPoolEntry::String { string_index } => {
                 string_index.serialize(buf)?;
             }
+            ConstantPoolEntry::Integer { integer } => {
+                buf.write_all(&integer.to_be_bytes())?;
+            }
         }
 
         Ok(())
@@ -95,6 +101,7 @@ impl ConstantPoolEntry {
             ConstantPoolEntry::NameAndType { .. } => 12,
             ConstantPoolEntry::Utf8 { .. } => 1,
             ConstantPoolEntry::String { .. } => 8,
+            ConstantPoolEntry::Integer { .. } => 3,
         }
     }
 }
@@ -114,6 +121,10 @@ pub enum Instruction {
     Ldc(u8),
     /// Returns void
     Return,
+    IAdd,
+    IMul,
+    IStore(u16),
+    ILoad(u16),
 }
 
 impl Instruction {
@@ -143,6 +154,24 @@ impl Instruction {
             }
             Instruction::Return => {
                 buf.write_all(&[0xb1])?;
+            }
+            Instruction::IAdd => {
+                buf.write_all(&[0x60])?;
+            }
+            Instruction::IMul => {
+                buf.write_all(&[0x68])?;
+            }
+            Instruction::IStore(index) => {
+                // TODO: implement istore_<n> as space optimization
+                let index: u8 = index.try_into().expect("TODO: Implement wide store");
+                buf.write_all(&[0x36, index])?;
+            }
+            Instruction::ILoad(index) => {
+                // TODO: implement iload_<n> as space optimization
+                let index: u8 = index
+                    .try_into()
+                    .expect("TODO: Implement support for wide loads");
+                buf.write_all(&[0x15, index])?;
             }
         }
 

@@ -9,6 +9,7 @@ pub struct MethodDescriptor(pub String);
 #[derive(Debug, Clone)]
 pub enum ConstantValue {
     String(String),
+    Integer(i32),
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +28,10 @@ pub enum Instruction {
         value: ConstantValue,
     },
     ReturnNull,
+    IAdd,
+    IMul,
+    IStore(u16),
+    ILoad(u16),
 }
 
 #[derive(Debug)]
@@ -101,6 +106,7 @@ impl Assembler {
             Instruction::LoadConstant { value } => {
                 let constant_index = match value {
                     ConstantValue::String(string) => self.class_data.add_string(string),
+                    ConstantValue::Integer(integer) => self.class_data.add_integer(integer),
                 };
                 let constant_index = constant_index
                     .0
@@ -113,6 +119,12 @@ impl Assembler {
             Instruction::ReturnNull => {
                 self.instructions.push(class::Instruction::Return);
             }
+            Instruction::IAdd => {
+                self.instructions.push(class::Instruction::IAdd);
+            }
+            Instruction::IMul => self.instructions.push(class::Instruction::IMul),
+            Instruction::IStore(index) => self.instructions.push(class::Instruction::IStore(index)),
+            Instruction::ILoad(index) => self.instructions.push(class::Instruction::ILoad(index)),
         }
     }
 }
@@ -177,6 +189,10 @@ impl class::ClassData {
     fn add_string(&mut self, string: String) -> class::ConstantPoolIndex {
         let string_index = self.add_utf8(string);
         self.add_constant(class::ConstantPoolEntry::String { string_index })
+    }
+
+    fn add_integer(&mut self, integer: i32) -> class::ConstantPoolIndex {
+        self.add_constant(class::ConstantPoolEntry::Integer { integer })
     }
 }
 
