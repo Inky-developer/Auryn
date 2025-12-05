@@ -1,6 +1,6 @@
 use crate::auryn::{
-    BinaryOperatorToken,
     syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxTree},
+    tokenizer::BinaryOperatorToken,
 };
 
 #[derive(Debug)]

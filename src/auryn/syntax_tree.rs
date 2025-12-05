@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use crate::auryn::BinaryOperatorToken;
+use crate::auryn::tokenizer::BinaryOperatorToken;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SyntaxNodeKind {

@@ -1,8 +1,8 @@
 use std::iter::Peekable;
 
 use crate::auryn::{
-    BinaryOperatorToken, Token, TokenKind, Tokenizer,
     syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxTree},
+    tokenizer::{BinaryOperatorToken, Token, TokenKind, Tokenizer},
 };
 
 #[derive(Debug, Clone, Copy)]
