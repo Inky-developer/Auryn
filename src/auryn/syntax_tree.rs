@@ -51,7 +51,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
         let range = format_args!("{offset}..{end}");
         let kind = self.node.kind;
         for _ in 0..depth {
-            write!(f, " ")?;
+            write!(f, "|")?;
         }
         write!(f, "{range} {kind:?}")?;
 
