@@ -11,6 +11,7 @@ pub enum DiagnosticError {
     ExpectedNumber { got: TokenKind },
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
+    InvalidNumber,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -256,7 +257,14 @@ impl Parser<'_> {
             Token {
                 kind: TokenKind::Number,
                 text,
-            } => text.parse().expect("Should be a valid number"),
+            } => {
+                let Ok(value) = text.parse() else {
+                    self.diagnostic(DiagnosticError::InvalidNumber);
+                    self.finish_node_with_error();
+                    return Err(());
+                };
+                value
+            }
             other => {
                 let kind = other.kind;
                 self.diagnostic(DiagnosticError::ExpectedNumber { got: kind });
@@ -313,5 +321,10 @@ mod tests {
     #[test]
     fn test_reject_extra_input() {
         insta::assert_debug_snapshot!(verify("1 1 1 1 11 1"));
+    }
+
+    #[test]
+    fn test_reject_large_number() {
+        insta::assert_debug_snapshot!(verify("9999999999999"));
     }
 }

@@ -1,0 +1,27 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"9999999999999\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..13 Root
+        |0..13 Error '9999999999999'
+        ,
+    ),
+    diagnostics: [
+        Diagnostic {
+            kind: Error(
+                InvalidNumber,
+            ),
+            offset: 13,
+            len: 1,
+        },
+        Diagnostic {
+            kind: Error(
+                UnknownError,
+            ),
+            offset: 13,
+            len: 1,
+        },
+    ],
+}
