@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::java::class;
 
 #[derive(Debug, Clone)]
@@ -10,6 +12,19 @@ pub struct MethodDescriptor(pub String);
 pub enum ConstantValue {
     String(String),
     Integer(i32),
+}
+
+pub mod primitive {
+    pub trait IsPrimitiveType {
+        // The size of this type in the local variable frame. Either 1 or 2
+        const SIZE: u16;
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    pub struct Integer;
+    impl IsPrimitiveType for Integer {
+        const SIZE: u16 = 1;
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -30,14 +45,18 @@ pub enum Instruction {
     ReturnNull,
     IAdd,
     IMul,
-    IStore(u16),
-    ILoad(u16),
+    IStore(VariableId<primitive::Integer>),
+    ILoad(VariableId<primitive::Integer>),
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct VariableId<T>(u16, PhantomData<T>);
 
 #[derive(Debug)]
 pub struct Assembler {
     class_data: class::ClassData,
     instructions: Vec<class::Instruction>,
+    next_variable_index: u16,
 }
 
 impl Assembler {
@@ -45,6 +64,7 @@ impl Assembler {
         Self {
             class_data: class::ClassData::new(class_name),
             instructions: Vec::new(),
+            next_variable_index: 0,
         }
     }
 
@@ -54,6 +74,8 @@ impl Assembler {
             .class_data
             .add_utf8("([Ljava/lang/String;)V".to_string());
         let code_name_index = self.class_data.add_utf8("Code".to_string());
+        // It must be at least 2 bigger than the highest index to a 2-sized variable
+        let max_locals = self.next_variable_index + 1;
         let method = class::Method {
             flags: (class::MethodAccessFlag::Public as u16)
                 | (class::MethodAccessFlag::Static as u16),
@@ -62,7 +84,7 @@ impl Assembler {
             attributes: vec![class::AttributeInfo {
                 name_index: code_name_index,
                 attribute: class::Attribute::Code(class::CodeAttribute {
-                    max_locals: 1,
+                    max_locals,
                     code: self.instructions,
                 }),
             }],
@@ -123,9 +145,17 @@ impl Assembler {
                 self.instructions.push(class::Instruction::IAdd);
             }
             Instruction::IMul => self.instructions.push(class::Instruction::IMul),
-            Instruction::IStore(index) => self.instructions.push(class::Instruction::IStore(index)),
-            Instruction::ILoad(index) => self.instructions.push(class::Instruction::ILoad(index)),
+            Instruction::IStore(index) => {
+                self.instructions.push(class::Instruction::IStore(index.0))
+            }
+            Instruction::ILoad(index) => self.instructions.push(class::Instruction::ILoad(index.0)),
         }
+    }
+
+    pub fn alloc_variable<T: primitive::IsPrimitiveType>(&mut self) -> VariableId<T> {
+        let id = self.next_variable_index;
+        self.next_variable_index += T::SIZE;
+        VariableId(id, PhantomData)
     }
 }
 

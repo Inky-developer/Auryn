@@ -121,7 +121,7 @@ ClassData {
                     ),
                     attribute: Code(
                         CodeAttribute {
-                            max_locals: 1,
+                            max_locals: 2,
                             code: [
                                 Ldc(
                                     5,

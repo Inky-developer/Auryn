@@ -53,8 +53,9 @@ impl Generator {
 
 impl Generator {
     fn instrics_print_int(&mut self) {
+        let result_id = self.assembler.alloc_variable();
         self.assembler.add_all([
-            Instruction::IStore(0),
+            Instruction::IStore(result_id),
             Instruction::GetStatic {
                 class_name: "java/lang/System".to_string(),
                 name: "out".to_string(),
@@ -62,7 +63,7 @@ impl Generator {
                     "Ljava/io/PrintStream;".to_string(),
                 ),
             },
-            Instruction::ILoad(0),
+            Instruction::ILoad(result_id),
             Instruction::InvokeVirtual {
                 class_name: "java/io/PrintStream".to_string(),
                 name: "println".to_string(),
@@ -133,7 +134,6 @@ mod tests {
 
     fn generate_class(input: &str) -> ClassData {
         let result = Parser::new(input).parse();
-        println!("{}", result.syntax_tree.as_ref().unwrap().display(input));
         let ast = query_ast(result.syntax_tree.as_ref().unwrap());
         let class = query_class("Helloworld".to_string(), &ast).unwrap();
         class
