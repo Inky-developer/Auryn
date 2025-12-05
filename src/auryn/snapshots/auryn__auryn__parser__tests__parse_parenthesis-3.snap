@@ -7,14 +7,25 @@ AnnotatedParserOutput {
         0..11 Root
         |0..11 Expression
         ||0..2 Expression
-        |||0..1 Number(1) '1'
-        ||2..3 BinaryOperator(Times) '*'
+        |||0..2 Number(1)
+        ||||Number
+        ||||Whitespace
+        ||2..4 BinaryOperator(Times)
+        |||Times
+        |||Whitespace
         ||4..11 Expression
         |||4..7 Expression
-        ||||4..5 Number(2) '('
-        |||7..8 BinaryOperator(Plus) '+'
+        ||||ParensOpen
+        ||||5..7 Number(2)
+        |||||Number
+        |||||Whitespace
+        |||7..9 BinaryOperator(Plus)
+        ||||Plus
+        ||||Whitespace
         |||9..10 Expression
-        ||||9..10 Number(3) '3'
+        ||||9..10 Number(3)
+        |||||Number
+        |||ParensClose
         ,
     ),
     diagnostics: [],

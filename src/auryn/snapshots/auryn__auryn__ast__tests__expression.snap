@@ -4,19 +4,27 @@ expression: "parse(\"1+2\")"
 ---
 Ok(
     Node {
-        len: 3,
+        span: Span {
+            len: 3,
+        },
         kind: Root {
             expression: Ok(
                 Node {
-                    len: 3,
+                    span: Span {
+                        len: 3,
+                    },
                     kind: BinaryOperation {
                         lhs: Ok(
                             Node {
-                                len: 1,
+                                span: Span {
+                                    len: 1,
+                                },
                                 kind: Value(
                                     Ok(
                                         Node {
-                                            len: 1,
+                                            span: Span {
+                                                len: 1,
+                                            },
                                             kind: Int(
                                                 1,
                                             ),
@@ -27,17 +35,23 @@ Ok(
                         ),
                         operator: Ok(
                             Node {
-                                len: 1,
+                                span: Span {
+                                    len: 1,
+                                },
                                 kind: Plus,
                             },
                         ),
                         rhs: Ok(
                             Node {
-                                len: 1,
+                                span: Span {
+                                    len: 1,
+                                },
                                 kind: Value(
                                     Ok(
                                         Node {
-                                            len: 1,
+                                            span: Span {
+                                                len: 1,
+                                            },
                                             kind: Int(
                                                 2,
                                             ),

@@ -1,10 +1,15 @@
 use crate::auryn::{
-    syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxTree},
+    Span,
+    syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxTree},
     tokenizer::BinaryOperatorToken,
 };
 
-#[derive(Debug)]
-pub struct AstError;
+#[derive(Debug, Clone, Copy)]
+pub enum AstError {
+    TooFewChildren,
+    UnexpectedNode,
+    TooManyChildren,
+}
 
 pub type NodeOrError<T> = Result<Node<T>, AstError>;
 
@@ -18,14 +23,14 @@ where
         let result = Self::get_kind(node)?;
         Ok(Node {
             kind: result,
-            len: node.len + node.trailing_whitespace,
+            span: node.span,
         })
     }
 }
 
 #[derive(Debug)]
 pub struct Node<T> {
-    pub len: u32,
+    pub span: Span,
     pub kind: T,
 }
 
@@ -49,23 +54,25 @@ pub enum Expression {
 impl FromSyntaxNode for Expression {
     fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
         if node.kind != SyntaxNodeKind::Expression {
-            return Err(AstError);
+            return Err(AstError::UnexpectedNode);
         }
 
-        match node.children.len() {
+        let num_children = node.node_children().count();
+
+        match num_children {
             1 => {
-                let (value,) = node.map_children()?;
+                let (value,) = node.map_child_nodes()?;
                 Ok(Expression::Value(NodeRef::new(value)))
             }
             3 => {
-                let (lhs, op, rhs) = node.map_children()?;
+                let (lhs, op, rhs) = node.map_child_nodes()?;
                 Ok(Expression::BinaryOperation {
                     lhs: NodeRef::new(lhs),
                     operator: NodeRef::new(op),
                     rhs: NodeRef::new(rhs),
                 })
             }
-            _ => Err(AstError),
+            _ => Err(AstError::UnexpectedNode),
         }
     }
 }
@@ -78,11 +85,8 @@ pub enum Value {
 impl FromSyntaxNode for Value {
     fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
         let SyntaxNodeKind::Number(number) = node.kind else {
-            return Err(AstError);
+            return Err(AstError::UnexpectedNode);
         };
-        if !node.children.is_empty() {
-            return Err(AstError);
-        }
 
         Ok(Value::Int(number))
     }
@@ -91,89 +95,90 @@ impl FromSyntaxNode for Value {
 impl FromSyntaxNode for BinaryOperatorToken {
     fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
         let SyntaxNodeKind::BinaryOperator(op) = node.kind else {
-            return Err(AstError);
+            return Err(AstError::UnexpectedNode);
         };
-        if !node.children.is_empty() {
-            return Err(AstError);
-        }
         Ok(op)
     }
 }
 
 pub fn query_ast(syntax_tree: &SyntaxTree) -> NodeOrError<Root> {
-    let &SyntaxTree {
-        root_node,
-        leading_whitespace,
-    } = &syntax_tree;
-    let len = root_node.len + leading_whitespace;
+    let &SyntaxTree { root_node } = &syntax_tree;
 
-    let (expression,) = root_node.map_children()?;
+    let span = root_node.span;
+
+    let (expression,) = root_node.map_child_nodes()?;
     NodeOrError::Ok(Node {
         kind: Root {
             expression: NodeRef::new(expression),
         },
-        len,
+        span,
     })
 }
 
 impl SyntaxNode {
-    fn map_children<T: FromSyntaxNodeChildren>(&self) -> Result<T, AstError> {
-        T::from_syntax_node_children(&self.children)
+    fn map_child_nodes<T: FromSyntaxNodes>(&self) -> Result<T, AstError> {
+        T::from_syntax_nodes(self.children.iter().filter_map(SyntaxItem::as_node))
     }
 }
 
-trait FromSyntaxNodeChildren
+trait FromSyntaxNodes
 where
     Self: Sized,
 {
-    fn from_syntax_node_children(children: &[SyntaxNode]) -> Result<Self, AstError>;
+    fn from_syntax_nodes<'a>(
+        children: impl Iterator<Item = &'a SyntaxNode>,
+    ) -> Result<Self, AstError>;
 }
 
-impl<A> FromSyntaxNodeChildren for (NodeOrError<A>,)
+impl<A> FromSyntaxNodes for (NodeOrError<A>,)
 where
     A: FromSyntaxNode,
     Self: Sized,
 {
-    fn from_syntax_node_children(children: &[SyntaxNode]) -> Result<Self, AstError> {
-        let [first] = children else {
-            return Err(AstError);
-        };
-
+    fn from_syntax_nodes<'a>(
+        mut children: impl Iterator<Item = &'a SyntaxNode>,
+    ) -> Result<Self, AstError> {
+        let first = children.next().ok_or(AstError::TooFewChildren)?;
         let first = A::from_syntax_node(first);
+        if !children.next().is_none() {
+            return Err(AstError::TooManyChildren);
+        }
         Ok((first,))
     }
 }
-impl<A, B> FromSyntaxNodeChildren for (NodeOrError<A>, NodeOrError<B>)
+impl<A, B> FromSyntaxNodes for (NodeOrError<A>, NodeOrError<B>)
 where
     A: FromSyntaxNode,
     B: FromSyntaxNode,
     Self: Sized,
 {
-    fn from_syntax_node_children(children: &[SyntaxNode]) -> Result<Self, AstError> {
-        let [first, second] = children else {
-            return Err(AstError);
-        };
-
-        let first = A::from_syntax_node(first);
-        let second = B::from_syntax_node(second);
+    fn from_syntax_nodes<'a>(
+        mut children: impl Iterator<Item = &'a SyntaxNode>,
+    ) -> Result<Self, AstError> {
+        let first = A::from_syntax_node(children.next().ok_or(AstError::TooFewChildren)?);
+        let second = B::from_syntax_node(children.next().ok_or(AstError::TooFewChildren)?);
+        if !children.next().is_none() {
+            return Err(AstError::TooManyChildren);
+        }
         Ok((first, second))
     }
 }
-impl<A, B, C> FromSyntaxNodeChildren for (NodeOrError<A>, NodeOrError<B>, NodeOrError<C>)
+impl<A, B, C> FromSyntaxNodes for (NodeOrError<A>, NodeOrError<B>, NodeOrError<C>)
 where
     A: FromSyntaxNode,
     B: FromSyntaxNode,
     C: FromSyntaxNode,
     Self: Sized,
 {
-    fn from_syntax_node_children(children: &[SyntaxNode]) -> Result<Self, AstError> {
-        let [first, second, third] = children else {
-            return Err(AstError);
-        };
-
-        let first = A::from_syntax_node(first);
-        let second = B::from_syntax_node(second);
-        let third = C::from_syntax_node(third);
+    fn from_syntax_nodes<'a>(
+        mut children: impl Iterator<Item = &'a SyntaxNode>,
+    ) -> Result<Self, AstError> {
+        let first = A::from_syntax_node(children.next().ok_or(AstError::TooFewChildren)?);
+        let second = B::from_syntax_node(children.next().ok_or(AstError::TooFewChildren)?);
+        let third = C::from_syntax_node(children.next().ok_or(AstError::TooFewChildren)?);
+        if !children.next().is_none() {
+            return Err(AstError::TooManyChildren);
+        }
         Ok((first, second, third))
     }
 }

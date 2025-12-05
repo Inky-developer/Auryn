@@ -10,11 +10,13 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct CodegenError;
+pub enum CodegenError {
+    InvalidAst(AstError),
+}
 
 impl From<&AstError> for CodegenError {
-    fn from(&AstError: &AstError) -> Self {
-        CodegenError
+    fn from(error: &AstError) -> Self {
+        CodegenError::InvalidAst(*error)
     }
 }
 

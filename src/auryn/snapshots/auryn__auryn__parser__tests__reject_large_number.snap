@@ -5,7 +5,8 @@ expression: "verify(\"9999999999999\")"
 AnnotatedParserOutput {
     ast: Some(
         0..13 Root
-        |0..13 Error '9999999999999'
+        |0..13 Error
+        ||Number
         ,
     ),
     diagnostics: [

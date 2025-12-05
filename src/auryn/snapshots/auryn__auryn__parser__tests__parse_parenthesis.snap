@@ -6,7 +6,10 @@ AnnotatedParserOutput {
     ast: Some(
         0..3 Root
         |0..3 Expression
-        ||0..1 Number(3) '('
+        ||ParensOpen
+        ||1..2 Number(3)
+        |||Number
+        ||ParensClose
         ,
     ),
     diagnostics: [],

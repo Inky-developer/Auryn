@@ -1,6 +1,9 @@
 use std::fmt::{Debug, Display};
 
-use crate::auryn::tokenizer::BinaryOperatorToken;
+use crate::auryn::{
+    Span,
+    tokenizer::{BinaryOperatorToken, TokenKind},
+};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SyntaxNodeKind {
@@ -14,15 +17,47 @@ pub enum SyntaxNodeKind {
 #[derive(Debug)]
 pub struct SyntaxNode {
     pub kind: SyntaxNodeKind,
-    pub len: u32,
-    pub trailing_whitespace: u32,
-    pub children: Box<[SyntaxNode]>,
+    pub span: Span,
+    pub children: Box<[SyntaxItem]>,
+}
+
+impl SyntaxNode {
+    pub fn node_children(&self) -> impl Iterator<Item = &SyntaxNode> {
+        self.children.iter().filter_map(SyntaxItem::as_node)
+    }
+}
+
+#[derive(Debug)]
+pub struct SyntaxToken {
+    pub kind: TokenKind,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub enum SyntaxItem {
+    Node(SyntaxNode),
+    Token(SyntaxToken),
+}
+
+impl SyntaxItem {
+    pub fn span(&self) -> Span {
+        match self {
+            SyntaxItem::Node(syntax_node) => syntax_node.span,
+            SyntaxItem::Token(syntax_token) => syntax_token.span,
+        }
+    }
+
+    pub fn as_node(&self) -> Option<&SyntaxNode> {
+        match self {
+            SyntaxItem::Node(node) => Some(node),
+            SyntaxItem::Token(_) => None,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct SyntaxTree {
     pub root_node: SyntaxNode,
-    pub leading_whitespace: u32,
 }
 
 impl SyntaxTree {
@@ -30,7 +65,7 @@ impl SyntaxTree {
         SyntaxNodeDisplay {
             node: &self.root_node,
             source,
-            offset: self.leading_whitespace,
+            offset: 0,
             depth: 0,
         }
     }
@@ -47,7 +82,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let depth = self.depth as usize;
         let offset = self.offset;
-        let end = offset + self.node.len;
+        let end = offset + self.node.span.len;
         let range = format_args!("{offset}..{end}");
         let kind = self.node.kind;
         for _ in 0..depth {
@@ -63,14 +98,25 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
             writeln!(f)?;
             let mut offset = offset;
             for child in &self.node.children {
-                let node = SyntaxNodeDisplay {
-                    node: child,
-                    source: self.source,
-                    offset,
-                    depth: self.depth + 1,
-                };
-                Display::fmt(&node, f)?;
-                offset += child.len + child.trailing_whitespace;
+                match child {
+                    SyntaxItem::Node(node) => {
+                        let display_node = SyntaxNodeDisplay {
+                            node: node,
+                            source: self.source,
+                            offset,
+                            depth: self.depth + 1,
+                        };
+
+                        Display::fmt(&display_node, f)?;
+                    }
+                    SyntaxItem::Token(token) => {
+                        for _ in 0..(depth + 1) {
+                            write!(f, "|")?;
+                        }
+                        writeln!(f, "{:?}", token.kind)?;
+                    }
+                }
+                offset += child.span().len;
             }
         }
 

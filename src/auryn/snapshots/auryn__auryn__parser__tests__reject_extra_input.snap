@@ -6,7 +6,9 @@ AnnotatedParserOutput {
     ast: Some(
         0..2 Root
         |0..2 Expression
-        ||0..1 Number(1) '1'
+        ||0..2 Number(1)
+        |||Number
+        |||Whitespace
         ,
     ),
     diagnostics: [

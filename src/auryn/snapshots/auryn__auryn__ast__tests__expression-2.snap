@@ -4,19 +4,27 @@ expression: "parse(\"1 + 2 * 3\")"
 ---
 Ok(
     Node {
-        len: 9,
+        span: Span {
+            len: 9,
+        },
         kind: Root {
             expression: Ok(
                 Node {
-                    len: 9,
+                    span: Span {
+                        len: 9,
+                    },
                     kind: BinaryOperation {
                         lhs: Ok(
                             Node {
-                                len: 2,
+                                span: Span {
+                                    len: 2,
+                                },
                                 kind: Value(
                                     Ok(
                                         Node {
-                                            len: 2,
+                                            span: Span {
+                                                len: 2,
+                                            },
                                             kind: Int(
                                                 1,
                                             ),
@@ -27,21 +35,29 @@ Ok(
                         ),
                         operator: Ok(
                             Node {
-                                len: 2,
+                                span: Span {
+                                    len: 2,
+                                },
                                 kind: Plus,
                             },
                         ),
                         rhs: Ok(
                             Node {
-                                len: 5,
+                                span: Span {
+                                    len: 5,
+                                },
                                 kind: BinaryOperation {
                                     lhs: Ok(
                                         Node {
-                                            len: 2,
+                                            span: Span {
+                                                len: 2,
+                                            },
                                             kind: Value(
                                                 Ok(
                                                     Node {
-                                                        len: 2,
+                                                        span: Span {
+                                                            len: 2,
+                                                        },
                                                         kind: Int(
                                                             2,
                                                         ),
@@ -52,17 +68,23 @@ Ok(
                                     ),
                                     operator: Ok(
                                         Node {
-                                            len: 2,
+                                            span: Span {
+                                                len: 2,
+                                            },
                                             kind: Times,
                                         },
                                     ),
                                     rhs: Ok(
                                         Node {
-                                            len: 1,
+                                            span: Span {
+                                                len: 1,
+                                            },
                                             kind: Value(
                                                 Ok(
                                                     Node {
-                                                        len: 1,
+                                                        span: Span {
+                                                            len: 1,
+                                                        },
                                                         kind: Int(
                                                             3,
                                                         ),

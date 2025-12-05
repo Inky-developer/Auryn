@@ -1,7 +1,8 @@
 use std::iter::Peekable;
 
 use crate::auryn::{
-    syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxTree},
+    Span,
+    syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
     tokenizer::{BinaryOperatorToken, Token, TokenKind, Tokenizer},
 };
 
@@ -40,8 +41,7 @@ pub struct ParserOutput {
 
 #[derive(Debug)]
 struct ParserStackNode {
-    len: u32,
-    children: Vec<SyntaxNode>,
+    children: Vec<SyntaxItem>,
 }
 
 pub struct Parser<'a> {
@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
     pub fn parse(mut self) -> ParserOutput {
         self.push_node();
 
-        let leading_whitespace = self.consume_whitespace();
+        self.consume_whitespace();
         if let Err(()) = self.parse_expression() {
             self.diagnostic(DiagnosticError::UnknownError);
         }
@@ -83,10 +83,7 @@ impl<'a> Parser<'a> {
         };
 
         ParserOutput {
-            syntax_tree: Some(SyntaxTree {
-                root_node,
-                leading_whitespace,
-            }),
+            syntax_tree: Some(SyntaxTree { root_node }),
             diagnostics: self.diagnostics,
         }
     }
@@ -97,9 +94,8 @@ impl<'a> Parser<'a> {
     fn current_offset(&self) -> u32 {
         let mut offset = 0u32;
         for node in &self.node_stack {
-            offset += node.len;
             for child in &node.children {
-                offset += child.len;
+                offset += child.span().len;
             }
         }
         offset
@@ -125,7 +121,11 @@ impl<'a> Parser<'a> {
             text: "",
         });
         let len: u32 = token.text.len().try_into().expect("Token too long");
-        self.node_stack.last_mut().expect("Should have a node").len += len;
+        let node = self.node_stack.last_mut().expect("Should have a node");
+        node.children.push(SyntaxItem::Token(SyntaxToken {
+            kind: token.kind,
+            span: Span { len },
+        }));
         token
     }
 
@@ -165,23 +165,22 @@ impl<'a> Parser<'a> {
 
     fn push_node(&mut self) -> &mut ParserStackNode {
         self.node_stack.push(ParserStackNode {
-            len: 0,
             children: Vec::new(),
         });
         self.node_stack.last_mut().expect("Was just pushed")
     }
 
     fn pop_node(&mut self, kind: SyntaxNodeKind) -> Option<SyntaxNode> {
-        let Some(ParserStackNode { children, len }) = self.node_stack.pop() else {
+        self.consume_whitespace();
+        let Some(ParserStackNode { children }) = self.node_stack.pop() else {
             return None;
         };
 
-        let trailing_whitespace = self.consume_whitespace();
+        let span = children.iter().map(|child| child.span()).sum::<Span>();
 
         Some(SyntaxNode {
             kind,
-            len: len + children.iter().map(|child| child.len).sum::<u32>(),
-            trailing_whitespace,
+            span,
             children: children.into_boxed_slice(),
         })
     }
@@ -191,7 +190,7 @@ impl<'a> Parser<'a> {
             panic!("Expected node")
         };
         let parent = self.node_stack.last_mut().expect("Parent should exist");
-        parent.children.push(node);
+        parent.children.push(SyntaxItem::Node(node));
     }
 
     fn finish_node_with_error(&mut self) {
@@ -241,7 +240,7 @@ impl Parser<'_> {
                 .pop_node(SyntaxNodeKind::Expression)
                 .expect("Node was started");
             let parent = self.push_node();
-            parent.children.push(node);
+            parent.children.push(SyntaxItem::Node(node));
 
             self.parse_binary_operator()?;
             self.parse_expression_pratt(binding_power)?;
