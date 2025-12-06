@@ -137,8 +137,9 @@ impl Generator {
                     value: ConstantValue::Integer(number.kind.value),
                 });
             }
-            Value::Expression(expression) => {
-                let expression = expression.as_ref().as_ref()?;
+            Value::Parenthesis(parenthesis) => {
+                let parenthesis = parenthesis.as_ref().as_ref()?;
+                let expression = parenthesis.kind.expression.as_ref().as_ref()?;
                 self.generate_expression(&expression.kind)?;
             }
             Value::FunctionCall(call) => {

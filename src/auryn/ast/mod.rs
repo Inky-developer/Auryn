@@ -33,4 +33,9 @@ mod tests {
     fn test_function_call() {
         insta::assert_debug_snapshot!(parse("print(1)"));
     }
+
+    #[test]
+    fn test_expressions() {
+        insta::assert_debug_snapshot!(parse("1 + (2 + 3)"));
+    }
 }

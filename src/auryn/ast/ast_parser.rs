@@ -161,12 +161,16 @@ create_ast_parser! {
     pub enum Value @ SyntaxNodeKind::Value {
         Number(NodeRef<Number>: SyntaxNodeKind::Number {..}),
         FunctionCall(NodeRef<FunctionCall>: SyntaxNodeKind::FunctionCall {..}),
-        Expression(NodeRef<Expression>: SyntaxNodeKind::Expression),
+        Parenthesis(NodeRef<Parenthesis>: SyntaxNodeKind::Parenthesis),
     }
 
     pub struct Number @ SyntaxNodeKind::Number { value: i32 } {}
 
     pub struct FunctionCall @ SyntaxNodeKind::FunctionCall { ident: String } {
         pub arguments: Vec<NodeOrError<Expression>>
+    }
+
+    pub struct Parenthesis @ SyntaxNodeKind::Parenthesis{} {
+        pub expression: NodeRef<Expression>,
     }
 }
