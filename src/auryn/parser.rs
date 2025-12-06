@@ -13,6 +13,7 @@ pub enum DiagnosticError {
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
     InvalidNumber,
+    ExpectedValue { got: TokenKind },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -170,6 +171,7 @@ impl<'a> Parser<'a> {
         self.node_stack.last_mut().expect("Was just pushed")
     }
 
+    #[must_use]
     fn pop_node(&mut self, kind: SyntaxNodeKind) -> Option<SyntaxNode> {
         self.consume_whitespace();
         let Some(ParserStackNode { children }) = self.node_stack.pop() else {
@@ -204,20 +206,10 @@ impl Parser<'_> {
         self.parse_expression_pratt(0)
     }
 
-    fn parse_expression_pratt(&mut self, mut min_binding_power: u32) -> ParseResult {
+    fn parse_expression_pratt(&mut self, min_binding_power: u32) -> ParseResult {
         self.push_node();
 
-        let is_parenthesis = self.peek().kind == TokenKind::ParensOpen;
-        if is_parenthesis {
-            self.consume();
-            min_binding_power = 0;
-        }
-
         self.parse_expression_pratt_inner(min_binding_power)?;
-
-        if is_parenthesis {
-            self.expect(TokenKind::ParensClose)?;
-        }
 
         self.finish_node(SyntaxNodeKind::Expression);
 
@@ -267,30 +259,38 @@ impl Parser<'_> {
     }
 
     fn parse_value(&mut self) -> ParseResult {
-        self.push_node();
-
-        let value = match self.consume() {
-            Token {
-                kind: TokenKind::Number,
-                text,
-            } => {
-                let Ok(value) = text.parse() else {
-                    self.diagnostic(DiagnosticError::InvalidNumber);
-                    self.finish_node_with_error();
-                    return Err(());
-                };
-                value
-            }
+        match self.peek().kind {
+            TokenKind::Number => self.parse_number()?,
+            TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
-                let kind = other.kind;
-                self.diagnostic(DiagnosticError::ExpectedNumber { got: kind });
+                self.diagnostic(DiagnosticError::ExpectedValue { got: other });
                 self.finish_node_with_error();
                 return Err(());
             }
         };
 
-        self.finish_node(SyntaxNodeKind::Number(value));
+        Ok(())
+    }
 
+    fn parse_number(&mut self) -> ParseResult {
+        self.push_node();
+        let text = self.expect(TokenKind::Number)?.text;
+        let Ok(value) = text.parse() else {
+            self.diagnostic(DiagnosticError::InvalidNumber);
+            self.finish_node_with_error();
+            return Ok(());
+        };
+
+        self.finish_node(SyntaxNodeKind::Number(value));
+        Ok(())
+    }
+
+    fn parse_parenthesis(&mut self) -> ParseResult {
+        self.push_node();
+        self.expect(TokenKind::ParensOpen)?;
+        self.parse_expression()?;
+        self.expect(TokenKind::ParensClose)?;
+        self.finish_node(SyntaxNodeKind::Parenthesis);
         Ok(())
     }
 }
@@ -337,6 +337,7 @@ mod tests {
     #[test]
     fn test_parse_parenthesis() {
         insta::assert_debug_snapshot!(verify("(3)"));
+        insta::assert_debug_snapshot!(verify("((3))"));
         insta::assert_debug_snapshot!(verify("1 + (2 + 3)"));
         insta::assert_debug_snapshot!(verify("1 * (2 + 3)"));
     }

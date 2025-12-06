@@ -12,6 +12,7 @@ pub enum SyntaxNodeKind {
     Expression,
     BinaryOperator(BinaryOperatorToken),
     Error,
+    Parenthesis,
 }
 
 #[derive(Debug)]

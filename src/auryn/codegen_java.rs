@@ -100,11 +100,17 @@ impl Generator {
     }
 
     fn generate_value(&mut self, value: &Value) -> CodegenResult {
-        let Value::Int(value) = *value;
-
-        self.assembler.add(Instruction::LoadConstant {
-            value: ConstantValue::Integer(value),
-        });
+        match value {
+            Value::Int(number) => {
+                self.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Integer(*number),
+                });
+            }
+            Value::Expression(expression) => {
+                let expression = expression.as_ref().as_ref()?;
+                self.generate_expression(&expression.kind)?;
+            }
+        }
 
         Ok(())
     }

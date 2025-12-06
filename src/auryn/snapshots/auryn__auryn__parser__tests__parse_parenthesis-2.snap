@@ -1,30 +1,20 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"1 + (2 + 3)\")"
+expression: "verify(\"((3))\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..11 Root
-        |0..11 Expression
-        ||0..2 Expression
-        |||0..2 Number(1)
-        ||||Number
-        ||||Whitespace
-        ||2..4 BinaryOperator(Plus)
-        |||Plus
-        |||Whitespace
-        ||4..11 Expression
-        |||4..7 Expression
-        ||||ParensOpen
-        ||||5..7 Number(2)
-        |||||Number
-        |||||Whitespace
-        |||7..9 BinaryOperator(Plus)
-        ||||Plus
-        ||||Whitespace
-        |||9..10 Expression
-        ||||9..10 Number(3)
-        |||||Number
+        0..5 Root
+        |0..5 Expression
+        ||0..5 Parenthesis
+        |||ParensOpen
+        |||1..4 Expression
+        ||||1..4 Parenthesis
+        |||||ParensOpen
+        |||||2..3 Expression
+        ||||||2..3 Number(3)
+        |||||||Number
+        |||||ParensClose
         |||ParensClose
         ,
     ),

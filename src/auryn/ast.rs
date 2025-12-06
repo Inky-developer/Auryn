@@ -9,6 +9,7 @@ pub enum AstError {
     TooFewChildren,
     UnexpectedNode,
     TooManyChildren,
+    InvalidChildren,
 }
 
 pub type NodeOrError<T> = Result<Node<T>, AstError>;
@@ -80,15 +81,19 @@ impl FromSyntaxNode for Expression {
 #[derive(Debug)]
 pub enum Value {
     Int(i32),
+    Expression(NodeRef<Expression>),
 }
 
 impl FromSyntaxNode for Value {
     fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
-        let SyntaxNodeKind::Number(number) = node.kind else {
-            return Err(AstError::UnexpectedNode);
-        };
-
-        Ok(Value::Int(number))
+        match &node.kind {
+            SyntaxNodeKind::Number(num) => Ok(Value::Int(*num)),
+            SyntaxNodeKind::Parenthesis => {
+                let (expression,) = node.map_child_nodes()?;
+                Ok(Value::Expression(NodeRef::new(expression)))
+            }
+            _ => Err(AstError::UnexpectedNode),
+        }
     }
 }
 
