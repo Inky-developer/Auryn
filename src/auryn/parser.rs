@@ -144,7 +144,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn consume_error_token(&mut self, diagnostic: impl Into<DiagnosticKind>) {
+    fn push_error_token(&mut self, diagnostic: impl Into<DiagnosticKind>) {
         let node = self.node_stack.last_mut().expect("Should have a node");
         node.children.push(SyntaxItem::Token(SyntaxToken {
             kind: TokenKind::Error,
@@ -205,7 +205,7 @@ impl<'a> Parser<'a> {
             Ok(token) => Ok(token.text),
             Err(token) => {
                 let kind = token.kind;
-                self.consume_error_token(DiagnosticError::UnexpectedToken {
+                self.push_error_token(DiagnosticError::UnexpectedToken {
                     expected,
                     got: kind,
                 });
@@ -218,7 +218,7 @@ impl<'a> Parser<'a> {
         let token = self.peek();
         let kind = token.kind;
         if kind != expected {
-            self.consume_error_token(DiagnosticError::UnexpectedToken {
+            self.push_error_token(DiagnosticError::UnexpectedToken {
                 expected,
                 got: kind,
             });
@@ -273,7 +273,7 @@ impl Parser<'_> {
         loop {
             self.parse_expression()?;
             if !self.consume_statement_separator() {
-                self.consume_error_token(DiagnosticError::ExpectedNewline);
+                self.push_error_token(DiagnosticError::ExpectedNewline);
             }
             if self.peek().kind == TokenKind::EndOfInput {
                 break;
@@ -343,7 +343,7 @@ impl Parser<'_> {
             TokenKind::Number => self.parse_number()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
-                self.consume_error_token(DiagnosticError::ExpectedValue { got: other });
+                self.push_error_token(DiagnosticError::ExpectedValue { got: other });
                 return Err(());
             }
         };
