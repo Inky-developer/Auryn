@@ -228,7 +228,6 @@ impl<'a> Parser<'a> {
         watcher: ParserFrameWatcher,
         kind: SyntaxNodeKind,
     ) -> Option<SyntaxNode> {
-        self.consume_whitespace();
         watcher.finish_successfully();
         let Some(ParserStackNode { children }) = self.node_stack.pop() else {
             return None;
@@ -249,6 +248,7 @@ impl<'a> Parser<'a> {
         };
         let parent = self.node_stack.last_mut().expect("Parent should exist");
         parent.children.push(SyntaxItem::Node(node));
+        self.consume_whitespace();
     }
 }
 

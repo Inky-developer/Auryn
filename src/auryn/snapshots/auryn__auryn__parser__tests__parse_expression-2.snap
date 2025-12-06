@@ -9,19 +9,19 @@ AnnotatedParserOutput {
         ||0..9 Expression
         |||0..6 Expression
         ||||0..2 Expression
-        |||||0..2 Number(1)
+        |||||0..1 Number(1)
         ||||||Number
-        ||||||Whitespace
-        ||||2..4 BinaryOperator(Times)
-        |||||Times
         |||||Whitespace
-        ||||4..6 Expression
-        |||||4..6 Number(2)
-        ||||||Number
-        ||||||Whitespace
-        |||6..8 BinaryOperator(Plus)
-        ||||Plus
+        ||||2..3 BinaryOperator(Times)
+        |||||Times
         ||||Whitespace
+        ||||4..6 Expression
+        |||||4..5 Number(2)
+        ||||||Number
+        |||||Whitespace
+        |||6..7 BinaryOperator(Plus)
+        ||||Plus
+        |||Whitespace
         |||8..9 Expression
         ||||8..9 Number(3)
         |||||Number

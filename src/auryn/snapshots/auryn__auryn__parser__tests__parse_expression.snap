@@ -8,20 +8,20 @@ AnnotatedParserOutput {
         |0..9 Block
         ||0..9 Expression
         |||0..2 Expression
-        ||||0..2 Number(1)
+        ||||0..1 Number(1)
         |||||Number
-        |||||Whitespace
-        |||2..4 BinaryOperator(Plus)
-        ||||Plus
         ||||Whitespace
+        |||2..3 BinaryOperator(Plus)
+        ||||Plus
+        |||Whitespace
         |||4..9 Expression
         ||||4..6 Expression
-        |||||4..6 Number(2)
+        |||||4..5 Number(2)
         ||||||Number
-        ||||||Whitespace
-        ||||6..8 BinaryOperator(Times)
-        |||||Times
         |||||Whitespace
+        ||||6..7 BinaryOperator(Times)
+        |||||Times
+        ||||Whitespace
         ||||8..9 Expression
         |||||8..9 Number(3)
         ||||||Number

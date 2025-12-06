@@ -42,7 +42,7 @@ Ok(
                                                                             Ok(
                                                                                 Node {
                                                                                     span: Span {
-                                                                                        len: 2,
+                                                                                        len: 1,
                                                                                     },
                                                                                     kind: Int(
                                                                                         1,
@@ -55,7 +55,7 @@ Ok(
                                                                 operator: Ok(
                                                                     Node {
                                                                         span: Span {
-                                                                            len: 2,
+                                                                            len: 1,
                                                                         },
                                                                         kind: Times,
                                                                     },
@@ -69,7 +69,7 @@ Ok(
                                                                             Ok(
                                                                                 Node {
                                                                                     span: Span {
-                                                                                        len: 2,
+                                                                                        len: 1,
                                                                                     },
                                                                                     kind: Int(
                                                                                         2,
@@ -85,7 +85,7 @@ Ok(
                                                     operator: Ok(
                                                         Node {
                                                             span: Span {
-                                                                len: 2,
+                                                                len: 1,
                                                             },
                                                             kind: Plus,
                                                         },
