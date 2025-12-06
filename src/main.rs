@@ -44,11 +44,11 @@ fn get_class(input: &str) -> ClassData {
         .syntax_tree
         .as_ref()
         .map(|it| it.collect_diagnostics())
-        .unwrap_or_else(Vec::new);
+        .unwrap_or_default();
     if !diagnostics.is_empty() {
         println!("Warn: {diagnostics:?}");
     }
     let ast = query_ast(result.syntax_tree.as_ref().unwrap());
-    let class = query_class("Helloworld".to_string(), &ast).unwrap();
-    class
+
+    query_class("Helloworld".to_string(), &ast).unwrap()
 }

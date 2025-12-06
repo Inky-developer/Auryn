@@ -92,7 +92,7 @@ type ParseResult<T = ()> = Result<T, ()>;
 impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
-            input: Tokenizer::new(input).into_iter().peekable(),
+            input: Tokenizer::new(input).peekable(),
             node_stack: Vec::new(),
             has_errors: false,
             skipped_frames: ParserSkippedFrames(Rc::new(Cell::new(0))),
@@ -242,10 +242,7 @@ impl<'a> Parser<'a> {
         kind: SyntaxNodeKind,
     ) -> Option<SyntaxNode> {
         watcher.finish_successfully();
-        let Some(ParserStackNode { children }) = self.node_stack.pop() else {
-            return None;
-        };
-
+        let ParserStackNode { children } = self.node_stack.pop()?;
         let span = children.iter().map(|child| child.span()).sum::<Span>();
 
         Some(SyntaxNode {

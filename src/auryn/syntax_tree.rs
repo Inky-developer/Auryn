@@ -156,7 +156,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
                 match child {
                     SyntaxItem::Node(node) => {
                         let display_node = SyntaxNodeDisplay {
-                            node: node,
+                            node,
                             source: self.source,
                             offset,
                             depth: self.depth + 1,

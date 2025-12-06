@@ -74,7 +74,7 @@ impl<'a> Tokenizer<'a> {
     fn consume_number(&mut self) -> Option<Token<'a>> {
         Some(Token {
             kind: TokenKind::Number,
-            text: self.consume_while(|char| char.is_digit(10)),
+            text: self.consume_while(|char| char.is_ascii_digit()),
         })
     }
 
@@ -91,9 +91,7 @@ impl<'a> Iterator for Tokenizer<'a> {
     type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let Some(first_char) = self.input.chars().next() else {
-            return None;
-        };
+        let first_char = self.input.chars().next()?;
 
         let kind = match first_char {
             '+' => TokenKind::Plus,
@@ -104,7 +102,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '\n' => TokenKind::Newline,
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
-            char if char.is_digit(10) => return self.consume_number(),
+            char if char.is_ascii_digit() => return self.consume_number(),
             _ => TokenKind::Error,
         };
 
