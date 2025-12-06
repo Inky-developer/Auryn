@@ -1,5 +1,5 @@
 ---
-source: src/auryn/ast.rs
+source: src/auryn/ast/mod.rs
 expression: "parse(\"print(1)\")"
 ---
 Ok(

@@ -22,6 +22,7 @@ pub enum TokenKind {
     ParensOpen,
     ParensClose,
     Whitespace,
+    Newline,
     Error,
     EndOfInput,
     Comma,
@@ -66,7 +67,7 @@ impl<'a> Tokenizer<'a> {
     fn consume_whitespace(&mut self) -> Option<Token<'a>> {
         Some(Token {
             kind: TokenKind::Whitespace,
-            text: self.consume_while(char::is_whitespace),
+            text: self.consume_while(|char| char != '\n' && char.is_whitespace()),
         })
     }
 
@@ -100,6 +101,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '(' => TokenKind::ParensOpen,
             ')' => TokenKind::ParensClose,
             ',' => TokenKind::Comma,
+            '\n' => TokenKind::Newline,
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
             char if char.is_digit(10) => return self.consume_number(),
@@ -128,5 +130,6 @@ mod tests {
     fn test_parser() {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
+        insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
     }
 }

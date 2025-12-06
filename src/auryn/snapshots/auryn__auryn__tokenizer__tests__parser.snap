@@ -25,6 +25,10 @@ expression: "tokenize(\" 1 +4  \\n\")"
     },
     Token {
         kind: Whitespace,
-        text: "  \n",
+        text: "  ",
+    },
+    Token {
+        kind: Newline,
+        text: "\n",
     },
 ]

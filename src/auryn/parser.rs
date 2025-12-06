@@ -13,6 +13,7 @@ pub enum DiagnosticError {
     ExpectedBinaryOperator { got: TokenKind },
     InvalidNumber,
     ExpectedValue { got: TokenKind },
+    ExpectedNewline,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -187,6 +188,18 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn consume_statement_separator(&mut self) -> bool {
+        let mut consumed = false;
+        loop {
+            if !matches!(self.peek().kind, TokenKind::Whitespace | TokenKind::Newline) {
+                break;
+            }
+            self.consume();
+            consumed = true;
+        }
+        consumed || self.peek().kind == TokenKind::EndOfInput
+    }
+
     fn expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
         match self.consume_if(|token| (token.kind == expected).then_some(token)) {
             Ok(token) => Ok(token.text),
@@ -259,6 +272,9 @@ impl Parser<'_> {
 
         loop {
             self.parse_expression()?;
+            if !self.consume_statement_separator() {
+                self.consume_error_token(DiagnosticError::ExpectedNewline);
+            }
             if self.peek().kind == TokenKind::EndOfInput {
                 break;
             }
@@ -447,6 +463,7 @@ mod tests {
     #[test]
     fn test_parse_function_call() {
         insta::assert_debug_snapshot!(verify("print(1)"));
+        insta::assert_debug_snapshot!(verify("print(1)\n"));
     }
 
     #[test]

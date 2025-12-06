@@ -1,85 +1,49 @@
 ---
-source: src/auryn/ast.rs
-expression: "parse(\"1 * 2 + 3\")"
+source: src/auryn/ast/mod.rs
+expression: "parse(\"1+2\")"
 ---
 Ok(
     Node {
         span: Span {
-            len: 9,
+            len: 3,
         },
         kind: Root {
             block: Ok(
                 Node {
                     span: Span {
-                        len: 9,
+                        len: 3,
                     },
                     kind: Block {
                         statements: [
                             Ok(
                                 Node {
                                     span: Span {
-                                        len: 9,
+                                        len: 3,
                                     },
                                     kind: Expression(
                                         Ok(
                                             Node {
                                                 span: Span {
-                                                    len: 9,
+                                                    len: 3,
                                                 },
                                                 kind: BinaryOperation {
                                                     lhs: Ok(
                                                         Node {
                                                             span: Span {
-                                                                len: 6,
+                                                                len: 1,
                                                             },
-                                                            kind: BinaryOperation {
-                                                                lhs: Ok(
-                                                                    Node {
-                                                                        span: Span {
-                                                                            len: 2,
-                                                                        },
-                                                                        kind: Value(
-                                                                            Ok(
-                                                                                Node {
-                                                                                    span: Span {
-                                                                                        len: 1,
-                                                                                    },
-                                                                                    kind: Int(
-                                                                                        1,
-                                                                                    ),
-                                                                                },
-                                                                            ),
-                                                                        ),
-                                                                    },
-                                                                ),
-                                                                operator: Ok(
+                                                            kind: Value(
+                                                                Ok(
                                                                     Node {
                                                                         span: Span {
                                                                             len: 1,
                                                                         },
-                                                                        kind: Times,
-                                                                    },
-                                                                ),
-                                                                rhs: Ok(
-                                                                    Node {
-                                                                        span: Span {
-                                                                            len: 2,
-                                                                        },
-                                                                        kind: Value(
-                                                                            Ok(
-                                                                                Node {
-                                                                                    span: Span {
-                                                                                        len: 1,
-                                                                                    },
-                                                                                    kind: Int(
-                                                                                        2,
-                                                                                    ),
-                                                                                },
-                                                                            ),
+                                                                        kind: Int(
+                                                                            1,
                                                                         ),
                                                                     },
                                                                 ),
-                                                            },
+                                                            ),
                                                         },
                                                     ),
                                                     operator: Ok(
@@ -102,7 +66,7 @@ Ok(
                                                                             len: 1,
                                                                         },
                                                                         kind: Int(
-                                                                            3,
+                                                                            2,
                                                                         ),
                                                                     },
                                                                 ),

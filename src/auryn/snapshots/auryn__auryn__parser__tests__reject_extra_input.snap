@@ -4,24 +4,81 @@ expression: "verify(\"1 1 1 1 11 1\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..2 Root
-        |0..2 Expression
-        ||0..2 Number(1)
-        |||Number
+        0..12 Root
+        |0..12 Block
+        ||0..2 Expression
+        |||0..1 Number(1)
+        ||||Number
         |||Whitespace
-        |Error [Error(UnexpectedToken { expected: EndOfInput, got: Number })]
+        ||Error [Error(ExpectedNewline)]
+        ||2..4 Expression
+        |||2..3 Number(1)
+        ||||Number
+        |||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||4..6 Expression
+        |||4..5 Number(1)
+        ||||Number
+        |||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||6..8 Expression
+        |||6..7 Number(1)
+        ||||Number
+        |||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||8..11 Expression
+        |||8..10 Number(11)
+        ||||Number
+        |||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||11..12 Expression
+        |||11..12 Number(1)
+        ||||Number
         ,
     ),
     diagnostics: [
         ComputedDiagnostic {
             kind: Error(
-                UnexpectedToken {
-                    expected: EndOfInput,
-                    got: Number,
-                },
+                ExpectedNewline,
             ),
             span: ComputedSpan {
                 offset: 2,
+                len: 0,
+            },
+        },
+        ComputedDiagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            span: ComputedSpan {
+                offset: 4,
+                len: 0,
+            },
+        },
+        ComputedDiagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            span: ComputedSpan {
+                offset: 6,
+                len: 0,
+            },
+        },
+        ComputedDiagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            span: ComputedSpan {
+                offset: 8,
+                len: 0,
+            },
+        },
+        ComputedDiagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            span: ComputedSpan {
+                offset: 11,
                 len: 0,
             },
         },

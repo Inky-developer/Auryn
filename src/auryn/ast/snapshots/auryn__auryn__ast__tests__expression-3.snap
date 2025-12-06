@@ -1,6 +1,6 @@
 ---
-source: src/auryn/ast.rs
-expression: "parse(\"1 + 2 * 3\")"
+source: src/auryn/ast/mod.rs
+expression: "parse(\"1 * 2 + 3\")"
 ---
 Ok(
     Node {
@@ -30,37 +30,37 @@ Ok(
                                                     lhs: Ok(
                                                         Node {
                                                             span: Span {
-                                                                len: 2,
+                                                                len: 6,
                                                             },
-                                                            kind: Value(
-                                                                Ok(
+                                                            kind: BinaryOperation {
+                                                                lhs: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 2,
+                                                                        },
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 1,
+                                                                                    },
+                                                                                    kind: Int(
+                                                                                        1,
+                                                                                    ),
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                operator: Ok(
                                                                     Node {
                                                                         span: Span {
                                                                             len: 1,
                                                                         },
-                                                                        kind: Int(
-                                                                            1,
-                                                                        ),
+                                                                        kind: Times,
                                                                     },
                                                                 ),
-                                                            ),
-                                                        },
-                                                    ),
-                                                    operator: Ok(
-                                                        Node {
-                                                            span: Span {
-                                                                len: 1,
-                                                            },
-                                                            kind: Plus,
-                                                        },
-                                                    ),
-                                                    rhs: Ok(
-                                                        Node {
-                                                            span: Span {
-                                                                len: 5,
-                                                            },
-                                                            kind: BinaryOperation {
-                                                                lhs: Ok(
+                                                                rhs: Ok(
                                                                     Node {
                                                                         span: Span {
                                                                             len: 2,
@@ -79,34 +79,34 @@ Ok(
                                                                         ),
                                                                     },
                                                                 ),
-                                                                operator: Ok(
+                                                            },
+                                                        },
+                                                    ),
+                                                    operator: Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 1,
+                                                            },
+                                                            kind: Plus,
+                                                        },
+                                                    ),
+                                                    rhs: Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 1,
+                                                            },
+                                                            kind: Value(
+                                                                Ok(
                                                                     Node {
                                                                         span: Span {
                                                                             len: 1,
                                                                         },
-                                                                        kind: Times,
-                                                                    },
-                                                                ),
-                                                                rhs: Ok(
-                                                                    Node {
-                                                                        span: Span {
-                                                                            len: 1,
-                                                                        },
-                                                                        kind: Value(
-                                                                            Ok(
-                                                                                Node {
-                                                                                    span: Span {
-                                                                                        len: 1,
-                                                                                    },
-                                                                                    kind: Int(
-                                                                                        3,
-                                                                                    ),
-                                                                                },
-                                                                            ),
+                                                                        kind: Int(
+                                                                            3,
                                                                         ),
                                                                     },
                                                                 ),
-                                                            },
+                                                            ),
                                                         },
                                                     ),
                                                 },
