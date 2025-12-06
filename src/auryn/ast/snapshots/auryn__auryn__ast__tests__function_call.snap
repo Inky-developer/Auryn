@@ -52,8 +52,17 @@ Ok(
                                                                                                     span: Span {
                                                                                                         len: 1,
                                                                                                     },
-                                                                                                    kind: Int(
-                                                                                                        1,
+                                                                                                    kind: Number(
+                                                                                                        Ok(
+                                                                                                            Node {
+                                                                                                                span: Span {
+                                                                                                                    len: 1,
+                                                                                                                },
+                                                                                                                kind: Number {
+                                                                                                                    value: 1,
+                                                                                                                },
+                                                                                                            },
+                                                                                                        ),
                                                                                                     ),
                                                                                                 },
                                                                                             ),

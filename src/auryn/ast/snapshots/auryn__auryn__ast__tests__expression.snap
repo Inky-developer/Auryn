@@ -26,54 +26,81 @@ Ok(
                                                 span: Span {
                                                     len: 3,
                                                 },
-                                                kind: BinaryOperation {
-                                                    lhs: Ok(
+                                                kind: BinaryOperation(
+                                                    Ok(
                                                         Node {
                                                             span: Span {
-                                                                len: 1,
+                                                                len: 3,
                                                             },
-                                                            kind: Value(
-                                                                Ok(
+                                                            kind: BinaryOperation {
+                                                                lhs: Ok(
                                                                     Node {
                                                                         span: Span {
                                                                             len: 1,
                                                                         },
-                                                                        kind: Int(
-                                                                            1,
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 1,
+                                                                                    },
+                                                                                    kind: Number(
+                                                                                        Ok(
+                                                                                            Node {
+                                                                                                span: Span {
+                                                                                                    len: 1,
+                                                                                                },
+                                                                                                kind: Number {
+                                                                                                    value: 1,
+                                                                                                },
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                },
+                                                                            ),
                                                                         ),
                                                                     },
                                                                 ),
-                                                            ),
-                                                        },
-                                                    ),
-                                                    operator: Ok(
-                                                        Node {
-                                                            span: Span {
-                                                                len: 1,
-                                                            },
-                                                            kind: Plus,
-                                                        },
-                                                    ),
-                                                    rhs: Ok(
-                                                        Node {
-                                                            span: Span {
-                                                                len: 1,
-                                                            },
-                                                            kind: Value(
-                                                                Ok(
+                                                                operator: Ok(
                                                                     Node {
                                                                         span: Span {
                                                                             len: 1,
                                                                         },
-                                                                        kind: Int(
-                                                                            2,
+                                                                        kind: Plus,
+                                                                    },
+                                                                ),
+                                                                rhs: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 1,
+                                                                        },
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 1,
+                                                                                    },
+                                                                                    kind: Number(
+                                                                                        Ok(
+                                                                                            Node {
+                                                                                                span: Span {
+                                                                                                    len: 1,
+                                                                                                },
+                                                                                                kind: Number {
+                                                                                                    value: 2,
+                                                                                                },
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                },
+                                                                            ),
                                                                         ),
                                                                     },
                                                                 ),
-                                                            ),
+                                                            },
                                                         },
                                                     ),
-                                                },
+                                                ),
                                             },
                                         ),
                                     ),

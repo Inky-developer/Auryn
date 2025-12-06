@@ -15,13 +15,18 @@ pub struct ComputedDiagnostic {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SyntaxNodeKind {
     Root,
-    Number(i32),
+    Block,
+    Statement,
     Expression,
+    Value,
+    Number { value: i32 },
+    BinaryOperation,
     BinaryOperator(BinaryOperatorToken),
     Error,
     Parenthesis,
-    FunctionCall(String),
-    Block,
+    FunctionCall { ident: String },
+    StatementList,
+    ParameterList,
 }
 
 #[derive(Debug)]

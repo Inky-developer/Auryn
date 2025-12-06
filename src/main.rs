@@ -39,6 +39,7 @@ fn repl() {
 
 fn get_class(input: &str) -> ClassData {
     let result = Parser::new(input).parse();
+    // dbg!(&result.syntax_tree);
     let diagnostics = result
         .syntax_tree
         .as_ref()

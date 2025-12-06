@@ -269,9 +269,10 @@ impl<'a> Parser<'a> {
 impl Parser<'_> {
     fn parse_block(&mut self) -> ParseResult {
         let watcher = self.push_node();
+        let statements_watcher = self.push_node();
 
         loop {
-            self.parse_expression()?;
+            self.parse_statement()?;
             if !self.consume_statement_separator() {
                 self.push_error_token(DiagnosticError::ExpectedNewline);
             }
@@ -280,7 +281,16 @@ impl Parser<'_> {
             }
         }
 
+        self.finish_node(statements_watcher, SyntaxNodeKind::StatementList);
         self.finish_node(watcher, SyntaxNodeKind::Block);
+
+        Ok(())
+    }
+
+    fn parse_statement(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+        self.parse_expression()?;
+        self.finish_node(watcher, SyntaxNodeKind::Statement);
 
         Ok(())
     }
@@ -302,7 +312,7 @@ impl Parser<'_> {
                     break;
                 };
                 let binding_power = operator.binding_power();
-                if binding_power < min_binding_power {
+                if binding_power <= min_binding_power {
                     break;
                 }
 
@@ -315,6 +325,13 @@ impl Parser<'_> {
 
                 this.parse_binary_operator()?;
                 this.parse_expression_pratt(binding_power)?;
+
+                let node = this
+                    .pop_node(watcher, SyntaxNodeKind::BinaryOperation)
+                    .expect("Node was started");
+                watcher = this.push_node();
+                let parent = this.node_stack.last_mut().expect("Was just pushed");
+                parent.children.push(SyntaxItem::Node(node));
             }
 
             Ok(watcher)
@@ -338,6 +355,8 @@ impl Parser<'_> {
     }
 
     fn parse_value(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
         match self.peek().kind {
             TokenKind::Identifier => self.parse_identifier_or_function_call()?,
             TokenKind::Number => self.parse_number()?,
@@ -347,6 +366,8 @@ impl Parser<'_> {
                 return Err(());
             }
         };
+
+        self.finish_node(watcher, SyntaxNodeKind::Value);
 
         Ok(())
     }
@@ -361,12 +382,18 @@ impl Parser<'_> {
         }
         self.expect(TokenKind::ParensClose)?;
 
-        self.finish_node(watcher, SyntaxNodeKind::FunctionCall(text.to_string()));
+        self.finish_node(
+            watcher,
+            SyntaxNodeKind::FunctionCall {
+                ident: text.to_string(),
+            },
+        );
 
         Ok(())
     }
 
     fn parse_parameter_list(&mut self) -> ParseResult {
+        let watcher = self.push_node();
         loop {
             self.parse_expression()?;
             if self.peek().kind != TokenKind::Comma {
@@ -375,6 +402,8 @@ impl Parser<'_> {
 
             self.consume();
         }
+
+        self.finish_node(watcher, SyntaxNodeKind::ParameterList);
 
         Ok(())
     }
@@ -388,7 +417,7 @@ impl Parser<'_> {
             return Err(());
         };
 
-        self.finish_node(watcher, SyntaxNodeKind::Number(value));
+        self.finish_node(watcher, SyntaxNodeKind::Number { value });
         Ok(())
     }
 

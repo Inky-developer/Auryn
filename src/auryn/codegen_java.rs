@@ -1,6 +1,8 @@
 use crate::{
     auryn::{
-        ast::{AstError, Block, Expression, NodeOrError, Root, Statement, Value},
+        ast::ast_parser::{
+            AstError, BinaryOperation, Block, Expression, NodeOrError, Root, Statement, Value,
+        },
         tokenizer::BinaryOperatorToken,
     },
     java::{
@@ -16,7 +18,7 @@ pub enum CodegenError {
 
 impl From<&AstError> for CodegenError {
     fn from(error: &AstError) -> Self {
-        CodegenError::InvalidAst(*error)
+        CodegenError::InvalidAst(error.clone())
     }
 }
 
@@ -102,12 +104,26 @@ impl Generator {
                 let value = value.as_ref().as_ref()?;
                 self.generate_value(&value.kind)?;
             }
-            Expression::BinaryOperation { lhs, operator, rhs } => {
-                let lhs = lhs.as_ref().as_ref()?;
-                let op = operator.as_ref().as_ref()?;
-                let rhs = rhs.as_ref().as_ref()?;
-                self.generate_binary_operation(&lhs.kind, op.kind, &rhs.kind)?;
+            Expression::BinaryOperation(operation) => {
+                let operation = operation.as_ref().as_ref()?;
+                self.generate_binary_operation(&operation.kind)?;
             }
+        }
+
+        Ok(())
+    }
+
+    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> CodegenResult {
+        let lhs = &operation.lhs.as_ref().as_ref()?.kind;
+        let op = operation.operator.as_ref().as_ref()?.kind;
+        let rhs = &operation.rhs.as_ref().as_ref()?.kind;
+
+        self.generate_expression(lhs)?;
+        self.generate_expression(rhs)?;
+
+        match op {
+            BinaryOperatorToken::Plus => self.assembler.add(Instruction::IAdd),
+            BinaryOperatorToken::Times => self.assembler.add(Instruction::IMul),
         }
 
         Ok(())
@@ -115,9 +131,10 @@ impl Generator {
 
     fn generate_value(&mut self, value: &Value) -> CodegenResult {
         match value {
-            Value::Int(number) => {
+            Value::Number(number) => {
+                let number = number.as_ref().as_ref()?;
                 self.assembler.add(Instruction::LoadConstant {
-                    value: ConstantValue::Integer(*number),
+                    value: ConstantValue::Integer(number.kind.value),
                 });
             }
             Value::Expression(expression) => {
@@ -134,23 +151,6 @@ impl Generator {
                 self.generate_expression(&expression.kind)?;
                 self.instrics_print_int();
             }
-        }
-
-        Ok(())
-    }
-
-    fn generate_binary_operation(
-        &mut self,
-        lhs: &Expression,
-        op: BinaryOperatorToken,
-        rhs: &Expression,
-    ) -> CodegenResult {
-        self.generate_expression(lhs)?;
-        self.generate_expression(rhs)?;
-
-        match op {
-            BinaryOperatorToken::Plus => self.assembler.add(Instruction::IAdd),
-            BinaryOperatorToken::Times => self.assembler.add(Instruction::IMul),
         }
 
         Ok(())
