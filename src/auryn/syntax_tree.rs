@@ -1,9 +1,16 @@
 use std::fmt::{Debug, Display};
 
 use crate::auryn::{
-    Span,
+    ComputedSpan, Span,
+    parser::DiagnosticKind,
     tokenizer::{BinaryOperatorToken, TokenKind},
 };
+
+#[derive(Debug)]
+pub struct ComputedDiagnostic {
+    pub kind: DiagnosticKind,
+    pub span: ComputedSpan,
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SyntaxNodeKind {
@@ -27,12 +34,32 @@ impl SyntaxNode {
     pub fn node_children(&self) -> impl Iterator<Item = &SyntaxNode> {
         self.children.iter().filter_map(SyntaxItem::as_node)
     }
+
+    pub fn collect_diagnostics(&self, mut offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
+        for child in &self.children {
+            child.collect_diagnostics(offset, buf);
+            offset += child.span().len;
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct SyntaxToken {
     pub kind: TokenKind,
     pub span: Span,
+    pub diagnostics: Vec<DiagnosticKind>,
+}
+
+impl SyntaxToken {
+    pub fn collect_diagnostics(&self, offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
+        for kind in &self.diagnostics {
+            let kind = *kind;
+            buf.push(ComputedDiagnostic {
+                kind,
+                span: self.span.at_offset(offset),
+            })
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -55,6 +82,20 @@ impl SyntaxItem {
             SyntaxItem::Token(_) => None,
         }
     }
+
+    pub fn as_mut_token(&mut self) -> Option<&mut SyntaxToken> {
+        match self {
+            SyntaxItem::Node(_) => None,
+            SyntaxItem::Token(token) => Some(token),
+        }
+    }
+
+    pub fn collect_diagnostics(&self, offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
+        match self {
+            SyntaxItem::Node(node) => node.collect_diagnostics(offset, buf),
+            SyntaxItem::Token(token) => token.collect_diagnostics(offset, buf),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -70,6 +111,12 @@ impl SyntaxTree {
             offset: 0,
             depth: 0,
         }
+    }
+
+    pub fn collect_diagnostics(&self) -> Vec<ComputedDiagnostic> {
+        let mut buf = Vec::new();
+        self.root_node.collect_diagnostics(0, &mut buf);
+        buf
     }
 }
 
@@ -115,7 +162,11 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
                         for _ in 0..(depth + 1) {
                             write!(f, "|")?;
                         }
-                        writeln!(f, "{:?}", token.kind)?;
+                        write!(f, "{:?}", token.kind)?;
+                        if !token.diagnostics.is_empty() {
+                            write!(f, " {:?}", token.diagnostics)?;
+                        }
+                        writeln!(f)?;
                     }
                 }
                 offset += child.span().len;

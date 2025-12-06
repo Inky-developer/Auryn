@@ -1,4 +1,4 @@
-use std::{cell::Cell, iter::Peekable, ops::Deref, rc::Rc};
+use std::{cell::Cell, fmt::Debug, iter::Peekable, ops::Deref, rc::Rc};
 
 use crate::auryn::{
     Span,
@@ -19,6 +19,13 @@ pub enum DiagnosticError {
 pub enum DiagnosticKind {
     Error(DiagnosticError),
 }
+impl DiagnosticKind {
+    fn is_error(&self) -> bool {
+        match self {
+            DiagnosticKind::Error(_) => true,
+        }
+    }
+}
 
 impl From<DiagnosticError> for DiagnosticKind {
     fn from(value: DiagnosticError) -> Self {
@@ -26,17 +33,9 @@ impl From<DiagnosticError> for DiagnosticKind {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Diagnostic {
-    pub kind: DiagnosticKind,
-    pub offset: u32,
-    pub len: u32,
-}
-
 #[derive(Debug)]
 pub struct ParserOutput {
     pub syntax_tree: Option<SyntaxTree>,
-    pub diagnostics: Vec<Diagnostic>,
 }
 
 #[derive(Debug)]
@@ -82,8 +81,8 @@ impl Drop for ParserFrameWatcher {
 
 pub struct Parser<'a> {
     input: Peekable<Tokenizer<'a>>,
-    diagnostics: Vec<Diagnostic>,
     node_stack: Vec<ParserStackNode>,
+    has_errors: bool,
     skipped_frames: ParserSkippedFrames,
 }
 
@@ -93,8 +92,8 @@ impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
             input: Tokenizer::new(input).into_iter().peekable(),
-            diagnostics: Vec::new(),
             node_stack: Vec::new(),
+            has_errors: false,
             skipped_frames: ParserSkippedFrames(Rc::new(Cell::new(0))),
         }
     }
@@ -105,46 +104,36 @@ impl<'a> Parser<'a> {
         self.consume_whitespace();
         // Nothing left to recover if there is an error
         let _ = self.parse_expression();
-
-        let next_token_kind = self.peek().kind;
-        if next_token_kind != TokenKind::EndOfInput {
-            self.diagnostic(DiagnosticError::UnexpectedToken {
-                expected: TokenKind::EndOfInput,
-                got: next_token_kind,
-            });
-        }
+        let _ = self.peek_expect(TokenKind::EndOfInput);
         let Some(root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
-            return ParserOutput {
-                syntax_tree: None,
-                diagnostics: self.diagnostics,
-            };
+            return ParserOutput { syntax_tree: None };
         };
 
         ParserOutput {
             syntax_tree: Some(SyntaxTree { root_node }),
-            diagnostics: self.diagnostics,
         }
     }
 }
 
 /// Utility methods
 impl<'a> Parser<'a> {
-    fn current_offset(&self) -> u32 {
-        let mut offset = 0u32;
-        for node in &self.node_stack {
-            for child in &node.children {
-                offset += child.span().len;
-            }
-        }
-        offset
-    }
-
     fn diagnostic(&mut self, kind: impl Into<DiagnosticKind>) {
         let kind = kind.into();
-        let offset = self.current_offset();
-        let len = self.peek().text.len().try_into().expect("Token too long");
-        self.consume();
-        self.diagnostics.push(Diagnostic { kind, offset, len });
+        if kind.is_error() {
+            self.has_errors = true;
+        }
+        let current = self
+            .node_stack
+            .last_mut()
+            .expect("Should not emit diagnostics if there is no node");
+        let token = current
+            .children
+            .last_mut()
+            .and_then(SyntaxItem::as_mut_token)
+            .expect(
+                "diagnostics should only be emitted if there is a current token they can apply to",
+            );
+        token.diagnostics.push(kind)
     }
 
     fn peek(&mut self) -> Token<'a> {
@@ -152,6 +141,15 @@ impl<'a> Parser<'a> {
             kind: TokenKind::EndOfInput,
             text: "",
         })
+    }
+
+    fn consume_error_token(&mut self, diagnostic: impl Into<DiagnosticKind>) {
+        let node = self.node_stack.last_mut().expect("Should have a node");
+        node.children.push(SyntaxItem::Token(SyntaxToken {
+            kind: TokenKind::Error,
+            span: Span { len: 0 },
+            diagnostics: vec![diagnostic.into()],
+        }));
     }
 
     fn consume(&mut self) -> Token<'a> {
@@ -164,6 +162,7 @@ impl<'a> Parser<'a> {
         node.children.push(SyntaxItem::Token(SyntaxToken {
             kind: token.kind,
             span: Span { len },
+            diagnostics: Vec::new(),
         }));
         token
     }
@@ -193,7 +192,7 @@ impl<'a> Parser<'a> {
             Ok(token) => Ok(token.text),
             Err(token) => {
                 let kind = token.kind;
-                self.diagnostic(DiagnosticError::UnexpectedToken {
+                self.consume_error_token(DiagnosticError::UnexpectedToken {
                     expected,
                     got: kind,
                 });
@@ -204,14 +203,14 @@ impl<'a> Parser<'a> {
 
     fn peek_expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
         let token = self.peek();
-        if token.kind != expected {
-            self.diagnostic(DiagnosticError::UnexpectedToken {
+        let kind = token.kind;
+        if kind != expected {
+            self.consume_error_token(DiagnosticError::UnexpectedToken {
                 expected,
-                got: token.kind,
+                got: kind,
             });
             return Err(());
         }
-
         Ok(token.text)
     }
 
@@ -313,7 +312,7 @@ impl Parser<'_> {
             TokenKind::Number => self.parse_number()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
-                self.diagnostic(DiagnosticError::ExpectedValue { got: other });
+                self.consume_error_token(DiagnosticError::ExpectedValue { got: other });
                 return Err(());
             }
         };
@@ -343,12 +342,11 @@ impl Parser<'_> {
     fn parse_number(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        let text = self.peek_expect(TokenKind::Number)?;
+        let text = self.expect(TokenKind::Number)?;
         let Ok(value) = text.parse() else {
             self.diagnostic(DiagnosticError::InvalidNumber);
             return Err(());
         };
-        self.consume();
 
         self.finish_node(watcher, SyntaxNodeKind::Number(value));
         Ok(())
@@ -368,7 +366,10 @@ impl Parser<'_> {
 mod tests {
     use std::fmt::Debug;
 
-    use crate::auryn::parser::{Parser, ParserOutput};
+    use crate::auryn::{
+        parser::{Parser, ParserOutput},
+        syntax_tree::ComputedDiagnostic,
+    };
 
     fn parse(input: &str) -> ParserOutput {
         Parser::new(input).parse()
@@ -376,15 +377,14 @@ mod tests {
 
     struct AnnotatedParserOutput<'a> {
         output: ParserOutput,
+        diagnostics: Vec<ComputedDiagnostic>,
         input: &'a str,
     }
 
     impl Debug for AnnotatedParserOutput<'_> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            let ParserOutput {
-                syntax_tree: ast,
-                diagnostics,
-            } = &self.output;
+            let ParserOutput { syntax_tree: ast } = &self.output;
+            let diagnostics = &self.diagnostics;
             f.debug_struct("AnnotatedParserOutput")
                 .field("ast", &ast.as_ref().map(|ast| ast.display(self.input)))
                 .field("diagnostics", diagnostics)
@@ -394,7 +394,16 @@ mod tests {
 
     fn verify(input: &str) -> impl Debug {
         let output = parse(input);
-        AnnotatedParserOutput { output, input }
+        let diagnostics = output
+            .syntax_tree
+            .as_ref()
+            .map(|it| it.collect_diagnostics())
+            .unwrap_or_else(Vec::new);
+        AnnotatedParserOutput {
+            output,
+            input,
+            diagnostics,
+        }
     }
 
     #[test]

@@ -19,6 +19,11 @@ impl Span {
             len: self.len + other.len,
         }
     }
+
+    fn at_offset(self, offset: u32) -> ComputedSpan {
+        let Span { len } = self;
+        ComputedSpan { offset, len }
+    }
 }
 
 impl Sum for Span {
@@ -26,4 +31,10 @@ impl Sum for Span {
         iter.reduce(|acc, next| acc.add(next))
             .unwrap_or(Span::EMPTY)
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ComputedSpan {
+    pub offset: u32,
+    pub len: u32,
 }

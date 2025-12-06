@@ -4,25 +4,26 @@ expression: "verify(\"1 1 1 1 11 1\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..4 Root
+        0..2 Root
         |0..2 Expression
         ||0..2 Number(1)
         |||Number
         |||Whitespace
-        |Number
-        |Whitespace
+        |Error [Error(UnexpectedToken { expected: EndOfInput, got: Number })]
         ,
     ),
     diagnostics: [
-        Diagnostic {
+        ComputedDiagnostic {
             kind: Error(
                 UnexpectedToken {
                     expected: EndOfInput,
                     got: Number,
                 },
             ),
-            offset: 2,
-            len: 1,
+            span: ComputedSpan {
+                offset: 2,
+                len: 0,
+            },
         },
     ],
 }

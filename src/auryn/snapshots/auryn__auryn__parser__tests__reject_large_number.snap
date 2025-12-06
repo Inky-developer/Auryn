@@ -5,16 +5,18 @@ expression: "verify(\"9999999999999\")"
 AnnotatedParserOutput {
     ast: Some(
         0..13 Root
-        |Number
+        |Number [Error(InvalidNumber)]
         ,
     ),
     diagnostics: [
-        Diagnostic {
+        ComputedDiagnostic {
             kind: Error(
                 InvalidNumber,
             ),
-            offset: 0,
-            len: 13,
+            span: ComputedSpan {
+                offset: 0,
+                len: 13,
+            },
         },
     ],
 }
