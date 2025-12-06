@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::{cell::Cell, iter::Peekable, ops::Deref, rc::Rc};
 
 use crate::auryn::{
     Span,
@@ -44,10 +44,47 @@ struct ParserStackNode {
     children: Vec<SyntaxItem>,
 }
 
+#[derive(Debug, Clone)]
+struct ParserSkippedFrames(Rc<Cell<u32>>);
+
+impl ParserSkippedFrames {
+    fn get_watcher(&self) -> ParserFrameWatcher {
+        ParserFrameWatcher(self.clone())
+    }
+}
+
+impl Deref for ParserSkippedFrames {
+    type Target = Cell<u32>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// Type to keep track of current frames in the parser that automatically marks them as exited with error, in case
+/// an error happened.
+#[derive(Debug)]
+struct ParserFrameWatcher(ParserSkippedFrames);
+
+impl ParserFrameWatcher {
+    fn finish_successfully(self) {
+        let Self(_) = self;
+    }
+}
+
+/// When this is dropped, it means that the current frame was not finished without error.
+/// In this case, mark the latest frame as error.
+impl Drop for ParserFrameWatcher {
+    fn drop(&mut self) {
+        self.0.update(|dropped_frames| dropped_frames + 1);
+    }
+}
+
 pub struct Parser<'a> {
     input: Peekable<Tokenizer<'a>>,
     diagnostics: Vec<Diagnostic>,
     node_stack: Vec<ParserStackNode>,
+    skipped_frames: ParserSkippedFrames,
 }
 
 type ParseResult<T = ()> = Result<T, ()>;
@@ -58,11 +95,12 @@ impl<'a> Parser<'a> {
             input: Tokenizer::new(input).into_iter().peekable(),
             diagnostics: Vec::new(),
             node_stack: Vec::new(),
+            skipped_frames: ParserSkippedFrames(Rc::new(Cell::new(0))),
         }
     }
 
     pub fn parse(mut self) -> ParserOutput {
-        self.push_node();
+        let watcher = self.push_node();
 
         self.consume_whitespace();
         // Nothing left to recover if there is an error
@@ -75,7 +113,7 @@ impl<'a> Parser<'a> {
                 got: next_token_kind,
             });
         }
-        let Some(root_node) = self.pop_node(SyntaxNodeKind::Root) else {
+        let Some(root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
             return ParserOutput {
                 syntax_tree: None,
                 diagnostics: self.diagnostics,
@@ -104,7 +142,8 @@ impl<'a> Parser<'a> {
     fn diagnostic(&mut self, kind: impl Into<DiagnosticKind>) {
         let kind = kind.into();
         let offset = self.current_offset();
-        let len = 1;
+        let len = self.peek().text.len().try_into().expect("Token too long");
+        self.consume();
         self.diagnostics.push(Diagnostic { kind, offset, len });
     }
 
@@ -149,9 +188,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn expect(&mut self, expected: TokenKind) -> ParseResult<Token<'a>> {
+    fn expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
         match self.consume_if(|token| (token.kind == expected).then_some(token)) {
-            Ok(token) => Ok(token),
+            Ok(token) => Ok(token.text),
             Err(token) => {
                 let kind = token.kind;
                 self.diagnostic(DiagnosticError::UnexpectedToken {
@@ -163,16 +202,35 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn push_node(&mut self) -> &mut ParserStackNode {
-        self.node_stack.push(ParserStackNode {
-            children: Vec::new(),
-        });
-        self.node_stack.last_mut().expect("Was just pushed")
+    fn peek_expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
+        let token = self.peek();
+        if token.kind != expected {
+            self.diagnostic(DiagnosticError::UnexpectedToken {
+                expected,
+                got: token.kind,
+            });
+            return Err(());
+        }
+
+        Ok(token.text)
     }
 
     #[must_use]
-    fn pop_node(&mut self, kind: SyntaxNodeKind) -> Option<SyntaxNode> {
+    fn push_node(&mut self) -> ParserFrameWatcher {
+        self.node_stack.push(ParserStackNode {
+            children: Vec::new(),
+        });
+        self.skipped_frames.get_watcher()
+    }
+
+    #[must_use]
+    fn pop_node(
+        &mut self,
+        watcher: ParserFrameWatcher,
+        kind: SyntaxNodeKind,
+    ) -> Option<SyntaxNode> {
         self.consume_whitespace();
+        watcher.finish_successfully();
         let Some(ParserStackNode { children }) = self.node_stack.pop() else {
             return None;
         };
@@ -186,16 +244,12 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn finish_node(&mut self, kind: SyntaxNodeKind) {
-        let Some(node) = self.pop_node(kind) else {
+    fn finish_node(&mut self, watcher: ParserFrameWatcher, kind: SyntaxNodeKind) {
+        let Some(node) = self.pop_node(watcher, kind) else {
             panic!("Expected node")
         };
         let parent = self.node_stack.last_mut().expect("Parent should exist");
         parent.children.push(SyntaxItem::Node(node));
-    }
-
-    fn finish_node_with_error(&mut self) {
-        self.finish_node(SyntaxNodeKind::Error);
     }
 }
 
@@ -206,64 +260,60 @@ impl Parser<'_> {
     }
 
     fn parse_expression_pratt(&mut self, min_binding_power: u32) -> ParseResult {
-        self.push_node();
+        fn inner(
+            this: &mut Parser<'_>,
+            mut watcher: ParserFrameWatcher,
+            min_binding_power: u32,
+        ) -> ParseResult<ParserFrameWatcher> {
+            this.parse_value()?;
 
-        self.parse_expression_pratt_inner(min_binding_power)?;
+            loop {
+                let Some(operator) = this.peek().kind.to_binary_operator() else {
+                    break;
+                };
+                let binding_power = operator.binding_power();
+                if binding_power < min_binding_power {
+                    break;
+                }
 
-        self.finish_node(SyntaxNodeKind::Expression);
+                let node = this
+                    .pop_node(watcher, SyntaxNodeKind::Expression)
+                    .expect("Node was started");
+                watcher = this.push_node();
+                let parent = this.node_stack.last_mut().expect("Was just pushed");
+                parent.children.push(SyntaxItem::Node(node));
 
-        Ok(())
-    }
-
-    fn parse_expression_pratt_inner(&mut self, min_binding_power: u32) -> ParseResult {
-        self.parse_value()?;
-
-        loop {
-            let Some(operator) = self.peek().kind.to_binary_operator() else {
-                return Ok(());
-            };
-            let binding_power = operator.binding_power();
-            if binding_power < min_binding_power {
-                break;
+                this.parse_binary_operator()?;
+                this.parse_expression_pratt(binding_power)?;
             }
 
-            let node = self
-                .pop_node(SyntaxNodeKind::Expression)
-                .expect("Node was started");
-            let parent = self.push_node();
-            parent.children.push(SyntaxItem::Node(node));
-
-            self.parse_binary_operator()?;
-            self.parse_expression_pratt(binding_power)?;
+            Ok(watcher)
         }
+
+        let watcher = self.push_node();
+        let watcher = inner(self, watcher, min_binding_power)?;
+        self.finish_node(watcher, SyntaxNodeKind::Expression);
 
         Ok(())
     }
 
     fn parse_binary_operator(&mut self) -> ParseResult<BinaryOperatorToken> {
-        self.push_node();
-
-        let op = match self.consume_if(|token| token.kind.to_binary_operator()) {
-            Ok(op) => op,
-            Err(token) => {
-                self.diagnostic(DiagnosticError::ExpectedBinaryOperator { got: token.kind });
-                self.finish_node_with_error();
-                return Err(());
-            }
-        };
-
-        self.finish_node(SyntaxNodeKind::BinaryOperator(op));
+        let watcher = self.push_node();
+        let op = self
+            .consume_if(|token| token.kind.to_binary_operator())
+            .map_err(|_| ())?;
+        self.finish_node(watcher, SyntaxNodeKind::BinaryOperator(op));
 
         Ok(op)
     }
 
     fn parse_value(&mut self) -> ParseResult {
         match self.peek().kind {
+            TokenKind::Identifier => self.parse_identifier_or_function_call()?,
             TokenKind::Number => self.parse_number()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
                 self.diagnostic(DiagnosticError::ExpectedValue { got: other });
-                self.finish_node_with_error();
                 return Err(());
             }
         };
@@ -271,25 +321,45 @@ impl Parser<'_> {
         Ok(())
     }
 
+    fn parse_identifier_or_function_call(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        let text = self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::ParensOpen)?;
+        if let Err(()) = self.parse_parameter_list() {
+            // self.recover(|k| matches!(k, TokenKind::ParensClose))?;
+        }
+        self.expect(TokenKind::ParensClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::FunctionCall(text.to_string()));
+
+        Ok(())
+    }
+
+    fn parse_parameter_list(&mut self) -> ParseResult {
+        Ok(())
+    }
+
     fn parse_number(&mut self) -> ParseResult {
-        self.push_node();
-        let text = self.expect(TokenKind::Number)?.text;
+        let watcher = self.push_node();
+
+        let text = self.peek_expect(TokenKind::Number)?;
         let Ok(value) = text.parse() else {
             self.diagnostic(DiagnosticError::InvalidNumber);
-            self.finish_node_with_error();
-            return Ok(());
+            return Err(());
         };
+        self.consume();
 
-        self.finish_node(SyntaxNodeKind::Number(value));
+        self.finish_node(watcher, SyntaxNodeKind::Number(value));
         Ok(())
     }
 
     fn parse_parenthesis(&mut self) -> ParseResult {
-        self.push_node();
+        let watcher = self.push_node();
         self.expect(TokenKind::ParensOpen)?;
         self.parse_expression()?;
         self.expect(TokenKind::ParensClose)?;
-        self.finish_node(SyntaxNodeKind::Parenthesis);
+        self.finish_node(watcher, SyntaxNodeKind::Parenthesis);
         Ok(())
     }
 }

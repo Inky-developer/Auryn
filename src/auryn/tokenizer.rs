@@ -16,6 +16,7 @@ impl BinaryOperatorToken {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenKind {
     Number,
+    Identifier,
     Plus,
     Times,
     ParensOpen,
@@ -74,6 +75,14 @@ impl<'a> Tokenizer<'a> {
             text: self.consume_while(|char| char.is_digit(10)),
         })
     }
+
+    fn consume_identifier(&mut self) -> Option<Token<'a>> {
+        Some(Token {
+            kind: TokenKind::Identifier,
+            text: self
+                .consume_while(|char| matches!(char, '0'..='9' | 'a'..='z' | 'A'..='Z' | '_')),
+        })
+    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
@@ -89,6 +98,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '*' => TokenKind::Times,
             '(' => TokenKind::ParensOpen,
             ')' => TokenKind::ParensClose,
+            'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
             char if char.is_digit(10) => return self.consume_number(),
             _ => TokenKind::Error,
@@ -115,5 +125,6 @@ mod tests {
     #[test]
     fn test_parser() {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
+        insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1)"));
     }
 }

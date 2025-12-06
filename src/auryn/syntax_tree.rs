@@ -5,7 +5,7 @@ use crate::auryn::{
     tokenizer::{BinaryOperatorToken, TokenKind},
 };
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SyntaxNodeKind {
     Root,
     Number(i32),
@@ -13,6 +13,7 @@ pub enum SyntaxNodeKind {
     BinaryOperator(BinaryOperatorToken),
     Error,
     Parenthesis,
+    FunctionCall(String),
 }
 
 #[derive(Debug)]
@@ -85,7 +86,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
         let offset = self.offset;
         let end = offset + self.node.span.len;
         let range = format_args!("{offset}..{end}");
-        let kind = self.node.kind;
+        let kind = &self.node.kind;
         for _ in 0..depth {
             write!(f, "|")?;
         }

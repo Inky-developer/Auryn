@@ -1,0 +1,42 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\" hello_World(1 + 1)\")"
+---
+[
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "hello_World",
+    },
+    Token {
+        kind: ParensOpen,
+        text: "(",
+    },
+    Token {
+        kind: Number,
+        text: "1",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Plus,
+        text: "+",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Number,
+        text: "1",
+    },
+    Token {
+        kind: ParensClose,
+        text: ")",
+    },
+]
