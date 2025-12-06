@@ -66,12 +66,65 @@ where
     }
 }
 
+pub trait ToAstNode {
+    type Target;
+
+    fn to_ast_node(&self) -> Result<&Self::Target, AstError>;
+}
+
+impl<T> ToAstNode for NodeRef<T>
+where
+    T: ToAstNode,
+{
+    type Target = T::Target;
+
+    fn to_ast_node(&self) -> Result<&Self::Target, AstError> {
+        self.as_ref()
+            .as_ref()
+            .map_err(Clone::clone)?
+            .kind
+            .to_ast_node()
+    }
+}
+
+impl<T> ToAstNode for Vec<NodeOrError<T>> {
+    type Target = Vec<NodeOrError<T>>;
+
+    fn to_ast_node(&self) -> Result<&Self::Target, AstError> {
+        Ok(self)
+    }
+}
+
+impl ToAstNode for BinaryOperatorToken {
+    type Target = BinaryOperatorToken;
+
+    fn to_ast_node(&self) -> Result<&Self::Target, AstError> {
+        Ok(self)
+    }
+}
+
 macro_rules! create_ast_parser {
     (pub struct $ident:ident @ $source_type:path{$($source_var:ident: $syntax_type:ty),*} {$(pub $var_name:ident: $typ:ty),* $(,)?} $($rest:tt)*) => {
         #[derive(Debug)]
         pub struct $ident {
             $(pub $source_var: $syntax_type,)*
             $(pub $var_name: $typ,)*
+        }
+
+        impl ToAstNode for $ident {
+            type Target = $ident;
+
+            fn to_ast_node(&self) -> Result<&Self::Target, AstError> {
+                Ok(self)
+            }
+        }
+
+        impl $ident {
+            $(
+                pub fn $var_name(&self) -> Result<&<$typ as ToAstNode>::Target, AstError>  where $typ: ToAstNode{
+                    self.$var_name.to_ast_node()
+                }
+            )*
         }
 
         impl FromSyntaxNode for NodeOrError<$ident> {
@@ -102,6 +155,14 @@ macro_rules! create_ast_parser {
         #[derive(Debug)]
         pub enum $ident {
             $($var_name($typ)),*
+        }
+
+        impl ToAstNode for $ident {
+            type Target = $ident;
+
+            fn to_ast_node(&self) -> Result<&Self::Target, AstError> {
+                Ok(self)
+            }
         }
 
         impl FromSyntaxNode for NodeOrError<$ident> {

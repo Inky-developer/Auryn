@@ -16,9 +16,15 @@ pub enum CodegenError {
     InvalidAst(AstError),
 }
 
+impl From<AstError> for CodegenError {
+    fn from(error: AstError) -> Self {
+        CodegenError::InvalidAst(error)
+    }
+}
+
 impl From<&AstError> for CodegenError {
-    fn from(error: &AstError) -> Self {
-        CodegenError::InvalidAst(error.clone())
+    fn from(value: &AstError) -> Self {
+        CodegenError::InvalidAst(value.clone())
     }
 }
 
@@ -47,7 +53,7 @@ impl Generator {
     }
 
     pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
-        let root = root.as_ref()?;
+        let root = root.as_ref().map_err(Clone::clone)?;
         self.generate_root(&root.kind)?;
         self.assembler.add(Instruction::ReturnNull);
         Ok(())
@@ -78,8 +84,7 @@ impl Generator {
 
 impl Generator {
     fn generate_root(&mut self, root: &Root) -> CodegenResult {
-        let block = root.block.as_ref().as_ref()?;
-        self.generate_block(&block.kind)?;
+        self.generate_block(root.block()?)?;
         Ok(())
     }
 
@@ -114,14 +119,10 @@ impl Generator {
     }
 
     fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> CodegenResult {
-        let lhs = &operation.lhs.as_ref().as_ref()?.kind;
-        let op = operation.operator.as_ref().as_ref()?.kind;
-        let rhs = &operation.rhs.as_ref().as_ref()?.kind;
+        self.generate_expression(operation.lhs()?)?;
+        self.generate_expression(operation.rhs()?)?;
 
-        self.generate_expression(lhs)?;
-        self.generate_expression(rhs)?;
-
-        match op {
+        match operation.operator()? {
             BinaryOperatorToken::Plus => self.assembler.add(Instruction::IAdd),
             BinaryOperatorToken::Times => self.assembler.add(Instruction::IMul),
         }
