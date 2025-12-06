@@ -47,7 +47,6 @@ impl Generator {
     pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
         let root = root.as_ref()?;
         self.generate_root(&root.kind)?;
-        self.instrics_print_int();
         self.assembler.add(Instruction::ReturnNull);
         Ok(())
     }
@@ -110,6 +109,16 @@ impl Generator {
                 let expression = expression.as_ref().as_ref()?;
                 self.generate_expression(&expression.kind)?;
             }
+            Value::FunctionCall(call) => {
+                let call = call.as_ref().as_ref()?;
+                assert_eq!(call.kind.ident, "print", "Unexpected function");
+                let [expression] = call.kind.arguments.as_slice() else {
+                    panic!("print only supports one parameter");
+                };
+                let expression = expression.as_ref()?;
+                self.generate_expression(&expression.kind)?;
+                self.instrics_print_int();
+            }
         }
 
         Ok(())
@@ -150,5 +159,10 @@ mod tests {
     #[test]
     fn test_simple() {
         insta::assert_debug_snapshot!(generate_class("1 + 2 * 3"));
+    }
+
+    #[test]
+    fn test_print() {
+        insta::assert_debug_snapshot!(generate_class("print(2 * 3)"));
     }
 }

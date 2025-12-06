@@ -81,6 +81,7 @@ impl FromSyntaxNode for Expression {
 #[derive(Debug)]
 pub enum Value {
     Int(i32),
+    FunctionCall(NodeRef<FunctionCall>),
     Expression(NodeRef<Expression>),
 }
 
@@ -92,8 +93,32 @@ impl FromSyntaxNode for Value {
                 let (expression,) = node.map_child_nodes()?;
                 Ok(Value::Expression(NodeRef::new(expression)))
             }
+            SyntaxNodeKind::FunctionCall { .. } => Ok(Value::FunctionCall(NodeRef::new(
+                FunctionCall::from_syntax_node(node),
+            ))),
             _ => Err(AstError::UnexpectedNode),
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct FunctionCall {
+    pub ident: String,
+    pub arguments: Vec<NodeOrError<Expression>>,
+}
+
+impl FromSyntaxNode for FunctionCall {
+    fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
+        let SyntaxNodeKind::FunctionCall(ident) = &node.kind else {
+            return Err(AstError::UnexpectedNode);
+        };
+        let ident = ident.clone();
+
+        let arguments = node
+            .node_children()
+            .map(|child| Expression::from_syntax_node(child))
+            .collect();
+        Ok(FunctionCall { ident, arguments })
     }
 }
 
@@ -204,5 +229,10 @@ mod tests {
         insta::assert_debug_snapshot!(parse("1+2"));
         insta::assert_debug_snapshot!(parse("1 + 2 * 3"));
         insta::assert_debug_snapshot!(parse("1 * 2 + 3"));
+    }
+
+    #[test]
+    fn test_function_call() {
+        insta::assert_debug_snapshot!(parse("print(1)"));
     }
 }

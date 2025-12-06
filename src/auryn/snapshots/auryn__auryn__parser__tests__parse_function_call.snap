@@ -1,0 +1,19 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"print(1)\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..8 Root
+        |0..8 Expression
+        ||0..8 FunctionCall("print")
+        |||Identifier
+        |||ParensOpen
+        |||6..7 Expression
+        ||||6..7 Number(1)
+        |||||Number
+        |||ParensClose
+        ,
+    ),
+    diagnostics: [],
+}

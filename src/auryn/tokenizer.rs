@@ -24,6 +24,7 @@ pub enum TokenKind {
     Whitespace,
     Error,
     EndOfInput,
+    Comma,
 }
 
 impl TokenKind {
@@ -98,6 +99,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '*' => TokenKind::Times,
             '(' => TokenKind::ParensOpen,
             ')' => TokenKind::ParensClose,
+            ',' => TokenKind::Comma,
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
             char if char.is_digit(10) => return self.consume_number(),
@@ -125,6 +127,6 @@ mod tests {
     #[test]
     fn test_parser() {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
-        insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1)"));
+        insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
     }
 }

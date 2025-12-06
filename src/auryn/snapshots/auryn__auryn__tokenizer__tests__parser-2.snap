@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\" hello_World(1 + 1)\")"
+expression: "tokenize(\" hello_World(1 + 1, 2)\")"
 ---
 [
     Token {
@@ -34,6 +34,18 @@ expression: "tokenize(\" hello_World(1 + 1)\")"
     Token {
         kind: Number,
         text: "1",
+    },
+    Token {
+        kind: Comma,
+        text: ",",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Number,
+        text: "2",
     },
     Token {
         kind: ParensClose,

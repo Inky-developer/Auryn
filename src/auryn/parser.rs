@@ -336,6 +336,15 @@ impl Parser<'_> {
     }
 
     fn parse_parameter_list(&mut self) -> ParseResult {
+        loop {
+            self.parse_expression()?;
+            if self.peek().kind != TokenKind::Comma {
+                break;
+            }
+
+            self.consume();
+        }
+
         Ok(())
     }
 
@@ -418,6 +427,11 @@ mod tests {
         insta::assert_debug_snapshot!(verify("((3))"));
         insta::assert_debug_snapshot!(verify("1 + (2 + 3)"));
         insta::assert_debug_snapshot!(verify("1 * (2 + 3)"));
+    }
+
+    #[test]
+    fn test_parse_function_call() {
+        insta::assert_debug_snapshot!(verify("print(1)"));
     }
 
     #[test]
