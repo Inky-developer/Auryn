@@ -8,7 +8,6 @@ use crate::auryn::{
 
 #[derive(Debug, Clone, Copy)]
 pub enum DiagnosticError {
-    UnknownError,
     ExpectedNumber { got: TokenKind },
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
@@ -66,9 +65,9 @@ impl<'a> Parser<'a> {
         self.push_node();
 
         self.consume_whitespace();
-        if let Err(()) = self.parse_expression() {
-            self.diagnostic(DiagnosticError::UnknownError);
-        }
+        // Nothing left to recover if there is an error
+        let _ = self.parse_expression();
+
         let next_token_kind = self.peek().kind;
         if next_token_kind != TokenKind::EndOfInput {
             self.diagnostic(DiagnosticError::UnexpectedToken {
@@ -150,13 +149,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn expect(&mut self, kind: TokenKind) -> ParseResult<Token<'a>> {
-        match self.consume_if(|token| (token.kind == kind).then_some(token)) {
+    fn expect(&mut self, expected: TokenKind) -> ParseResult<Token<'a>> {
+        match self.consume_if(|token| (token.kind == expected).then_some(token)) {
             Ok(token) => Ok(token),
             Err(token) => {
                 let kind = token.kind;
                 self.diagnostic(DiagnosticError::UnexpectedToken {
-                    expected: kind,
+                    expected,
                     got: kind,
                 });
                 Err(())
