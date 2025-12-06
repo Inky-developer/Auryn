@@ -21,6 +21,7 @@ pub enum SyntaxNodeKind {
     Error,
     Parenthesis,
     FunctionCall(String),
+    Block,
 }
 
 #[derive(Debug)]

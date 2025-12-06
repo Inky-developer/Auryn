@@ -103,7 +103,7 @@ impl<'a> Parser<'a> {
 
         self.consume_whitespace();
         // Nothing left to recover if there is an error
-        let _ = self.parse_expression();
+        let _ = self.parse_block();
         let _ = self.peek_expect(TokenKind::EndOfInput);
         let Some(root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
             return ParserOutput { syntax_tree: None };
@@ -254,6 +254,21 @@ impl<'a> Parser<'a> {
 
 /// Parsing methods
 impl Parser<'_> {
+    fn parse_block(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        loop {
+            self.parse_expression()?;
+            if self.peek().kind == TokenKind::EndOfInput {
+                break;
+            }
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::Block);
+
+        Ok(())
+    }
+
     fn parse_expression(&mut self) -> ParseResult {
         self.parse_expression_pratt(0)
     }

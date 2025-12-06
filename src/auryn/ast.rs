@@ -39,7 +39,39 @@ pub type NodeRef<T> = Box<NodeOrError<T>>;
 
 #[derive(Debug)]
 pub struct Root {
-    pub expression: NodeRef<Expression>,
+    pub block: NodeRef<Block>,
+}
+
+#[derive(Debug)]
+pub struct Block {
+    pub statements: Vec<NodeOrError<Statement>>,
+}
+
+impl FromSyntaxNode for Block {
+    fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
+        let SyntaxNodeKind::Block = node.kind else {
+            return Err(AstError::UnexpectedNode);
+        };
+
+        let statements = node
+            .node_children()
+            .map(|child| Statement::from_syntax_node(child))
+            .collect();
+        Ok(Block { statements })
+    }
+}
+
+#[derive(Debug)]
+pub enum Statement {
+    Expression(NodeRef<Expression>),
+}
+
+impl FromSyntaxNode for Statement {
+    fn get_kind(node: &SyntaxNode) -> Result<Self, AstError> {
+        Ok(Statement::Expression(NodeRef::new(
+            Expression::from_syntax_node(node),
+        )))
+    }
 }
 
 #[derive(Debug)]
@@ -136,10 +168,10 @@ pub fn query_ast(syntax_tree: &SyntaxTree) -> NodeOrError<Root> {
 
     let span = root_node.span;
 
-    let (expression,) = root_node.map_child_nodes()?;
+    let (block,) = root_node.map_child_nodes()?;
     NodeOrError::Ok(Node {
         kind: Root {
-            expression: NodeRef::new(expression),
+            block: NodeRef::new(block),
         },
         span,
     })

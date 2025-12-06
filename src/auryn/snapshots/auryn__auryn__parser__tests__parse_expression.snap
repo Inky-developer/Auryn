@@ -5,25 +5,26 @@ expression: "verify(\"1 + 2 * 3\")"
 AnnotatedParserOutput {
     ast: Some(
         0..9 Root
-        |0..9 Expression
-        ||0..2 Expression
-        |||0..2 Number(1)
-        ||||Number
-        ||||Whitespace
-        ||2..4 BinaryOperator(Plus)
-        |||Plus
-        |||Whitespace
-        ||4..9 Expression
-        |||4..6 Expression
-        ||||4..6 Number(2)
+        |0..9 Block
+        ||0..9 Expression
+        |||0..2 Expression
+        ||||0..2 Number(1)
         |||||Number
         |||||Whitespace
-        |||6..8 BinaryOperator(Times)
-        ||||Times
+        |||2..4 BinaryOperator(Plus)
+        ||||Plus
         ||||Whitespace
-        |||8..9 Expression
-        ||||8..9 Number(3)
-        |||||Number
+        |||4..9 Expression
+        ||||4..6 Expression
+        |||||4..6 Number(2)
+        ||||||Number
+        ||||||Whitespace
+        ||||6..8 BinaryOperator(Times)
+        |||||Times
+        |||||Whitespace
+        ||||8..9 Expression
+        |||||8..9 Number(3)
+        ||||||Number
         ,
     ),
     diagnostics: [],

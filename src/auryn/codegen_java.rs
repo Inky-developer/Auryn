@@ -1,6 +1,6 @@
 use crate::{
     auryn::{
-        ast::{AstError, Expression, NodeOrError, Root, Value},
+        ast::{AstError, Block, Expression, NodeOrError, Root, Statement, Value},
         tokenizer::BinaryOperatorToken,
     },
     java::{
@@ -76,9 +76,24 @@ impl Generator {
 
 impl Generator {
     fn generate_root(&mut self, root: &Root) -> CodegenResult {
-        let expression = root.expression.as_ref().as_ref()?;
-        self.generate_expression(&expression.kind)?;
+        let block = root.block.as_ref().as_ref()?;
+        self.generate_block(&block.kind)?;
         Ok(())
+    }
+
+    fn generate_block(&mut self, block: &Block) -> CodegenResult {
+        for statement in &block.statements {
+            let statement = statement.as_ref()?;
+            self.generate_statement(&statement.kind)?;
+        }
+
+        Ok(())
+    }
+
+    fn generate_statement(&mut self, statement: &Statement) -> CodegenResult {
+        let Statement::Expression(expression) = statement;
+        let expression = expression.as_ref().as_ref()?;
+        self.generate_expression(&expression.kind)
     }
 
     fn generate_expression(&mut self, expression: &Expression) -> CodegenResult {

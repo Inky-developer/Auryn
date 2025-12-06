@@ -5,13 +5,14 @@ expression: "verify(\"(3)\")"
 AnnotatedParserOutput {
     ast: Some(
         0..3 Root
-        |0..3 Expression
-        ||0..3 Parenthesis
-        |||ParensOpen
-        |||1..2 Expression
-        ||||1..2 Number(3)
-        |||||Number
-        |||ParensClose
+        |0..3 Block
+        ||0..3 Expression
+        |||0..3 Parenthesis
+        ||||ParensOpen
+        ||||1..2 Expression
+        |||||1..2 Number(3)
+        ||||||Number
+        ||||ParensClose
         ,
     ),
     diagnostics: [],

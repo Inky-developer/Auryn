@@ -8,94 +8,114 @@ Ok(
             len: 9,
         },
         kind: Root {
-            expression: Ok(
+            block: Ok(
                 Node {
                     span: Span {
                         len: 9,
                     },
-                    kind: BinaryOperation {
-                        lhs: Ok(
-                            Node {
-                                span: Span {
-                                    len: 6,
-                                },
-                                kind: BinaryOperation {
-                                    lhs: Ok(
-                                        Node {
-                                            span: Span {
-                                                len: 2,
-                                            },
-                                            kind: Value(
-                                                Ok(
-                                                    Node {
-                                                        span: Span {
-                                                            len: 2,
+                    kind: Block {
+                        statements: [
+                            Ok(
+                                Node {
+                                    span: Span {
+                                        len: 9,
+                                    },
+                                    kind: Expression(
+                                        Ok(
+                                            Node {
+                                                span: Span {
+                                                    len: 9,
+                                                },
+                                                kind: BinaryOperation {
+                                                    lhs: Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 6,
+                                                            },
+                                                            kind: BinaryOperation {
+                                                                lhs: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 2,
+                                                                        },
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 2,
+                                                                                    },
+                                                                                    kind: Int(
+                                                                                        1,
+                                                                                    ),
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                operator: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 2,
+                                                                        },
+                                                                        kind: Times,
+                                                                    },
+                                                                ),
+                                                                rhs: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 2,
+                                                                        },
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 2,
+                                                                                    },
+                                                                                    kind: Int(
+                                                                                        2,
+                                                                                    ),
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            },
                                                         },
-                                                        kind: Int(
-                                                            1,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    operator: Ok(
-                                        Node {
-                                            span: Span {
-                                                len: 2,
-                                            },
-                                            kind: Times,
-                                        },
-                                    ),
-                                    rhs: Ok(
-                                        Node {
-                                            span: Span {
-                                                len: 2,
-                                            },
-                                            kind: Value(
-                                                Ok(
-                                                    Node {
-                                                        span: Span {
-                                                            len: 2,
+                                                    ),
+                                                    operator: Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 2,
+                                                            },
+                                                            kind: Plus,
                                                         },
-                                                        kind: Int(
-                                                            2,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                },
-                            },
-                        ),
-                        operator: Ok(
-                            Node {
-                                span: Span {
-                                    len: 2,
-                                },
-                                kind: Plus,
-                            },
-                        ),
-                        rhs: Ok(
-                            Node {
-                                span: Span {
-                                    len: 1,
-                                },
-                                kind: Value(
-                                    Ok(
-                                        Node {
-                                            span: Span {
-                                                len: 1,
+                                                    ),
+                                                    rhs: Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 1,
+                                                            },
+                                                            kind: Value(
+                                                                Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 1,
+                                                                        },
+                                                                        kind: Int(
+                                                                            3,
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
                                             },
-                                            kind: Int(
-                                                3,
-                                            ),
-                                        },
+                                        ),
                                     ),
-                                ),
-                            },
-                        ),
+                                },
+                            ),
+                        ],
                     },
                 },
             ),

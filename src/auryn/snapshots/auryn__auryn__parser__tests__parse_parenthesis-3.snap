@@ -5,29 +5,30 @@ expression: "verify(\"1 + (2 + 3)\")"
 AnnotatedParserOutput {
     ast: Some(
         0..11 Root
-        |0..11 Expression
-        ||0..2 Expression
-        |||0..2 Number(1)
-        ||||Number
+        |0..11 Block
+        ||0..11 Expression
+        |||0..2 Expression
+        ||||0..2 Number(1)
+        |||||Number
+        |||||Whitespace
+        |||2..4 BinaryOperator(Plus)
+        ||||Plus
         ||||Whitespace
-        ||2..4 BinaryOperator(Plus)
-        |||Plus
-        |||Whitespace
-        ||4..11 Expression
-        |||4..11 Parenthesis
-        ||||ParensOpen
-        ||||5..10 Expression
-        |||||5..7 Expression
-        ||||||5..7 Number(2)
-        |||||||Number
+        |||4..11 Expression
+        ||||4..11 Parenthesis
+        |||||ParensOpen
+        |||||5..10 Expression
+        ||||||5..7 Expression
+        |||||||5..7 Number(2)
+        ||||||||Number
+        ||||||||Whitespace
+        ||||||7..9 BinaryOperator(Plus)
+        |||||||Plus
         |||||||Whitespace
-        |||||7..9 BinaryOperator(Plus)
-        ||||||Plus
-        ||||||Whitespace
-        |||||9..10 Expression
-        ||||||9..10 Number(3)
-        |||||||Number
-        ||||ParensClose
+        ||||||9..10 Expression
+        |||||||9..10 Number(3)
+        ||||||||Number
+        |||||ParensClose
         ,
     ),
     diagnostics: [],

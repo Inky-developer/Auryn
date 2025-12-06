@@ -8,53 +8,73 @@ Ok(
             len: 8,
         },
         kind: Root {
-            expression: Ok(
+            block: Ok(
                 Node {
                     span: Span {
                         len: 8,
                     },
-                    kind: Value(
-                        Ok(
-                            Node {
-                                span: Span {
-                                    len: 8,
-                                },
-                                kind: FunctionCall(
-                                    Ok(
-                                        Node {
-                                            span: Span {
-                                                len: 8,
-                                            },
-                                            kind: FunctionCall {
-                                                ident: "print",
-                                                arguments: [
+                    kind: Block {
+                        statements: [
+                            Ok(
+                                Node {
+                                    span: Span {
+                                        len: 8,
+                                    },
+                                    kind: Expression(
+                                        Ok(
+                                            Node {
+                                                span: Span {
+                                                    len: 8,
+                                                },
+                                                kind: Value(
                                                     Ok(
                                                         Node {
                                                             span: Span {
-                                                                len: 1,
+                                                                len: 8,
                                                             },
-                                                            kind: Value(
+                                                            kind: FunctionCall(
                                                                 Ok(
                                                                     Node {
                                                                         span: Span {
-                                                                            len: 1,
+                                                                            len: 8,
                                                                         },
-                                                                        kind: Int(
-                                                                            1,
-                                                                        ),
+                                                                        kind: FunctionCall {
+                                                                            ident: "print",
+                                                                            arguments: [
+                                                                                Ok(
+                                                                                    Node {
+                                                                                        span: Span {
+                                                                                            len: 1,
+                                                                                        },
+                                                                                        kind: Value(
+                                                                                            Ok(
+                                                                                                Node {
+                                                                                                    span: Span {
+                                                                                                        len: 1,
+                                                                                                    },
+                                                                                                    kind: Int(
+                                                                                                        1,
+                                                                                                    ),
+                                                                                                },
+                                                                                            ),
+                                                                                        ),
+                                                                                    },
+                                                                                ),
+                                                                            ],
+                                                                        },
                                                                     },
                                                                 ),
                                                             ),
                                                         },
                                                     ),
-                                                ],
+                                                ),
                                             },
-                                        },
+                                        ),
                                     ),
-                                ),
-                            },
-                        ),
-                    ),
+                                },
+                            ),
+                        ],
+                    },
                 },
             ),
         },
