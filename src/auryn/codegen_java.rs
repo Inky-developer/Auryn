@@ -1,12 +1,16 @@
 use crate::{
     auryn::{
         ast::ast_parser::{
-            AstError, BinaryOperation, Block, Expression, NodeOrError, Root, Statement, Value,
+            Assignment, AstError, BinaryOperation, Block, Expression, NodeOrError, Root, Statement,
+            Value,
         },
+        fast_map::FastMap,
         tokenizer::BinaryOperatorToken,
     },
     java::{
-        assembler::{Assembler, ConstantValue, Instruction, MethodDescriptor},
+        assembler::{
+            Assembler, ConstantValue, Instruction, MethodDescriptor, VariableId, primitive,
+        },
         class::ClassData,
     },
 };
@@ -39,12 +43,14 @@ pub fn query_class(class_name: String, ast: &NodeOrError<Root>) -> Result<ClassD
 
 struct Generator {
     assembler: Assembler,
+    variable_map: FastMap<String, VariableId<primitive::Integer>>,
 }
 
 impl Generator {
     pub fn new(class_name: String) -> Self {
         Self {
             assembler: Assembler::new(class_name),
+            variable_map: FastMap::default(),
         }
     }
 
@@ -98,9 +104,32 @@ impl Generator {
     }
 
     fn generate_statement(&mut self, statement: &Statement) -> CodegenResult {
-        let Statement::Expression(expression) = statement;
-        let expression = expression.as_ref().as_ref()?;
-        self.generate_expression(&expression.kind)
+        match statement {
+            Statement::Assignement(assignment) => {
+                let assignment = assignment.as_ref().as_ref()?;
+                self.generate_assignment(&assignment.kind)
+            }
+            Statement::Expression(expression) => {
+                let expression = expression.as_ref().as_ref()?;
+                self.generate_expression(&expression.kind)
+            }
+        }
+    }
+
+    fn generate_assignment(&mut self, assignment: &Assignment) -> CodegenResult {
+        self.generate_expression(assignment.expression()?)?;
+
+        assert!(
+            !self.variable_map.contains_key(&assignment.ident),
+            "Trying to redefine a variable"
+        );
+        let variable_id = self.assembler.alloc_variable();
+        self.variable_map
+            .insert(assignment.ident.clone(), variable_id);
+
+        self.assembler.add(Instruction::IStore(variable_id));
+
+        Ok(())
     }
 
     fn generate_expression(&mut self, expression: &Expression) -> CodegenResult {
@@ -137,6 +166,14 @@ impl Generator {
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::Integer(number.kind.value),
                 });
+            }
+            Value::Ident(ident) => {
+                let ident = ident.as_ref().as_ref()?;
+                let local_variable_id = *self
+                    .variable_map
+                    .get(&ident.kind.ident)
+                    .expect("Trying to access variable which was not defined");
+                self.assembler.add(Instruction::ILoad(local_variable_id));
             }
             Value::Parenthesis(parenthesis) => {
                 let parenthesis = parenthesis.as_ref().as_ref()?;
@@ -181,5 +218,17 @@ mod tests {
     #[test]
     fn test_print() {
         insta::assert_debug_snapshot!(generate_class("print(2 * 3)"));
+    }
+
+    #[test]
+    fn test_assignment() {
+        insta::assert_debug_snapshot!(generate_class("let a = 1"));
+        insta::assert_debug_snapshot!(generate_class("let a = 1\nprint(a)"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_reject_invalid_variable() {
+        insta::assert_debug_snapshot!(generate_class("let a = a"));
     }
 }

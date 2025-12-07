@@ -205,7 +205,12 @@ create_ast_parser! {
     }
 
     pub enum Statement @ SyntaxNodeKind::Statement {
+        Assignement(NodeRef<Assignment>: SyntaxNodeKind::Assignment {..}),
         Expression(NodeRef<Expression>: SyntaxNodeKind::Expression),
+    }
+
+    pub struct Assignment @ SyntaxNodeKind::Assignment { ident: String } {
+        pub expression: NodeRef<Expression>
     }
 
     pub enum Expression @ SyntaxNodeKind::Expression {
@@ -221,11 +226,14 @@ create_ast_parser! {
 
     pub enum Value @ SyntaxNodeKind::Value {
         Number(NodeRef<Number>: SyntaxNodeKind::Number {..}),
+        Ident(NodeRef<Ident>: SyntaxNodeKind::Ident {..} ),
         FunctionCall(NodeRef<FunctionCall>: SyntaxNodeKind::FunctionCall {..}),
         Parenthesis(NodeRef<Parenthesis>: SyntaxNodeKind::Parenthesis),
     }
 
     pub struct Number @ SyntaxNodeKind::Number { value: i32 } {}
+
+    pub struct Ident @ SyntaxNodeKind::Ident { ident: String } {}
 
     pub struct FunctionCall @ SyntaxNodeKind::FunctionCall { ident: String } {
         pub arguments: Vec<NodeOrError<Expression>>

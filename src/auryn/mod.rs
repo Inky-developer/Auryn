@@ -2,6 +2,7 @@ use std::iter::Sum;
 
 pub mod ast;
 pub mod codegen_java;
+pub mod fast_map;
 pub mod parser;
 pub mod syntax_tree;
 pub mod tokenizer;

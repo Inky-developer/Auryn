@@ -1,0 +1,30 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\"let some_text = 2\")"
+---
+[
+    Token {
+        kind: KeywordLet,
+        text: "let ",
+    },
+    Token {
+        kind: Identifier,
+        text: "some_text",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Equal,
+        text: "=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Number,
+        text: "2",
+    },
+]

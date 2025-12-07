@@ -1,0 +1,153 @@
+---
+source: src/auryn/codegen_java.rs
+expression: "generate_class(\"let a = 1\\nprint(a)\")"
+---
+ClassData {
+    constant_pool: [
+        Utf8(
+            "Helloworld",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+        },
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                3,
+            ),
+        },
+        Integer {
+            integer: 1,
+        },
+        Utf8(
+            "java/lang/System",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                6,
+            ),
+        },
+        Utf8(
+            "out",
+        ),
+        Utf8(
+            "Ljava/io/PrintStream;",
+        ),
+        NameAndType {
+            name_index: ConstantPoolIndex(
+                8,
+            ),
+            type_index: ConstantPoolIndex(
+                9,
+            ),
+        },
+        FieldRef {
+            class_index: ConstantPoolIndex(
+                7,
+            ),
+            name_and_type_index: ConstantPoolIndex(
+                10,
+            ),
+        },
+        Utf8(
+            "java/io/PrintStream",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                12,
+            ),
+        },
+        Utf8(
+            "println",
+        ),
+        Utf8(
+            "(I)V",
+        ),
+        NameAndType {
+            name_index: ConstantPoolIndex(
+                14,
+            ),
+            type_index: ConstantPoolIndex(
+                15,
+            ),
+        },
+        MethodRef {
+            class_index: ConstantPoolIndex(
+                13,
+            ),
+            name_and_type_index: ConstantPoolIndex(
+                16,
+            ),
+        },
+        Utf8(
+            "main",
+        ),
+        Utf8(
+            "([Ljava/lang/String;)V",
+        ),
+        Utf8(
+            "Code",
+        ),
+    ],
+    this_class: ConstantPoolIndex(
+        2,
+    ),
+    super_class: ConstantPoolIndex(
+        4,
+    ),
+    methods: [
+        Method {
+            flags: 9,
+            name_index: ConstantPoolIndex(
+                18,
+            ),
+            descriptor_index: ConstantPoolIndex(
+                19,
+            ),
+            attributes: [
+                AttributeInfo {
+                    name_index: ConstantPoolIndex(
+                        20,
+                    ),
+                    attribute: Code(
+                        CodeAttribute {
+                            max_locals: 3,
+                            code: [
+                                Ldc(
+                                    5,
+                                ),
+                                IStore(
+                                    0,
+                                ),
+                                ILoad(
+                                    0,
+                                ),
+                                IStore(
+                                    1,
+                                ),
+                                GetStatic(
+                                    ConstantPoolIndex(
+                                        11,
+                                    ),
+                                ),
+                                ILoad(
+                                    1,
+                                ),
+                                InvokeVirtual(
+                                    ConstantPoolIndex(
+                                        17,
+                                    ),
+                                ),
+                                Return,
+                            ],
+                        },
+                    ),
+                },
+            ],
+        },
+    ],
+}

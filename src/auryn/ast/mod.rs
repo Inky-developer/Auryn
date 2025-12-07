@@ -38,4 +38,14 @@ mod tests {
     fn test_expressions() {
         insta::assert_debug_snapshot!(parse("1 + (2 + 3)"));
     }
+
+    #[test]
+    fn test_assignment() {
+        insta::assert_debug_snapshot!(parse("let test = 1"));
+    }
+
+    #[test]
+    fn test_variable() {
+        insta::assert_debug_snapshot!(parse("print(test)"));
+    }
 }

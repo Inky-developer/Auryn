@@ -1,0 +1,74 @@
+---
+source: src/auryn/codegen_java.rs
+expression: "generate_class(\"let a = 1\")"
+---
+ClassData {
+    constant_pool: [
+        Utf8(
+            "Helloworld",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+        },
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                3,
+            ),
+        },
+        Integer {
+            integer: 1,
+        },
+        Utf8(
+            "main",
+        ),
+        Utf8(
+            "([Ljava/lang/String;)V",
+        ),
+        Utf8(
+            "Code",
+        ),
+    ],
+    this_class: ConstantPoolIndex(
+        2,
+    ),
+    super_class: ConstantPoolIndex(
+        4,
+    ),
+    methods: [
+        Method {
+            flags: 9,
+            name_index: ConstantPoolIndex(
+                6,
+            ),
+            descriptor_index: ConstantPoolIndex(
+                7,
+            ),
+            attributes: [
+                AttributeInfo {
+                    name_index: ConstantPoolIndex(
+                        8,
+                    ),
+                    attribute: Code(
+                        CodeAttribute {
+                            max_locals: 2,
+                            code: [
+                                Ldc(
+                                    5,
+                                ),
+                                IStore(
+                                    0,
+                                ),
+                                Return,
+                            ],
+                        },
+                    ),
+                },
+            ],
+        },
+    ],
+}

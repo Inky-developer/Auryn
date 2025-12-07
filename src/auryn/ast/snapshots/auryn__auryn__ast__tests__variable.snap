@@ -1,0 +1,91 @@
+---
+source: src/auryn/ast/mod.rs
+expression: "parse(\"print(test)\")"
+---
+Ok(
+    Node {
+        span: Span {
+            len: 11,
+        },
+        kind: Root {
+            block: Ok(
+                Node {
+                    span: Span {
+                        len: 11,
+                    },
+                    kind: Block {
+                        statements: [
+                            Ok(
+                                Node {
+                                    span: Span {
+                                        len: 11,
+                                    },
+                                    kind: Expression(
+                                        Ok(
+                                            Node {
+                                                span: Span {
+                                                    len: 11,
+                                                },
+                                                kind: Value(
+                                                    Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 11,
+                                                            },
+                                                            kind: FunctionCall(
+                                                                Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 11,
+                                                                        },
+                                                                        kind: FunctionCall {
+                                                                            ident: "print",
+                                                                            arguments: [
+                                                                                Ok(
+                                                                                    Node {
+                                                                                        span: Span {
+                                                                                            len: 4,
+                                                                                        },
+                                                                                        kind: Value(
+                                                                                            Ok(
+                                                                                                Node {
+                                                                                                    span: Span {
+                                                                                                        len: 4,
+                                                                                                    },
+                                                                                                    kind: Ident(
+                                                                                                        Ok(
+                                                                                                            Node {
+                                                                                                                span: Span {
+                                                                                                                    len: 4,
+                                                                                                                },
+                                                                                                                kind: Ident {
+                                                                                                                    ident: "test",
+                                                                                                                },
+                                                                                                            },
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                },
+                                                                                            ),
+                                                                                        ),
+                                                                                    },
+                                                                                ),
+                                                                            ],
+                                                                        },
+                                                                    },
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                },
+            ),
+        },
+    },
+)

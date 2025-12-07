@@ -1,0 +1,25 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"print(hello)\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..12 Root
+        |0..12 Block
+        ||0..12 StatementList
+        |||0..12 Statement
+        ||||0..12 Expression
+        |||||0..12 Value
+        ||||||0..12 FunctionCall { ident: "print" }
+        |||||||Identifier
+        |||||||ParensOpen
+        |||||||6..11 ParameterList
+        ||||||||6..11 Expression
+        |||||||||6..11 Value
+        ||||||||||6..11 Ident { ident: "hello" }
+        |||||||||||Identifier
+        |||||||ParensClose
+        ,
+    ),
+    diagnostics: [],
+}

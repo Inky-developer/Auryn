@@ -1,0 +1,71 @@
+---
+source: src/auryn/ast/mod.rs
+expression: "parse(\"let test = 1\")"
+---
+Ok(
+    Node {
+        span: Span {
+            len: 12,
+        },
+        kind: Root {
+            block: Ok(
+                Node {
+                    span: Span {
+                        len: 12,
+                    },
+                    kind: Block {
+                        statements: [
+                            Ok(
+                                Node {
+                                    span: Span {
+                                        len: 12,
+                                    },
+                                    kind: Assignement(
+                                        Ok(
+                                            Node {
+                                                span: Span {
+                                                    len: 12,
+                                                },
+                                                kind: Assignment {
+                                                    ident: "test",
+                                                    expression: Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 1,
+                                                            },
+                                                            kind: Value(
+                                                                Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 1,
+                                                                        },
+                                                                        kind: Number(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 1,
+                                                                                    },
+                                                                                    kind: Number {
+                                                                                        value: 1,
+                                                                                    },
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                },
+            ),
+        },
+    },
+)

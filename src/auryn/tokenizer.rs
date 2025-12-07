@@ -19,8 +19,10 @@ pub enum TokenKind {
     Identifier,
     Plus,
     Times,
+    Equal,
     ParensOpen,
     ParensClose,
+    KeywordLet,
     Whitespace,
     Newline,
     Error,
@@ -85,6 +87,16 @@ impl<'a> Tokenizer<'a> {
                 .consume_while(|char| matches!(char, '0'..='9' | 'a'..='z' | 'A'..='Z' | '_')),
         })
     }
+
+    fn consume_text(&mut self, arg: &str) -> &'a str {
+        let (text, rest) = self.input.split_at(arg.len());
+        assert_eq!(
+            text, arg,
+            "Could not consume text, expected {arg} got {text}"
+        );
+        self.input = rest;
+        text
+    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
@@ -96,10 +108,17 @@ impl<'a> Iterator for Tokenizer<'a> {
         let kind = match first_char {
             '+' => TokenKind::Plus,
             '*' => TokenKind::Times,
+            '=' => TokenKind::Equal,
             '(' => TokenKind::ParensOpen,
             ')' => TokenKind::ParensClose,
             ',' => TokenKind::Comma,
             '\n' => TokenKind::Newline,
+            'l' if self.input.starts_with("let ") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordLet,
+                    text: self.consume_text("let "),
+                });
+            }
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
             char if char.is_ascii_digit() => return self.consume_number(),
@@ -129,5 +148,6 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
+        insta::assert_debug_snapshot!(tokenize("let some_text = 2"));
     }
 }

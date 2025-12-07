@@ -27,6 +27,8 @@ pub enum SyntaxNodeKind {
     FunctionCall { ident: String },
     StatementList,
     ParameterList,
+    Assignment { ident: String },
+    Ident { ident: String },
 }
 
 #[derive(Debug)]

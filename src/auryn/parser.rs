@@ -286,9 +286,28 @@ impl Parser<'_> {
 
     fn parse_statement(&mut self) -> ParseResult {
         let watcher = self.push_node();
-        self.parse_expression()?;
-        self.finish_node(watcher, SyntaxNodeKind::Statement);
 
+        match self.peek().kind {
+            TokenKind::KeywordLet => self.parse_assignment()?,
+            _ => self.parse_expression()?,
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::Statement);
+        Ok(())
+    }
+
+    fn parse_assignment(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordLet)?;
+        self.consume_whitespace();
+        let ident = self.expect(TokenKind::Identifier)?.to_string();
+        self.consume_whitespace();
+        self.expect(TokenKind::Equal)?;
+        self.consume_whitespace();
+        self.parse_expression()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Assignment { ident });
         Ok(())
     }
 
@@ -373,18 +392,32 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         let text = self.expect(TokenKind::Identifier)?;
-        self.expect(TokenKind::ParensOpen)?;
-        if let Err(()) = self.parse_parameter_list() {
-            // self.recover(|k| matches!(k, TokenKind::ParensClose))?;
-        }
-        self.expect(TokenKind::ParensClose)?;
+        self.consume_whitespace();
 
-        self.finish_node(
-            watcher,
-            SyntaxNodeKind::FunctionCall {
-                ident: text.to_string(),
-            },
-        );
+        match self.peek().kind {
+            TokenKind::ParensOpen => {
+                self.expect(TokenKind::ParensOpen)?;
+                if let Err(()) = self.parse_parameter_list() {
+                    // self.recover(|k| matches!(k, TokenKind::ParensClose))?;
+                }
+                self.expect(TokenKind::ParensClose)?;
+
+                self.finish_node(
+                    watcher,
+                    SyntaxNodeKind::FunctionCall {
+                        ident: text.to_string(),
+                    },
+                );
+            }
+            _ => {
+                self.finish_node(
+                    watcher,
+                    SyntaxNodeKind::Ident {
+                        ident: text.to_string(),
+                    },
+                );
+            }
+        }
 
         Ok(())
     }
@@ -490,6 +523,16 @@ mod tests {
     fn test_parse_function_call() {
         insta::assert_debug_snapshot!(verify("print(1)"));
         insta::assert_debug_snapshot!(verify("print(1)\n"));
+    }
+
+    #[test]
+    fn test_parse_assignment() {
+        insta::assert_debug_snapshot!(verify("let helloworld = 1\n"));
+    }
+
+    #[test]
+    fn test_variable() {
+        insta::assert_debug_snapshot!(verify("print(hello)"));
     }
 
     #[test]
