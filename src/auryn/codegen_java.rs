@@ -60,7 +60,9 @@ impl Generator {
 
     pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
         let root = root.as_ref().map_err(Clone::clone)?;
+        let start = self.assembler.add(Instruction::Nop);
         self.generate_root(&root.kind)?;
+        self.assembler.add(Instruction::Goto(start));
         self.assembler.add(Instruction::ReturnNull);
         Ok(())
     }
@@ -154,7 +156,7 @@ impl Generator {
         match operation.operator()? {
             BinaryOperatorToken::Plus => self.assembler.add(Instruction::IAdd),
             BinaryOperatorToken::Times => self.assembler.add(Instruction::IMul),
-        }
+        };
 
         Ok(())
     }

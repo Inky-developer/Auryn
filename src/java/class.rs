@@ -106,6 +106,11 @@ impl ConstantPoolEntry {
     }
 }
 
+/// Marks the index of an index that should be jumped to.
+/// During serialization, this is replaced with the actual byte index.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct JumpPoint(pub u16);
+
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
     /// Static must be a FieldRef
@@ -125,10 +130,12 @@ pub enum Instruction {
     IMul,
     IStore(u16),
     ILoad(u16),
+    Goto(JumpPoint),
+    Nop,
 }
 
 impl Instruction {
-    pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
+    pub fn serialize(&self, buf: &mut impl Write, jump_points: &[u32]) -> io::Result<()> {
         match *self {
             Instruction::GetStatic(reference) => {
                 buf.write_all(&[0xb2])?;
@@ -173,6 +180,18 @@ impl Instruction {
                     .expect("TODO: Implement support for wide loads");
                 buf.write_all(&[0x15, index])?;
             }
+            Instruction::Goto(jump_point) => {
+                let byte_index = jump_points[jump_point.0 as usize] as i64;
+                let own_index = jump_points.last().copied().unwrap_or(0) as i64;
+                let offset: i16 = (byte_index - own_index)
+                    .try_into()
+                    .expect("Jump should not be too long");
+                buf.write_all(&[0xa7])?;
+                buf.write_all(&offset.to_be_bytes())?;
+            }
+            Instruction::Nop => {
+                buf.write_all(&[0x0])?;
+            }
         }
 
         Ok(())
@@ -194,8 +213,16 @@ impl CodeAttribute {
         buf.write_all(&self.max_locals.to_be_bytes())?;
 
         let mut code_buf = Vec::new();
+        // Lookup from instruction index to byte index
+        let mut jump_points = vec![0];
         for instruction in &self.code {
-            instruction.serialize(&mut code_buf)?;
+            instruction.serialize(&mut code_buf, &jump_points)?;
+            jump_points.push(
+                code_buf
+                    .len()
+                    .try_into()
+                    .expect("Instruction buffer too long"),
+            );
         }
         assert!(code_buf.len() < 65536, "Code buffer is too large");
         buf.write_all(&(code_buf.len() as u32).to_be_bytes())?;

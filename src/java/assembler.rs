@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::java::class;
+use crate::java::class::{self, JumpPoint};
 
 #[derive(Debug, Clone)]
 pub struct FieldDescriptor(pub String);
@@ -47,6 +47,8 @@ pub enum Instruction {
     IMul,
     IStore(VariableId<primitive::Integer>),
     ILoad(VariableId<primitive::Integer>),
+    Goto(JumpPoint),
+    Nop,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -57,6 +59,7 @@ pub struct Assembler {
     class_data: class::ClassData,
     instructions: Vec<class::Instruction>,
     next_variable_index: u16,
+    current_instruction_index: u16,
 }
 
 impl Assembler {
@@ -65,6 +68,7 @@ impl Assembler {
             class_data: class::ClassData::new(class_name),
             instructions: Vec::new(),
             next_variable_index: 0,
+            current_instruction_index: 0,
         }
     }
 
@@ -101,7 +105,7 @@ impl Assembler {
         }
     }
 
-    pub fn add(&mut self, instruction: Instruction) {
+    pub fn add(&mut self, instruction: Instruction) -> JumpPoint {
         match instruction {
             Instruction::GetStatic {
                 class_name,
@@ -149,7 +153,14 @@ impl Assembler {
                 self.instructions.push(class::Instruction::IStore(index.0))
             }
             Instruction::ILoad(index) => self.instructions.push(class::Instruction::ILoad(index.0)),
+            Instruction::Goto(jump_point) => {
+                self.instructions.push(class::Instruction::Goto(jump_point))
+            }
+            Instruction::Nop => self.instructions.push(class::Instruction::Nop),
         }
+
+        let jump_index = self.instructions.len() - 1;
+        JumpPoint(jump_index.try_into().unwrap())
     }
 
     pub fn alloc_variable<T: primitive::IsPrimitiveType>(&mut self) -> VariableId<T> {
