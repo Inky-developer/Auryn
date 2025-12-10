@@ -5,19 +5,11 @@ expression: "generate_class(\"let a = 1\")"
 ClassData {
     constant_pool: [
         Utf8(
-            "Helloworld",
+            "[Ljava/lang/String;",
         ),
         Class {
             name_index: ConstantPoolIndex(
                 1,
-            ),
-        },
-        Utf8(
-            "java/lang/Object",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                3,
             ),
         },
         Integer {
@@ -32,38 +24,85 @@ ClassData {
         Utf8(
             "Code",
         ),
+        Utf8(
+            "StackMapTable",
+        ),
+        Utf8(
+            "Helloworld",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                8,
+            ),
+        },
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                10,
+            ),
+        },
     ],
     this_class: ConstantPoolIndex(
-        2,
+        9,
     ),
     super_class: ConstantPoolIndex(
-        4,
+        11,
     ),
     methods: [
         Method {
             flags: 9,
             name_index: ConstantPoolIndex(
-                6,
+                4,
             ),
             descriptor_index: ConstantPoolIndex(
-                7,
+                5,
             ),
             attributes: [
                 AttributeInfo {
                     name_index: ConstantPoolIndex(
-                        8,
+                        6,
                     ),
                     attribute: Code(
                         CodeAttribute {
-                            max_locals: 2,
+                            max_locals: 3,
                             code: [
                                 Ldc(
-                                    5,
+                                    3,
                                 ),
                                 IStore(
-                                    0,
+                                    1,
                                 ),
-                                Return,
+                                Goto(
+                                    JumpPoint(
+                                        0,
+                                    ),
+                                ),
+                            ],
+                            attributes: [
+                                AttributeInfo {
+                                    name_index: ConstantPoolIndex(
+                                        7,
+                                    ),
+                                    attribute: StackMapTable(
+                                        StackMapTableAttribute {
+                                            entries: [
+                                                Full {
+                                                    offset_delta: 0,
+                                                    locals: [
+                                                        Object {
+                                                            constant_pool_index: ConstantPoolIndex(
+                                                                2,
+                                                            ),
+                                                        },
+                                                    ],
+                                                    stack: [],
+                                                },
+                                            ],
+                                        },
+                                    ),
+                                },
                             ],
                         },
                     ),

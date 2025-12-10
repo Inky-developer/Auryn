@@ -4,15 +4,16 @@ use crate::{
             Assignment, AstError, BinaryOperation, Block, Expression, NodeOrError, Root, Statement,
             Value,
         },
-        fast_map::FastMap,
         tokenizer::BinaryOperatorToken,
     },
     java::{
         assembler::{
-            Assembler, ConstantValue, Instruction, MethodDescriptor, VariableId, primitive,
+            Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, VariableId,
+            primitive,
         },
         class::ClassData,
     },
+    utils::fast_map::FastMap,
 };
 
 #[derive(Debug)]
@@ -35,10 +36,10 @@ impl From<&AstError> for CodegenError {
 pub type CodegenResult<T = ()> = Result<T, CodegenError>;
 
 pub fn query_class(class_name: String, ast: &NodeOrError<Root>) -> Result<ClassData, CodegenError> {
-    let mut generator = Generator::new(class_name);
+    let mut generator = Generator::new();
     generator.generate_from_ast(ast)?;
 
-    Ok(generator.finish())
+    Ok(generator.finish(class_name))
 }
 
 struct Generator {
@@ -47,23 +48,22 @@ struct Generator {
 }
 
 impl Generator {
-    pub fn new(class_name: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            assembler: Assembler::new(class_name),
+            assembler: Assembler::new(),
             variable_map: FastMap::default(),
         }
     }
 
-    pub fn finish(self) -> ClassData {
-        self.assembler.assemble()
+    pub fn finish(self, class_name: String) -> ClassData {
+        self.assembler.assemble(class_name)
     }
 
     pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
         let root = root.as_ref().map_err(Clone::clone)?;
-        let start = self.assembler.add(Instruction::Nop);
+        let start = self.assembler.add_jump_target();
         self.generate_root(&root.kind)?;
         self.assembler.add(Instruction::Goto(start));
-        self.assembler.add(Instruction::ReturnNull);
         Ok(())
     }
 }
@@ -76,15 +76,17 @@ impl Generator {
             Instruction::GetStatic {
                 class_name: "java/lang/System".to_string(),
                 name: "out".to_string(),
-                field_type: crate::java::assembler::FieldDescriptor(
-                    "Ljava/io/PrintStream;".to_string(),
-                ),
+                field_type: FieldDescriptor::Object("java/io/PrintStream".to_string()),
             },
             Instruction::ILoad(result_id),
             Instruction::InvokeVirtual {
                 class_name: "java/io/PrintStream".to_string(),
                 name: "println".to_string(),
-                method_type: MethodDescriptor("(I)V".to_string()),
+                // method_type: MethodDescriptor("(I)V".to_string()),
+                method_type: MethodDescriptor {
+                    arguments: vec![FieldDescriptor::Integer],
+                    return_type: FieldDescriptor::Void,
+                },
             },
         ]);
     }

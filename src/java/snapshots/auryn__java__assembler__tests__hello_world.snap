@@ -5,7 +5,7 @@ expression: class_data
 ClassData {
     constant_pool: [
         Utf8(
-            "Helloworld",
+            "[Ljava/lang/String;",
         ),
         Class {
             name_index: ConstantPoolIndex(
@@ -13,7 +13,7 @@ ClassData {
             ),
         },
         Utf8(
-            "java/lang/Object",
+            "java/io/PrintStream",
         ),
         Class {
             name_index: ConstantPoolIndex(
@@ -51,18 +51,18 @@ ClassData {
             ),
         },
         Utf8(
-            "Hello World!",
+            "java/lang/String",
         ),
-        String {
-            string_index: ConstantPoolIndex(
+        Class {
+            name_index: ConstantPoolIndex(
                 11,
             ),
         },
         Utf8(
-            "java/io/PrintStream",
+            "Hello World!",
         ),
-        Class {
-            name_index: ConstantPoolIndex(
+        String {
+            string_index: ConstantPoolIndex(
                 13,
             ),
         },
@@ -82,7 +82,7 @@ ClassData {
         },
         MethodRef {
             class_index: ConstantPoolIndex(
-                14,
+                4,
             ),
             name_and_type_index: ConstantPoolIndex(
                 17,
@@ -97,12 +97,31 @@ ClassData {
         Utf8(
             "Code",
         ),
+        Utf8(
+            "StackMapTable",
+        ),
+        Utf8(
+            "Helloworld",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                23,
+            ),
+        },
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                25,
+            ),
+        },
     ],
     this_class: ConstantPoolIndex(
-        2,
+        24,
     ),
     super_class: ConstantPoolIndex(
-        4,
+        26,
     ),
     methods: [
         Method {
@@ -120,7 +139,7 @@ ClassData {
                     ),
                     attribute: Code(
                         CodeAttribute {
-                            max_locals: 1,
+                            max_locals: 2,
                             code: [
                                 GetStatic(
                                     ConstantPoolIndex(
@@ -128,7 +147,7 @@ ClassData {
                                     ),
                                 ),
                                 Ldc(
-                                    12,
+                                    14,
                                 ),
                                 InvokeVirtual(
                                     ConstantPoolIndex(
@@ -136,6 +155,18 @@ ClassData {
                                     ),
                                 ),
                                 Return,
+                            ],
+                            attributes: [
+                                AttributeInfo {
+                                    name_index: ConstantPoolIndex(
+                                        22,
+                                    ),
+                                    attribute: StackMapTable(
+                                        StackMapTableAttribute {
+                                            entries: [],
+                                        },
+                                    ),
+                                },
                             ],
                         },
                     ),
