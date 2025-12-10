@@ -1,4 +1,4 @@
-use std::{cell::Cell, fmt::Debug, iter::Peekable, ops::Deref, rc::Rc};
+use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
 
 use crate::auryn::{
     Span,
@@ -81,7 +81,8 @@ impl Drop for ParserFrameWatcher {
 }
 
 pub struct Parser<'a> {
-    input: Peekable<Tokenizer<'a>>,
+    input: Vec<Token<'a>>,
+    index: usize,
     node_stack: Vec<ParserStackNode>,
     has_errors: bool,
     skipped_frames: ParserSkippedFrames,
@@ -92,7 +93,8 @@ type ParseResult<T = ()> = Result<T, ()>;
 impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
-            input: Tokenizer::new(input).peekable(),
+            input: Tokenizer::new(input).collect(),
+            index: 0,
             node_stack: Vec::new(),
             has_errors: false,
             skipped_frames: ParserSkippedFrames(Rc::new(Cell::new(0))),
@@ -137,10 +139,24 @@ impl<'a> Parser<'a> {
         token.diagnostics.push(kind)
     }
 
-    fn peek(&mut self) -> Token<'a> {
-        self.input.peek().copied().unwrap_or(Token {
+    fn peek(&self) -> Token<'a> {
+        self.input.get(self.index).copied().unwrap_or(Token {
             kind: TokenKind::EndOfInput,
             text: "",
+        })
+    }
+
+    fn multipeek<const N: usize>(&self) -> [TokenKind; N] {
+        let mut iter = self
+            .input
+            .iter()
+            .skip(self.index)
+            .copied()
+            .filter(|token| !matches!(token.kind, TokenKind::Whitespace));
+        std::array::from_fn(|_| {
+            iter.next()
+                .map(|token| token.kind)
+                .unwrap_or(TokenKind::EndOfInput)
         })
     }
 
@@ -154,10 +170,11 @@ impl<'a> Parser<'a> {
     }
 
     fn consume(&mut self) -> Token<'a> {
-        let token = self.input.next().unwrap_or(Token {
+        let token = self.input.get(self.index).copied().unwrap_or(Token {
             kind: TokenKind::EndOfInput,
             text: "",
         });
+        self.index = usize::min(self.input.len(), self.index + 1);
         let len: u32 = token.text.len().try_into().expect("Token too long");
         let node = self.node_stack.last_mut().expect("Should have a node");
         node.children.push(SyntaxItem::Token(SyntaxToken {
@@ -289,7 +306,13 @@ impl Parser<'_> {
 
         match self.peek().kind {
             TokenKind::KeywordLet => self.parse_assignment()?,
-            _ => self.parse_expression()?,
+            _ => {
+                if let [TokenKind::Identifier, TokenKind::Equal] = self.multipeek() {
+                    self.parse_variable_update()?;
+                } else {
+                    self.parse_expression()?
+                }
+            }
         }
 
         self.finish_node(watcher, SyntaxNodeKind::Statement);
@@ -308,6 +331,20 @@ impl Parser<'_> {
         self.parse_expression()?;
 
         self.finish_node(watcher, SyntaxNodeKind::Assignment { ident });
+        Ok(())
+    }
+
+    fn parse_variable_update(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        let ident = self.expect(TokenKind::Identifier)?.to_string();
+        self.consume_whitespace();
+        self.expect(TokenKind::Equal)?;
+        self.consume_whitespace();
+        self.parse_expression()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::VariableUpdate { ident });
+
         Ok(())
     }
 
@@ -533,6 +570,11 @@ mod tests {
     #[test]
     fn test_variable() {
         insta::assert_debug_snapshot!(verify("print(hello)"));
+    }
+
+    #[test]
+    fn test_variable_update() {
+        insta::assert_debug_snapshot!(verify("a = 3"));
     }
 
     #[test]

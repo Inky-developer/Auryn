@@ -29,6 +29,7 @@ pub enum SyntaxNodeKind {
     ParameterList,
     Assignment { ident: String },
     Ident { ident: String },
+    VariableUpdate { ident: String },
 }
 
 #[derive(Debug)]

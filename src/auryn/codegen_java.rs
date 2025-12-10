@@ -2,7 +2,7 @@ use crate::{
     auryn::{
         ast::ast_parser::{
             Assignment, AstError, BinaryOperation, Block, Expression, NodeOrError, Root, Statement,
-            Value,
+            Value, VariableUpdate,
         },
         tokenizer::BinaryOperatorToken,
     },
@@ -113,6 +113,10 @@ impl Generator {
                 let assignment = assignment.as_ref().as_ref()?;
                 self.generate_assignment(&assignment.kind)
             }
+            Statement::VariableUpdate(update) => {
+                let update = update.as_ref().as_ref()?;
+                self.generate_update(&update.kind)
+            }
             Statement::Expression(expression) => {
                 let expression = expression.as_ref().as_ref()?;
                 self.generate_expression(&expression.kind)
@@ -131,6 +135,15 @@ impl Generator {
         self.variable_map
             .insert(assignment.ident.clone(), variable_id);
 
+        self.assembler.add(Instruction::IStore(variable_id));
+
+        Ok(())
+    }
+
+    fn generate_update(&mut self, update: &VariableUpdate) -> CodegenResult {
+        self.generate_expression(update.expression()?)?;
+
+        let variable_id = self.variable_map[&update.ident];
         self.assembler.add(Instruction::IStore(variable_id));
 
         Ok(())
@@ -228,6 +241,7 @@ mod tests {
     fn test_assignment() {
         insta::assert_debug_snapshot!(generate_class("let a = 1"));
         insta::assert_debug_snapshot!(generate_class("let a = 1\nprint(a)"));
+        insta::assert_debug_snapshot!(generate_class("let a = 7\na = a * a\nprint(a)"));
     }
 
     #[test]

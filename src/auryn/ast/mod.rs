@@ -48,4 +48,9 @@ mod tests {
     fn test_variable() {
         insta::assert_debug_snapshot!(parse("print(test)"));
     }
+
+    #[test]
+    fn test_variable_update() {
+        insta::assert_debug_snapshot!(parse("a = 2"));
+    }
 }
