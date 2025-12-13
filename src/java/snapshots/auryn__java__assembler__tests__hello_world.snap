@@ -13,19 +13,11 @@ ClassData {
             ),
         },
         Utf8(
-            "java/io/PrintStream",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                3,
-            ),
-        },
-        Utf8(
             "java/lang/System",
         ),
         Class {
             name_index: ConstantPoolIndex(
-                5,
+                3,
             ),
         },
         Utf8(
@@ -36,26 +28,18 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                7,
+                5,
             ),
             type_index: ConstantPoolIndex(
-                8,
+                6,
             ),
         },
         FieldRef {
             class_index: ConstantPoolIndex(
-                6,
+                4,
             ),
             name_and_type_index: ConstantPoolIndex(
-                9,
-            ),
-        },
-        Utf8(
-            "java/lang/String",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                11,
+                7,
             ),
         },
         Utf8(
@@ -63,7 +47,15 @@ ClassData {
         ),
         String {
             string_index: ConstantPoolIndex(
-                13,
+                9,
+            ),
+        },
+        Utf8(
+            "java/io/PrintStream",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                11,
             ),
         },
         Utf8(
@@ -74,17 +66,25 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                15,
+                13,
             ),
             type_index: ConstantPoolIndex(
-                16,
+                14,
             ),
         },
         MethodRef {
             class_index: ConstantPoolIndex(
-                4,
+                12,
             ),
             name_and_type_index: ConstantPoolIndex(
+                15,
+            ),
+        },
+        Utf8(
+            "java/lang/String",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
                 17,
             ),
         },
@@ -143,15 +143,15 @@ ClassData {
                             code: [
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        10,
+                                        8,
                                     ),
                                 ),
                                 Ldc(
-                                    14,
+                                    10,
                                 ),
                                 InvokeVirtual(
                                     ConstantPoolIndex(
-                                        18,
+                                        16,
                                     ),
                                 ),
                                 Return,

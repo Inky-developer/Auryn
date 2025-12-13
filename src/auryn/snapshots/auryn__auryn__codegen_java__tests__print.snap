@@ -19,19 +19,11 @@ ClassData {
             integer: 3,
         },
         Utf8(
-            "java/io/PrintStream",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                5,
-            ),
-        },
-        Utf8(
             "java/lang/System",
         ),
         Class {
             name_index: ConstantPoolIndex(
-                7,
+                5,
             ),
         },
         Utf8(
@@ -42,17 +34,25 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                9,
+                7,
             ),
             type_index: ConstantPoolIndex(
-                10,
+                8,
             ),
         },
         FieldRef {
             class_index: ConstantPoolIndex(
-                8,
+                6,
             ),
             name_and_type_index: ConstantPoolIndex(
+                9,
+            ),
+        },
+        Utf8(
+            "java/io/PrintStream",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
                 11,
             ),
         },
@@ -72,7 +72,7 @@ ClassData {
         },
         MethodRef {
             class_index: ConstantPoolIndex(
-                6,
+                12,
             ),
             name_and_type_index: ConstantPoolIndex(
                 15,
@@ -143,7 +143,7 @@ ClassData {
                                 ),
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        12,
+                                        10,
                                     ),
                                 ),
                                 ILoad(

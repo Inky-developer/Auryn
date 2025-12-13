@@ -6,7 +6,7 @@ use crate::{
         constant_pool_builder::ConstantPoolBuilder,
         symbolic_evaluation::SymbolicEvaluator,
     },
-    utils::fast_map::FastMap,
+    utils::fast_map::{FastMap, FastSet},
 };
 
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType
@@ -143,6 +143,9 @@ pub mod primitive {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct InstructionId(pub usize);
+
 #[derive(Debug, Clone)]
 pub enum Instruction {
     GetStatic {
@@ -163,7 +166,7 @@ pub enum Instruction {
     IMul,
     IStore(VariableId<primitive::Integer>),
     ILoad(VariableId<primitive::Integer>),
-    Goto(JumpPoint),
+    Goto(InstructionId),
     Nop,
 }
 
@@ -172,6 +175,7 @@ pub struct VariableId<T>(u16, PhantomData<T>);
 
 #[derive(Debug)]
 pub struct VerificationFrame {
+    offset: u16,
     locals: Vec<VerificationTypeInfo>,
     stack: Vec<VerificationTypeInfo>,
 }
@@ -179,11 +183,9 @@ pub struct VerificationFrame {
 #[derive(Debug)]
 pub struct Assembler {
     constant_pool: ConstantPoolBuilder,
-    instructions: Vec<class::Instruction>,
-    // Map from instruction byte index to stack map frame that should be generated for it
-    verification_frames: FastMap<u16, VerificationFrame>,
-    symbolic_evaluator: SymbolicEvaluator,
+    instructions: Vec<Instruction>,
     next_variable_index: u16,
+    function_arguments: Vec<VerificationTypeInfo>,
 }
 
 impl Assembler {
@@ -196,19 +198,23 @@ impl Assembler {
         Self {
             constant_pool,
             instructions: Vec::new(),
-            verification_frames: FastMap::default(),
-            symbolic_evaluator: SymbolicEvaluator::new(main_function_arguments),
             next_variable_index,
+            function_arguments: main_function_arguments,
         }
     }
 
     pub fn assemble(mut self, class_name: String) -> class::ClassData {
+        let (class_instructions, verification_frames) = Self::assemble_instructions(
+            self.function_arguments,
+            &mut self.constant_pool,
+            self.instructions,
+        );
         let name_index = self.constant_pool.add_utf8("main".to_string());
         let descriptor_index = self
             .constant_pool
             .add_utf8("([Ljava/lang/String;)V".to_string());
         let code_name_index = self.constant_pool.add_utf8("Code".to_string());
-        let stack_map_frame = StackMapTableAttribute::from(self.verification_frames);
+        let stack_map_frame = StackMapTableAttribute::from(verification_frames);
         // It must be at least 2 bigger than the highest index to a 2-sized variable
         let max_locals = self.next_variable_index + 1;
         let method = class::Method {
@@ -220,7 +226,7 @@ impl Assembler {
                 name_index: code_name_index,
                 attribute: class::Attribute::Code(class::CodeAttribute {
                     max_locals,
-                    code: self.instructions,
+                    code: class_instructions,
                     attributes: vec![class::AttributeInfo {
                         name_index: self.constant_pool.add_utf8("StackMapTable".to_string()),
                         attribute: class::Attribute::StackMapTable(stack_map_frame),
@@ -241,32 +247,7 @@ impl Assembler {
     }
 
     pub fn add(&mut self, instruction: Instruction) {
-        self.symbolic_evaluator
-            .eval(&instruction, &mut self.constant_pool);
-        let class_instruction = self.convert_to_class_instruction(instruction);
-        self.instructions.push(class_instruction);
-    }
-
-    pub fn add_jump_target(&mut self) -> JumpPoint {
-        // FIXME: lets maybe not have quadratic complexity lol
-        let mut scratch_buffer = Vec::new();
-        for instruction in &self.instructions {
-            instruction
-                .serialize(&mut scratch_buffer, 0)
-                .expect("Should be able to write");
-        }
-        let current_byte_index: u16 = scratch_buffer
-            .len()
-            .try_into()
-            .expect("Should not have too many instructions");
-
-        let frame = VerificationFrame {
-            locals: self.symbolic_evaluator.locals.clone(),
-            stack: self.symbolic_evaluator.stack.clone(),
-        };
-        self.verification_frames.insert(current_byte_index, frame);
-
-        JumpPoint(current_byte_index)
+        self.instructions.push(instruction);
     }
 
     pub fn alloc_variable<T: primitive::IsPrimitiveType>(&mut self) -> VariableId<T> {
@@ -277,7 +258,82 @@ impl Assembler {
 }
 
 impl Assembler {
-    fn convert_to_class_instruction(&mut self, instruction: Instruction) -> class::Instruction {
+    /// Goes through every instruction, converts it to a [`class::Instructon`] and, if it is a jump target,
+    /// generates a verification frame for it
+    ///
+    /// We also need a two-pass algorithm to calculate the jump targets. So in the first pass all class instructions and jump targets are collected.
+    /// Then, in the second pass we can convert from instruction id to jump target (byte offset).
+    fn assemble_instructions(
+        function_arguments: Vec<VerificationTypeInfo>,
+        constant_pool: &mut ConstantPoolBuilder,
+        instructions: Vec<Instruction>,
+    ) -> (Vec<class::Instruction>, Vec<VerificationFrame>) {
+        let mut jump_targets: FastSet<InstructionId> = FastSet::default();
+        let class_instructions_first_pass = instructions
+            .iter()
+            .cloned()
+            .map(|instruction| {
+                Self::convert_to_class_instruction(constant_pool, instruction, |id| {
+                    jump_targets.insert(id);
+                    JumpPoint(0)
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let mut jump_table: FastMap<InstructionId, JumpPoint> = FastMap::default();
+        let mut scratch_buffer: Vec<u8> = Vec::with_capacity(instructions.len());
+        for (index, class_instruction) in class_instructions_first_pass.into_iter().enumerate() {
+            if jump_targets.contains(&InstructionId(index)) {
+                jump_table.insert(
+                    InstructionId(index),
+                    JumpPoint(scratch_buffer.len().try_into().unwrap()),
+                );
+            }
+            class_instruction
+                .serialize(&mut scratch_buffer, 0)
+                .expect("Should not err");
+        }
+
+        let mut eval = SymbolicEvaluator::new(function_arguments);
+        let mut verification_frames = Vec::with_capacity(jump_targets.len());
+        let mut last_byte_offset = 0;
+        for (index, instruction) in instructions.iter().enumerate() {
+            if let Some(jump_point) = jump_table.get(&InstructionId(index)) {
+                // The meaning of the offset changes depending on whether a frame is the first frame:
+                // For the first frame, the offset indicates the byte position of its instruction
+                // Otherwise, the offset indicates the offset to the last instruction - 1
+                // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
+                let effective_offset = if verification_frames.is_empty() {
+                    jump_point.0
+                } else {
+                    jump_point.0 - last_byte_offset - 1
+                };
+                last_byte_offset = jump_point.0;
+                let frame = VerificationFrame {
+                    offset: effective_offset,
+                    locals: eval.locals.clone(),
+                    stack: eval.stack.clone(),
+                };
+                verification_frames.push(frame);
+            }
+            eval.eval(instruction, constant_pool);
+        }
+
+        let class_instructions = instructions
+            .into_iter()
+            .map(|instruction| {
+                Self::convert_to_class_instruction(constant_pool, instruction, |id| jump_table[&id])
+            })
+            .collect();
+
+        (class_instructions, verification_frames)
+    }
+
+    fn convert_to_class_instruction(
+        constant_pool: &mut ConstantPoolBuilder,
+        instruction: Instruction,
+        mut resolve_jump_point: impl FnMut(InstructionId) -> JumpPoint,
+    ) -> class::Instruction {
         match instruction {
             Instruction::GetStatic {
                 class_name,
@@ -285,8 +341,7 @@ impl Assembler {
                 field_type,
             } => {
                 let field_ref_index =
-                    self.constant_pool
-                        .add_field_ref(class_name, name, field_type.to_string());
+                    constant_pool.add_field_ref(class_name, name, field_type.to_string());
                 class::Instruction::GetStatic(field_ref_index)
             }
             Instruction::InvokeVirtual {
@@ -295,14 +350,13 @@ impl Assembler {
                 method_type,
             } => {
                 let method_ref_index =
-                    self.constant_pool
-                        .add_method_ref(class_name, name, method_type.to_string());
+                    constant_pool.add_method_ref(class_name, name, method_type.to_string());
                 class::Instruction::InvokeVirtual(method_ref_index)
             }
             Instruction::LoadConstant { value } => {
                 let constant_index = match value {
-                    ConstantValue::String(string) => self.constant_pool.add_string(string),
-                    ConstantValue::Integer(integer) => self.constant_pool.add_integer(integer),
+                    ConstantValue::String(string) => constant_pool.add_string(string),
+                    ConstantValue::Integer(integer) => constant_pool.add_integer(integer),
                 };
                 let constant_index = constant_index
                     .0
@@ -316,33 +370,31 @@ impl Assembler {
             Instruction::IMul => class::Instruction::IMul,
             Instruction::IStore(index) => class::Instruction::IStore(index.0),
             Instruction::ILoad(index) => class::Instruction::ILoad(index.0),
-            Instruction::Goto(jump_point) => class::Instruction::Goto(jump_point),
+            Instruction::Goto(target) => class::Instruction::Goto(resolve_jump_point(target)),
             Instruction::Nop => class::Instruction::Nop,
         }
     }
 }
 
-impl From<FastMap<u16, VerificationFrame>> for StackMapTableAttribute {
+impl From<Vec<VerificationFrame>> for StackMapTableAttribute {
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
-    fn from(value: FastMap<u16, VerificationFrame>) -> Self {
+    fn from(value: Vec<VerificationFrame>) -> Self {
         let mut current_offset: u16 = 0;
-        let mut sorted_entries = value.into_iter().collect::<Vec<_>>();
-        sorted_entries.sort_unstable_by_key(|(index, _)| *index);
 
         // Skip frames at index 0, since they will be automatically generated by java
-        let frames = sorted_entries
+        let frames = value
             .into_iter()
-            .map(move |(byte_index, frame)| {
+            .map(move |frame| {
                 // An offset of 0 indicates that the frame applies to the next instruction, so we need to subtract 1 here, unless this is the first frame
                 // In which case this must not be done according to spec.
                 let offset_to_last: u16 = if current_offset == 0 {
-                    byte_index
+                    frame.offset
                 } else {
-                    (byte_index - current_offset - 1)
+                    (frame.offset - current_offset - 1)
                         .try_into()
                         .expect("Should not to to big")
                 };
-                current_offset = byte_index;
+                current_offset = frame.offset;
 
                 // TODO: Try encode into a more compact representation
                 StackMapFrame::Full {
