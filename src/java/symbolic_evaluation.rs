@@ -53,6 +53,10 @@ impl SymbolicEvaluator {
                 self.stack.push(VerificationTypeInfo::Integer);
             }
             Instruction::Goto(_) => {}
+            Instruction::IfIcmp { .. } => {
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+            }
             Instruction::Nop => {}
         }
     }

@@ -2,13 +2,21 @@
 pub enum BinaryOperatorToken {
     Plus,
     Times,
+    Equal,
+    NotEqual,
+    Greater,
+    GreaterOrEqual,
+    Less,
+    LessOrEqual,
 }
 
 impl BinaryOperatorToken {
     pub fn binding_power(self) -> u32 {
         match self {
-            BinaryOperatorToken::Plus => 1,
-            BinaryOperatorToken::Times => 2,
+            Self::Equal | Self::NotEqual => 1,
+            Self::GreaterOrEqual | Self::Greater | Self::LessOrEqual | Self::Less => 2,
+            Self::Plus => 3,
+            Self::Times => 4,
         }
     }
 }
@@ -20,9 +28,16 @@ pub enum TokenKind {
     Plus,
     Times,
     Equal,
+    DoubleEqual,
+    NotEqual,
+    Greater,
+    GreaterOrEqual,
+    Less,
+    LessOrEqual,
     ParensOpen,
     ParensClose,
     KeywordLet,
+    KeywordIf,
     Whitespace,
     Newline,
     Error,
@@ -35,6 +50,12 @@ impl TokenKind {
         match self {
             TokenKind::Plus => Some(BinaryOperatorToken::Plus),
             TokenKind::Times => Some(BinaryOperatorToken::Times),
+            TokenKind::DoubleEqual => Some(BinaryOperatorToken::Equal),
+            TokenKind::NotEqual => Some(BinaryOperatorToken::NotEqual),
+            TokenKind::Greater => Some(BinaryOperatorToken::Greater),
+            TokenKind::GreaterOrEqual => Some(BinaryOperatorToken::GreaterOrEqual),
+            TokenKind::Less => Some(BinaryOperatorToken::Less),
+            TokenKind::LessOrEqual => Some(BinaryOperatorToken::LessOrEqual),
             _ => None,
         }
     }
@@ -108,7 +129,35 @@ impl<'a> Iterator for Tokenizer<'a> {
         let kind = match first_char {
             '+' => TokenKind::Plus,
             '*' => TokenKind::Times,
-            '=' => TokenKind::Equal,
+            '=' => {
+                if self.input.starts_with("==") {
+                    return Some(Token {
+                        kind: TokenKind::DoubleEqual,
+                        text: self.consume_text("=="),
+                    });
+                }
+                TokenKind::Equal
+            }
+            '!' if self.input.starts_with("!=") => {
+                return Some(Token {
+                    kind: TokenKind::NotEqual,
+                    text: self.consume_text("!="),
+                });
+            }
+            '>' if self.input.starts_with(">=") => {
+                return Some(Token {
+                    kind: TokenKind::GreaterOrEqual,
+                    text: self.consume_text(">="),
+                });
+            }
+            '>' => TokenKind::Greater,
+            '<' if self.input.starts_with("<=") => {
+                return Some(Token {
+                    kind: TokenKind::LessOrEqual,
+                    text: self.consume_text("<="),
+                });
+            }
+            '<' => TokenKind::Less,
             '(' => TokenKind::ParensOpen,
             ')' => TokenKind::ParensClose,
             ',' => TokenKind::Comma,
@@ -117,6 +166,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(Token {
                     kind: TokenKind::KeywordLet,
                     text: self.consume_text("let "),
+                });
+            }
+            'i' if self.input.starts_with("if ") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordIf,
+                    text: self.consume_text("if "),
                 });
             }
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
@@ -148,6 +203,9 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
-        insta::assert_debug_snapshot!(tokenize("let some_text = 2"));
+        insta::assert_debug_snapshot!(tokenize("let some_text = if true { 2 } else { 0 }"));
+        insta::assert_debug_snapshot!(tokenize(
+            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6"
+        ));
     }
 }

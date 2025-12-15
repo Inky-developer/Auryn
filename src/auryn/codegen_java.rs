@@ -11,7 +11,7 @@ use crate::{
             Assembler, ConstantValue, FieldDescriptor, Instruction, InstructionId,
             MethodDescriptor, VariableId, primitive,
         },
-        class::ClassData,
+        class::{ClassData, Comparison},
     },
     utils::fast_map::FastMap,
 };
@@ -168,9 +168,49 @@ impl Generator {
         self.generate_expression(operation.rhs()?)?;
 
         match operation.operator()? {
-            BinaryOperatorToken::Plus => self.assembler.add(Instruction::IAdd),
-            BinaryOperatorToken::Times => self.assembler.add(Instruction::IMul),
+            BinaryOperatorToken::Plus => {
+                self.assembler.add(Instruction::IAdd);
+            }
+            BinaryOperatorToken::Times => {
+                self.assembler.add(Instruction::IMul);
+            }
+            BinaryOperatorToken::Equal => self.generate_comparison(Comparison::Equal)?,
+            BinaryOperatorToken::NotEqual => self.generate_comparison(Comparison::NotEqual)?,
+            BinaryOperatorToken::Greater => self.generate_comparison(Comparison::Greater)?,
+            BinaryOperatorToken::GreaterOrEqual => {
+                self.generate_comparison(Comparison::GreaterOrEqual)?
+            }
+            BinaryOperatorToken::Less => self.generate_comparison(Comparison::Less)?,
+            BinaryOperatorToken::LessOrEqual => {
+                self.generate_comparison(Comparison::LessOrEqual)?
+            }
         };
+
+        Ok(())
+    }
+
+    fn generate_comparison(&mut self, comparison: Comparison) -> CodegenResult {
+        // We have to generate a branch:
+        // 0: if cmp == false goto 3
+        // 1: load 1
+        // 2: goto 4
+        // 3: load 0
+        // 4: <>
+        //
+        // so the comparison operator needs to be inverted
+        self.assembler.add_all([
+            Instruction::IfIcmp {
+                comparison: comparison.invert(),
+                target: self.assembler.current_instruction_id() + 3,
+            },
+            Instruction::LoadConstant {
+                value: ConstantValue::Integer(1),
+            },
+            Instruction::Goto(self.assembler.current_instruction_id() + 4),
+            Instruction::LoadConstant {
+                value: ConstantValue::Integer(0),
+            },
+        ]);
 
         Ok(())
     }

@@ -113,6 +113,29 @@ impl ConstantPoolEntry {
 pub struct JumpPoint(pub u16);
 
 #[derive(Debug, Clone, Copy)]
+pub enum Comparison {
+    Equal = 0x9f,
+    NotEqual,
+    Less,
+    GreaterOrEqual,
+    Greater,
+    LessOrEqual,
+}
+
+impl Comparison {
+    pub fn invert(self) -> Self {
+        match self {
+            Comparison::Equal => Self::NotEqual,
+            Comparison::NotEqual => Self::Equal,
+            Comparison::Greater => Self::LessOrEqual,
+            Comparison::GreaterOrEqual => Self::Less,
+            Comparison::Less => Self::GreaterOrEqual,
+            Comparison::LessOrEqual => Self::Greater,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum Instruction {
     /// Static must be a FieldRef
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
@@ -134,6 +157,11 @@ pub enum Instruction {
     IMul,
     IStore(u16),
     ILoad(u16),
+    // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond
+    IfICmp {
+        comparison: Comparison,
+        jump_point: JumpPoint,
+    },
     Goto(JumpPoint),
     Nop,
 }
@@ -193,6 +221,16 @@ impl Instruction {
             }
             Instruction::Nop => {
                 buf.write_all(&[0x0])?;
+            }
+            Instruction::IfICmp {
+                comparison,
+                jump_point,
+            } => {
+                buf.write_all(&[(comparison as u8)])?;
+                let offset: i16 = (jump_point.0 as i16 - current_index as i16)
+                    .try_into()
+                    .unwrap();
+                buf.write_all(&offset.to_be_bytes())?;
             }
         }
 

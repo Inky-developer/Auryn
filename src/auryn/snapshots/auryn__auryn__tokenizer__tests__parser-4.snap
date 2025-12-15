@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"let some_text = 2\")"
+expression: "tokenize(\"let some_text = if true { 2 } else { 0 }\")"
 ---
 [
     Token {
@@ -24,7 +24,67 @@ expression: "tokenize(\"let some_text = 2\")"
         text: " ",
     },
     Token {
+        kind: KeywordIf,
+        text: "if ",
+    },
+    Token {
+        kind: Identifier,
+        text: "true",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "{",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
         kind: Number,
         text: "2",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "}",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "else",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "{",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Number,
+        text: "0",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "}",
     },
 ]

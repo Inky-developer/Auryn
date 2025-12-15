@@ -1,8 +1,11 @@
-use std::{fmt::Display, marker::PhantomData};
+use std::{fmt::Display, marker::PhantomData, ops::Add};
 
 use crate::{
     java::{
-        class::{self, JumpPoint, StackMapFrame, StackMapTableAttribute, VerificationTypeInfo},
+        class::{
+            self, Comparison, JumpPoint, StackMapFrame, StackMapTableAttribute,
+            VerificationTypeInfo,
+        },
         constant_pool_builder::ConstantPoolBuilder,
         symbolic_evaluation::SymbolicEvaluator,
     },
@@ -146,6 +149,14 @@ pub mod primitive {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct InstructionId(pub usize);
 
+impl Add<isize> for InstructionId {
+    type Output = InstructionId;
+
+    fn add(self, rhs: isize) -> Self::Output {
+        InstructionId(self.0.strict_add_signed(rhs))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Instruction {
     GetStatic {
@@ -166,6 +177,10 @@ pub enum Instruction {
     IMul,
     IStore(VariableId<primitive::Integer>),
     ILoad(VariableId<primitive::Integer>),
+    IfIcmp {
+        comparison: Comparison,
+        target: InstructionId,
+    },
     Goto(InstructionId),
     Nop,
 }
@@ -250,6 +265,10 @@ impl Assembler {
         self.instructions.push(instruction);
     }
 
+    pub fn current_instruction_id(&self) -> InstructionId {
+        InstructionId(self.instructions.len())
+    }
+
     pub fn alloc_variable<T: primitive::IsPrimitiveType>(&mut self) -> VariableId<T> {
         let id = self.next_variable_index;
         self.next_variable_index += T::SIZE;
@@ -296,21 +315,10 @@ impl Assembler {
 
         let mut eval = SymbolicEvaluator::new(function_arguments);
         let mut verification_frames = Vec::with_capacity(jump_targets.len());
-        let mut last_byte_offset = 0;
         for (index, instruction) in instructions.iter().enumerate() {
             if let Some(jump_point) = jump_table.get(&InstructionId(index)) {
-                // The meaning of the offset changes depending on whether a frame is the first frame:
-                // For the first frame, the offset indicates the byte position of its instruction
-                // Otherwise, the offset indicates the offset to the last instruction - 1
-                // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
-                let effective_offset = if verification_frames.is_empty() {
-                    jump_point.0
-                } else {
-                    jump_point.0 - last_byte_offset - 1
-                };
-                last_byte_offset = jump_point.0;
                 let frame = VerificationFrame {
-                    offset: effective_offset,
+                    offset: jump_point.0,
                     locals: eval.locals.clone(),
                     stack: eval.stack.clone(),
                 };
@@ -370,6 +378,10 @@ impl Assembler {
             Instruction::IMul => class::Instruction::IMul,
             Instruction::IStore(index) => class::Instruction::IStore(index.0),
             Instruction::ILoad(index) => class::Instruction::ILoad(index.0),
+            Instruction::IfIcmp { comparison, target } => class::Instruction::IfICmp {
+                comparison,
+                jump_point: resolve_jump_point(target),
+            },
             Instruction::Goto(target) => class::Instruction::Goto(resolve_jump_point(target)),
             Instruction::Nop => class::Instruction::Nop,
         }
