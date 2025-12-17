@@ -32,8 +32,6 @@ fn repl() {
             .spawn()
             .unwrap();
         handle.wait().unwrap();
-
-        std::fs::remove_file("Helloworld.class").unwrap();
     }
 }
 
