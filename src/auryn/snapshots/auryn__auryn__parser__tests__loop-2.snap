@@ -1,0 +1,21 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"loop { }\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..8 Root
+        |0..8 Block
+        ||0..8 StatementList
+        |||0..8 Statement
+        ||||0..8 Loop
+        |||||KeywordLoop
+        |||||BraceOpen
+        |||||Whitespace
+        |||||7..7 Block
+        ||||||7..7 StatementList ''
+        |||||BraceClose
+        ,
+    ),
+    diagnostics: [],
+}

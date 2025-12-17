@@ -286,12 +286,12 @@ impl Parser<'_> {
         let statements_watcher = self.push_node();
 
         loop {
+            if end_set(self.peek().kind) {
+                break;
+            }
             self.parse_statement()?;
             if !self.consume_statement_separator() && !end_set(self.peek().kind) {
                 self.push_error_token(DiagnosticError::ExpectedNewline);
-            }
-            if end_set(self.peek().kind) {
-                break;
             }
         }
 
@@ -623,6 +623,7 @@ mod tests {
     #[test]
     fn test_loop() {
         insta::assert_debug_snapshot!(verify("loop { 1 + 2 }"));
+        insta::assert_debug_snapshot!(verify("loop { }"));
     }
 
     #[test]
