@@ -27,6 +27,7 @@ mod tests {
         insta::assert_debug_snapshot!(parse("1+2"));
         insta::assert_debug_snapshot!(parse("1 + 2 * 3"));
         insta::assert_debug_snapshot!(parse("1 * 2 + 3"));
+        insta::assert_debug_snapshot!(parse("1 != 2"));
     }
 
     #[test]

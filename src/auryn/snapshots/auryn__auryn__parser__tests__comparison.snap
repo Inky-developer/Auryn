@@ -1,0 +1,28 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"1 == 1\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..6 Root
+        |0..6 Block
+        ||0..6 StatementList
+        |||0..6 Statement
+        ||||0..6 Expression
+        |||||0..6 BinaryOperation
+        ||||||0..2 Expression
+        |||||||0..2 Value
+        ||||||||0..1 Number { value: 1 }
+        |||||||||Number
+        ||||||||Whitespace
+        ||||||2..4 BinaryOperator(Equal)
+        |||||||DoubleEqual
+        ||||||Whitespace
+        ||||||5..6 Expression
+        |||||||5..6 Value
+        ||||||||5..6 Number { value: 1 }
+        |||||||||Number
+        ,
+    ),
+    diagnostics: [],
+}

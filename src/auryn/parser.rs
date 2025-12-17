@@ -578,6 +578,11 @@ mod tests {
     }
 
     #[test]
+    fn test_comparison() {
+        insta::assert_debug_snapshot!(verify("1 == 1"));
+    }
+
+    #[test]
     fn test_reject_extra_input() {
         insta::assert_debug_snapshot!(verify("1 1 1 1 11 1"));
     }

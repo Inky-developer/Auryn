@@ -1,0 +1,115 @@
+---
+source: src/auryn/ast/mod.rs
+expression: "parse(\"1 != 2\")"
+---
+Ok(
+    Node {
+        span: Span {
+            len: 6,
+        },
+        kind: Root {
+            block: Ok(
+                Node {
+                    span: Span {
+                        len: 6,
+                    },
+                    kind: Block {
+                        statements: [
+                            Ok(
+                                Node {
+                                    span: Span {
+                                        len: 6,
+                                    },
+                                    kind: Expression(
+                                        Ok(
+                                            Node {
+                                                span: Span {
+                                                    len: 6,
+                                                },
+                                                kind: BinaryOperation(
+                                                    Ok(
+                                                        Node {
+                                                            span: Span {
+                                                                len: 6,
+                                                            },
+                                                            kind: BinaryOperation {
+                                                                lhs: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 2,
+                                                                        },
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 2,
+                                                                                    },
+                                                                                    kind: Number(
+                                                                                        Ok(
+                                                                                            Node {
+                                                                                                span: Span {
+                                                                                                    len: 1,
+                                                                                                },
+                                                                                                kind: Number {
+                                                                                                    value: 1,
+                                                                                                },
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                operator: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 2,
+                                                                        },
+                                                                        kind: NotEqual,
+                                                                    },
+                                                                ),
+                                                                rhs: Ok(
+                                                                    Node {
+                                                                        span: Span {
+                                                                            len: 1,
+                                                                        },
+                                                                        kind: Value(
+                                                                            Ok(
+                                                                                Node {
+                                                                                    span: Span {
+                                                                                        len: 1,
+                                                                                    },
+                                                                                    kind: Number(
+                                                                                        Ok(
+                                                                                            Node {
+                                                                                                span: Span {
+                                                                                                    len: 1,
+                                                                                                },
+                                                                                                kind: Number {
+                                                                                                    value: 2,
+                                                                                                },
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                },
+            ),
+        },
+    },
+)
