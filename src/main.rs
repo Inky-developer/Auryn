@@ -11,11 +11,8 @@ fn main() {
 
 fn repl() {
     let mut input = String::new();
-    let stdin = std::io::stdin();
     loop {
-        print!("> ");
-        std::io::stdout().flush().unwrap();
-        stdin.read_line(&mut input).unwrap();
+        read_user_input(&mut input);
         let class = get_class(&input);
         input.clear();
 
@@ -49,4 +46,22 @@ fn get_class(input: &str) -> ClassData {
     let ast = query_ast(result.syntax_tree.as_ref().unwrap());
 
     query_class("Helloworld".to_string(), &ast).unwrap()
+}
+
+fn read_user_input(buf: &mut String) {
+    print_prompt();
+    for line in std::io::stdin().lines() {
+        let line = line.unwrap();
+        if line.is_empty() {
+            break;
+        }
+        buf.push_str(&line);
+
+        print_prompt();
+    }
+}
+
+fn print_prompt() {
+    print!("> ");
+    std::io::stdout().flush().unwrap();
 }
