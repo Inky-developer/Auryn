@@ -30,6 +30,7 @@ pub enum SyntaxNodeKind {
     Assignment { ident: String },
     Ident { ident: String },
     VariableUpdate { ident: String },
+    IfStatement,
 }
 
 #[derive(Debug)]

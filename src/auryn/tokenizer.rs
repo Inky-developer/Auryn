@@ -36,6 +36,8 @@ pub enum TokenKind {
     LessOrEqual,
     ParensOpen,
     ParensClose,
+    BraceOpen,
+    BraceClose,
     KeywordLet,
     KeywordIf,
     Whitespace,
@@ -160,6 +162,8 @@ impl<'a> Iterator for Tokenizer<'a> {
             '<' => TokenKind::Less,
             '(' => TokenKind::ParensOpen,
             ')' => TokenKind::ParensClose,
+            '{' => TokenKind::BraceOpen,
+            '}' => TokenKind::BraceClose,
             ',' => TokenKind::Comma,
             '\n' => TokenKind::Newline,
             'l' if self.input.starts_with("let ") => {

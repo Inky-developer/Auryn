@@ -1,8 +1,8 @@
 use crate::{
     auryn::{
         ast::ast_parser::{
-            Assignment, AstError, BinaryOperation, Block, Expression, NodeOrError, Root, Statement,
-            Value, VariableUpdate,
+            Assignment, AstError, BinaryOperation, Block, Expression, IfStatement, NodeOrError,
+            Root, Statement, Value, VariableUpdate,
         },
         tokenizer::BinaryOperatorToken,
     },
@@ -113,6 +113,10 @@ impl Generator {
                 let assignment = assignment.as_ref().as_ref()?;
                 self.generate_assignment(&assignment.kind)
             }
+            Statement::IfStatement(if_statement) => {
+                let if_statement = if_statement.as_ref().as_ref()?;
+                self.generate_if_statement(&if_statement.kind)
+            }
             Statement::VariableUpdate(update) => {
                 let update = update.as_ref().as_ref()?;
                 self.generate_update(&update.kind)
@@ -140,6 +144,26 @@ impl Generator {
             .insert(assignment.ident.clone(), variable_id);
 
         self.assembler.add(Instruction::IStore(variable_id));
+
+        Ok(())
+    }
+
+    fn generate_if_statement(&mut self, if_statement: &IfStatement) -> CodegenResult {
+        self.generate_expression(if_statement.expression()?)?;
+
+        let pos_block = self.assembler.add_block();
+        let next_block = self.assembler.add_block();
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+            comparison: Comparison::NotEqual,
+            positive_block: pos_block,
+            negative_block: next_block,
+        };
+
+        self.assembler.set_current_block_id(pos_block);
+        self.generate_block(if_statement.block()?)?;
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+
+        self.assembler.set_current_block_id(next_block);
 
         Ok(())
     }
@@ -203,7 +227,7 @@ impl Generator {
         let pos_block_id = self.assembler.add_block();
         let neg_block_id = self.assembler.add_block();
         let next_block_id = self.assembler.add_block();
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchIntegerCmp {
             comparison,
             positive_block: pos_block_id,
             negative_block: neg_block_id,

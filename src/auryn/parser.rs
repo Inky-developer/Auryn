@@ -106,7 +106,7 @@ impl<'a> Parser<'a> {
 
         self.consume_whitespace();
         // Nothing left to recover if there is an error
-        let _ = self.parse_block();
+        let _ = self.parse_block(|kind| kind == TokenKind::EndOfInput);
         let _ = self.peek_expect(TokenKind::EndOfInput);
         let Some(root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
             return ParserOutput { syntax_tree: None };
@@ -281,16 +281,16 @@ impl<'a> Parser<'a> {
 
 /// Parsing methods
 impl Parser<'_> {
-    fn parse_block(&mut self) -> ParseResult {
+    fn parse_block(&mut self, end_set: impl Fn(TokenKind) -> bool) -> ParseResult {
         let watcher = self.push_node();
         let statements_watcher = self.push_node();
 
         loop {
             self.parse_statement()?;
-            if !self.consume_statement_separator() {
+            if !self.consume_statement_separator() && !end_set(self.peek().kind) {
                 self.push_error_token(DiagnosticError::ExpectedNewline);
             }
-            if self.peek().kind == TokenKind::EndOfInput {
+            if end_set(self.peek().kind) {
                 break;
             }
         }
@@ -306,6 +306,7 @@ impl Parser<'_> {
 
         match self.peek().kind {
             TokenKind::KeywordLet => self.parse_assignment()?,
+            TokenKind::KeywordIf => self.parse_if_statement()?,
             _ => {
                 if let [TokenKind::Identifier, TokenKind::Equal] = self.multipeek() {
                     self.parse_variable_update()?;
@@ -331,6 +332,22 @@ impl Parser<'_> {
         self.parse_expression()?;
 
         self.finish_node(watcher, SyntaxNodeKind::Assignment { ident });
+        Ok(())
+    }
+
+    fn parse_if_statement(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordIf)?;
+        self.consume_whitespace();
+        self.parse_expression()?;
+        self.expect(TokenKind::BraceOpen)?;
+        self.consume_whitespace();
+        self.parse_block(|kind| kind == TokenKind::BraceClose)?;
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::IfStatement);
+
         Ok(())
     }
 
@@ -580,6 +597,11 @@ mod tests {
     #[test]
     fn test_comparison() {
         insta::assert_debug_snapshot!(verify("1 == 1"));
+    }
+
+    #[test]
+    fn test_if_statemt() {
+        insta::assert_debug_snapshot!(verify("if 1 { print(42) }"));
     }
 
     #[test]

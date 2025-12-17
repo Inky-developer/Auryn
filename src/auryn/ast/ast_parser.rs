@@ -206,12 +206,18 @@ create_ast_parser! {
 
     pub enum Statement @ SyntaxNodeKind::Statement {
         Assignement(NodeRef<Assignment>: SyntaxNodeKind::Assignment {..}),
+        IfStatement(NodeRef<IfStatement>: SyntaxNodeKind::IfStatement {..}),
         VariableUpdate(NodeRef<VariableUpdate>: SyntaxNodeKind::VariableUpdate {..} ),
         Expression(NodeRef<Expression>: SyntaxNodeKind::Expression),
     }
 
     pub struct Assignment @ SyntaxNodeKind::Assignment { ident: String } {
         pub expression: NodeRef<Expression>
+    }
+
+    pub struct IfStatement @ SyntaxNodeKind::IfStatement {} {
+        pub expression: NodeRef<Expression>,
+        pub block: NodeRef<Block>,
     }
 
     pub struct VariableUpdate @ SyntaxNodeKind::VariableUpdate { ident: String } {

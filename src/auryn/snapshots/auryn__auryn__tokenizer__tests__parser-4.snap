@@ -36,7 +36,7 @@ expression: "tokenize(\"let some_text = if true { 2 } else { 0 }\")"
         text: " ",
     },
     Token {
-        kind: Error,
+        kind: BraceOpen,
         text: "{",
     },
     Token {
@@ -52,7 +52,7 @@ expression: "tokenize(\"let some_text = if true { 2 } else { 0 }\")"
         text: " ",
     },
     Token {
-        kind: Error,
+        kind: BraceClose,
         text: "}",
     },
     Token {
@@ -68,7 +68,7 @@ expression: "tokenize(\"let some_text = if true { 2 } else { 0 }\")"
         text: " ",
     },
     Token {
-        kind: Error,
+        kind: BraceOpen,
         text: "{",
     },
     Token {
@@ -84,7 +84,7 @@ expression: "tokenize(\"let some_text = if true { 2 } else { 0 }\")"
         text: " ",
     },
     Token {
-        kind: Error,
+        kind: BraceClose,
         text: "}",
     },
 ]

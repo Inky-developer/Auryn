@@ -17,6 +17,13 @@ pub struct BasicBlockId(pub usize);
 
 #[derive(Debug, Default)]
 pub enum BlockFinalizer {
+    /// Compares the first two stack entries according to `comparison`.
+    BranchIntegerCmp {
+        comparison: Comparison,
+        positive_block: BasicBlockId,
+        negative_block: BasicBlockId,
+    },
+    /// Compares the first stack entry with 0 according to `comparison`.
     BranchInteger {
         comparison: Comparison,
         positive_block: BasicBlockId,
@@ -31,6 +38,11 @@ impl BlockFinalizer {
     pub fn targets(&self) -> impl Iterator<Item = BasicBlockId> {
         let targets = match self {
             BlockFinalizer::Goto(basic_block_id) => [Some(*basic_block_id), None],
+            BlockFinalizer::BranchIntegerCmp {
+                comparison: _,
+                positive_block,
+                negative_block,
+            } => [Some(*positive_block), Some(*negative_block)],
             BlockFinalizer::BranchInteger {
                 comparison: _,
                 positive_block,
@@ -292,12 +304,27 @@ impl AssemblyContext<'_> {
                 }
             }
             BlockFinalizer::Return => Some(class::Instruction::Ireturn),
-            BlockFinalizer::BranchInteger {
+            BlockFinalizer::BranchIntegerCmp {
                 comparison,
                 positive_block,
                 negative_block,
             } => Some(match next_implicit_block_id {
                 Some(id) if id == *positive_block => class::Instruction::IfICmp {
+                    comparison: comparison.invert(),
+                    jump_point: resolve_jump_point(*negative_block),
+                },
+                Some(id) if id == *negative_block => class::Instruction::IfICmp {
+                    comparison: *comparison,
+                    jump_point: resolve_jump_point(*positive_block),
+                },
+                _ => panic!("Either positive block negative block has to be implicit!"),
+            }),
+            BlockFinalizer::BranchInteger {
+                comparison,
+                positive_block,
+                negative_block,
+            } => Some(match next_implicit_block_id {
+                Some(id) if id == *positive_block => class::Instruction::IfI {
                     comparison: comparison.invert(),
                     jump_point: resolve_jump_point(*negative_block),
                 },

@@ -112,9 +112,10 @@ impl ConstantPoolEntry {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JumpPoint(pub u16);
 
+/// Must be ordered as in https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_cond
 #[derive(Debug, Clone, Copy)]
 pub enum Comparison {
-    Equal = 0x9f,
+    Equal,
     NotEqual,
     Less,
     GreaterOrEqual,
@@ -157,8 +158,15 @@ pub enum Instruction {
     IMul,
     IStore(u16),
     ILoad(u16),
+    /// Compares the two topmost stack entries according to the given `comparison`
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond
     IfICmp {
+        comparison: Comparison,
+        jump_point: JumpPoint,
+    },
+    /// Compares the topmost stack entry with 0 according to the given `comparison`
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_cond
+    IfI {
         comparison: Comparison,
         jump_point: JumpPoint,
     },
@@ -230,7 +238,17 @@ impl Instruction {
                 comparison,
                 jump_point,
             } => {
-                buf.write_all(&[(comparison as u8)])?;
+                buf.write_all(&[0x9f + (comparison as u8)])?;
+                let offset: i16 = (jump_point.0 as i16 - current_index as i16)
+                    .try_into()
+                    .unwrap();
+                buf.write_all(&offset.to_be_bytes())?;
+            }
+            Instruction::IfI {
+                comparison,
+                jump_point,
+            } => {
+                buf.write_all(&[0x99 + (comparison as u8)])?;
                 let offset: i16 = (jump_point.0 as i16 - current_index as i16)
                     .try_into()
                     .unwrap();

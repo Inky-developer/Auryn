@@ -32,12 +32,19 @@ impl SymbolicEvaluator {
 
     pub fn eval_finalizer(&mut self, finalizer: &BlockFinalizer, _pool: &mut ConstantPoolBuilder) {
         match finalizer {
-            BlockFinalizer::BranchInteger {
+            BlockFinalizer::BranchIntegerCmp {
                 comparison: _,
                 positive_block: _,
                 negative_block: _,
             } => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+            }
+            BlockFinalizer::BranchInteger {
+                comparison: _,
+                positive_block: _,
+                negative_block: _,
+            } => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
             }
             BlockFinalizer::Goto(_) => {}
