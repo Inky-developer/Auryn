@@ -31,6 +31,7 @@ pub enum SyntaxNodeKind {
     Ident { ident: String },
     VariableUpdate { ident: String },
     IfStatement,
+    Loop,
 }
 
 #[derive(Debug)]

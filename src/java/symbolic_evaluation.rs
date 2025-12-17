@@ -48,7 +48,7 @@ impl SymbolicEvaluator {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
             }
             BlockFinalizer::Goto(_) => {}
-            BlockFinalizer::Return => {}
+            BlockFinalizer::ReturnNull => {}
         }
     }
 
@@ -77,8 +77,12 @@ impl SymbolicEvaluator {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
                 self.stack.push(VerificationTypeInfo::Integer);
             }
-            Instruction::IStore(_) => {
+            Instruction::IStore(id) => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+                // FIXME: Probably need to rework the whole locals allocation system :(
+                if self.locals.len() == id.0.into() {
+                    self.locals.push(VerificationTypeInfo::Integer);
+                }
             }
             Instruction::ILoad(_) => {
                 self.stack.push(VerificationTypeInfo::Integer);

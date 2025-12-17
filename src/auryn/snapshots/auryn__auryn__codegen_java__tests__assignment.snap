@@ -74,11 +74,7 @@ ClassData {
                                 IStore(
                                     1,
                                 ),
-                                Goto(
-                                    JumpPoint(
-                                        0,
-                                    ),
-                                ),
+                                Return,
                             ],
                             attributes: [
                                 AttributeInfo {

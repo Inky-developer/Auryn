@@ -307,6 +307,7 @@ impl Parser<'_> {
         match self.peek().kind {
             TokenKind::KeywordLet => self.parse_assignment()?,
             TokenKind::KeywordIf => self.parse_if_statement()?,
+            TokenKind::KeywordLoop => self.parse_loop()?,
             _ => {
                 if let [TokenKind::Identifier, TokenKind::Equal] = self.multipeek() {
                     self.parse_variable_update()?;
@@ -347,6 +348,21 @@ impl Parser<'_> {
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::IfStatement);
+
+        Ok(())
+    }
+
+    fn parse_loop(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordLoop)?;
+        self.consume_whitespace();
+        self.expect(TokenKind::BraceOpen)?;
+        self.consume_whitespace();
+        self.parse_block(|kind| kind == TokenKind::BraceClose)?;
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Loop);
 
         Ok(())
     }
@@ -602,6 +618,11 @@ mod tests {
     #[test]
     fn test_if_statemt() {
         insta::assert_debug_snapshot!(verify("if 1 { print(42) }"));
+    }
+
+    #[test]
+    fn test_loop() {
+        insta::assert_debug_snapshot!(verify("loop { 1 + 2 }"));
     }
 
     #[test]

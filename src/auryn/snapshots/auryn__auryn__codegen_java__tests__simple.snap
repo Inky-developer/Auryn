@@ -86,11 +86,7 @@ ClassData {
                                 IMul,
                                 IAdd,
                                 Pop,
-                                Goto(
-                                    JumpPoint(
-                                        0,
-                                    ),
-                                ),
+                                Return,
                             ],
                             attributes: [
                                 AttributeInfo {

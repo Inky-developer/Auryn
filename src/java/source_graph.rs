@@ -31,7 +31,7 @@ pub enum BlockFinalizer {
     },
     Goto(BasicBlockId),
     #[default]
-    Return,
+    ReturnNull,
 }
 
 impl BlockFinalizer {
@@ -48,7 +48,7 @@ impl BlockFinalizer {
                 positive_block,
                 negative_block,
             } => [Some(*positive_block), Some(*negative_block)],
-            BlockFinalizer::Return => [None, None],
+            BlockFinalizer::ReturnNull => [None, None],
         };
 
         targets.into_iter().filter_map(|it| it)
@@ -182,11 +182,19 @@ impl AssemblyContext<'_> {
         let mut visited_blocks: FastMap<BasicBlockId, BlockFrames> = FastMap::default();
         for id in block_order.iter().copied() {
             let calling_blocks = graph.edges(id);
-            let mut caller_frames = calling_blocks.map(|id| {
-                visited_blocks
-                    .get(&id)
-                    .expect("Topological ordering should guarentee this entry to exist")
-            });
+            let mut caller_frames =
+                calling_blocks.filter_map(|caller_id| match visited_blocks.get(&caller_id) {
+                    Some(frame) => Some(frame),
+                    None => {
+                        if caller_id != id {
+                            panic!("I think this block should have already been visited");
+                        } else {
+                            // Theoretically we probably need a fixpoint iteration for loops, but lets just see for how long
+                            // just assuming that loops don't change works
+                            None
+                        }
+                    }
+                });
 
             let frame_at_start_of_block = if id.0 == 0 {
                 Frame {
@@ -303,7 +311,7 @@ impl AssemblyContext<'_> {
                     None
                 }
             }
-            BlockFinalizer::Return => Some(class::Instruction::Ireturn),
+            BlockFinalizer::ReturnNull => Some(class::Instruction::Return),
             BlockFinalizer::BranchIntegerCmp {
                 comparison,
                 positive_block,
@@ -362,7 +370,10 @@ fn convert_verification_frames(verification_frames: Vec<(u16, Frame)>) -> StackM
         entries: verification_frames
             .into_iter()
             .enumerate()
-            .map(move |(index, (offset, Frame { locals, stack }))| {
+            .filter_map(move |(index, (offset, Frame { locals, stack }))| {
+                if offset == current_offset && index != 0 {
+                    return None;
+                }
                 // An offset of 0 indicates that the frame applies to the next instruction, so we need to subtract 1 here, unless this is the first frame
                 // In which case this must not be done according to spec.
                 let offset_to_last: u16 = if index == 0 {
@@ -373,11 +384,11 @@ fn convert_verification_frames(verification_frames: Vec<(u16, Frame)>) -> StackM
                         .expect("Should not to to big")
                 };
                 current_offset = offset;
-                class::StackMapFrame::Full {
+                Some(class::StackMapFrame::Full {
                     offset_delta: offset_to_last,
                     locals,
                     stack,
-                }
+                })
             })
             .collect(),
     }

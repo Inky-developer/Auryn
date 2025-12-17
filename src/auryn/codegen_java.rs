@@ -1,8 +1,8 @@
 use crate::{
     auryn::{
         ast::ast_parser::{
-            Assignment, AstError, BinaryOperation, Block, Expression, IfStatement, NodeOrError,
-            Root, Statement, Value, VariableUpdate,
+            Assignment, AstError, BinaryOperation, Block, Expression, IfStatement, LoopStatement,
+            NodeOrError, Root, Statement, Value, VariableUpdate,
         },
         tokenizer::BinaryOperatorToken,
     },
@@ -12,7 +12,7 @@ use crate::{
             primitive,
         },
         class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
-        source_graph::{BasicBlockId, BlockFinalizer},
+        source_graph::BlockFinalizer,
     },
     utils::fast_map::FastMap,
 };
@@ -63,7 +63,7 @@ impl Generator {
     pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
         let root = root.as_ref().map_err(Clone::clone)?;
         self.generate_root(&root.kind)?;
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(BasicBlockId(0));
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::ReturnNull;
         Ok(())
     }
 }
@@ -117,6 +117,10 @@ impl Generator {
                 let if_statement = if_statement.as_ref().as_ref()?;
                 self.generate_if_statement(&if_statement.kind)
             }
+            Statement::Loop(loop_statement) => {
+                let loop_statement = loop_statement.as_ref().as_ref()?;
+                self.generate_loop(&loop_statement.kind)
+            }
             Statement::VariableUpdate(update) => {
                 let update = update.as_ref().as_ref()?;
                 self.generate_update(&update.kind)
@@ -163,6 +167,23 @@ impl Generator {
         self.generate_block(if_statement.block()?)?;
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
 
+        self.assembler.set_current_block_id(next_block);
+
+        Ok(())
+    }
+
+    fn generate_loop(&mut self, loop_statement: &LoopStatement) -> CodegenResult {
+        let loop_block = self.assembler.add_block();
+
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
+        self.assembler.set_current_block_id(loop_block);
+
+        self.generate_block(loop_statement.block()?)?;
+
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
+
+        // Currently everything that goes here is dead code
+        let next_block = self.assembler.add_block();
         self.assembler.set_current_block_id(next_block);
 
         Ok(())

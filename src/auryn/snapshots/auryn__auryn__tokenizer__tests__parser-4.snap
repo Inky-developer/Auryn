@@ -1,8 +1,12 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"let some_text = if true { 2 } else { 0 }\")"
+expression: "tokenize(\"loop let some_text = if true { 2 } else { 0 }\")"
 ---
 [
+    Token {
+        kind: KeywordLoop,
+        text: "loop ",
+    },
     Token {
         kind: KeywordLet,
         text: "let ",

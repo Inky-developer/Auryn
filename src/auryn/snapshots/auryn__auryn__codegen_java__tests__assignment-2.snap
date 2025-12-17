@@ -153,11 +153,7 @@ ClassData {
                                         15,
                                     ),
                                 ),
-                                Goto(
-                                    JumpPoint(
-                                        0,
-                                    ),
-                                ),
+                                Return,
                             ],
                             attributes: [
                                 AttributeInfo {

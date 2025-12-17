@@ -155,7 +155,7 @@ ClassData {
                                     ),
                                 ),
                                 Return,
-                                Ireturn,
+                                Return,
                             ],
                             attributes: [
                                 AttributeInfo {
