@@ -3,7 +3,9 @@ use std::io::Write;
 use crate::{
     java::{
         assembler::{ConstantValue, Instruction},
-        class::{self, Comparison, JumpPoint, StackMapTableAttribute, VerificationTypeInfo},
+        class::{
+            self, Comparison, JumpPoint, StackMapTableAttribute, TypeCategory, VerificationTypeInfo,
+        },
         constant_pool_builder::ConstantPoolBuilder,
         symbolic_evaluation::{Frame, SymbolicEvaluator},
     },
@@ -119,7 +121,7 @@ impl SourceGraph {
             let next_block_id = block_order.get(index + 1).copied();
             let block = graph.get_vertex(block_id).expect("Should exist");
             for instruction in &block.instructions {
-                code.push(context.convert_instruction(&instruction));
+                context.convert_instruction(&instruction, |i| code.push(i));
             }
             if let Some(finalizer) =
                 context.convert_finalizer_instruction(&block.finalizer, next_block_id, |block_id| {
@@ -215,13 +217,18 @@ impl AssemblyContext<'_> {
 
     /// Returns the length of the instructions compiled into bytecode
     fn measure_len(&mut self, instructions: &[Instruction]) -> u16 {
-        instructions
-            .iter()
-            .map(|instruction| measure_class_len(&self.convert_instruction(instruction)))
-            .sum()
+        let mut writer = VoidWriter::default();
+        for instruction in instructions {
+            self.convert_instruction(&instruction, |i| i.serialize(&mut writer, 0).unwrap());
+        }
+        writer.len.try_into().unwrap()
     }
 
-    fn convert_instruction(&mut self, instruction: &Instruction) -> class::Instruction {
+    fn convert_instruction(
+        &mut self,
+        instruction: &Instruction,
+        mut on_instruction: impl FnMut(class::Instruction),
+    ) {
         match instruction {
             Instruction::GetStatic {
                 class_name,
@@ -231,7 +238,7 @@ impl AssemblyContext<'_> {
                 let field_ref_index =
                     self.0
                         .add_field_ref(class_name.clone(), name.clone(), field_type.to_string());
-                class::Instruction::GetStatic(field_ref_index)
+                on_instruction(class::Instruction::GetStatic(field_ref_index))
             }
             Instruction::InvokeVirtual {
                 class_name,
@@ -243,7 +250,7 @@ impl AssemblyContext<'_> {
                     name.clone(),
                     method_type.to_string(),
                 );
-                class::Instruction::InvokeVirtual(method_ref_index)
+                on_instruction(class::Instruction::InvokeVirtual(method_ref_index))
             }
             Instruction::LoadConstant { value } => {
                 let constant_index = match value {
@@ -255,14 +262,18 @@ impl AssemblyContext<'_> {
                     .get()
                     .try_into()
                     .expect("TODO: Implement support for higher indexes");
-                class::Instruction::Ldc(constant_index)
+                on_instruction(class::Instruction::Ldc(constant_index))
             }
-            Instruction::ReturnNull => class::Instruction::Return,
-            Instruction::IAdd => class::Instruction::IAdd,
-            Instruction::IMul => class::Instruction::IMul,
-            Instruction::IStore(index) => class::Instruction::IStore(index.0),
-            Instruction::ILoad(index) => class::Instruction::ILoad(index.0),
-            Instruction::Nop => class::Instruction::Nop,
+            Instruction::ReturnNull => on_instruction(class::Instruction::Return),
+            Instruction::IAdd => on_instruction(class::Instruction::IAdd),
+            Instruction::IMul => on_instruction(class::Instruction::IMul),
+            Instruction::IStore(index) => on_instruction(class::Instruction::IStore(index.0)),
+            Instruction::ILoad(index) => on_instruction(class::Instruction::ILoad(index.0)),
+            Instruction::Nop => on_instruction(class::Instruction::Nop),
+            Instruction::Pop(category) => match category {
+                TypeCategory::Normal => on_instruction(class::Instruction::Pop),
+                TypeCategory::Big => on_instruction(class::Instruction::Pop2),
+            },
         }
     }
 

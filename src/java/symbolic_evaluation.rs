@@ -47,12 +47,10 @@ impl SymbolicEvaluator {
 
     pub fn eval(&mut self, instruction: &Instruction, pool: &mut ConstantPoolBuilder) {
         match instruction {
-            // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.getstatic
             Instruction::GetStatic { field_type, .. } => {
                 let verification_type = field_type.to_verification_type(pool);
                 self.stack.push(verification_type);
             }
-            // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokevirtual
             Instruction::InvokeVirtual { method_type, .. } => {
                 for argument in method_type.arguments.iter().rev() {
                     let verification_type = argument.to_verification_type(pool);
@@ -79,6 +77,10 @@ impl SymbolicEvaluator {
                 self.stack.push(VerificationTypeInfo::Integer);
             }
             Instruction::Nop => {}
+            Instruction::Pop(category) => {
+                let value = self.stack.pop();
+                assert_eq!(value.map(|it| it.category()), Some(*category))
+            }
         }
     }
 }

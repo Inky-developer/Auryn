@@ -157,13 +157,17 @@ pub enum Instruction {
     IMul,
     IStore(u16),
     ILoad(u16),
-    // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond
     IfICmp {
         comparison: Comparison,
         jump_point: JumpPoint,
     },
     Goto(JumpPoint),
     Nop,
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop
+    Pop,
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop2
+    Pop2,
 }
 
 impl Instruction {
@@ -232,6 +236,12 @@ impl Instruction {
                     .unwrap();
                 buf.write_all(&offset.to_be_bytes())?;
             }
+            Instruction::Pop => {
+                buf.write_all(&[0x57])?;
+            }
+            Instruction::Pop2 => {
+                buf.write_all(&[0x58])?;
+            }
         }
 
         Ok(())
@@ -283,6 +293,13 @@ impl CodeAttribute {
     }
 }
 
+/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-2.html#jvms-2.11.1-320
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum TypeCategory {
+    Normal,
+    Big,
+}
+
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum VerificationTypeInfo {
@@ -305,6 +322,19 @@ pub enum VerificationTypeInfo {
 }
 
 impl VerificationTypeInfo {
+    pub fn category(&self) -> TypeCategory {
+        match self {
+            Self::Top
+            | Self::Integer
+            | Self::Float
+            | Self::Null
+            | Self::UninitializedThis
+            | Self::Object { .. }
+            | Self::UninitializedVariable { .. } => TypeCategory::Normal,
+            Self::Long | Self::Double => TypeCategory::Big,
+        }
+    }
+
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
         match self {
             VerificationTypeInfo::Top => buf.write_all(&[0x0]),

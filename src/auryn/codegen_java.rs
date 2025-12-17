@@ -11,7 +11,7 @@ use crate::{
             Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, VariableId,
             primitive,
         },
-        class::{ClassData, Comparison},
+        class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
     utils::fast_map::FastMap,
@@ -119,7 +119,11 @@ impl Generator {
             }
             Statement::Expression(expression) => {
                 let expression = expression.as_ref().as_ref()?;
-                self.generate_expression(&expression.kind)
+                let leftover = self.generate_expression(&expression.kind)?;
+                if let Some(leftover) = leftover {
+                    self.assembler.add(Instruction::Pop(leftover));
+                }
+                Ok(())
             }
         }
     }
@@ -149,22 +153,27 @@ impl Generator {
         Ok(())
     }
 
-    fn generate_expression(&mut self, expression: &Expression) -> CodegenResult {
+    /// The return value indicates the stack usage
+    fn generate_expression(
+        &mut self,
+        expression: &Expression,
+    ) -> CodegenResult<Option<TypeCategory>> {
         match expression {
             Expression::Value(value) => {
                 let value = value.as_ref().as_ref()?;
-                self.generate_value(&value.kind)?;
+                self.generate_value(&value.kind)
             }
             Expression::BinaryOperation(operation) => {
                 let operation = operation.as_ref().as_ref()?;
-                self.generate_binary_operation(&operation.kind)?;
+                self.generate_binary_operation(&operation.kind)
             }
         }
-
-        Ok(())
     }
 
-    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> CodegenResult {
+    fn generate_binary_operation(
+        &mut self,
+        operation: &BinaryOperation,
+    ) -> CodegenResult<Option<TypeCategory>> {
         self.generate_expression(operation.lhs()?)?;
         self.generate_expression(operation.rhs()?)?;
 
@@ -187,7 +196,7 @@ impl Generator {
             }
         };
 
-        Ok(())
+        Ok(Some(VerificationTypeInfo::Integer.category()))
     }
 
     fn generate_comparison(&mut self, comparison: Comparison) -> CodegenResult {
@@ -217,13 +226,14 @@ impl Generator {
         Ok(())
     }
 
-    fn generate_value(&mut self, value: &Value) -> CodegenResult {
+    fn generate_value(&mut self, value: &Value) -> CodegenResult<Option<TypeCategory>> {
         match value {
             Value::Number(number) => {
                 let number = number.as_ref().as_ref()?;
-                self.assembler.add(Instruction::LoadConstant {
-                    value: ConstantValue::Integer(number.kind.value),
-                });
+                let value = ConstantValue::Integer(number.kind.value);
+                let info = value.to_verification_type(&mut self.assembler.constant_pool);
+                self.assembler.add(Instruction::LoadConstant { value });
+                Ok(Some(info.category()))
             }
             Value::Ident(ident) => {
                 let ident = ident.as_ref().as_ref()?;
@@ -232,11 +242,12 @@ impl Generator {
                     .get(&ident.kind.ident)
                     .expect("Trying to access variable which was not defined");
                 self.assembler.add(Instruction::ILoad(local_variable_id));
+                Ok(Some(VerificationTypeInfo::Integer.category()))
             }
             Value::Parenthesis(parenthesis) => {
                 let parenthesis = parenthesis.as_ref().as_ref()?;
                 let expression = parenthesis.kind.expression.as_ref().as_ref()?;
-                self.generate_expression(&expression.kind)?;
+                self.generate_expression(&expression.kind)
             }
             Value::FunctionCall(call) => {
                 let call = call.as_ref().as_ref()?;
@@ -247,10 +258,11 @@ impl Generator {
                 let expression = expression.as_ref()?;
                 self.generate_expression(&expression.kind)?;
                 self.instrics_print_int();
+
+                // Right now the only supported function returns nothing
+                Ok(None)
             }
         }
-
-        Ok(())
     }
 }
 

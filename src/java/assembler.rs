@@ -1,7 +1,7 @@
 use std::{fmt::Display, marker::PhantomData};
 
 use crate::java::{
-    class::{self, StackMapTableAttribute, VerificationTypeInfo},
+    class::{self, StackMapTableAttribute, TypeCategory, VerificationTypeInfo},
     constant_pool_builder::ConstantPoolBuilder,
     source_graph::{BasicBlock, BasicBlockId, SourceGraph},
 };
@@ -161,6 +161,8 @@ pub enum Instruction {
     IStore(VariableId<primitive::Integer>),
     ILoad(VariableId<primitive::Integer>),
     Nop,
+    /// Pops a single value of the given category from the stack
+    Pop(TypeCategory),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
