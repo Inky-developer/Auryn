@@ -1,7 +1,10 @@
 use std::fmt::Debug;
 
 use crate::java::{
-    assembler::Instruction, class::VerificationTypeInfo, constant_pool_builder::ConstantPoolBuilder,
+    assembler::Instruction,
+    class::VerificationTypeInfo,
+    constant_pool_builder::ConstantPoolBuilder,
+    source_graph::{BasicBlock, BlockFinalizer},
 };
 
 /// Symbolic evaluator that keeps track of data relevant for stack map frames
@@ -16,6 +19,29 @@ impl SymbolicEvaluator {
         Self {
             stack: Vec::default(),
             locals: function_arguments,
+        }
+    }
+
+    pub fn eval_block(&mut self, block: &BasicBlock, pool: &mut ConstantPoolBuilder) {
+        for instruction in &block.instructions {
+            self.eval(instruction, pool);
+        }
+
+        self.eval_finalizer(&block.finalizer, pool);
+    }
+
+    pub fn eval_finalizer(&mut self, finalizer: &BlockFinalizer, _pool: &mut ConstantPoolBuilder) {
+        match finalizer {
+            BlockFinalizer::BranchInteger {
+                comparison: _,
+                positive_block: _,
+                negative_block: _,
+            } => {
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+            }
+            BlockFinalizer::Goto(_) => {}
+            BlockFinalizer::Return => {}
         }
     }
 
@@ -52,12 +78,48 @@ impl SymbolicEvaluator {
             Instruction::ILoad(_) => {
                 self.stack.push(VerificationTypeInfo::Integer);
             }
-            Instruction::Goto(_) => {}
-            Instruction::IfIcmp { .. } => {
-                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
-                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
-            }
             Instruction::Nop => {}
+        }
+    }
+}
+
+impl From<Frame> for SymbolicEvaluator {
+    fn from(Frame { locals, stack }: Frame) -> Self {
+        Self { locals, stack }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct Frame {
+    pub locals: Vec<VerificationTypeInfo>,
+    pub stack: Vec<VerificationTypeInfo>,
+}
+
+impl Frame {
+    pub fn combine(self, other: &Frame) -> Frame {
+        for (a, b) in self.locals.iter().zip(other.locals.iter()) {
+            assert_eq!(a, b);
+        }
+
+        let locals = if self.locals.len() > other.locals.len() {
+            self.locals
+        } else {
+            other.locals.clone()
+        };
+
+        assert_eq!(self.stack, other.stack);
+        Frame {
+            locals,
+            stack: self.stack,
+        }
+    }
+}
+
+impl From<&SymbolicEvaluator> for Frame {
+    fn from(value: &SymbolicEvaluator) -> Self {
+        Self {
+            locals: value.locals.clone(),
+            stack: value.stack.clone(),
         }
     }
 }

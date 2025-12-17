@@ -12,6 +12,14 @@ ClassData {
                 1,
             ),
         },
+        Utf8(
+            "java/io/PrintStream",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                3,
+            ),
+        },
         Integer {
             integer: 1,
         },
@@ -20,7 +28,7 @@ ClassData {
         ),
         Class {
             name_index: ConstantPoolIndex(
-                4,
+                6,
             ),
         },
         Utf8(
@@ -31,25 +39,17 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                6,
+                8,
             ),
             type_index: ConstantPoolIndex(
-                7,
+                9,
             ),
         },
         FieldRef {
             class_index: ConstantPoolIndex(
-                5,
+                7,
             ),
             name_and_type_index: ConstantPoolIndex(
-                8,
-            ),
-        },
-        Utf8(
-            "java/io/PrintStream",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
                 10,
             ),
         },
@@ -69,7 +69,7 @@ ClassData {
         },
         MethodRef {
             class_index: ConstantPoolIndex(
-                11,
+                4,
             ),
             name_and_type_index: ConstantPoolIndex(
                 14,
@@ -129,7 +129,7 @@ ClassData {
                             max_locals: 4,
                             code: [
                                 Ldc(
-                                    3,
+                                    5,
                                 ),
                                 IStore(
                                     1,
@@ -142,7 +142,7 @@ ClassData {
                                 ),
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        9,
+                                        11,
                                     ),
                                 ),
                                 ILoad(

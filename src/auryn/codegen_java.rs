@@ -8,10 +8,11 @@ use crate::{
     },
     java::{
         assembler::{
-            Assembler, ConstantValue, FieldDescriptor, Instruction, InstructionId,
-            MethodDescriptor, VariableId, primitive,
+            Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, VariableId,
+            primitive,
         },
         class::{ClassData, Comparison},
+        source_graph::{BasicBlockId, BlockFinalizer},
     },
     utils::fast_map::FastMap,
 };
@@ -62,7 +63,7 @@ impl Generator {
     pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
         let root = root.as_ref().map_err(Clone::clone)?;
         self.generate_root(&root.kind)?;
-        self.assembler.add(Instruction::Goto(InstructionId(0)));
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(BasicBlockId(0));
         Ok(())
     }
 }
@@ -190,27 +191,28 @@ impl Generator {
     }
 
     fn generate_comparison(&mut self, comparison: Comparison) -> CodegenResult {
-        // We have to generate a branch:
-        // 0: if cmp == false goto 3
-        // 1: load 1
-        // 2: goto 4
-        // 3: load 0
-        // 4: <>
-        //
-        // so the comparison operator needs to be inverted
-        self.assembler.add_all([
-            Instruction::IfIcmp {
-                comparison: comparison.invert(),
-                target: self.assembler.current_instruction_id() + 3,
-            },
-            Instruction::LoadConstant {
-                value: ConstantValue::Integer(1),
-            },
-            Instruction::Goto(self.assembler.current_instruction_id() + 4),
-            Instruction::LoadConstant {
-                value: ConstantValue::Integer(0),
-            },
-        ]);
+        let pos_block_id = self.assembler.add_block();
+        let neg_block_id = self.assembler.add_block();
+        let next_block_id = self.assembler.add_block();
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+            comparison,
+            positive_block: pos_block_id,
+            negative_block: neg_block_id,
+        };
+
+        self.assembler.set_current_block_id(pos_block_id);
+        self.assembler.add(Instruction::LoadConstant {
+            value: ConstantValue::Integer(1),
+        });
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
+
+        self.assembler.set_current_block_id(neg_block_id);
+        self.assembler.add(Instruction::LoadConstant {
+            value: ConstantValue::Integer(0),
+        });
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
+
+        self.assembler.set_current_block_id(next_block_id);
 
         Ok(())
     }

@@ -1,15 +1,9 @@
-use std::{fmt::Display, marker::PhantomData, ops::Add};
+use std::{fmt::Display, marker::PhantomData};
 
-use crate::{
-    java::{
-        class::{
-            self, Comparison, JumpPoint, StackMapFrame, StackMapTableAttribute,
-            VerificationTypeInfo,
-        },
-        constant_pool_builder::ConstantPoolBuilder,
-        symbolic_evaluation::SymbolicEvaluator,
-    },
-    utils::fast_map::{FastMap, FastSet},
+use crate::java::{
+    class::{self, StackMapTableAttribute, VerificationTypeInfo},
+    constant_pool_builder::ConstantPoolBuilder,
+    source_graph::{BasicBlock, BasicBlockId, SourceGraph},
 };
 
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType
@@ -146,17 +140,6 @@ pub mod primitive {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct InstructionId(pub usize);
-
-impl Add<isize> for InstructionId {
-    type Output = InstructionId;
-
-    fn add(self, rhs: isize) -> Self::Output {
-        InstructionId(self.0.strict_add_signed(rhs))
-    }
-}
-
 #[derive(Debug, Clone)]
 pub enum Instruction {
     GetStatic {
@@ -177,30 +160,18 @@ pub enum Instruction {
     IMul,
     IStore(VariableId<primitive::Integer>),
     ILoad(VariableId<primitive::Integer>),
-    IfIcmp {
-        comparison: Comparison,
-        target: InstructionId,
-    },
-    Goto(InstructionId),
     Nop,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct VariableId<T>(u16, PhantomData<T>);
-
-#[derive(Debug)]
-pub struct VerificationFrame {
-    offset: u16,
-    locals: Vec<VerificationTypeInfo>,
-    stack: Vec<VerificationTypeInfo>,
-}
+pub struct VariableId<T>(pub(super) u16, PhantomData<T>);
 
 #[derive(Debug)]
 pub struct Assembler {
-    constant_pool: ConstantPoolBuilder,
-    instructions: Vec<Instruction>,
+    pub constant_pool: ConstantPoolBuilder,
+    blocks: SourceGraph,
     next_variable_index: u16,
-    function_arguments: Vec<VerificationTypeInfo>,
+    pub function_arguments: Vec<VerificationTypeInfo>,
 }
 
 impl Assembler {
@@ -212,18 +183,16 @@ impl Assembler {
         let next_variable_index = main_function_arguments.len() as u16;
         Self {
             constant_pool,
-            instructions: Vec::new(),
+            blocks: SourceGraph::default(),
             next_variable_index,
             function_arguments: main_function_arguments,
         }
     }
 
     pub fn assemble(mut self, class_name: String) -> class::ClassData {
-        let (class_instructions, verification_frames) = Self::assemble_instructions(
-            self.function_arguments,
-            &mut self.constant_pool,
-            self.instructions,
-        );
+        let (class_instructions, verification_frames) = self
+            .blocks
+            .assemble(&mut self.constant_pool, self.function_arguments);
         let name_index = self.constant_pool.add_utf8("main".to_string());
         let descriptor_index = self
             .constant_pool
@@ -255,6 +224,10 @@ impl Assembler {
         class_data
     }
 
+    pub fn current_block_id(&self) -> BasicBlockId {
+        self.blocks.current
+    }
+
     pub fn add_all(&mut self, instructions: impl IntoIterator<Item = Instruction>) {
         for instruction in instructions {
             self.add(instruction);
@@ -262,11 +235,7 @@ impl Assembler {
     }
 
     pub fn add(&mut self, instruction: Instruction) {
-        self.instructions.push(instruction);
-    }
-
-    pub fn current_instruction_id(&self) -> InstructionId {
-        InstructionId(self.instructions.len())
+        self.blocks.add(instruction);
     }
 
     pub fn alloc_variable<T: primitive::IsPrimitiveType>(&mut self) -> VariableId<T> {
@@ -274,151 +243,17 @@ impl Assembler {
         self.next_variable_index += T::SIZE;
         VariableId(id, PhantomData)
     }
-}
 
-impl Assembler {
-    /// Goes through every instruction, converts it to a [`class::Instructon`] and, if it is a jump target,
-    /// generates a verification frame for it
-    ///
-    /// We also need a two-pass algorithm to calculate the jump targets. So in the first pass all class instructions and jump targets are collected.
-    /// Then, in the second pass we can convert from instruction id to jump target (byte offset).
-    fn assemble_instructions(
-        function_arguments: Vec<VerificationTypeInfo>,
-        constant_pool: &mut ConstantPoolBuilder,
-        instructions: Vec<Instruction>,
-    ) -> (Vec<class::Instruction>, Vec<VerificationFrame>) {
-        let mut jump_targets: FastSet<InstructionId> = FastSet::default();
-        let class_instructions_first_pass = instructions
-            .iter()
-            .cloned()
-            .map(|instruction| {
-                Self::convert_to_class_instruction(constant_pool, instruction, |id| {
-                    jump_targets.insert(id);
-                    JumpPoint(0)
-                })
-            })
-            .collect::<Vec<_>>();
-
-        let mut jump_table: FastMap<InstructionId, JumpPoint> = FastMap::default();
-        let mut scratch_buffer: Vec<u8> = Vec::with_capacity(instructions.len());
-        for (index, class_instruction) in class_instructions_first_pass.into_iter().enumerate() {
-            if jump_targets.contains(&InstructionId(index)) {
-                jump_table.insert(
-                    InstructionId(index),
-                    JumpPoint(scratch_buffer.len().try_into().unwrap()),
-                );
-            }
-            class_instruction
-                .serialize(&mut scratch_buffer, 0)
-                .expect("Should not err");
-        }
-
-        let mut eval = SymbolicEvaluator::new(function_arguments);
-        let mut verification_frames = Vec::with_capacity(jump_targets.len());
-        for (index, instruction) in instructions.iter().enumerate() {
-            if let Some(jump_point) = jump_table.get(&InstructionId(index)) {
-                let frame = VerificationFrame {
-                    offset: jump_point.0,
-                    locals: eval.locals.clone(),
-                    stack: eval.stack.clone(),
-                };
-                verification_frames.push(frame);
-            }
-            eval.eval(instruction, constant_pool);
-        }
-
-        let class_instructions = instructions
-            .into_iter()
-            .map(|instruction| {
-                Self::convert_to_class_instruction(constant_pool, instruction, |id| jump_table[&id])
-            })
-            .collect();
-
-        (class_instructions, verification_frames)
+    pub fn add_block(&mut self) -> BasicBlockId {
+        self.blocks.add_block()
     }
 
-    fn convert_to_class_instruction(
-        constant_pool: &mut ConstantPoolBuilder,
-        instruction: Instruction,
-        mut resolve_jump_point: impl FnMut(InstructionId) -> JumpPoint,
-    ) -> class::Instruction {
-        match instruction {
-            Instruction::GetStatic {
-                class_name,
-                name,
-                field_type,
-            } => {
-                let field_ref_index =
-                    constant_pool.add_field_ref(class_name, name, field_type.to_string());
-                class::Instruction::GetStatic(field_ref_index)
-            }
-            Instruction::InvokeVirtual {
-                class_name,
-                name,
-                method_type,
-            } => {
-                let method_ref_index =
-                    constant_pool.add_method_ref(class_name, name, method_type.to_string());
-                class::Instruction::InvokeVirtual(method_ref_index)
-            }
-            Instruction::LoadConstant { value } => {
-                let constant_index = match value {
-                    ConstantValue::String(string) => constant_pool.add_string(string),
-                    ConstantValue::Integer(integer) => constant_pool.add_integer(integer),
-                };
-                let constant_index = constant_index
-                    .0
-                    .get()
-                    .try_into()
-                    .expect("TODO: Implement support for higher indexes");
-                class::Instruction::Ldc(constant_index)
-            }
-            Instruction::ReturnNull => class::Instruction::Return,
-            Instruction::IAdd => class::Instruction::IAdd,
-            Instruction::IMul => class::Instruction::IMul,
-            Instruction::IStore(index) => class::Instruction::IStore(index.0),
-            Instruction::ILoad(index) => class::Instruction::ILoad(index.0),
-            Instruction::IfIcmp { comparison, target } => class::Instruction::IfICmp {
-                comparison,
-                jump_point: resolve_jump_point(target),
-            },
-            Instruction::Goto(target) => class::Instruction::Goto(resolve_jump_point(target)),
-            Instruction::Nop => class::Instruction::Nop,
-        }
+    pub fn current_block_mut(&mut self) -> &mut BasicBlock {
+        self.blocks.current_block_mut()
     }
-}
 
-impl From<Vec<VerificationFrame>> for StackMapTableAttribute {
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
-    fn from(value: Vec<VerificationFrame>) -> Self {
-        let mut current_offset: u16 = 0;
-
-        // Skip frames at index 0, since they will be automatically generated by java
-        let frames = value
-            .into_iter()
-            .enumerate()
-            .map(move |(index, frame)| {
-                // An offset of 0 indicates that the frame applies to the next instruction, so we need to subtract 1 here, unless this is the first frame
-                // In which case this must not be done according to spec.
-                let offset_to_last: u16 = if index == 0 {
-                    frame.offset
-                } else {
-                    (frame.offset - current_offset - 1)
-                        .try_into()
-                        .expect("Should not to to big")
-                };
-                current_offset = frame.offset;
-
-                // TODO: Try encode into a more compact representation
-                StackMapFrame::Full {
-                    offset_delta: offset_to_last,
-                    locals: frame.locals,
-                    stack: frame.stack,
-                }
-            })
-            .collect();
-
-        StackMapTableAttribute { entries: frames }
+    pub fn set_current_block_id(&mut self, new_block_id: BasicBlockId) {
+        self.blocks.current = new_block_id;
     }
 }
 

@@ -12,6 +12,14 @@ ClassData {
                 1,
             ),
         },
+        Utf8(
+            "java/io/PrintStream",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                3,
+            ),
+        },
         Integer {
             integer: 2,
         },
@@ -23,7 +31,7 @@ ClassData {
         ),
         Class {
             name_index: ConstantPoolIndex(
-                5,
+                7,
             ),
         },
         Utf8(
@@ -34,25 +42,17 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                7,
+                9,
             ),
             type_index: ConstantPoolIndex(
-                8,
+                10,
             ),
         },
         FieldRef {
             class_index: ConstantPoolIndex(
-                6,
+                8,
             ),
             name_and_type_index: ConstantPoolIndex(
-                9,
-            ),
-        },
-        Utf8(
-            "java/io/PrintStream",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
                 11,
             ),
         },
@@ -72,7 +72,7 @@ ClassData {
         },
         MethodRef {
             class_index: ConstantPoolIndex(
-                12,
+                4,
             ),
             name_and_type_index: ConstantPoolIndex(
                 15,
@@ -132,10 +132,10 @@ ClassData {
                             max_locals: 3,
                             code: [
                                 Ldc(
-                                    3,
+                                    5,
                                 ),
                                 Ldc(
-                                    4,
+                                    6,
                                 ),
                                 IMul,
                                 IStore(
@@ -143,7 +143,7 @@ ClassData {
                                 ),
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        10,
+                                        12,
                                     ),
                                 ),
                                 ILoad(
