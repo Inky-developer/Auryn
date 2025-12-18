@@ -205,6 +205,12 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn consume_whitespace_and_newlines(&mut self) {
+        while let Ok(_) = self.consume_if(|token| {
+            matches!(token.kind, TokenKind::Whitespace | TokenKind::Newline).then_some(token)
+        }) {}
+    }
+
     fn consume_statement_separator(&mut self) -> bool {
         let mut consumed = false;
         loop {
@@ -286,6 +292,7 @@ impl Parser<'_> {
         let statements_watcher = self.push_node();
 
         loop {
+            self.consume_whitespace_and_newlines();
             if end_set(self.peek().kind) {
                 break;
             }
@@ -624,6 +631,7 @@ mod tests {
     fn test_loop() {
         insta::assert_debug_snapshot!(verify("loop { 1 + 2 }"));
         insta::assert_debug_snapshot!(verify("loop { }"));
+        insta::assert_debug_snapshot!(verify("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"))
     }
 
     #[test]
