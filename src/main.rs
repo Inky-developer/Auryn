@@ -9,7 +9,7 @@ fn main() -> std::io::Result<()> {
     let mut args = std::env::args();
     args.next().unwrap();
     if let Some(filename) = args.next() {
-        let input = dbg!(std::fs::read_to_string(filename)?);
+        let input = std::fs::read_to_string(filename)?;
         let class = get_class(&input);
         run(class);
     } else {

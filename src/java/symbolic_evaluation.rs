@@ -114,7 +114,8 @@ impl Frame {
             assert_eq!(a, b);
         }
 
-        let locals = if self.locals.len() > other.locals.len() {
+        // FIXME: The locals handling does not seem entirely correct. TODO: Read up on it is supposed to work.
+        let locals = if self.locals.len() < other.locals.len() {
             self.locals
         } else {
             other.locals.clone()

@@ -348,6 +348,13 @@ mod tests {
     }
 
     #[test]
+    fn test_stack_map_table_generation() {
+        insta::assert_debug_snapshot!(generate_class(
+            "loop {\nif 1 {\nprint(42)\n}\nprint(100)\n}"
+        ));
+    }
+
+    #[test]
     #[should_panic]
     fn test_reject_invalid_variable() {
         insta::assert_debug_snapshot!(generate_class("let a = a"));

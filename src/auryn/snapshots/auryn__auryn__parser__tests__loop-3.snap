@@ -1,0 +1,45 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"\\t\\nloop {\\t\\n\\t\\n\\tprint(1)\\t\\n\\t}\\t\\n\\t\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..28 Root
+        |Whitespace
+        |1..28 Block
+        ||1..28 StatementList
+        |||Newline
+        |||2..26 Statement
+        ||||2..25 Loop
+        |||||KeywordLoop
+        |||||BraceOpen
+        |||||Whitespace
+        |||||9..24 Block
+        ||||||9..24 StatementList
+        |||||||Newline
+        |||||||Whitespace
+        |||||||Newline
+        |||||||Whitespace
+        |||||||13..22 Statement
+        ||||||||13..22 Expression
+        |||||||||13..22 Value
+        ||||||||||13..21 FunctionCall { ident: "print" }
+        |||||||||||Identifier
+        |||||||||||ParensOpen
+        |||||||||||19..20 ParameterList
+        ||||||||||||19..20 Expression
+        |||||||||||||19..20 Value
+        ||||||||||||||19..20 Number { value: 1 }
+        |||||||||||||||Number
+        |||||||||||ParensClose
+        ||||||||||Whitespace
+        |||||||Newline
+        |||||||Whitespace
+        |||||BraceClose
+        ||||Whitespace
+        |||Newline
+        |||Whitespace
+        ,
+    ),
+    diagnostics: [],
+}
