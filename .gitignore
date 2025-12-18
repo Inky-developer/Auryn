@@ -1,3 +1,5 @@
 /target
 # For debugging
 *.class
+# Code snippets for testing
+/snippets

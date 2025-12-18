@@ -5,8 +5,18 @@ use auryn::{
     java::class::ClassData,
 };
 
-fn main() {
-    repl();
+fn main() -> std::io::Result<()> {
+    let mut args = std::env::args();
+    args.next().unwrap();
+    if let Some(filename) = args.next() {
+        let input = dbg!(std::fs::read_to_string(filename)?);
+        let class = get_class(&input);
+        run(class);
+    } else {
+        repl();
+    }
+
+    Ok(())
 }
 
 fn repl() {
@@ -16,20 +26,24 @@ fn repl() {
         let class = get_class(&input);
         input.clear();
 
-        let mut f = OpenOptions::new()
-            .create(true)
-            .truncate(true)
-            .write(true)
-            .open("Helloworld.class")
-            .unwrap();
-        class.serialize(&mut f).unwrap();
-
-        let mut handle = std::process::Command::new("java")
-            .arg("Helloworld")
-            .spawn()
-            .unwrap();
-        handle.wait().unwrap();
+        run(class);
     }
+}
+
+fn run(class: ClassData) {
+    let mut f = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open("Helloworld.class")
+        .unwrap();
+    class.serialize(&mut f).unwrap();
+
+    let mut handle = std::process::Command::new("java")
+        .arg("Helloworld")
+        .spawn()
+        .unwrap();
+    handle.wait().unwrap();
 }
 
 fn get_class(input: &str) -> ClassData {
