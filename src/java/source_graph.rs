@@ -181,27 +181,13 @@ impl AssemblyContext<'_> {
 
         // dbg!(&block_order, graph);
 
+        // Theoretically we probably need a fixpoint iteration for loops, but lets just see for how long
+        // just assuming that loops don't change works
         let mut visited_blocks: FastMap<BasicBlockId, BlockFrames> = FastMap::default();
         for id in block_order.iter().copied() {
             let calling_blocks = graph.edges(id);
             let mut caller_frames =
-                calling_blocks.filter_map(|caller_id| match visited_blocks.get(&caller_id) {
-                    Some(frame) => Some(frame),
-                    None => {
-                        if caller_id != id {
-                            if block_order.contains(&caller_id) {
-                                panic!("I think this block should have already been visited");
-                            } else {
-                                // If the block order does not contain this block, then it is just dead code and can be ignored
-                                None
-                            }
-                        } else {
-                            // Theoretically we probably need a fixpoint iteration for loops, but lets just see for how long
-                            // just assuming that loops don't change works
-                            None
-                        }
-                    }
-                });
+                calling_blocks.filter_map(|caller_id| visited_blocks.get(&caller_id));
 
             let frame_at_start_of_block = if id.0 == 0 {
                 Frame {
