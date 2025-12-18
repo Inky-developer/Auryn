@@ -40,6 +40,7 @@ pub enum TokenKind {
     BraceClose,
     KeywordLet,
     KeywordLoop,
+    KeywordBreak,
     KeywordIf,
     Whitespace,
     Newline,
@@ -188,6 +189,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("loop"),
                 });
             }
+            'b' if self.starts_with_keyword("break") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordBreak,
+                    text: self.consume_text("break"),
+                });
+            }
             'i' if self.starts_with_keyword("if") => {
                 return Some(Token {
                     kind: TokenKind::KeywordIf,
@@ -223,7 +230,9 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
-        insta::assert_debug_snapshot!(tokenize("loop let some_text = if true { 2 } else { 0 }"));
+        insta::assert_debug_snapshot!(tokenize(
+            "loop let some_text = if true { 2 } else { break }"
+        ));
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6"
         ));

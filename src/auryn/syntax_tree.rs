@@ -32,6 +32,7 @@ pub enum SyntaxNodeKind {
     VariableUpdate { ident: String },
     IfStatement,
     Loop,
+    Break,
 }
 
 #[derive(Debug)]

@@ -208,6 +208,7 @@ create_ast_parser! {
         Assignement(NodeRef<Assignment>: SyntaxNodeKind::Assignment {..}),
         IfStatement(NodeRef<IfStatement>: SyntaxNodeKind::IfStatement {..}),
         Loop(NodeRef<LoopStatement>: SyntaxNodeKind::Loop {..}),
+        Break(NodeRef<BreakStatement>: SyntaxNodeKind::Break {..}),
         VariableUpdate(NodeRef<VariableUpdate>: SyntaxNodeKind::VariableUpdate {..} ),
         Expression(NodeRef<Expression>: SyntaxNodeKind::Expression),
     }
@@ -224,6 +225,8 @@ create_ast_parser! {
     pub struct LoopStatement @ SyntaxNodeKind::Loop {} {
         pub block: NodeRef<Block>,
     }
+
+    pub struct BreakStatement @ SyntaxNodeKind::Break {} {}
 
     pub struct VariableUpdate @ SyntaxNodeKind::VariableUpdate { ident: String } {
         pub expression: NodeRef<Expression>

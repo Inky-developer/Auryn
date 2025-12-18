@@ -54,4 +54,9 @@ mod tests {
     fn test_variable_update() {
         insta::assert_debug_snapshot!(parse("a = 2"));
     }
+
+    #[test]
+    fn test_control_flow() {
+        insta::assert_debug_snapshot!(parse("loop { if 1 { break } }"));
+    }
 }

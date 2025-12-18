@@ -1,8 +1,8 @@
 use crate::{
     auryn::{
         ast::ast_parser::{
-            Assignment, AstError, BinaryOperation, Block, Expression, IfStatement, LoopStatement,
-            NodeOrError, Root, Statement, Value, VariableUpdate,
+            Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, IfStatement,
+            LoopStatement, NodeOrError, Root, Statement, Value, VariableUpdate,
         },
         tokenizer::BinaryOperatorToken,
     },
@@ -12,7 +12,7 @@ use crate::{
             primitive,
         },
         class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
-        source_graph::BlockFinalizer,
+        source_graph::{BasicBlockId, BlockFinalizer},
     },
     utils::fast_map::FastMap,
 };
@@ -43,9 +43,16 @@ pub fn query_class(class_name: String, ast: &NodeOrError<Root>) -> Result<ClassD
     Ok(generator.finish(class_name))
 }
 
+#[derive(Debug)]
+struct LoopInfo {
+    _continue_target: BasicBlockId,
+    break_target: BasicBlockId,
+}
+
 struct Generator {
     assembler: Assembler,
     variable_map: FastMap<String, VariableId<primitive::Integer>>,
+    loops: Vec<LoopInfo>,
 }
 
 impl Generator {
@@ -53,6 +60,7 @@ impl Generator {
         Self {
             assembler: Assembler::new(),
             variable_map: FastMap::default(),
+            loops: Vec::new(),
         }
     }
 
@@ -121,6 +129,10 @@ impl Generator {
                 let loop_statement = loop_statement.as_ref().as_ref()?;
                 self.generate_loop(&loop_statement.kind)
             }
+            Statement::Break(break_statement) => {
+                let break_statement = break_statement.as_ref().as_ref()?;
+                self.generate_break(&break_statement.kind)
+            }
             Statement::VariableUpdate(update) => {
                 let update = update.as_ref().as_ref()?;
                 self.generate_update(&update.kind)
@@ -174,17 +186,36 @@ impl Generator {
 
     fn generate_loop(&mut self, loop_statement: &LoopStatement) -> CodegenResult {
         let loop_block = self.assembler.add_block();
+        let next_block = self.assembler.add_block();
 
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
         self.assembler.set_current_block_id(loop_block);
 
+        self.loops.push(LoopInfo {
+            _continue_target: loop_block,
+            break_target: next_block,
+        });
         self.generate_block(loop_statement.block()?)?;
+        self.loops.pop();
 
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
 
         // Currently everything that goes here is dead code
-        let next_block = self.assembler.add_block();
         self.assembler.set_current_block_id(next_block);
+
+        Ok(())
+    }
+
+    fn generate_break(&mut self, _break_statement: &BreakStatement) -> CodegenResult {
+        let Some(loop_info) = self.loops.last() else {
+            panic!("Not in a loop D:");
+        };
+
+        // This block is for potential code that comes after the break statement
+        let dead_code_block = self.assembler.add_block();
+
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_info.break_target);
+        self.assembler.set_current_block_id(dead_code_block);
 
         Ok(())
     }

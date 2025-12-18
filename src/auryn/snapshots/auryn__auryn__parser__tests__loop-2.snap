@@ -1,20 +1,24 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"loop { }\")"
+expression: "verify(\"loop { break }\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..8 Root
-        |0..8 Block
-        ||0..8 StatementList
-        |||0..8 Statement
-        ||||0..8 Loop
+        0..14 Root
+        |0..14 Block
+        ||0..14 StatementList
+        |||0..14 Statement
+        ||||0..14 Loop
         |||||KeywordLoop
         |||||Whitespace
         |||||BraceOpen
         |||||Whitespace
-        |||||7..7 Block
-        ||||||7..7 StatementList ''
+        |||||7..13 Block
+        ||||||7..13 StatementList
+        |||||||7..13 Statement
+        ||||||||7..12 Break
+        |||||||||KeywordBreak
+        ||||||||Whitespace
         |||||BraceClose
         ,
     ),
