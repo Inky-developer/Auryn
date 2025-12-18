@@ -79,6 +79,15 @@ impl<'a> Tokenizer<'a> {
         Self { input }
     }
 
+    fn starts_with_keyword(&self, keyword: &str) -> bool {
+        self.input.starts_with(keyword)
+            && self.input[keyword.len()..]
+                .chars()
+                .next()
+                .unwrap_or('\0')
+                .is_ascii_whitespace()
+    }
+
     fn consume_while<F: FnMut(char) -> bool>(&mut self, mut predicate: F) -> &'a str {
         let first_non_matching_byte = match self.input.find(|char| !predicate(char)) {
             Some(index) => index,
@@ -93,7 +102,7 @@ impl<'a> Tokenizer<'a> {
     fn consume_whitespace(&mut self) -> Option<Token<'a>> {
         Some(Token {
             kind: TokenKind::Whitespace,
-            text: self.consume_while(|char| char != '\n' && char.is_whitespace()),
+            text: self.consume_while(|char| char != '\n' && char.is_ascii_whitespace()),
         })
     }
 
@@ -167,22 +176,22 @@ impl<'a> Iterator for Tokenizer<'a> {
             '}' => TokenKind::BraceClose,
             ',' => TokenKind::Comma,
             '\n' => TokenKind::Newline,
-            'l' if self.input.starts_with("let ") => {
+            'l' if self.starts_with_keyword("let") => {
                 return Some(Token {
                     kind: TokenKind::KeywordLet,
-                    text: self.consume_text("let "),
+                    text: self.consume_text("let"),
                 });
             }
-            'l' if self.input.starts_with("loop ") => {
+            'l' if self.starts_with_keyword("loop") => {
                 return Some(Token {
                     kind: TokenKind::KeywordLoop,
-                    text: self.consume_text("loop "),
+                    text: self.consume_text("loop"),
                 });
             }
-            'i' if self.input.starts_with("if ") => {
+            'i' if self.starts_with_keyword("if") => {
                 return Some(Token {
                     kind: TokenKind::KeywordIf,
-                    text: self.consume_text("if "),
+                    text: self.consume_text("if"),
                 });
             }
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),

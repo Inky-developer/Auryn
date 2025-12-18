@@ -5,11 +5,19 @@ expression: "tokenize(\"loop let some_text = if true { 2 } else { 0 }\")"
 [
     Token {
         kind: KeywordLoop,
-        text: "loop ",
+        text: "loop",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
     },
     Token {
         kind: KeywordLet,
-        text: "let ",
+        text: "let",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
     },
     Token {
         kind: Identifier,
@@ -29,7 +37,11 @@ expression: "tokenize(\"loop let some_text = if true { 2 } else { 0 }\")"
     },
     Token {
         kind: KeywordIf,
-        text: "if ",
+        text: "if",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
     },
     Token {
         kind: Identifier,

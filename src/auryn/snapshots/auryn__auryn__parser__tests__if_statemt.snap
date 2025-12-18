@@ -10,6 +10,7 @@ AnnotatedParserOutput {
         |||0..18 Statement
         ||||0..18 IfStatement
         |||||KeywordIf
+        |||||Whitespace
         |||||3..5 Expression
         ||||||3..5 Value
         |||||||3..4 Number { value: 1 }

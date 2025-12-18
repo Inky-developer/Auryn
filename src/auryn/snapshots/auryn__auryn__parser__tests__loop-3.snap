@@ -12,6 +12,7 @@ AnnotatedParserOutput {
         |||2..26 Statement
         ||||2..25 Loop
         |||||KeywordLoop
+        |||||Whitespace
         |||||BraceOpen
         |||||Whitespace
         |||||9..24 Block
