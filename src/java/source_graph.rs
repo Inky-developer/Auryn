@@ -329,7 +329,7 @@ impl AssemblyContext<'_> {
                     comparison: comparison.invert(),
                     jump_point: resolve_jump_point(*negative_block),
                 },
-                Some(id) if id == *negative_block => class::Instruction::IfICmp {
+                Some(id) if id == *negative_block => class::Instruction::IfI {
                     comparison: *comparison,
                     jump_point: resolve_jump_point(*positive_block),
                 },
