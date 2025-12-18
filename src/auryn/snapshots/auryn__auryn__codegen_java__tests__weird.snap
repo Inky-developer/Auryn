@@ -1,0 +1,104 @@
+---
+source: src/auryn/codegen_java.rs
+expression: "generate_class(\"loop { loop {} }\")"
+---
+ClassData {
+    constant_pool: [
+        Utf8(
+            "[Ljava/lang/String;",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+        },
+        Utf8(
+            "main",
+        ),
+        Utf8(
+            "([Ljava/lang/String;)V",
+        ),
+        Utf8(
+            "Code",
+        ),
+        Utf8(
+            "StackMapTable",
+        ),
+        Utf8(
+            "Helloworld",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                7,
+            ),
+        },
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                9,
+            ),
+        },
+    ],
+    this_class: ConstantPoolIndex(
+        8,
+    ),
+    super_class: ConstantPoolIndex(
+        10,
+    ),
+    methods: [
+        Method {
+            flags: 9,
+            name_index: ConstantPoolIndex(
+                3,
+            ),
+            descriptor_index: ConstantPoolIndex(
+                4,
+            ),
+            attributes: [
+                AttributeInfo {
+                    name_index: ConstantPoolIndex(
+                        5,
+                    ),
+                    attribute: Code(
+                        CodeAttribute {
+                            max_locals: 2,
+                            code: [
+                                Goto(
+                                    JumpPoint(
+                                        0,
+                                    ),
+                                ),
+                            ],
+                            attributes: [
+                                AttributeInfo {
+                                    name_index: ConstantPoolIndex(
+                                        6,
+                                    ),
+                                    attribute: StackMapTable(
+                                        StackMapTableAttribute {
+                                            entries: [
+                                                Full {
+                                                    offset_delta: 0,
+                                                    locals: [
+                                                        Object {
+                                                            constant_pool_index: ConstantPoolIndex(
+                                                                2,
+                                                            ),
+                                                        },
+                                                    ],
+                                                    stack: [],
+                                                },
+                                            ],
+                                        },
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                },
+            ],
+        },
+    ],
+}

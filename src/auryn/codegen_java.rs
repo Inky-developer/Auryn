@@ -343,6 +343,11 @@ mod tests {
     }
 
     #[test]
+    fn test_weird() {
+        insta::assert_debug_snapshot!(generate_class("loop { loop {} }"));
+    }
+
+    #[test]
     #[should_panic]
     fn test_reject_invalid_variable() {
         insta::assert_debug_snapshot!(generate_class("let a = a"));
