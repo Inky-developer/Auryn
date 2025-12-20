@@ -1,10 +1,7 @@
 use std::fmt::{Debug, Display};
 
-use crate::auryn::{
-    ComputedSpan, Span,
-    parser::DiagnosticKind,
-    tokenizer::{BinaryOperatorToken, TokenKind},
-};
+use crate::auryn::{ComputedSpan, Span, parser::DiagnosticKind, tokenizer::TokenKind};
+use crate::utils::small_string::SmallString;
 
 #[derive(Debug)]
 pub struct ComputedDiagnostic {
@@ -19,17 +16,15 @@ pub enum SyntaxNodeKind {
     Statement,
     Expression,
     Value,
-    Number { value: i32 },
+    Number,
     BinaryOperation,
-    BinaryOperator(BinaryOperatorToken),
     Error,
     Parenthesis,
-    FunctionCall { ident: String },
-    StatementList,
+    FunctionCall,
     ParameterList,
-    Assignment { ident: String },
-    Ident { ident: String },
-    VariableUpdate { ident: String },
+    Assignment,
+    Ident,
+    VariableUpdate,
     IfStatement,
     Loop,
     Break,
@@ -58,6 +53,7 @@ impl SyntaxNode {
 #[derive(Debug)]
 pub struct SyntaxToken {
     pub kind: TokenKind,
+    pub text: SmallString,
     pub span: Span,
     pub diagnostics: Vec<DiagnosticKind>,
 }
@@ -65,7 +61,7 @@ pub struct SyntaxToken {
 impl SyntaxToken {
     pub fn collect_diagnostics(&self, offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
         for kind in &self.diagnostics {
-            let kind = *kind;
+            let kind = kind.clone();
             buf.push(ComputedDiagnostic {
                 kind,
                 span: self.span.at_offset(offset),
@@ -92,6 +88,13 @@ impl SyntaxItem {
         match self {
             SyntaxItem::Node(node) => Some(node),
             SyntaxItem::Token(_) => None,
+        }
+    }
+
+    pub fn as_token(&self) -> Option<&SyntaxToken> {
+        match self {
+            SyntaxItem::Node(_) => None,
+            SyntaxItem::Token(token) => Some(token),
         }
     }
 

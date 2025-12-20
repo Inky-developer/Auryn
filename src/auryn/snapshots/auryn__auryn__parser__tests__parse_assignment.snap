@@ -6,20 +6,19 @@ AnnotatedParserOutput {
     ast: Some(
         0..19 Root
         |0..19 Block
-        ||0..19 StatementList
-        |||0..18 Statement
-        ||||0..18 Assignment { ident: "helloworld" }
-        |||||KeywordLet
-        |||||Whitespace
-        |||||Identifier
-        |||||Whitespace
-        |||||Equal
-        |||||Whitespace
-        |||||17..18 Expression
-        ||||||17..18 Value
-        |||||||17..18 Number { value: 1 }
-        ||||||||Number
-        |||Newline
+        ||0..18 Statement
+        |||0..18 Assignment
+        ||||KeywordLet
+        ||||Whitespace
+        ||||Identifier
+        ||||Whitespace
+        ||||Equal
+        ||||Whitespace
+        ||||17..18 Expression
+        |||||17..18 Value
+        ||||||17..18 Number
+        |||||||Number
+        ||Newline
         ,
     ),
     diagnostics: [],

@@ -6,17 +6,16 @@ AnnotatedParserOutput {
     ast: Some(
         0..5 Root
         |0..5 Block
-        ||0..5 StatementList
-        |||0..5 Statement
-        ||||0..5 VariableUpdate { ident: "a" }
-        |||||Identifier
-        |||||Whitespace
-        |||||Equal
-        |||||Whitespace
-        |||||4..5 Expression
-        ||||||4..5 Value
-        |||||||4..5 Number { value: 3 }
-        ||||||||Number
+        ||0..5 Statement
+        |||0..5 VariableUpdate
+        ||||Identifier
+        ||||Whitespace
+        ||||Equal
+        ||||Whitespace
+        ||||4..5 Expression
+        |||||4..5 Value
+        ||||||4..5 Number
+        |||||||Number
         ,
     ),
     diagnostics: [],

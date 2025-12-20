@@ -126,7 +126,7 @@ ClassData {
                     ),
                     attribute: Code(
                         CodeAttribute {
-                            max_locals: 4,
+                            max_locals: 3,
                             code: [
                                 Ldc(
                                     5,
@@ -134,19 +134,13 @@ ClassData {
                                 IStore(
                                     1,
                                 ),
-                                ILoad(
-                                    1,
-                                ),
-                                IStore(
-                                    2,
-                                ),
                                 GetStatic(
                                     ConstantPoolIndex(
                                         11,
                                     ),
                                 ),
                                 ILoad(
-                                    2,
+                                    1,
                                 ),
                                 InvokeVirtual(
                                     ConstantPoolIndex(

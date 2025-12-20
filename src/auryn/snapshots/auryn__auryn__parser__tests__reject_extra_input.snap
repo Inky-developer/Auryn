@@ -6,47 +6,46 @@ AnnotatedParserOutput {
     ast: Some(
         0..12 Root
         |0..12 Block
-        ||0..12 StatementList
-        |||0..2 Statement
-        ||||0..2 Expression
-        |||||0..2 Value
-        ||||||0..1 Number { value: 1 }
-        |||||||Number
-        ||||||Whitespace
-        |||Error [Error(ExpectedNewline)]
-        |||2..4 Statement
-        ||||2..4 Expression
-        |||||2..4 Value
-        ||||||2..3 Number { value: 1 }
-        |||||||Number
-        ||||||Whitespace
-        |||Error [Error(ExpectedNewline)]
-        |||4..6 Statement
-        ||||4..6 Expression
-        |||||4..6 Value
-        ||||||4..5 Number { value: 1 }
-        |||||||Number
-        ||||||Whitespace
-        |||Error [Error(ExpectedNewline)]
-        |||6..8 Statement
-        ||||6..8 Expression
-        |||||6..8 Value
-        ||||||6..7 Number { value: 1 }
-        |||||||Number
-        ||||||Whitespace
-        |||Error [Error(ExpectedNewline)]
-        |||8..11 Statement
-        ||||8..11 Expression
-        |||||8..11 Value
-        ||||||8..10 Number { value: 11 }
-        |||||||Number
-        ||||||Whitespace
-        |||Error [Error(ExpectedNewline)]
-        |||11..12 Statement
-        ||||11..12 Expression
-        |||||11..12 Value
-        ||||||11..12 Number { value: 1 }
-        |||||||Number
+        ||0..2 Statement
+        |||0..2 Expression
+        ||||0..2 Value
+        |||||0..1 Number
+        ||||||Number
+        |||||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||2..4 Statement
+        |||2..4 Expression
+        ||||2..4 Value
+        |||||2..3 Number
+        ||||||Number
+        |||||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||4..6 Statement
+        |||4..6 Expression
+        ||||4..6 Value
+        |||||4..5 Number
+        ||||||Number
+        |||||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||6..8 Statement
+        |||6..8 Expression
+        ||||6..8 Value
+        |||||6..7 Number
+        ||||||Number
+        |||||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||8..11 Statement
+        |||8..11 Expression
+        ||||8..11 Value
+        |||||8..10 Number
+        ||||||Number
+        |||||Whitespace
+        ||Error [Error(ExpectedNewline)]
+        ||11..12 Statement
+        |||11..12 Expression
+        ||||11..12 Value
+        |||||11..12 Number
+        ||||||Number
         ,
     ),
     diagnostics: [

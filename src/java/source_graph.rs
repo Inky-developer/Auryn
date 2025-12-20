@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use crate::java::assembler::Primitive;
 use crate::{
     java::{
         assembler::{ConstantValue, Instruction},
@@ -101,7 +102,7 @@ impl SourceGraph {
         self,
         constant_pool: &'_ mut ConstantPoolBuilder,
         arguments: Vec<VerificationTypeInfo>,
-    ) -> (Vec<class::Instruction>, class::StackMapTableAttribute) {
+    ) -> (Vec<class::Instruction>, StackMapTableAttribute) {
         let mut context = AssemblyContext(constant_pool);
         let mut graph = build_graph(self.graph);
         let block_order = graph.order_topologically(BasicBlockId(0));
@@ -280,8 +281,12 @@ impl AssemblyContext<'_> {
             Instruction::ReturnNull => on_instruction(class::Instruction::Return),
             Instruction::IAdd => on_instruction(class::Instruction::IAdd),
             Instruction::IMul => on_instruction(class::Instruction::IMul),
-            Instruction::IStore(index) => on_instruction(class::Instruction::IStore(index.0)),
-            Instruction::ILoad(index) => on_instruction(class::Instruction::ILoad(index.0)),
+            Instruction::Store(id) => on_instruction(match id.r#type {
+                Primitive::Integer => class::Instruction::IStore(id.index),
+            }),
+            Instruction::Load(id) => on_instruction(match id.r#type {
+                Primitive::Integer => class::Instruction::ILoad(id.index),
+            }),
             Instruction::Nop => on_instruction(class::Instruction::Nop),
             Instruction::Pop(category) => match category {
                 TypeCategory::Normal => on_instruction(class::Instruction::Pop),

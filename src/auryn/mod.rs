@@ -1,5 +1,6 @@
 use std::iter::Sum;
 
+pub mod air;
 pub mod ast;
 pub mod codegen_java;
 pub mod parser;

@@ -23,15 +23,12 @@ ClassData {
         Integer {
             integer: 1,
         },
-        Integer {
-            integer: 42,
-        },
         Utf8(
             "java/lang/System",
         ),
         Class {
             name_index: ConstantPoolIndex(
-                7,
+                6,
             ),
         },
         Utf8(
@@ -42,19 +39,22 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                9,
+                8,
             ),
             type_index: ConstantPoolIndex(
-                10,
+                9,
             ),
         },
         FieldRef {
             class_index: ConstantPoolIndex(
-                8,
+                7,
             ),
             name_and_type_index: ConstantPoolIndex(
-                11,
+                10,
             ),
+        },
+        Integer {
+            integer: 42,
         },
         Utf8(
             "println",
@@ -132,7 +132,7 @@ ClassData {
                     ),
                     attribute: Code(
                         CodeAttribute {
-                            max_locals: 4,
+                            max_locals: 2,
                             code: [
                                 Ldc(
                                     5,
@@ -140,41 +140,29 @@ ClassData {
                                 IfI {
                                     comparison: Equal,
                                     jump_point: JumpPoint(
-                                        17,
+                                        13,
                                     ),
                                 },
-                                Ldc(
-                                    6,
-                                ),
-                                IStore(
-                                    1,
-                                ),
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        12,
+                                        11,
                                     ),
                                 ),
-                                ILoad(
-                                    1,
+                                Ldc(
+                                    12,
                                 ),
                                 InvokeVirtual(
                                     ConstantPoolIndex(
                                         16,
                                     ),
                                 ),
-                                Ldc(
-                                    17,
-                                ),
-                                IStore(
-                                    2,
-                                ),
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        12,
+                                        11,
                                     ),
                                 ),
-                                ILoad(
-                                    2,
+                                Ldc(
+                                    17,
                                 ),
                                 InvokeVirtual(
                                     ConstantPoolIndex(
@@ -218,7 +206,7 @@ ClassData {
                                                     stack: [],
                                                 },
                                                 Full {
-                                                    offset_delta: 11,
+                                                    offset_delta: 7,
                                                     locals: [
                                                         Object {
                                                             constant_pool_index: ConstantPoolIndex(

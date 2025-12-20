@@ -1,66 +1,48 @@
+use crate::auryn::air::air::{
+    Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression, AirExpressionKind,
+    AirNode, AirNodeKind, AirValueId, Assignment, BinaryOperation, Intrinsic, IntrinsicCall,
+};
+use crate::auryn::air::types::Type;
+use crate::java::assembler::Primitive;
+use crate::utils::fast_map::FastSet;
 use crate::{
-    auryn::{
-        ast::ast_parser::{
-            Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, IfStatement,
-            LoopStatement, NodeOrError, Root, Statement, Value, VariableUpdate,
-        },
-        tokenizer::BinaryOperatorToken,
-    },
+    auryn::tokenizer::BinaryOperatorToken,
     java::{
         assembler::{
             Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, VariableId,
-            primitive,
         },
         class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
     utils::fast_map::FastMap,
 };
+use indexmap::IndexSet;
 
-#[derive(Debug)]
-pub enum CodegenError {
-    InvalidAst(AstError),
-}
-
-impl From<AstError> for CodegenError {
-    fn from(error: AstError) -> Self {
-        CodegenError::InvalidAst(error)
-    }
-}
-
-impl From<&AstError> for CodegenError {
-    fn from(value: &AstError) -> Self {
-        CodegenError::InvalidAst(value.clone())
-    }
-}
-
-pub type CodegenResult<T = ()> = Result<T, CodegenError>;
-
-pub fn query_class(class_name: String, ast: &NodeOrError<Root>) -> Result<ClassData, CodegenError> {
+pub fn query_class(class_name: String, air: &Air) -> ClassData {
     let mut generator = Generator::new();
-    generator.generate_from_ast(ast)?;
+    generator.generate_from_air(air);
 
-    Ok(generator.finish(class_name))
-}
-
-#[derive(Debug)]
-struct LoopInfo {
-    _continue_target: BasicBlockId,
-    break_target: BasicBlockId,
+    generator.finish(class_name)
 }
 
 struct Generator {
     assembler: Assembler,
-    variable_map: FastMap<String, VariableId<primitive::Integer>>,
-    loops: Vec<LoopInfo>,
+    variable_map: FastMap<AirValueId, VariableId>,
+    block_translation: FastMap<AirBlockId, BasicBlockId>,
+    generated_blocks: FastSet<AirBlockId>,
+    pending_blocks: IndexSet<AirBlockId>,
 }
 
 impl Generator {
     pub fn new() -> Self {
+        let mut block_translation = FastMap::default();
+        block_translation.insert(AirBlockId::ROOT, BasicBlockId(0));
         Self {
             assembler: Assembler::new(),
+            block_translation,
             variable_map: FastMap::default(),
-            loops: Vec::new(),
+            generated_blocks: FastSet::default(),
+            pending_blocks: IndexSet::default(),
         }
     }
 
@@ -68,25 +50,37 @@ impl Generator {
         self.assembler.assemble(class_name)
     }
 
-    pub fn generate_from_ast(&mut self, root: &NodeOrError<Root>) -> CodegenResult {
-        let root = root.as_ref().map_err(Clone::clone)?;
-        self.generate_root(&root.kind)?;
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::ReturnNull;
-        Ok(())
+    pub fn generate_from_air(&mut self, air: &Air) {
+        let root_block = air.root_block();
+        self.generate_block(root_block, AirBlockId::ROOT);
+
+        while let Some(id) = self.pending_blocks.pop() {
+            self.generate_block(&air.blocks[&id], id);
+        }
     }
 }
 
 impl Generator {
-    fn instrics_print_int(&mut self) {
-        let result_id = self.assembler.alloc_variable();
+    fn translate_block_id(&mut self, air_block_id: AirBlockId) -> BasicBlockId {
+        if !self.generated_blocks.contains(&air_block_id) {
+            self.pending_blocks.insert(air_block_id);
+        }
+        *self
+            .block_translation
+            .entry(air_block_id)
+            .or_insert_with(|| self.assembler.add_block())
+    }
+
+    fn _intrinsics_print_int(&mut self) {
+        let result_id = self.assembler.alloc_variable(Primitive::Integer);
         self.assembler.add_all([
-            Instruction::IStore(result_id),
+            Instruction::Store(result_id),
             Instruction::GetStatic {
                 class_name: "java/lang/System".to_string(),
                 name: "out".to_string(),
                 field_type: FieldDescriptor::Object("java/io/PrintStream".to_string()),
             },
-            Instruction::ILoad(result_id),
+            Instruction::Load(result_id),
             Instruction::InvokeVirtual {
                 class_name: "java/io/PrintStream".to_string(),
                 name: "println".to_string(),
@@ -101,181 +95,125 @@ impl Generator {
 }
 
 impl Generator {
-    fn generate_root(&mut self, root: &Root) -> CodegenResult {
-        self.generate_block(root.block()?)?;
-        Ok(())
-    }
+    fn generate_block(&mut self, block: &AirBlock, air_id: AirBlockId) {
+        self.generated_blocks.insert(air_id);
+        let block_id = self.translate_block_id(air_id);
+        self.assembler.set_current_block_id(block_id);
 
-    fn generate_block(&mut self, block: &Block) -> CodegenResult {
-        for statement in &block.statements {
-            let statement = statement.as_ref()?;
-            self.generate_statement(&statement.kind)?;
+        for node in &block.nodes {
+            self.generate_node(node);
         }
 
-        Ok(())
+        self.generate_finalizer(&block.finalizer);
     }
 
-    fn generate_statement(&mut self, statement: &Statement) -> CodegenResult {
-        match statement {
-            Statement::Assignement(assignment) => {
-                let assignment = assignment.as_ref().as_ref()?;
-                self.generate_assignment(&assignment.kind)
+    fn generate_finalizer(&mut self, finalizer: &AirBlockFinalizer) {
+        match finalizer {
+            AirBlockFinalizer::Return => {
+                self.assembler.current_block_mut().finalizer = BlockFinalizer::ReturnNull
             }
-            Statement::IfStatement(if_statement) => {
-                let if_statement = if_statement.as_ref().as_ref()?;
-                self.generate_if_statement(&if_statement.kind)
+            AirBlockFinalizer::Goto(target) => {
+                let block_id = self.translate_block_id(*target);
+                self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(block_id);
             }
-            Statement::Loop(loop_statement) => {
-                let loop_statement = loop_statement.as_ref().as_ref()?;
-                self.generate_loop(&loop_statement.kind)
+            AirBlockFinalizer::Branch {
+                value,
+                pos_block,
+                neg_block,
+            } => {
+                let pos_block_id = self.translate_block_id(*pos_block);
+                let neg_block_id = self.translate_block_id(*neg_block);
+                let result = self.generate_expression(value);
+                assert_eq!(result, Some(TypeCategory::Normal));
+                self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+                    comparison: Comparison::NotEqual,
+                    positive_block: pos_block_id,
+                    negative_block: neg_block_id,
+                };
             }
-            Statement::Break(break_statement) => {
-                let break_statement = break_statement.as_ref().as_ref()?;
-                self.generate_break(&break_statement.kind)
-            }
-            Statement::VariableUpdate(update) => {
-                let update = update.as_ref().as_ref()?;
-                self.generate_update(&update.kind)
-            }
-            Statement::Expression(expression) => {
-                let expression = expression.as_ref().as_ref()?;
-                let leftover = self.generate_expression(&expression.kind)?;
+        }
+    }
+
+    fn generate_node(&mut self, node: &AirNode) {
+        match &node.kind {
+            AirNodeKind::Assignment(assignment) => self.generate_assignment(assignment),
+            AirNodeKind::Expression(expression) => {
+                let leftover = self.generate_expression(&expression);
                 if let Some(leftover) = leftover {
                     self.assembler.add(Instruction::Pop(leftover));
                 }
-                Ok(())
             }
         }
     }
 
-    fn generate_assignment(&mut self, assignment: &Assignment) -> CodegenResult {
-        self.generate_expression(assignment.expression()?)?;
+    fn generate_assignment(&mut self, assignment: &Assignment) {
+        self.generate_expression(&assignment.expression);
 
-        assert!(
-            !self.variable_map.contains_key(&assignment.ident),
-            "Trying to redefine a variable"
-        );
-        let variable_id = self.assembler.alloc_variable();
-        self.variable_map
-            .insert(assignment.ident.clone(), variable_id);
-
-        self.assembler.add(Instruction::IStore(variable_id));
-
-        Ok(())
-    }
-
-    fn generate_if_statement(&mut self, if_statement: &IfStatement) -> CodegenResult {
-        self.generate_expression(if_statement.expression()?)?;
-
-        let pos_block = self.assembler.add_block();
-        let next_block = self.assembler.add_block();
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
-            comparison: Comparison::NotEqual,
-            positive_block: pos_block,
-            negative_block: next_block,
+        let variable_id = if self.variable_map.contains_key(&assignment.target) {
+            self.variable_map[&assignment.target]
+        } else {
+            let variable_type = assignment.expression.r#type.computed().as_primitive();
+            let variable_id = self.assembler.alloc_variable(variable_type);
+            self.variable_map.insert(assignment.target, variable_id);
+            variable_id
         };
 
-        self.assembler.set_current_block_id(pos_block);
-        self.generate_block(if_statement.block()?)?;
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
-
-        self.assembler.set_current_block_id(next_block);
-
-        Ok(())
-    }
-
-    fn generate_loop(&mut self, loop_statement: &LoopStatement) -> CodegenResult {
-        let loop_block = self.assembler.add_block();
-        let next_block = self.assembler.add_block();
-
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
-        self.assembler.set_current_block_id(loop_block);
-
-        self.loops.push(LoopInfo {
-            _continue_target: loop_block,
-            break_target: next_block,
-        });
-        self.generate_block(loop_statement.block()?)?;
-        self.loops.pop();
-
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
-
-        // Currently everything that goes here is dead code
-        self.assembler.set_current_block_id(next_block);
-
-        Ok(())
-    }
-
-    fn generate_break(&mut self, _break_statement: &BreakStatement) -> CodegenResult {
-        let Some(loop_info) = self.loops.last() else {
-            panic!("Not in a loop D:");
-        };
-
-        // This block is for potential code that comes after the break statement
-        let dead_code_block = self.assembler.add_block();
-
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_info.break_target);
-        self.assembler.set_current_block_id(dead_code_block);
-
-        Ok(())
-    }
-
-    fn generate_update(&mut self, update: &VariableUpdate) -> CodegenResult {
-        self.generate_expression(update.expression()?)?;
-
-        let variable_id = self.variable_map[&update.ident];
-        self.assembler.add(Instruction::IStore(variable_id));
-
-        Ok(())
+        self.assembler.add(Instruction::Store(variable_id));
     }
 
     /// The return value indicates the stack usage
-    fn generate_expression(
-        &mut self,
-        expression: &Expression,
-    ) -> CodegenResult<Option<TypeCategory>> {
-        match expression {
-            Expression::Value(value) => {
-                let value = value.as_ref().as_ref()?;
-                self.generate_value(&value.kind)
+    fn generate_expression(&mut self, expression: &AirExpression) -> Option<TypeCategory> {
+        match &expression.kind {
+            AirExpressionKind::Constant(constant) => Some(self.generate_constant(&constant)),
+            AirExpressionKind::BinaryOperator(binary_operator) => {
+                Some(self.generate_binary_operation(binary_operator))
             }
-            Expression::BinaryOperation(operation) => {
-                let operation = operation.as_ref().as_ref()?;
-                self.generate_binary_operation(&operation.kind)
+            AirExpressionKind::Variable(variable) => Some(self.generate_variable(variable)),
+            AirExpressionKind::IntrinsicCall(intrinsic) => self.generate_intrinsic_call(intrinsic),
+            AirExpressionKind::Error => unreachable!("Codegen was started with invalid air"),
+        }
+    }
+
+    fn generate_constant(&mut self, constant: &AirConstant) -> TypeCategory {
+        match constant {
+            AirConstant::Number(number) => {
+                let value = ConstantValue::Integer(*number);
+                let category = value
+                    .to_verification_type(&mut self.assembler.constant_pool)
+                    .category();
+                self.assembler.add(Instruction::LoadConstant { value });
+                category
             }
         }
     }
 
-    fn generate_binary_operation(
-        &mut self,
-        operation: &BinaryOperation,
-    ) -> CodegenResult<Option<TypeCategory>> {
-        self.generate_expression(operation.lhs()?)?;
-        self.generate_expression(operation.rhs()?)?;
+    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> TypeCategory {
+        let lhs_category = self.generate_expression(&operation.lhs);
+        let rhs_category = self.generate_expression(&operation.rhs);
+        assert_eq!(lhs_category, rhs_category);
+        assert_eq!(lhs_category, Some(TypeCategory::Normal));
 
-        match operation.operator()? {
+        match operation.operator {
             BinaryOperatorToken::Plus => {
                 self.assembler.add(Instruction::IAdd);
             }
             BinaryOperatorToken::Times => {
                 self.assembler.add(Instruction::IMul);
             }
-            BinaryOperatorToken::Equal => self.generate_comparison(Comparison::Equal)?,
-            BinaryOperatorToken::NotEqual => self.generate_comparison(Comparison::NotEqual)?,
-            BinaryOperatorToken::Greater => self.generate_comparison(Comparison::Greater)?,
+            BinaryOperatorToken::Equal => self.generate_comparison(Comparison::Equal),
+            BinaryOperatorToken::NotEqual => self.generate_comparison(Comparison::NotEqual),
+            BinaryOperatorToken::Greater => self.generate_comparison(Comparison::Greater),
             BinaryOperatorToken::GreaterOrEqual => {
-                self.generate_comparison(Comparison::GreaterOrEqual)?
+                self.generate_comparison(Comparison::GreaterOrEqual)
             }
-            BinaryOperatorToken::Less => self.generate_comparison(Comparison::Less)?,
-            BinaryOperatorToken::LessOrEqual => {
-                self.generate_comparison(Comparison::LessOrEqual)?
-            }
+            BinaryOperatorToken::Less => self.generate_comparison(Comparison::Less),
+            BinaryOperatorToken::LessOrEqual => self.generate_comparison(Comparison::LessOrEqual),
         };
 
-        Ok(Some(VerificationTypeInfo::Integer.category()))
+        VerificationTypeInfo::Integer.category()
     }
 
-    fn generate_comparison(&mut self, comparison: Comparison) -> CodegenResult {
+    fn generate_comparison(&mut self, comparison: Comparison) {
         let pos_block_id = self.assembler.add_block();
         let neg_block_id = self.assembler.add_block();
         let next_block_id = self.assembler.add_block();
@@ -298,61 +236,129 @@ impl Generator {
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
 
         self.assembler.set_current_block_id(next_block_id);
-
-        Ok(())
     }
 
-    fn generate_value(&mut self, value: &Value) -> CodegenResult<Option<TypeCategory>> {
-        match value {
-            Value::Number(number) => {
-                let number = number.as_ref().as_ref()?;
-                let value = ConstantValue::Integer(number.kind.value);
-                let info = value.to_verification_type(&mut self.assembler.constant_pool);
-                self.assembler.add(Instruction::LoadConstant { value });
-                Ok(Some(info.category()))
-            }
-            Value::Ident(ident) => {
-                let ident = ident.as_ref().as_ref()?;
-                let local_variable_id = *self
-                    .variable_map
-                    .get(&ident.kind.ident)
-                    .expect("Trying to access variable which was not defined");
-                self.assembler.add(Instruction::ILoad(local_variable_id));
-                Ok(Some(VerificationTypeInfo::Integer.category()))
-            }
-            Value::Parenthesis(parenthesis) => {
-                let parenthesis = parenthesis.as_ref().as_ref()?;
-                let expression = parenthesis.kind.expression.as_ref().as_ref()?;
-                self.generate_expression(&expression.kind)
-            }
-            Value::FunctionCall(call) => {
-                let call = call.as_ref().as_ref()?;
-                assert_eq!(call.kind.ident, "print", "Unexpected function");
-                let [expression] = call.kind.arguments.as_slice() else {
-                    panic!("print only supports one parameter");
-                };
-                let expression = expression.as_ref()?;
-                self.generate_expression(&expression.kind)?;
-                self.instrics_print_int();
+    fn generate_variable(&mut self, variable: &AirValueId) -> TypeCategory {
+        let variable_id = self.variable_map[variable];
+        self.assembler.add(Instruction::Load(variable_id));
+        variable_id.r#type.to_verification_type().category()
+    }
 
-                // Right now the only supported function returns nothing
-                Ok(None)
+    fn generate_intrinsic_call(&mut self, intrinsic: &IntrinsicCall) -> Option<TypeCategory> {
+        match intrinsic.intrinsic {
+            Intrinsic::Print => {
+                self.assembler.add(Instruction::GetStatic {
+                    class_name: "java/lang/System".to_string(),
+                    name: "out".to_string(),
+                    field_type: FieldDescriptor::Object("java/io/PrintStream".to_string()),
+                });
+                self.generate_expression(&intrinsic.arguments[0]);
+                self.assembler.add(Instruction::InvokeVirtual {
+                    class_name: "java/io/PrintStream".to_string(),
+                    name: "println".to_string(),
+                    // method_type: MethodDescriptor("(I)V".to_string()),
+                    method_type: MethodDescriptor {
+                        arguments: vec![FieldDescriptor::Integer],
+                        return_type: FieldDescriptor::Void,
+                    },
+                });
+
+                None
             }
+        }
+    }
+
+    // fn generate_if_statement(&mut self, if_statement: &IfStatement) -> CodegenResult {
+    //     self.generate_expression(if_statement.expression()?)?;
+    //
+    //     let pos_block = self.assembler.add_block();
+    //     let next_block = self.assembler.add_block();
+    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+    //         comparison: Comparison::NotEqual,
+    //         positive_block: pos_block,
+    //         negative_block: next_block,
+    //     };
+    //
+    //     self.assembler.set_current_block_id(pos_block);
+    //     self.generate_block(if_statement.block()?)?;
+    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+    //
+    //     self.assembler.set_current_block_id(next_block);
+    //
+    //     Ok(())
+    // }
+    //
+    // fn generate_loop(&mut self, loop_statement: &LoopStatement) -> CodegenResult {
+    //     let loop_block = self.assembler.add_block();
+    //     let next_block = self.assembler.add_block();
+    //
+    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
+    //     self.assembler.set_current_block_id(loop_block);
+    //
+    //     self.loops.push(LoopInfo {
+    //         _continue_target: loop_block,
+    //         break_target: next_block,
+    //     });
+    //     self.generate_block(loop_statement.block()?)?;
+    //     self.loops.pop();
+    //
+    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
+    //
+    //     // Currently everything that goes here is dead code
+    //     self.assembler.set_current_block_id(next_block);
+    //
+    //     Ok(())
+    // }
+    //
+    // fn generate_break(&mut self, _break_statement: &BreakStatement) -> CodegenResult {
+    //     let Some(loop_info) = self.loops.last() else {
+    //         panic!("Not in a loop D:");
+    //     };
+    //
+    //     // This block is for potential code that comes after the break statement
+    //     let dead_code_block = self.assembler.add_block();
+    //
+    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_info.break_target);
+    //     self.assembler.set_current_block_id(dead_code_block);
+    //
+    //     Ok(())
+    // }
+    //
+    // fn generate_update(&mut self, _update: &VariableUpdate) -> CodegenResult {
+    //     // self.generate_expression(update.expression()?)?;
+    //     //
+    //     // let variable_id = self.variable_map[&update.ident];
+    //     // self.assembler.add(Instruction::IStore(variable_id));
+    //
+    //     Ok(())
+    // }
+}
+
+impl Type {
+    fn as_primitive(&self) -> Primitive {
+        match self {
+            Type::Number => Primitive::Integer,
+            Type::Null => todo!("Decide how to represent the null type"),
+            Type::Error => unreachable!("Type error should not be present in air"),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::auryn::air::query_air;
+    use crate::auryn::ast::query_ast2;
     use crate::{
-        auryn::{ast::query_ast, codegen_java::query_class, parser::Parser},
+        auryn::{codegen_java::query_class, parser::Parser},
         java::class::ClassData,
     };
 
     fn generate_class(input: &str) -> ClassData {
         let result = Parser::new(input).parse();
-        let ast = query_ast(result.syntax_tree.as_ref().unwrap());
-        let class = query_class("Helloworld".to_string(), &ast).unwrap();
+        let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
+        let air = query_air(ast.unwrap());
+        assert!(air.diagnostics.is_empty());
+        let class = query_class("Helloworld".to_string(), &air.air);
         class
     }
 

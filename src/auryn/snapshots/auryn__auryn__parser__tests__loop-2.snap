@@ -6,20 +6,18 @@ AnnotatedParserOutput {
     ast: Some(
         0..14 Root
         |0..14 Block
-        ||0..14 StatementList
-        |||0..14 Statement
-        ||||0..14 Loop
-        |||||KeywordLoop
-        |||||Whitespace
-        |||||BraceOpen
-        |||||Whitespace
-        |||||7..13 Block
-        ||||||7..13 StatementList
-        |||||||7..13 Statement
-        ||||||||7..12 Break
-        |||||||||KeywordBreak
-        ||||||||Whitespace
-        |||||BraceClose
+        ||0..14 Statement
+        |||0..14 Loop
+        ||||KeywordLoop
+        ||||Whitespace
+        ||||BraceOpen
+        ||||Whitespace
+        ||||7..13 Block
+        |||||7..13 Statement
+        ||||||7..12 Break
+        |||||||KeywordBreak
+        ||||||Whitespace
+        ||||BraceClose
         ,
     ),
     diagnostics: [],

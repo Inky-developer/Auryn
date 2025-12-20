@@ -1,0 +1,104 @@
+---
+source: src/auryn/air/mod.rs
+expression: "compile(\"let a = print(1)\\nprint(a + 1)\")"
+---
+AirOutput {
+    air: Air {
+        blocks: {
+            AirBlockId(
+                0,
+            ): AirBlock {
+                nodes: [
+                    AirNode {
+                        kind: Assignment(
+                            Assignment {
+                                target: AirValueId(
+                                    1,
+                                ),
+                                expression: AirExpression {
+                                    type: Computed(
+                                        Null,
+                                    ),
+                                    kind: IntrinsicCall(
+                                        IntrinsicCall {
+                                            intrinsic: Print,
+                                            arguments: [
+                                                AirExpression {
+                                                    type: Computed(
+                                                        Number,
+                                                    ),
+                                                    kind: Constant(
+                                                        Number(
+                                                            1,
+                                                        ),
+                                                    ),
+                                                },
+                                            ],
+                                        },
+                                    ),
+                                },
+                            },
+                        ),
+                    },
+                    AirNode {
+                        kind: Expression(
+                            AirExpression {
+                                type: Computed(
+                                    Null,
+                                ),
+                                kind: IntrinsicCall(
+                                    IntrinsicCall {
+                                        intrinsic: Print,
+                                        arguments: [
+                                            AirExpression {
+                                                type: Computed(
+                                                    Number,
+                                                ),
+                                                kind: BinaryOperator(
+                                                    BinaryOperation {
+                                                        lhs: AirExpression {
+                                                            type: Computed(
+                                                                Null,
+                                                            ),
+                                                            kind: Variable(
+                                                                AirValueId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                        },
+                                                        rhs: AirExpression {
+                                                            type: Computed(
+                                                                Number,
+                                                            ),
+                                                            kind: Constant(
+                                                                Number(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                        },
+                                                        operator: Plus,
+                                                    },
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ),
+                            },
+                        ),
+                    },
+                ],
+                finalizer: Return,
+            },
+        },
+    },
+    diagnostics: [
+        Error(
+            TypeMismatch {
+                expected: Number,
+                got: Computed(
+                    Null,
+                ),
+            },
+        ),
+    ],
+}

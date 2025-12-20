@@ -6,34 +6,32 @@ AnnotatedParserOutput {
     ast: Some(
         0..18 Root
         |0..18 Block
-        ||0..18 StatementList
-        |||0..18 Statement
-        ||||0..18 IfStatement
-        |||||KeywordIf
-        |||||Whitespace
-        |||||3..5 Expression
-        ||||||3..5 Value
-        |||||||3..4 Number { value: 1 }
-        ||||||||Number
-        |||||||Whitespace
-        |||||BraceOpen
-        |||||Whitespace
-        |||||7..17 Block
-        ||||||7..17 StatementList
-        |||||||7..17 Statement
-        ||||||||7..17 Expression
-        |||||||||7..17 Value
-        ||||||||||7..16 FunctionCall { ident: "print" }
-        |||||||||||Identifier
-        |||||||||||ParensOpen
-        |||||||||||13..15 ParameterList
-        ||||||||||||13..15 Expression
-        |||||||||||||13..15 Value
-        ||||||||||||||13..15 Number { value: 42 }
-        |||||||||||||||Number
-        |||||||||||ParensClose
-        ||||||||||Whitespace
-        |||||BraceClose
+        ||0..18 Statement
+        |||0..18 IfStatement
+        ||||KeywordIf
+        ||||Whitespace
+        ||||3..5 Expression
+        |||||3..5 Value
+        ||||||3..4 Number
+        |||||||Number
+        ||||||Whitespace
+        ||||BraceOpen
+        ||||Whitespace
+        ||||7..17 Block
+        |||||7..17 Statement
+        ||||||7..17 Expression
+        |||||||7..17 Value
+        ||||||||7..16 FunctionCall
+        |||||||||Identifier
+        |||||||||ParensOpen
+        |||||||||13..15 ParameterList
+        ||||||||||13..15 Expression
+        |||||||||||13..15 Value
+        ||||||||||||13..15 Number
+        |||||||||||||Number
+        |||||||||ParensClose
+        ||||||||Whitespace
+        ||||BraceClose
         ,
     ),
     diagnostics: [],

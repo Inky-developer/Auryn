@@ -6,32 +6,29 @@ AnnotatedParserOutput {
     ast: Some(
         0..14 Root
         |0..14 Block
-        ||0..14 StatementList
-        |||0..14 Statement
-        ||||0..14 Loop
-        |||||KeywordLoop
-        |||||Whitespace
-        |||||BraceOpen
-        |||||Whitespace
-        |||||7..13 Block
-        ||||||7..13 StatementList
-        |||||||7..13 Statement
-        ||||||||7..13 Expression
-        |||||||||7..13 BinaryOperation
-        ||||||||||7..9 Expression
-        |||||||||||7..9 Value
-        ||||||||||||7..8 Number { value: 1 }
-        |||||||||||||Number
-        ||||||||||||Whitespace
-        ||||||||||9..10 BinaryOperator(Plus)
-        |||||||||||Plus
+        ||0..14 Statement
+        |||0..14 Loop
+        ||||KeywordLoop
+        ||||Whitespace
+        ||||BraceOpen
+        ||||Whitespace
+        ||||7..13 Block
+        |||||7..13 Statement
+        ||||||7..13 Expression
+        |||||||7..13 BinaryOperation
+        ||||||||7..9 Expression
+        |||||||||7..9 Value
+        ||||||||||7..8 Number
+        |||||||||||Number
         ||||||||||Whitespace
-        ||||||||||11..13 Expression
-        |||||||||||11..13 Value
-        ||||||||||||11..12 Number { value: 2 }
-        |||||||||||||Number
-        ||||||||||||Whitespace
-        |||||BraceClose
+        ||||||||Plus
+        ||||||||Whitespace
+        ||||||||11..13 Expression
+        |||||||||11..13 Value
+        ||||||||||11..12 Number
+        |||||||||||Number
+        ||||||||||Whitespace
+        ||||BraceClose
         ,
     ),
     diagnostics: [],

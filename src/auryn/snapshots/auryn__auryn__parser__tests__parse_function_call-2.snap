@@ -6,20 +6,19 @@ AnnotatedParserOutput {
     ast: Some(
         0..9 Root
         |0..9 Block
-        ||0..9 StatementList
-        |||0..8 Statement
-        ||||0..8 Expression
-        |||||0..8 Value
-        ||||||0..8 FunctionCall { ident: "print" }
-        |||||||Identifier
-        |||||||ParensOpen
-        |||||||6..7 ParameterList
-        ||||||||6..7 Expression
-        |||||||||6..7 Value
-        ||||||||||6..7 Number { value: 1 }
-        |||||||||||Number
-        |||||||ParensClose
-        |||Newline
+        ||0..8 Statement
+        |||0..8 Expression
+        ||||0..8 Value
+        |||||0..8 FunctionCall
+        ||||||Identifier
+        ||||||ParensOpen
+        ||||||6..7 ParameterList
+        |||||||6..7 Expression
+        ||||||||6..7 Value
+        |||||||||6..7 Number
+        ||||||||||Number
+        ||||||ParensClose
+        ||Newline
         ,
     ),
     diagnostics: [],

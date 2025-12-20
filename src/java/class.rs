@@ -318,6 +318,15 @@ pub enum TypeCategory {
     Big,
 }
 
+impl TypeCategory {
+    pub fn stack_size(&self) -> u16 {
+        match self {
+            Self::Normal => 1,
+            Self::Big => 2,
+        }
+    }
+}
+
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum VerificationTypeInfo {

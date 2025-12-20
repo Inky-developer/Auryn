@@ -6,22 +6,21 @@ AnnotatedParserOutput {
     ast: Some(
         0..5 Root
         |0..5 Block
-        ||0..5 StatementList
-        |||0..5 Statement
-        ||||0..5 Expression
-        |||||0..5 Value
-        ||||||0..5 Parenthesis
-        |||||||ParensOpen
-        |||||||1..4 Expression
-        ||||||||1..4 Value
-        |||||||||1..4 Parenthesis
-        ||||||||||ParensOpen
-        ||||||||||2..3 Expression
-        |||||||||||2..3 Value
-        ||||||||||||2..3 Number { value: 3 }
-        |||||||||||||Number
-        ||||||||||ParensClose
-        |||||||ParensClose
+        ||0..5 Statement
+        |||0..5 Expression
+        ||||0..5 Value
+        |||||0..5 Parenthesis
+        ||||||ParensOpen
+        ||||||1..4 Expression
+        |||||||1..4 Value
+        ||||||||1..4 Parenthesis
+        |||||||||ParensOpen
+        |||||||||2..3 Expression
+        ||||||||||2..3 Value
+        |||||||||||2..3 Number
+        ||||||||||||Number
+        |||||||||ParensClose
+        ||||||ParensClose
         ,
     ),
     diagnostics: [],

@@ -1,7 +1,10 @@
 use std::{fs::OpenOptions, io::Write};
 
+use auryn::auryn::ComputedSpan;
+use auryn::auryn::ast::query_ast2;
+use auryn::auryn::syntax_tree::ComputedDiagnostic;
 use auryn::{
-    auryn::{ast::query_ast, codegen_java::query_class, parser::Parser},
+    auryn::{air::query_air, codegen_java::query_class, parser::Parser},
     java::class::ClassData,
 };
 
@@ -48,18 +51,22 @@ fn run(class: ClassData) {
 
 fn get_class(input: &str) -> ClassData {
     let result = Parser::new(input).parse();
-    // dbg!(&result.syntax_tree);
-    let diagnostics = result
+    let mut diagnostics = result
         .syntax_tree
         .as_ref()
         .map(|it| it.collect_diagnostics())
         .unwrap_or_default();
+
+    let ast = query_ast2(result.syntax_tree.as_ref().unwrap()).unwrap();
+    let air = query_air(ast);
+    diagnostics.extend(air.diagnostics.into_iter().map(|it| ComputedDiagnostic {
+        kind: it,
+        span: ComputedSpan { offset: 0, len: 0 },
+    }));
     if !diagnostics.is_empty() {
         println!("Warn: {diagnostics:?}");
     }
-    let ast = query_ast(result.syntax_tree.as_ref().unwrap());
-
-    query_class("Helloworld".to_string(), &ast).unwrap()
+    query_class("Helloworld".to_string(), &air.air)
 }
 
 fn read_user_input(buf: &mut String) {

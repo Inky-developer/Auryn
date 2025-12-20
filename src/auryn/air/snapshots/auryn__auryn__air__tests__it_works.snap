@@ -1,0 +1,44 @@
+---
+source: src/auryn/air/mod.rs
+expression: "compile(\"print(1)\")"
+---
+AirOutput {
+    air: Air {
+        blocks: {
+            AirBlockId(
+                0,
+            ): AirBlock {
+                nodes: [
+                    AirNode {
+                        kind: Expression(
+                            AirExpression {
+                                type: Computed(
+                                    Null,
+                                ),
+                                kind: IntrinsicCall(
+                                    IntrinsicCall {
+                                        intrinsic: Print,
+                                        arguments: [
+                                            AirExpression {
+                                                type: Computed(
+                                                    Number,
+                                                ),
+                                                kind: Constant(
+                                                    Number(
+                                                        1,
+                                                    ),
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ),
+                            },
+                        ),
+                    },
+                ],
+                finalizer: Return,
+            },
+        },
+    },
+    diagnostics: [],
+}

@@ -20,18 +20,12 @@ ClassData {
                 3,
             ),
         },
-        Integer {
-            integer: 2,
-        },
-        Integer {
-            integer: 3,
-        },
         Utf8(
             "java/lang/System",
         ),
         Class {
             name_index: ConstantPoolIndex(
-                7,
+                5,
             ),
         },
         Utf8(
@@ -42,19 +36,25 @@ ClassData {
         ),
         NameAndType {
             name_index: ConstantPoolIndex(
-                9,
+                7,
             ),
             type_index: ConstantPoolIndex(
-                10,
+                8,
             ),
         },
         FieldRef {
             class_index: ConstantPoolIndex(
-                8,
+                6,
             ),
             name_and_type_index: ConstantPoolIndex(
-                11,
+                9,
             ),
+        },
+        Integer {
+            integer: 2,
+        },
+        Integer {
+            integer: 3,
         },
         Utf8(
             "println",
@@ -129,26 +129,20 @@ ClassData {
                     ),
                     attribute: Code(
                         CodeAttribute {
-                            max_locals: 3,
+                            max_locals: 2,
                             code: [
-                                Ldc(
-                                    5,
-                                ),
-                                Ldc(
-                                    6,
-                                ),
-                                IMul,
-                                IStore(
-                                    1,
-                                ),
                                 GetStatic(
                                     ConstantPoolIndex(
-                                        12,
+                                        10,
                                     ),
                                 ),
-                                ILoad(
-                                    1,
+                                Ldc(
+                                    11,
                                 ),
+                                Ldc(
+                                    12,
+                                ),
+                                IMul,
                                 InvokeVirtual(
                                     ConstantPoolIndex(
                                         16,

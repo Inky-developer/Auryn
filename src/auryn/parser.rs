@@ -1,22 +1,34 @@
 use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
 
+use crate::auryn::air::air::AirType;
+use crate::auryn::air::types::Type;
 use crate::auryn::{
     Span,
     syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
-    tokenizer::{BinaryOperatorToken, Token, TokenKind, Tokenizer},
+    tokenizer::{Token, TokenKind, Tokenizer},
 };
+use crate::utils::small_string::SmallString;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum DiagnosticError {
+    // Generate by the parser
     ExpectedNumber { got: TokenKind },
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
     InvalidNumber,
     ExpectedValue { got: TokenKind },
     ExpectedNewline,
+    // Generated during air
+    RedefinedVariable { ident: SmallString },
+    BreakOutsideLoop,
+    UndefinedVariable { ident: SmallString },
+    UnknownIntrinsic { ident: SmallString },
+    // Generated during typechecking
+    TypeMismatch { expected: Type, got: AirType },
+    MismatchedParameterCount { expected: usize, got: usize },
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum DiagnosticKind {
     Error(DiagnosticError),
 }
@@ -165,6 +177,7 @@ impl<'a> Parser<'a> {
         node.children.push(SyntaxItem::Token(SyntaxToken {
             kind: TokenKind::Error,
             span: Span { len: 0 },
+            text: "".into(),
             diagnostics: vec![diagnostic.into()],
         }));
     }
@@ -180,6 +193,7 @@ impl<'a> Parser<'a> {
         node.children.push(SyntaxItem::Token(SyntaxToken {
             kind: token.kind,
             span: Span { len },
+            text: token.text.into(),
             diagnostics: Vec::new(),
         }));
         token
@@ -289,7 +303,6 @@ impl<'a> Parser<'a> {
 impl Parser<'_> {
     fn parse_block(&mut self, end_set: impl Fn(TokenKind) -> bool) -> ParseResult {
         let watcher = self.push_node();
-        let statements_watcher = self.push_node();
 
         loop {
             self.consume_whitespace_and_newlines();
@@ -302,7 +315,6 @@ impl Parser<'_> {
             }
         }
 
-        self.finish_node(statements_watcher, SyntaxNodeKind::StatementList);
         self.finish_node(watcher, SyntaxNodeKind::Block);
 
         Ok(())
@@ -334,13 +346,13 @@ impl Parser<'_> {
 
         self.expect(TokenKind::KeywordLet)?;
         self.consume_whitespace();
-        let ident = self.expect(TokenKind::Identifier)?.to_string();
+        self.expect(TokenKind::Identifier)?;
         self.consume_whitespace();
         self.expect(TokenKind::Equal)?;
         self.consume_whitespace();
         self.parse_expression()?;
 
-        self.finish_node(watcher, SyntaxNodeKind::Assignment { ident });
+        self.finish_node(watcher, SyntaxNodeKind::Assignment);
         Ok(())
     }
 
@@ -388,13 +400,13 @@ impl Parser<'_> {
     fn parse_variable_update(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        let ident = self.expect(TokenKind::Identifier)?.to_string();
+        self.expect(TokenKind::Identifier)?;
         self.consume_whitespace();
         self.expect(TokenKind::Equal)?;
         self.consume_whitespace();
         self.parse_expression()?;
 
-        self.finish_node(watcher, SyntaxNodeKind::VariableUpdate { ident });
+        self.finish_node(watcher, SyntaxNodeKind::VariableUpdate);
 
         Ok(())
     }
@@ -427,7 +439,8 @@ impl Parser<'_> {
                 let parent = this.node_stack.last_mut().expect("Was just pushed");
                 parent.children.push(SyntaxItem::Node(node));
 
-                this.parse_binary_operator()?;
+                this.parse_binary_operator_token()?;
+                this.consume_whitespace();
                 this.parse_expression_pratt(binding_power)?;
 
                 let node = this
@@ -448,14 +461,11 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_binary_operator(&mut self) -> ParseResult<BinaryOperatorToken> {
-        let watcher = self.push_node();
-        let op = self
-            .consume_if(|token| token.kind.to_binary_operator())
+    fn parse_binary_operator_token(&mut self) -> ParseResult {
+        self.consume_if(|token| token.kind.to_binary_operator())
             .map_err(|_| ())?;
-        self.finish_node(watcher, SyntaxNodeKind::BinaryOperator(op));
 
-        Ok(op)
+        Ok(())
     }
 
     fn parse_value(&mut self) -> ParseResult {
@@ -479,7 +489,7 @@ impl Parser<'_> {
     fn parse_identifier_or_function_call(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        let text = self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::Identifier)?;
         self.consume_whitespace();
 
         match self.peek().kind {
@@ -490,20 +500,10 @@ impl Parser<'_> {
                 }
                 self.expect(TokenKind::ParensClose)?;
 
-                self.finish_node(
-                    watcher,
-                    SyntaxNodeKind::FunctionCall {
-                        ident: text.to_string(),
-                    },
-                );
+                self.finish_node(watcher, SyntaxNodeKind::FunctionCall);
             }
             _ => {
-                self.finish_node(
-                    watcher,
-                    SyntaxNodeKind::Ident {
-                        ident: text.to_string(),
-                    },
-                );
+                self.finish_node(watcher, SyntaxNodeKind::Ident);
             }
         }
 
@@ -530,12 +530,11 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         let text = self.expect(TokenKind::Number)?;
-        let Ok(value) = text.parse() else {
+        if text.parse::<i32>().is_err() {
             self.diagnostic(DiagnosticError::InvalidNumber);
-            return Err(());
         };
 
-        self.finish_node(watcher, SyntaxNodeKind::Number { value });
+        self.finish_node(watcher, SyntaxNodeKind::Number);
         Ok(())
     }
 
@@ -643,6 +642,11 @@ mod tests {
         insta::assert_debug_snapshot!(verify("loop { 1 + 2 }"));
         insta::assert_debug_snapshot!(verify("loop { break }"));
         insta::assert_debug_snapshot!(verify("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"))
+    }
+
+    #[test]
+    fn test_multiple_statements() {
+        insta::assert_debug_snapshot!(verify("let a = 1\nlet b = 2"))
     }
 
     #[test]

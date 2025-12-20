@@ -1,0 +1,37 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"let a = 1\\nlet b = 2\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..19 Root
+        |0..19 Block
+        ||0..9 Statement
+        |||0..9 Assignment
+        ||||KeywordLet
+        ||||Whitespace
+        ||||Identifier
+        ||||Whitespace
+        ||||Equal
+        ||||Whitespace
+        ||||8..9 Expression
+        |||||8..9 Value
+        ||||||8..9 Number
+        |||||||Number
+        ||Newline
+        ||10..19 Statement
+        |||10..19 Assignment
+        ||||KeywordLet
+        ||||Whitespace
+        ||||Identifier
+        ||||Whitespace
+        ||||Equal
+        ||||Whitespace
+        ||||18..19 Expression
+        |||||18..19 Value
+        ||||||18..19 Number
+        |||||||Number
+        ,
+    ),
+    diagnostics: [],
+}

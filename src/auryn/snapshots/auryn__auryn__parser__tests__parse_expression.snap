@@ -6,32 +6,29 @@ AnnotatedParserOutput {
     ast: Some(
         0..9 Root
         |0..9 Block
-        ||0..9 StatementList
-        |||0..9 Statement
-        ||||0..9 Expression
-        |||||0..9 BinaryOperation
-        ||||||0..2 Expression
-        |||||||0..2 Value
-        ||||||||0..1 Number { value: 1 }
-        |||||||||Number
-        ||||||||Whitespace
-        ||||||2..3 BinaryOperator(Plus)
-        |||||||Plus
-        ||||||Whitespace
-        ||||||4..9 Expression
-        |||||||4..9 BinaryOperation
-        ||||||||4..6 Expression
-        |||||||||4..6 Value
-        ||||||||||4..5 Number { value: 2 }
-        |||||||||||Number
-        ||||||||||Whitespace
-        ||||||||6..7 BinaryOperator(Times)
-        |||||||||Times
-        ||||||||Whitespace
-        ||||||||8..9 Expression
-        |||||||||8..9 Value
-        ||||||||||8..9 Number { value: 3 }
-        |||||||||||Number
+        ||0..9 Statement
+        |||0..9 Expression
+        ||||0..9 BinaryOperation
+        |||||0..2 Expression
+        ||||||0..2 Value
+        |||||||0..1 Number
+        ||||||||Number
+        |||||||Whitespace
+        |||||Plus
+        |||||Whitespace
+        |||||4..9 Expression
+        ||||||4..9 BinaryOperation
+        |||||||4..6 Expression
+        ||||||||4..6 Value
+        |||||||||4..5 Number
+        ||||||||||Number
+        |||||||||Whitespace
+        |||||||Times
+        |||||||Whitespace
+        |||||||8..9 Expression
+        ||||||||8..9 Value
+        |||||||||8..9 Number
+        ||||||||||Number
         ,
     ),
     diagnostics: [],

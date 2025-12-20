@@ -1,4 +1,4 @@
-use std::{fmt::Display, marker::PhantomData};
+use std::fmt::Display;
 
 use crate::java::{
     class::{self, StackMapTableAttribute, TypeCategory, VerificationTypeInfo},
@@ -127,16 +127,20 @@ impl ConstantValue {
     }
 }
 
-pub mod primitive {
-    pub trait IsPrimitiveType {
-        // The size of this type in the local variable frame. Either 1 or 2
-        const SIZE: u16;
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Primitive {
+    Integer,
+}
+
+impl Primitive {
+    pub fn to_verification_type(&self) -> VerificationTypeInfo {
+        match self {
+            Primitive::Integer => VerificationTypeInfo::Integer,
+        }
     }
 
-    #[derive(Debug, Clone, Copy)]
-    pub struct Integer;
-    impl IsPrimitiveType for Integer {
-        const SIZE: u16 = 1;
+    pub fn stack_size(&self) -> u16 {
+        self.to_verification_type().category().stack_size()
     }
 }
 
@@ -158,15 +162,18 @@ pub enum Instruction {
     ReturnNull,
     IAdd,
     IMul,
-    IStore(VariableId<primitive::Integer>),
-    ILoad(VariableId<primitive::Integer>),
+    Store(VariableId),
+    Load(VariableId),
     Nop,
     /// Pops a single value of the given category from the stack
     Pop(TypeCategory),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct VariableId<T>(pub(super) u16, PhantomData<T>);
+pub struct VariableId {
+    pub(super) index: u16,
+    pub r#type: Primitive,
+}
 
 #[derive(Debug)]
 pub struct Assembler {
@@ -240,10 +247,10 @@ impl Assembler {
         self.blocks.add(instruction);
     }
 
-    pub fn alloc_variable<T: primitive::IsPrimitiveType>(&mut self) -> VariableId<T> {
+    pub fn alloc_variable(&mut self, r#type: Primitive) -> VariableId {
         let id = self.next_variable_index;
-        self.next_variable_index += T::SIZE;
-        VariableId(id, PhantomData)
+        self.next_variable_index += r#type.stack_size();
+        VariableId { index: id, r#type }
     }
 
     pub fn add_block(&mut self) -> BasicBlockId {
