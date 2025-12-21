@@ -79,6 +79,7 @@ fn read_user_input(buf: &mut String) {
             break;
         }
         buf.push_str(&line);
+        buf.push('\n');
 
         print_prompt();
     }
