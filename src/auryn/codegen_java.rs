@@ -351,17 +351,20 @@ impl Type {
 #[cfg(test)]
 mod tests {
     use crate::{
-        auryn::{air::query_air, ast::query_ast2, codegen_java::query_class, parser::Parser},
+        auryn::{
+            air::query_air, ast::query_ast2, codegen_java::query_class, file_id::FileId,
+            parser::Parser,
+        },
         java::class::ClassData,
     };
 
     fn generate_class(input: &str) -> ClassData {
-        let result = Parser::new(input).parse();
+        let result = Parser::new(FileId::MAIN_FILE, input).parse();
         let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
         let air = query_air(ast.unwrap());
         assert!(air.diagnostics.is_empty());
-        let class = query_class("Helloworld".to_string(), &air.air);
-        class
+
+        query_class("Helloworld".to_string(), &air.air)
     }
 
     #[test]

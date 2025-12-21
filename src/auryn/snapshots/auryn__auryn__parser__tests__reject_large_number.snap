@@ -10,14 +10,24 @@ AnnotatedParserOutput {
         |||0..13 Expression
         ||||0..13 Value
         |||||0..13 Number
-        ||||||Number [Error(InvalidNumber)]
+        ||||||Error(InvalidNumber)
         ,
     ),
     diagnostics: [
         ComputedDiagnostic {
-            kind: Error(
-                InvalidNumber,
-            ),
+            inner: Diagnostic {
+                kind: Error(
+                    InvalidNumber,
+                ),
+                syntax_id: SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        7,
+                    ),
+                },
+            },
             span: ComputedSpan {
                 offset: 0,
                 len: 13,

@@ -12,35 +12,35 @@ AnnotatedParserOutput {
         |||||0..1 Number
         ||||||Number
         |||||Whitespace
-        ||Error [Error(ExpectedNewline)]
+        ||Error(ExpectedNewline)
         ||2..4 Statement
         |||2..4 Expression
         ||||2..4 Value
         |||||2..3 Number
         ||||||Number
         |||||Whitespace
-        ||Error [Error(ExpectedNewline)]
+        ||Error(ExpectedNewline)
         ||4..6 Statement
         |||4..6 Expression
         ||||4..6 Value
         |||||4..5 Number
         ||||||Number
         |||||Whitespace
-        ||Error [Error(ExpectedNewline)]
+        ||Error(ExpectedNewline)
         ||6..8 Statement
         |||6..8 Expression
         ||||6..8 Value
         |||||6..7 Number
         ||||||Number
         |||||Whitespace
-        ||Error [Error(ExpectedNewline)]
+        ||Error(ExpectedNewline)
         ||8..11 Statement
         |||8..11 Expression
         ||||8..11 Value
         |||||8..10 Number
         ||||||Number
         |||||Whitespace
-        ||Error [Error(ExpectedNewline)]
+        ||Error(ExpectedNewline)
         ||11..12 Statement
         |||11..12 Expression
         ||||11..12 Value
@@ -50,45 +50,95 @@ AnnotatedParserOutput {
     ),
     diagnostics: [
         ComputedDiagnostic {
-            kind: Error(
-                ExpectedNewline,
-            ),
+            inner: Diagnostic {
+                kind: Error(
+                    ExpectedNewline,
+                ),
+                syntax_id: SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        25588634246425,
+                    ),
+                },
+            },
             span: ComputedSpan {
                 offset: 2,
                 len: 0,
             },
         },
         ComputedDiagnostic {
-            kind: Error(
-                ExpectedNewline,
-            ),
+            inner: Diagnostic {
+                kind: Error(
+                    ExpectedNewline,
+                ),
+                syntax_id: SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        76765902739269,
+                    ),
+                },
+            },
             span: ComputedSpan {
                 offset: 4,
                 len: 0,
             },
         },
         ComputedDiagnostic {
-            kind: Error(
-                ExpectedNewline,
-            ),
+            inner: Diagnostic {
+                kind: Error(
+                    ExpectedNewline,
+                ),
+                syntax_id: SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        127943171232113,
+                    ),
+                },
+            },
             span: ComputedSpan {
                 offset: 6,
                 len: 0,
             },
         },
         ComputedDiagnostic {
-            kind: Error(
-                ExpectedNewline,
-            ),
+            inner: Diagnostic {
+                kind: Error(
+                    ExpectedNewline,
+                ),
+                syntax_id: SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        179120439724957,
+                    ),
+                },
+            },
             span: ComputedSpan {
                 offset: 8,
                 len: 0,
             },
         },
         ComputedDiagnostic {
-            kind: Error(
-                ExpectedNewline,
-            ),
+            inner: Diagnostic {
+                kind: Error(
+                    ExpectedNewline,
+                ),
+                syntax_id: SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        230297708217801,
+                    ),
+                },
+            },
             span: ComputedSpan {
                 offset: 11,
                 len: 0,

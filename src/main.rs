@@ -2,8 +2,8 @@ use std::{fs::OpenOptions, io::Write};
 
 use auryn::{
     auryn::{
-        ComputedSpan, air::query_air, ast::query_ast2, codegen_java::query_class, parser::Parser,
-        syntax_tree::ComputedDiagnostic,
+        air::query_air, ast::query_ast2, codegen_java::query_class, diagnostic::ComputedDiagnostic,
+        file_id::FileId, parser::Parser,
     },
     java::class::ClassData,
 };
@@ -50,18 +50,20 @@ fn run(class: ClassData) {
 }
 
 fn get_class(input: &str) -> ClassData {
-    let result = Parser::new(input).parse();
+    let result = Parser::new(FileId::MAIN_FILE, input).parse();
     let mut diagnostics = result
         .syntax_tree
         .as_ref()
         .map(|it| it.collect_diagnostics())
         .unwrap_or_default();
 
-    let ast = query_ast2(result.syntax_tree.as_ref().unwrap()).unwrap();
+    let syntax_tree = result.syntax_tree.unwrap();
+
+    let ast = query_ast2(&syntax_tree).unwrap();
     let air = query_air(ast);
     diagnostics.extend(air.diagnostics.into_iter().map(|it| ComputedDiagnostic {
-        kind: it,
-        span: ComputedSpan { offset: 0, len: 0 },
+        span: syntax_tree.get_span(it.syntax_id),
+        inner: it,
     }));
     if !diagnostics.is_empty() {
         println!("Warn: {diagnostics:?}");

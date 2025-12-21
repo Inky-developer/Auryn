@@ -1,4 +1,5 @@
 use crate::auryn::{
+    syntax_id::SyntaxId,
     syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxToken},
     tokenizer::{BinaryOperatorToken, TokenKind},
 };
@@ -46,6 +47,10 @@ macro_rules! ast_node {
                 Some(Self(Node { syntax_node } ))
             }
 
+            pub fn id(&self) -> SyntaxId {
+                self.0.syntax_node.id
+            }
+
             gen_ast_node_inner!{impl $($rest)*}
         }
     };
@@ -68,6 +73,14 @@ macro_rules! ast_node {
                         $syntax_node_ty => <$node_ty>::new(first_child).map(Self::$node_ty),
                     )*
                     _ => None
+                }
+            }
+
+            pub fn id(&self) -> SyntaxId {
+                match self {
+                    $(
+                        Self::$node_ty(value) => value.id(),
+                    )*
                 }
             }
         }

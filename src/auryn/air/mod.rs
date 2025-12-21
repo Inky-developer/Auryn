@@ -25,11 +25,12 @@ mod tests {
     use crate::auryn::{
         air::{ast_transformer::AirOutput, query_air},
         ast::query_ast2,
+        file_id::FileId,
         parser::Parser,
     };
 
     fn compile(input: &str) -> AirOutput {
-        let output = Parser::new(input).parse();
+        let output = Parser::new(FileId::MAIN_FILE, input).parse();
         let diagnostics = output
             .syntax_tree
             .as_ref()

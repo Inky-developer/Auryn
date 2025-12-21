@@ -1,5 +1,5 @@
 use crate::{
-    auryn::{air::types::Type, tokenizer::BinaryOperatorToken},
+    auryn::{air::types::Type, syntax_id::SyntaxId, tokenizer::BinaryOperatorToken},
     utils::fast_map::FastMap,
 };
 
@@ -32,6 +32,7 @@ pub struct AirValueId(pub(super) usize);
 
 #[derive(Debug)]
 pub struct AirNode {
+    pub id: SyntaxId,
     pub kind: AirNodeKind,
 }
 
@@ -65,18 +66,22 @@ impl AirType {
 #[must_use]
 #[derive(Debug)]
 pub struct AirExpression {
+    pub id: SyntaxId,
     pub r#type: AirType,
     pub kind: AirExpressionKind,
 }
 
 impl AirExpression {
-    pub const ERROR: Self = Self::new(AirExpressionKind::Error);
-
-    pub const fn new(kind: AirExpressionKind) -> Self {
+    pub const fn new(id: SyntaxId, kind: AirExpressionKind) -> Self {
         Self {
+            id,
             kind,
             r#type: AirType::Inferred,
         }
+    }
+
+    pub const fn error(id: SyntaxId) -> Self {
+        Self::new(id, AirExpressionKind::Error)
     }
 }
 

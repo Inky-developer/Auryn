@@ -10,8 +10,24 @@ AirOutput {
             ): AirBlock {
                 nodes: [
                     AirNode {
+                        id: SyntaxId {
+                            file_id: FileId(
+                                0,
+                            ),
+                            number: Some(
+                                6,
+                            ),
+                        },
                         kind: Expression(
                             AirExpression {
+                                id: SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        6,
+                                    ),
+                                },
                                 type: Computed(
                                     Null,
                                 ),
@@ -20,6 +36,14 @@ AirOutput {
                                         intrinsic: Print,
                                         arguments: [
                                             AirExpression {
+                                                id: SyntaxId {
+                                                    file_id: FileId(
+                                                        0,
+                                                    ),
+                                                    number: Some(
+                                                        140737488355334,
+                                                    ),
+                                                },
                                                 type: Computed(
                                                     Number,
                                                 ),

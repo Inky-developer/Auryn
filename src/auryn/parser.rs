@@ -1,51 +1,12 @@
 use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
 
-use crate::{
-    auryn::{
-        Span,
-        air::{data::AirType, types::Type},
-        syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
-        tokenizer::{Token, TokenKind, Tokenizer},
-    },
-    utils::small_string::SmallString,
+use crate::auryn::{
+    diagnostic::{DiagnosticError, DiagnosticKind},
+    file_id::FileId,
+    syntax_id::SyntaxId,
+    syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
+    tokenizer::{Token, TokenKind, Tokenizer},
 };
-
-#[derive(Debug, Clone)]
-pub enum DiagnosticError {
-    // Generate by the parser
-    ExpectedNumber { got: TokenKind },
-    UnexpectedToken { expected: TokenKind, got: TokenKind },
-    ExpectedBinaryOperator { got: TokenKind },
-    InvalidNumber,
-    ExpectedValue { got: TokenKind },
-    ExpectedNewline,
-    // Generated during air
-    RedefinedVariable { ident: SmallString },
-    BreakOutsideLoop,
-    UndefinedVariable { ident: SmallString },
-    UnknownIntrinsic { ident: SmallString },
-    // Generated during typechecking
-    TypeMismatch { expected: Type, got: AirType },
-    MismatchedParameterCount { expected: usize, got: usize },
-}
-
-#[derive(Debug, Clone)]
-pub enum DiagnosticKind {
-    Error(DiagnosticError),
-}
-impl DiagnosticKind {
-    fn is_error(&self) -> bool {
-        match self {
-            DiagnosticKind::Error(_) => true,
-        }
-    }
-}
-
-impl From<DiagnosticError> for DiagnosticKind {
-    fn from(value: DiagnosticError) -> Self {
-        Self::Error(value)
-    }
-}
 
 #[derive(Debug)]
 pub struct ParserOutput {
@@ -95,21 +56,21 @@ impl Drop for ParserFrameWatcher {
 
 pub struct Parser<'a> {
     input: Vec<Token<'a>>,
+    file_id: FileId,
     index: usize,
     node_stack: Vec<ParserStackNode>,
-    has_errors: bool,
     skipped_frames: ParserSkippedFrames,
 }
 
 type ParseResult<T = ()> = Result<T, ()>;
 
 impl<'a> Parser<'a> {
-    pub fn new(input: &'a str) -> Self {
+    pub fn new(file_id: FileId, input: &'a str) -> Self {
         Self {
             input: Tokenizer::new(input).collect(),
+            file_id,
             index: 0,
             node_stack: Vec::new(),
-            has_errors: false,
             skipped_frames: ParserSkippedFrames(Rc::new(Cell::new(0))),
         }
     }
@@ -121,10 +82,11 @@ impl<'a> Parser<'a> {
         // Nothing left to recover if there is an error
         let _ = self.parse_block(|kind| kind == TokenKind::EndOfInput);
         let _ = self.peek_expect(TokenKind::EndOfInput);
-        let Some(root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
+        let Some(mut root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
             return ParserOutput { syntax_tree: None };
         };
 
+        root_node.assign_ids(SyntaxId::NUMBER_RANGE);
         ParserOutput {
             syntax_tree: Some(SyntaxTree { root_node }),
         }
@@ -134,22 +96,19 @@ impl<'a> Parser<'a> {
 /// Utility methods
 impl<'a> Parser<'a> {
     fn diagnostic(&mut self, kind: impl Into<DiagnosticKind>) {
-        let kind = kind.into();
-        if kind.is_error() {
-            self.has_errors = true;
-        }
         let current = self
             .node_stack
             .last_mut()
             .expect("Should not emit diagnostics if there is no node");
-        let token = current
-            .children
-            .last_mut()
-            .and_then(SyntaxItem::as_mut_token)
-            .expect(
-                "diagnostics should only be emitted if there is a current token they can apply to",
-            );
-        token.diagnostics.push(kind)
+        let Some(SyntaxItem::Token(token)) = current.children.last_mut() else {
+            panic!("Expected a token to attach the diagnostic onto");
+        };
+        let text = std::mem::take(&mut token.text);
+        *current.children.last_mut().unwrap() = SyntaxItem::Error(Box::new(ErrorNode {
+            id: SyntaxId::new_unset(self.file_id),
+            text,
+            diagnostic: kind.into(),
+        }))
     }
 
     fn peek(&self) -> Token<'a> {
@@ -173,14 +132,13 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn push_error_token(&mut self, diagnostic: impl Into<DiagnosticKind>) {
+    fn push_error(&mut self, diagnostic: impl Into<DiagnosticKind>) {
         let node = self.node_stack.last_mut().expect("Should have a node");
-        node.children.push(SyntaxItem::Token(SyntaxToken {
-            kind: TokenKind::Error,
-            span: Span { len: 0 },
+        node.children.push(SyntaxItem::Error(Box::new(ErrorNode {
+            id: SyntaxId::new_unset(self.file_id),
             text: "".into(),
-            diagnostics: vec![diagnostic.into()],
-        }));
+            diagnostic: diagnostic.into(),
+        })));
     }
 
     fn consume(&mut self) -> Token<'a> {
@@ -189,13 +147,11 @@ impl<'a> Parser<'a> {
             text: "",
         });
         self.index = usize::min(self.input.len(), self.index + 1);
-        let len: u32 = token.text.len().try_into().expect("Token too long");
         let node = self.node_stack.last_mut().expect("Should have a node");
         node.children.push(SyntaxItem::Token(SyntaxToken {
+            id: SyntaxId::new_unset(self.file_id),
             kind: token.kind,
-            span: Span { len },
             text: token.text.into(),
-            diagnostics: Vec::new(),
         }));
         token
     }
@@ -246,7 +202,7 @@ impl<'a> Parser<'a> {
             Ok(token) => Ok(token.text),
             Err(token) => {
                 let kind = token.kind;
-                self.push_error_token(DiagnosticError::UnexpectedToken {
+                self.push_error(DiagnosticError::UnexpectedToken {
                     expected,
                     got: kind,
                 });
@@ -259,7 +215,7 @@ impl<'a> Parser<'a> {
         let token = self.peek();
         let kind = token.kind;
         if kind != expected {
-            self.push_error_token(DiagnosticError::UnexpectedToken {
+            self.push_error(DiagnosticError::UnexpectedToken {
                 expected,
                 got: kind,
             });
@@ -284,11 +240,12 @@ impl<'a> Parser<'a> {
     ) -> Option<SyntaxNode> {
         watcher.finish_successfully();
         let ParserStackNode { children } = self.node_stack.pop()?;
-        let span = children.iter().map(|child| child.span()).sum::<Span>();
+        let len = children.iter().map(|child| child.len()).sum::<u32>();
 
         Some(SyntaxNode {
+            id: SyntaxId::new_unset(self.file_id),
+            len,
             kind,
-            span,
             children: children.into_boxed_slice(),
         })
     }
@@ -315,7 +272,7 @@ impl Parser<'_> {
             }
             self.parse_statement()?;
             if !self.consume_statement_separator() && !end_set(self.peek().kind) {
-                self.push_error_token(DiagnosticError::ExpectedNewline);
+                self.push_error(DiagnosticError::ExpectedNewline);
             }
         }
 
@@ -480,7 +437,7 @@ impl Parser<'_> {
             TokenKind::Number => self.parse_number()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
-                self.push_error_token(DiagnosticError::ExpectedValue { got: other });
+                self.push_error(DiagnosticError::ExpectedValue { got: other });
                 return Err(());
             }
         };
@@ -557,12 +514,13 @@ mod tests {
     use std::fmt::Debug;
 
     use crate::auryn::{
+        diagnostic::ComputedDiagnostic,
+        file_id::FileId,
         parser::{Parser, ParserOutput},
-        syntax_tree::ComputedDiagnostic,
     };
 
     fn parse(input: &str) -> ParserOutput {
-        Parser::new(input).parse()
+        Parser::new(FileId::MAIN_FILE, input).parse()
     }
 
     struct AnnotatedParserOutput<'a> {
@@ -588,7 +546,7 @@ mod tests {
             .syntax_tree
             .as_ref()
             .map(|it| it.collect_diagnostics())
-            .unwrap_or_else(Vec::new);
+            .unwrap_or_default();
         AnnotatedParserOutput {
             output,
             input,

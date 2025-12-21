@@ -1,18 +1,17 @@
 use crate::{
     auryn::{
-        air::{
-            data,
-            data::{
-                Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirNode, AirNodeKind, AirValueId, Intrinsic, IntrinsicCall,
-            },
+        air::data::{
+            self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+            AirExpressionKind, AirNode, AirNodeKind, AirValueId, Intrinsic, IntrinsicCall,
         },
         ast::ast_node::{
             Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall, Ident,
             IfStatement, LoopStatement, Number, Parenthesis, Root, Statement, Value,
             VariableUpdate,
         },
-        parser::{DiagnosticError, DiagnosticKind},
+        diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+        syntax_id::SyntaxId,
+        syntax_tree::SyntaxToken,
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
@@ -20,7 +19,7 @@ use crate::{
 #[derive(Debug)]
 pub struct AirOutput {
     pub air: Air,
-    pub diagnostics: Vec<DiagnosticKind>,
+    pub diagnostics: Vec<Diagnostic>,
 }
 
 pub fn transform_ast(ast: Root) -> AirOutput {
@@ -53,7 +52,7 @@ pub struct AstTransformer {
     finished_blocks: FastMap<AirBlockId, AirBlock>,
     next_value_id: usize,
     variables: FastMap<SmallString, AirValueId>,
-    diagnostics: Vec<DiagnosticKind>,
+    diagnostics: Vec<Diagnostic>,
     loops: Vec<LoopInfo>,
 }
 
@@ -101,17 +100,21 @@ impl AstTransformer {
             .push(node);
     }
 
-    fn add_error(&mut self, error: DiagnosticError) {
-        self.diagnostics.push(DiagnosticKind::Error(error))
+    fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
+        self.diagnostics
+            .push(Diagnostic::new(id, DiagnosticKind::Error(error)))
     }
 
-    fn create_variable(&mut self, ident: SmallString, value_id: AirValueId) {
-        if self.variables.contains_key(&ident) {
-            self.add_error(DiagnosticError::RedefinedVariable {
-                ident: ident.clone(),
-            })
+    fn create_variable(&mut self, token: &SyntaxToken, value_id: AirValueId) {
+        if self.variables.contains_key(&token.text) {
+            self.add_error(
+                token.id,
+                DiagnosticError::RedefinedVariable {
+                    ident: token.text.clone(),
+                },
+            )
         }
-        self.variables.insert(ident, value_id);
+        self.variables.insert(token.text.clone(), value_id);
     }
 
     fn create_value(&mut self) -> AirValueId {
@@ -154,6 +157,7 @@ impl AstTransformer {
             Statement::Expression(expression) => {
                 let expression = self.transform_expression(expression);
                 self.add_node(AirNode {
+                    id: expression.id,
                     kind: AirNodeKind::Expression(Box::new(expression)),
                 });
             }
@@ -171,8 +175,9 @@ impl AstTransformer {
 
         let expression = self.transform_expression(expression);
         let id = self.create_value();
-        self.create_variable(ident.text.clone(), id);
+        self.create_variable(ident, id);
         self.add_node(AirNode {
+            id: assignment.id(),
             kind: AirNodeKind::Assignment(data::Assignment {
                 target: id,
                 expression: Box::new(expression),
@@ -223,9 +228,9 @@ impl AstTransformer {
         self.finish_block(next_block_id, AirBlockFinalizer::Goto(loop_body));
     }
 
-    fn transform_break_statement(&mut self, _: BreakStatement) {
+    fn transform_break_statement(&mut self, r#break: BreakStatement) {
         let Some(loop_info) = self.loops.last() else {
-            self.add_error(DiagnosticError::BreakOutsideLoop);
+            self.add_error(r#break.id(), DiagnosticError::BreakOutsideLoop);
             return;
         };
         let break_target = loop_info.break_target;
@@ -244,13 +249,17 @@ impl AstTransformer {
             return;
         };
         let Some(&variable_id) = self.variables.get(&ident.text) else {
-            self.add_error(DiagnosticError::UndefinedVariable {
-                ident: ident.text.clone(),
-            });
+            self.add_error(
+                ident.id,
+                DiagnosticError::UndefinedVariable {
+                    ident: ident.text.clone(),
+                },
+            );
             return;
         };
 
         self.add_node(AirNode {
+            id: variable_update.id(),
             kind: AirNodeKind::Assignment(data::Assignment {
                 target: variable_id,
                 expression: Box::new(expression),
@@ -268,24 +277,24 @@ impl AstTransformer {
     }
 
     fn transform_binary_operation(&mut self, binary_operation: BinaryOperation) -> AirExpression {
-        let Ok(lhs) = binary_operation.lhs() else {
-            return AirExpression::ERROR;
-        };
-        let Ok(rhs) = binary_operation.rhs() else {
-            return AirExpression::ERROR;
-        };
-        let Ok(operator) = binary_operation.binary_operator() else {
-            return AirExpression::ERROR;
-        };
+        if let Ok(lhs) = binary_operation.lhs()
+            && let Ok(rhs) = binary_operation.rhs()
+            && let Ok(operator) = binary_operation.binary_operator()
+        {
+            let lhs = self.transform_expression(lhs);
+            let rhs = self.transform_expression(rhs);
 
-        let lhs = self.transform_expression(lhs);
-        let rhs = self.transform_expression(rhs);
-
-        AirExpression::new(AirExpressionKind::BinaryOperator(data::BinaryOperation {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-            operator,
-        }))
+            AirExpression::new(
+                binary_operation.id(),
+                AirExpressionKind::BinaryOperator(data::BinaryOperation {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    operator,
+                }),
+            )
+        } else {
+            AirExpression::error(binary_operation.id())
+        }
     }
 
     fn transform_value(&mut self, value: Value) -> AirExpression {
@@ -299,38 +308,44 @@ impl AstTransformer {
 
     fn transform_number(&mut self, number: Number) -> AirExpression {
         let Ok(token) = number.value() else {
-            return AirExpression::ERROR;
+            return AirExpression::error(number.id());
         };
 
         let Ok(value) = token.text.as_ref().parse() else {
-            self.add_error(DiagnosticError::InvalidNumber);
-            return AirExpression::ERROR;
+            self.add_error(number.id(), DiagnosticError::InvalidNumber);
+            return AirExpression::error(number.id());
         };
 
-        AirExpression::new(AirExpressionKind::Constant(AirConstant::Number(value)))
+        AirExpression::new(
+            number.id(),
+            AirExpressionKind::Constant(AirConstant::Number(value)),
+        )
     }
 
     fn transform_ident(&mut self, ident: Ident) -> AirExpression {
         let Ok(ident) = ident.ident() else {
-            return AirExpression::ERROR;
+            return AirExpression::error(ident.id());
         };
 
         let Some(&variable_id) = self.variables.get(&ident.text) else {
-            self.add_error(DiagnosticError::UndefinedVariable {
-                ident: ident.text.clone(),
-            });
-            return AirExpression::ERROR;
+            self.add_error(
+                ident.id,
+                DiagnosticError::UndefinedVariable {
+                    ident: ident.text.clone(),
+                },
+            );
+            return AirExpression::error(ident.id);
         };
 
-        AirExpression::new(AirExpressionKind::Variable(variable_id))
+        AirExpression::new(ident.id, AirExpressionKind::Variable(variable_id))
     }
 
     fn transform_function_call(&mut self, function_call: FunctionCall) -> AirExpression {
         let Ok(ident) = function_call.ident() else {
-            return AirExpression::ERROR;
+            return AirExpression::error(function_call.id());
         };
         let Ok(argument_list) = function_call.argument_list() else {
-            return AirExpression::ERROR;
+            return AirExpression::error(function_call.id());
         };
 
         let arguments = argument_list
@@ -341,22 +356,28 @@ impl AstTransformer {
         let intrinsic = match ident.text.as_ref() {
             "print" => Intrinsic::Print,
             _ => {
-                self.add_error(DiagnosticError::UnknownIntrinsic {
-                    ident: ident.text.clone(),
-                });
-                return AirExpression::ERROR;
+                self.add_error(
+                    ident.id,
+                    DiagnosticError::UnknownIntrinsic {
+                        ident: ident.text.clone(),
+                    },
+                );
+                return AirExpression::error(ident.id);
             }
         };
 
-        AirExpression::new(AirExpressionKind::IntrinsicCall(IntrinsicCall {
-            intrinsic,
-            arguments,
-        }))
+        AirExpression::new(
+            function_call.id(),
+            AirExpressionKind::IntrinsicCall(IntrinsicCall {
+                intrinsic,
+                arguments,
+            }),
+        )
     }
 
     fn transform_parenthesis(&mut self, parenthesis: Parenthesis) -> AirExpression {
         let Ok(expression) = parenthesis.expression() else {
-            return AirExpression::ERROR;
+            return AirExpression::error(parenthesis.id());
         };
         self.transform_expression(expression)
     }

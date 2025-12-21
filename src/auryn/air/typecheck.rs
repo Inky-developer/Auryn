@@ -8,23 +8,24 @@ use crate::{
             },
             types::Type,
         },
-        parser::{DiagnosticError, DiagnosticKind},
+        diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+        syntax_id::SyntaxId,
     },
     utils::fast_map::FastMap,
 };
 
-pub fn typecheck_air(air: &mut Air) -> Vec<DiagnosticKind> {
+pub fn typecheck_air(air: &mut Air) -> Vec<Diagnostic> {
     Typechecker::default().typecheck(air)
 }
 
 #[derive(Debug, Default)]
 pub struct Typechecker {
     variables: FastMap<AirValueId, Type>,
-    diagnostics: Vec<DiagnosticKind>,
+    diagnostics: Vec<Diagnostic>,
 }
 
 impl Typechecker {
-    pub fn typecheck(mut self, air: &mut Air) -> Vec<DiagnosticKind> {
+    pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
         for block in air.blocks.values_mut() {
             self.typecheck_block(block);
         }
@@ -32,21 +33,25 @@ impl Typechecker {
         self.diagnostics
     }
 
-    fn expect_type(&mut self, received: &AirType, expected: Type) {
-        if let AirType::Computed(got) = received
+    fn expect_type(&mut self, received: &AirExpression, expected: Type) {
+        if let AirType::Computed(got) = &received.r#type
             && got == &expected
         {
             return;
         }
 
-        self.add_error(DiagnosticError::TypeMismatch {
-            expected,
-            got: received.clone(),
-        })
+        self.add_error(
+            received.id,
+            DiagnosticError::TypeMismatch {
+                expected,
+                got: received.r#type.clone(),
+            },
+        )
     }
 
-    fn add_error(&mut self, error: DiagnosticError) {
-        self.diagnostics.push(DiagnosticKind::Error(error))
+    fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
+        self.diagnostics
+            .push(Diagnostic::new(id, DiagnosticKind::Error(error)))
     }
 }
 
@@ -65,7 +70,7 @@ impl Typechecker {
             AirBlockFinalizer::Goto(_) => {}
             AirBlockFinalizer::Branch { value, .. } => {
                 self.typecheck_expression(value);
-                self.expect_type(&value.r#type, Type::Number);
+                self.expect_type(value, Type::Number);
             }
         }
     }
@@ -92,7 +97,9 @@ impl Typechecker {
                 self.typecheck_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(value) => self.typecheck_value(value),
-            AirExpressionKind::IntrinsicCall(intrinsic) => self.typecheck_intrinsic(intrinsic),
+            AirExpressionKind::IntrinsicCall(intrinsic) => {
+                self.typecheck_intrinsic(expression.id, intrinsic)
+            }
             AirExpressionKind::Error => Type::Error,
         };
 
@@ -109,8 +116,8 @@ impl Typechecker {
         self.typecheck_expression(&mut binary_operator.lhs);
         self.typecheck_expression(&mut binary_operator.rhs);
 
-        self.expect_type(&binary_operator.lhs.r#type, Type::Number);
-        self.expect_type(&binary_operator.rhs.r#type, Type::Number);
+        self.expect_type(&binary_operator.lhs, Type::Number);
+        self.expect_type(&binary_operator.rhs, Type::Number);
 
         Type::Number
     }
@@ -123,21 +130,24 @@ impl Typechecker {
         computed_type.clone()
     }
 
-    fn typecheck_intrinsic(&mut self, intrinsic: &mut IntrinsicCall) -> Type {
+    fn typecheck_intrinsic(&mut self, id: SyntaxId, intrinsic: &mut IntrinsicCall) -> Type {
         for argument in &mut intrinsic.arguments {
             self.typecheck_expression(argument);
         }
 
         let signature = intrinsic.intrinsic.signature();
         if signature.0.len() != intrinsic.arguments.len() {
-            self.add_error(DiagnosticError::MismatchedParameterCount {
-                expected: signature.0.len(),
-                got: intrinsic.arguments.len(),
-            });
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: signature.0.len(),
+                    got: intrinsic.arguments.len(),
+                },
+            );
         }
 
         for (expected, actual) in signature.0.iter().zip(intrinsic.arguments.iter()) {
-            self.expect_type(&actual.r#type, expected.clone());
+            self.expect_type(actual, expected.clone());
         }
 
         Type::Null

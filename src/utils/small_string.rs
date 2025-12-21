@@ -1,4 +1,9 @@
-use std::{fmt, fmt::Formatter, hash::Hash, num::NonZeroU8};
+use std::{
+    fmt::{self, Formatter},
+    hash::Hash,
+    num::NonZeroU8,
+    ops::Deref,
+};
 
 /// A very simple immutable string type that implements the small string optimization.
 /// Should probably be replaced at some point with a more sophisticated implementation,
@@ -7,14 +12,25 @@ use std::{fmt, fmt::Formatter, hash::Hash, num::NonZeroU8};
 pub enum SmallString {
     Heap(Box<str>),
     Stack {
-        data: [u8; SMALL_STRING_INLINE_SIZE],
+        data: [u8; Self::INLINE_SIZE],
         len: NonZeroU8,
     },
 }
 
-const SMALL_STRING_INLINE_SIZE: usize = 23;
-
 const _: () = const { assert!(size_of::<SmallString>() == 24) };
+
+impl SmallString {
+    const INLINE_SIZE: usize = 23;
+
+    /// Returns an empty [`SmallString`].
+    ///
+    /// This could be a constant in theory, but is not supported by std right now:
+    /// https://internals.rust-lang.org/t/const-box-str-new/20085
+    /// Though it should optimize anyways.
+    pub fn empty() -> Self {
+        Self::Heap("".into())
+    }
+}
 
 impl AsRef<str> for SmallString {
     fn as_ref(&self) -> &str {
@@ -25,12 +41,26 @@ impl AsRef<str> for SmallString {
     }
 }
 
+impl Deref for SmallString {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_ref()
+    }
+}
+
+impl Default for SmallString {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
 impl From<&str> for SmallString {
     fn from(s: &str) -> Self {
-        if s.len() <= SMALL_STRING_INLINE_SIZE
+        if s.len() <= Self::INLINE_SIZE
             && let Some(non_zero_len) = NonZeroU8::new(s.len().try_into().unwrap())
         {
-            let mut data = [0; SMALL_STRING_INLINE_SIZE];
+            let mut data = [0; Self::INLINE_SIZE];
             data[..s.len()].copy_from_slice(s.as_bytes());
             SmallString::Stack {
                 data,
