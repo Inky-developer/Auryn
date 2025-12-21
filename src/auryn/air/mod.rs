@@ -1,6 +1,10 @@
-use crate::auryn::air::ast_transformer::transform_ast;
-use crate::auryn::air::typecheck::typecheck_air;
-use crate::auryn::{air::ast_transformer::AirOutput, ast::ast_node};
+use crate::auryn::{
+    air::{
+        ast_transformer::{AirOutput, transform_ast},
+        typecheck::typecheck_air,
+    },
+    ast::ast_node,
+};
 
 pub mod air;
 pub mod ast_transformer;
@@ -18,10 +22,11 @@ pub fn query_air(ast: ast_node::Root) -> AirOutput {
 
 #[cfg(test)]
 mod tests {
-    use crate::auryn::air::ast_transformer::AirOutput;
-    use crate::auryn::air::query_air;
-    use crate::auryn::ast::query_ast2;
-    use crate::auryn::parser::Parser;
+    use crate::auryn::{
+        air::{ast_transformer::AirOutput, query_air},
+        ast::query_ast2,
+        parser::Parser,
+    };
 
     fn compile(input: &str) -> AirOutput {
         let output = Parser::new(input).parse();

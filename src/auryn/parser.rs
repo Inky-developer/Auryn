@@ -1,13 +1,14 @@
 use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
 
-use crate::auryn::air::air::AirType;
-use crate::auryn::air::types::Type;
-use crate::auryn::{
-    Span,
-    syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
-    tokenizer::{Token, TokenKind, Tokenizer},
+use crate::{
+    auryn::{
+        Span,
+        air::{air::AirType, types::Type},
+        syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
+        tokenizer::{Token, TokenKind, Tokenizer},
+    },
+    utils::small_string::SmallString,
 };
-use crate::utils::small_string::SmallString;
 
 #[derive(Debug, Clone)]
 pub enum DiagnosticError {

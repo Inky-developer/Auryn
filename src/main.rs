@@ -1,10 +1,10 @@
 use std::{fs::OpenOptions, io::Write};
 
-use auryn::auryn::ComputedSpan;
-use auryn::auryn::ast::query_ast2;
-use auryn::auryn::syntax_tree::ComputedDiagnostic;
 use auryn::{
-    auryn::{air::query_air, codegen_java::query_class, parser::Parser},
+    auryn::{
+        ComputedSpan, air::query_air, ast::query_ast2, codegen_java::query_class, parser::Parser,
+        syntax_tree::ComputedDiagnostic,
+    },
     java::class::ClassData,
 };
 

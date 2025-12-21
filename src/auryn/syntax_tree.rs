@@ -1,7 +1,9 @@
 use std::fmt::{Debug, Display};
 
-use crate::auryn::{ComputedSpan, Span, parser::DiagnosticKind, tokenizer::TokenKind};
-use crate::utils::small_string::SmallString;
+use crate::{
+    auryn::{ComputedSpan, Span, parser::DiagnosticKind, tokenizer::TokenKind},
+    utils::small_string::SmallString,
+};
 
 #[derive(Debug)]
 pub struct ComputedDiagnostic {

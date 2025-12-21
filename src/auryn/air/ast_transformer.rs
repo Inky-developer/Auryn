@@ -1,15 +1,21 @@
-use crate::auryn::air::air;
-use crate::auryn::air::air::{
-    Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression, AirExpressionKind,
-    AirNode, AirNodeKind, AirValueId, Intrinsic, IntrinsicCall,
+use crate::{
+    auryn::{
+        air::{
+            air,
+            air::{
+                Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirNode, AirNodeKind, AirValueId, Intrinsic, IntrinsicCall,
+            },
+        },
+        ast::ast_node::{
+            Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall, Ident,
+            IfStatement, LoopStatement, Number, Parenthesis, Root, Statement, Value,
+            VariableUpdate,
+        },
+        parser::{DiagnosticError, DiagnosticKind},
+    },
+    utils::{fast_map::FastMap, small_string::SmallString},
 };
-use crate::auryn::ast::ast_node::{
-    Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall, Ident,
-    IfStatement, LoopStatement, Number, Parenthesis, Root, Statement, Value, VariableUpdate,
-};
-use crate::auryn::parser::{DiagnosticError, DiagnosticKind};
-use crate::utils::fast_map::FastMap;
-use crate::utils::small_string::SmallString;
 
 #[derive(Debug)]
 pub struct AirOutput {

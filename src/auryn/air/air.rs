@@ -1,6 +1,7 @@
-use crate::auryn::air::types::Type;
-use crate::auryn::tokenizer::BinaryOperatorToken;
-use crate::utils::fast_map::FastMap;
+use crate::{
+    auryn::{air::types::Type, tokenizer::BinaryOperatorToken},
+    utils::fast_map::FastMap,
+};
 
 #[derive(Debug)]
 pub struct Air {

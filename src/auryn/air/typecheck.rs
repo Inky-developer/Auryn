@@ -1,10 +1,17 @@
-use crate::auryn::air::air::{
-    Air, AirBlock, AirBlockFinalizer, AirConstant, AirExpression, AirExpressionKind, AirNode,
-    AirNodeKind, AirType, AirValueId, Assignment, BinaryOperation, IntrinsicCall,
+use crate::{
+    auryn::{
+        air::{
+            air::{
+                Air, AirBlock, AirBlockFinalizer, AirConstant, AirExpression, AirExpressionKind,
+                AirNode, AirNodeKind, AirType, AirValueId, Assignment, BinaryOperation,
+                IntrinsicCall,
+            },
+            types::Type,
+        },
+        parser::{DiagnosticError, DiagnosticKind},
+    },
+    utils::fast_map::FastMap,
 };
-use crate::auryn::air::types::Type;
-use crate::auryn::parser::{DiagnosticError, DiagnosticKind};
-use crate::utils::fast_map::FastMap;
 
 pub fn typecheck_air(air: &mut Air) -> Vec<DiagnosticKind> {
     Typechecker::default().typecheck(air)

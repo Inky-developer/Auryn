@@ -1,9 +1,8 @@
 use std::io::Write;
 
-use crate::java::assembler::Primitive;
 use crate::{
     java::{
-        assembler::{ConstantValue, Instruction},
+        assembler::{ConstantValue, Instruction, Primitive},
         class::{
             self, Comparison, JumpPoint, StackMapTableAttribute, TypeCategory, VerificationTypeInfo,
         },

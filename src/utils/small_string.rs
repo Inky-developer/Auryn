@@ -1,7 +1,4 @@
-use std::fmt;
-use std::fmt::Formatter;
-use std::hash::Hash;
-use std::num::NonZeroU8;
+use std::{fmt, fmt::Formatter, hash::Hash, num::NonZeroU8};
 
 /// A very simple immutable string type that implements the small string optimization.
 /// Should probably be replaced at some point with a more sophisticated implementation,

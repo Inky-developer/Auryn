@@ -1,20 +1,24 @@
-use crate::auryn::air::air::{
-    Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression, AirExpressionKind,
-    AirNode, AirNodeKind, AirValueId, Assignment, BinaryOperation, Intrinsic, IntrinsicCall,
-};
-use crate::auryn::air::types::Type;
-use crate::java::assembler::Primitive;
-use crate::utils::fast_map::FastSet;
 use crate::{
-    auryn::tokenizer::BinaryOperatorToken,
+    auryn::{
+        air::{
+            air::{
+                Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirNode, AirNodeKind, AirValueId, Assignment, BinaryOperation,
+                Intrinsic, IntrinsicCall,
+            },
+            types::Type,
+        },
+        tokenizer::BinaryOperatorToken,
+    },
     java::{
         assembler::{
-            Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, VariableId,
+            Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, Primitive,
+            VariableId,
         },
         class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
-    utils::fast_map::FastMap,
+    utils::fast_map::{FastMap, FastSet},
 };
 use indexmap::IndexSet;
 
@@ -346,10 +350,8 @@ impl Type {
 
 #[cfg(test)]
 mod tests {
-    use crate::auryn::air::query_air;
-    use crate::auryn::ast::query_ast2;
     use crate::{
-        auryn::{codegen_java::query_class, parser::Parser},
+        auryn::{air::query_air, ast::query_ast2, codegen_java::query_class, parser::Parser},
         java::class::ClassData,
     };
 
