@@ -1,7 +1,7 @@
 use crate::{
     auryn::{
         air::{
-            air::{
+            data::{
                 Air, AirBlock, AirBlockFinalizer, AirConstant, AirExpression, AirExpressionKind,
                 AirNode, AirNodeKind, AirType, AirValueId, Assignment, BinaryOperation,
                 IntrinsicCall,

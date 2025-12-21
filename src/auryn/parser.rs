@@ -3,7 +3,7 @@ use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
 use crate::{
     auryn::{
         Span,
-        air::{air::AirType, types::Type},
+        air::{data::AirType, types::Type},
         syntax_tree::{SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
         tokenizer::{Token, TokenKind, Tokenizer},
     },
@@ -221,9 +221,12 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_whitespace_and_newlines(&mut self) {
-        while let Ok(_) = self.consume_if(|token| {
-            matches!(token.kind, TokenKind::Whitespace | TokenKind::Newline).then_some(token)
-        }) {}
+        while self
+            .consume_if(|token| {
+                matches!(token.kind, TokenKind::Whitespace | TokenKind::Newline).then_some(token)
+            })
+            .is_ok()
+        {}
     }
 
     fn consume_statement_separator(&mut self) -> bool {

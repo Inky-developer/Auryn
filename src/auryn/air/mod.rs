@@ -6,8 +6,8 @@ use crate::auryn::{
     ast::ast_node,
 };
 
-pub mod air;
 pub mod ast_transformer;
+pub mod data;
 pub mod typecheck;
 pub mod types;
 

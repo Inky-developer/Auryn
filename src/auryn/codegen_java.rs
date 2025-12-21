@@ -1,7 +1,7 @@
 use crate::{
     auryn::{
         air::{
-            air::{
+            data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirNode, AirNodeKind, AirValueId, Assignment, BinaryOperation,
                 Intrinsic, IntrinsicCall,
@@ -142,7 +142,7 @@ impl Generator {
         match &node.kind {
             AirNodeKind::Assignment(assignment) => self.generate_assignment(assignment),
             AirNodeKind::Expression(expression) => {
-                let leftover = self.generate_expression(&expression);
+                let leftover = self.generate_expression(expression);
                 if let Some(leftover) = leftover {
                     self.assembler.add(Instruction::Pop(leftover));
                 }
@@ -168,7 +168,7 @@ impl Generator {
     /// The return value indicates the stack usage
     fn generate_expression(&mut self, expression: &AirExpression) -> Option<TypeCategory> {
         match &expression.kind {
-            AirExpressionKind::Constant(constant) => Some(self.generate_constant(&constant)),
+            AirExpressionKind::Constant(constant) => Some(self.generate_constant(constant)),
             AirExpressionKind::BinaryOperator(binary_operator) => {
                 Some(self.generate_binary_operation(binary_operator))
             }

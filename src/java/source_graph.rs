@@ -51,7 +51,7 @@ impl BlockFinalizer {
             BlockFinalizer::ReturnNull => [None, None],
         };
 
-        targets.into_iter().filter_map(|it| it)
+        targets.into_iter().flatten()
     }
 }
 
@@ -133,7 +133,7 @@ impl SourceGraph {
             let next_block_id = block_order.get(index + 1).copied();
             let block = graph.get_vertex(block_id).expect("Should exist");
             for instruction in &block.instructions {
-                context.convert_instruction(&instruction, |i| code.push(i));
+                context.convert_instruction(instruction, |i| code.push(i));
             }
             if let Some(finalizer) =
                 context.convert_finalizer_instruction(&block.finalizer, next_block_id, |block_id| {
@@ -207,7 +207,7 @@ impl AssemblyContext<'_> {
 
             let mut evaluator = SymbolicEvaluator::from(frame_at_start_of_block.clone());
             let block = graph.get_vertex(id).unwrap();
-            evaluator.eval_block(block, &mut self.0);
+            evaluator.eval_block(block, self.0);
             let frame_at_end_of_block = Frame {
                 locals: evaluator.locals,
                 stack: evaluator.stack,
@@ -232,7 +232,7 @@ impl AssemblyContext<'_> {
     fn measure_len(&mut self, instructions: &[Instruction]) -> u16 {
         let mut writer = VoidWriter::default();
         for instruction in instructions {
-            self.convert_instruction(&instruction, |i| i.serialize(&mut writer, 0).unwrap());
+            self.convert_instruction(instruction, |i| i.serialize(&mut writer, 0).unwrap());
         }
         writer.len.try_into().unwrap()
     }
@@ -376,9 +376,7 @@ fn convert_verification_frames(verification_frames: Vec<(u16, Frame)>) -> StackM
                 let offset_to_last: u16 = if index == 0 {
                     offset
                 } else {
-                    (offset - current_offset - 1)
-                        .try_into()
-                        .expect("Should not to to big")
+                    offset - current_offset - 1
                 };
                 current_offset = offset;
                 Some(class::StackMapFrame::Full {

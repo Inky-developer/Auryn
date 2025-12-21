@@ -225,9 +225,7 @@ impl Instruction {
                 buf.write_all(&[0x15, index])?;
             }
             Instruction::Goto(jump_point) => {
-                let offset: i16 = (jump_point.0 as i16 - current_index as i16)
-                    .try_into()
-                    .expect("Jump should not be too long");
+                let offset: i16 = jump_point.0 as i16 - current_index as i16;
                 buf.write_all(&[0xa7])?;
                 buf.write_all(&offset.to_be_bytes())?;
             }
@@ -239,9 +237,7 @@ impl Instruction {
                 jump_point,
             } => {
                 buf.write_all(&[0x9f + (comparison as u8)])?;
-                let offset: i16 = (jump_point.0 as i16 - current_index as i16)
-                    .try_into()
-                    .unwrap();
+                let offset: i16 = jump_point.0 as i16 - current_index as i16;
                 buf.write_all(&offset.to_be_bytes())?;
             }
             Instruction::IfI {
@@ -249,9 +245,7 @@ impl Instruction {
                 jump_point,
             } => {
                 buf.write_all(&[0x99 + (comparison as u8)])?;
-                let offset: i16 = (jump_point.0 as i16 - current_index as i16)
-                    .try_into()
-                    .unwrap();
+                let offset: i16 = jump_point.0 as i16 - current_index as i16;
                 buf.write_all(&offset.to_be_bytes())?;
             }
             Instruction::Pop => {

@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::java::{
-    class::{self, StackMapTableAttribute, TypeCategory, VerificationTypeInfo},
+    class::{self, TypeCategory, VerificationTypeInfo},
     constant_pool_builder::ConstantPoolBuilder,
     source_graph::{BasicBlock, BasicBlockId, SourceGraph},
 };
@@ -183,6 +183,12 @@ pub struct Assembler {
     pub function_arguments: Vec<VerificationTypeInfo>,
 }
 
+impl Default for Assembler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Assembler {
     pub fn new() -> Self {
         let mut constant_pool = ConstantPoolBuilder::default();
@@ -199,7 +205,7 @@ impl Assembler {
     }
 
     pub fn assemble(mut self, class_name: String) -> class::ClassData {
-        let (class_instructions, verification_frames) = self
+        let (class_instructions, stack_map_frame) = self
             .blocks
             .assemble(&mut self.constant_pool, self.function_arguments);
         let name_index = self.constant_pool.add_utf8("main".to_string());
@@ -207,7 +213,6 @@ impl Assembler {
             .constant_pool
             .add_utf8("([Ljava/lang/String;)V".to_string());
         let code_name_index = self.constant_pool.add_utf8("Code".to_string());
-        let stack_map_frame = StackMapTableAttribute::from(verification_frames);
         // It must be at least 2 bigger than the highest index to a 2-sized variable
         let max_locals = self.next_variable_index + 1;
         let method = class::Method {

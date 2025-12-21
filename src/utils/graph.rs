@@ -40,10 +40,7 @@ where
     }
 
     pub fn connect(&mut self, key: K, target: K) {
-        self.edges
-            .entry(key)
-            .or_insert_with(Default::default)
-            .insert(target);
+        self.edges.entry(key).or_default().insert(target);
     }
 
     /// Invers all edges so that instead of pointing from A to B they will point from B to A.

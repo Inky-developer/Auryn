@@ -1,8 +1,8 @@
 use crate::{
     auryn::{
         air::{
-            air,
-            air::{
+            data,
+            data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirNode, AirNodeKind, AirValueId, Intrinsic, IntrinsicCall,
             },
@@ -173,7 +173,7 @@ impl AstTransformer {
         let id = self.create_value();
         self.create_variable(ident.text.clone(), id);
         self.add_node(AirNode {
-            kind: AirNodeKind::Assignment(air::Assignment {
+            kind: AirNodeKind::Assignment(data::Assignment {
                 target: id,
                 expression: Box::new(expression),
             }),
@@ -251,7 +251,7 @@ impl AstTransformer {
         };
 
         self.add_node(AirNode {
-            kind: AirNodeKind::Assignment(air::Assignment {
+            kind: AirNodeKind::Assignment(data::Assignment {
                 target: variable_id,
                 expression: Box::new(expression),
             }),
@@ -281,7 +281,7 @@ impl AstTransformer {
         let lhs = self.transform_expression(lhs);
         let rhs = self.transform_expression(rhs);
 
-        AirExpression::new(AirExpressionKind::BinaryOperator(air::BinaryOperation {
+        AirExpression::new(AirExpressionKind::BinaryOperator(data::BinaryOperation {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
             operator,
