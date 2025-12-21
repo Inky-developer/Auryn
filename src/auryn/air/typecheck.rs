@@ -84,10 +84,14 @@ impl Typechecker {
 
     fn typecheck_assignment(&mut self, assignment: &mut Assignment) {
         self.typecheck_expression(&mut assignment.expression);
-        self.variables.insert(
-            assignment.target,
-            assignment.expression.r#type.computed().clone(),
-        );
+        if let Some(expected_type) = self.variables.get(&assignment.target) {
+            self.expect_type(&assignment.expression, expected_type.clone());
+        } else {
+            self.variables.insert(
+                assignment.target,
+                assignment.expression.r#type.computed().clone(),
+            );
+        }
     }
 
     fn typecheck_expression(&mut self, expression: &mut AirExpression) {
