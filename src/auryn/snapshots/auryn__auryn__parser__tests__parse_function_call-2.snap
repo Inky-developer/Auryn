@@ -12,7 +12,7 @@ AnnotatedParserOutput {
         |||||0..8 FunctionCall
         ||||||Identifier
         ||||||ParensOpen
-        ||||||6..7 ParameterList
+        ||||||6..7 ArgumentList
         |||||||6..7 Expression
         ||||||||6..7 Value
         |||||||||6..7 Number

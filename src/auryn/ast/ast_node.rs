@@ -183,11 +183,11 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct FunctionCall = SyntaxNodeKind::FunctionCall as { token ident: TokenKind::Identifier, parameter_list: ParameterList, }
+    pub struct FunctionCall = SyntaxNodeKind::FunctionCall as { token ident: TokenKind::Identifier, argument_list: ArgumentList, }
 }
 
 ast_node! {
-    pub struct ParameterList = SyntaxNodeKind::ParameterList as { ...parameters: Expression }
+    pub struct ArgumentList = SyntaxNodeKind::ArgumentList as { ...arguments: Expression }
 }
 
 ast_node! {

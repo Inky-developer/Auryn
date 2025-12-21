@@ -323,13 +323,13 @@ impl AstTransformer {
         let Ok(ident) = function_call.ident() else {
             return AirExpression::ERROR;
         };
-        let Ok(parameter_list) = function_call.parameter_list() else {
+        let Ok(argument_list) = function_call.argument_list() else {
             return AirExpression::ERROR;
         };
 
-        let arguments = parameter_list
-            .parameters()
-            .map(|param| self.transform_expression(param))
+        let arguments = argument_list
+            .arguments()
+            .map(|arg| self.transform_expression(arg))
             .collect();
 
         let intrinsic = match ident.text.as_ref() {

@@ -24,7 +24,7 @@ AnnotatedParserOutput {
         ||||||||7..16 FunctionCall
         |||||||||Identifier
         |||||||||ParensOpen
-        |||||||||13..15 ParameterList
+        |||||||||13..15 ArgumentList
         ||||||||||13..15 Expression
         |||||||||||13..15 Value
         ||||||||||||13..15 Number

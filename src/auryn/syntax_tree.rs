@@ -21,7 +21,7 @@ pub enum SyntaxNodeKind {
     Error,
     Parenthesis,
     FunctionCall,
-    ParameterList,
+    ArgumentList,
     Assignment,
     Ident,
     VariableUpdate,

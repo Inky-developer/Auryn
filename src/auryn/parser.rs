@@ -495,7 +495,7 @@ impl Parser<'_> {
         match self.peek().kind {
             TokenKind::ParensOpen => {
                 self.expect(TokenKind::ParensOpen)?;
-                if let Err(()) = self.parse_parameter_list() {
+                if let Err(()) = self.parse_argument_list() {
                     // self.recover(|k| matches!(k, TokenKind::ParensClose))?;
                 }
                 self.expect(TokenKind::ParensClose)?;
@@ -510,7 +510,7 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_parameter_list(&mut self) -> ParseResult {
+    fn parse_argument_list(&mut self) -> ParseResult {
         let watcher = self.push_node();
         loop {
             self.parse_expression()?;
@@ -521,7 +521,7 @@ impl Parser<'_> {
             self.consume();
         }
 
-        self.finish_node(watcher, SyntaxNodeKind::ParameterList);
+        self.finish_node(watcher, SyntaxNodeKind::ArgumentList);
 
         Ok(())
     }
