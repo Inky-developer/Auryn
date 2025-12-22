@@ -419,6 +419,7 @@ impl Parser<'_> {
         match self.peek().kind {
             TokenKind::Identifier => self.parse_identifier_or_function_call()?,
             TokenKind::Number => self.parse_number()?,
+            TokenKind::StringLiteral => self.parse_string_literal()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
                 self.push_error(DiagnosticError::ExpectedValue { got: other });
@@ -476,7 +477,16 @@ impl Parser<'_> {
 
         self.expect(TokenKind::Number)?;
 
-        self.finish_node(watcher, SyntaxNodeKind::Number);
+        self.finish_node(watcher, SyntaxNodeKind::NumberLiteral);
+        Ok(())
+    }
+
+    fn parse_string_literal(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::StringLiteral)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::StringLiteral);
         Ok(())
     }
 
@@ -539,6 +549,7 @@ mod tests {
     fn test_parse_expression() {
         insta::assert_debug_snapshot!(verify("1 + 2 * 3"));
         insta::assert_debug_snapshot!(verify("1 * 2 + 3"));
+        insta::assert_debug_snapshot!(verify("1 * \"test\""));
     }
 
     #[test]

@@ -1,0 +1,46 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\"( \\\"Hello, World!\\\" ) && \\\"test\\\"\")"
+---
+[
+    Token {
+        kind: ParensOpen,
+        text: "(",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: StringLiteral,
+        text: "\"Hello, World!\"",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: ParensClose,
+        text: ")",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: StringLiteral,
+        text: "\"test\"",
+    },
+]

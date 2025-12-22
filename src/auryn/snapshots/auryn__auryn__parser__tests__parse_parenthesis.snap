@@ -13,7 +13,7 @@ AnnotatedParserOutput {
         ||||||ParensOpen
         ||||||1..2 Expression
         |||||||1..2 Value
-        ||||||||1..2 Number
+        ||||||||1..2 NumberLiteral
         |||||||||Number
         ||||||ParensClose
         ,

@@ -16,7 +16,7 @@ AnnotatedParserOutput {
         ||||Whitespace
         ||||8..9 Expression
         |||||8..9 Value
-        ||||||8..9 Number
+        ||||||8..9 NumberLiteral
         |||||||Number
         ||Newline
         ||10..19 Statement
@@ -29,7 +29,7 @@ AnnotatedParserOutput {
         ||||Whitespace
         ||||18..19 Expression
         |||||18..19 Value
-        ||||||18..19 Number
+        ||||||18..19 NumberLiteral
         |||||||Number
         ,
     ),

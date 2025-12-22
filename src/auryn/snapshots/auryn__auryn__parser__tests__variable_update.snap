@@ -14,7 +14,7 @@ AnnotatedParserOutput {
         ||||Whitespace
         ||||4..5 Expression
         |||||4..5 Value
-        ||||||4..5 Number
+        ||||||4..5 NumberLiteral
         |||||||Number
         ,
     ),

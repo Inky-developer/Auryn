@@ -181,14 +181,14 @@ impl<'a> BinaryOperation<'a> {
 
 ast_node! {
     pub enum Value = SyntaxNodeKind::Value as
-        | SyntaxNodeKind::Number as Number
+        | SyntaxNodeKind::NumberLiteral as Number
         | SyntaxNodeKind::Ident as Ident
         | SyntaxNodeKind::FunctionCall as FunctionCall
         | SyntaxNodeKind::Parenthesis as Parenthesis
 }
 
 ast_node! {
-    pub struct Number = SyntaxNodeKind::Number as { token value: TokenKind::Number, }
+    pub struct Number = SyntaxNodeKind::NumberLiteral as { token value: TokenKind::Number, }
 }
 
 ast_node! {

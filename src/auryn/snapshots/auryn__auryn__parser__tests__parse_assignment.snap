@@ -16,7 +16,7 @@ AnnotatedParserOutput {
         ||||Whitespace
         ||||17..18 Expression
         |||||17..18 Value
-        ||||||17..18 Number
+        ||||||17..18 NumberLiteral
         |||||||Number
         ||Newline
         ,

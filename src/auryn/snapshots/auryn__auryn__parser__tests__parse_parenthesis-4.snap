@@ -11,7 +11,7 @@ AnnotatedParserOutput {
         ||||0..11 BinaryOperation
         |||||0..2 Expression
         ||||||0..2 Value
-        |||||||0..1 Number
+        |||||||0..1 NumberLiteral
         ||||||||Number
         |||||||Whitespace
         |||||Times
@@ -24,14 +24,14 @@ AnnotatedParserOutput {
         |||||||||5..10 BinaryOperation
         ||||||||||5..7 Expression
         |||||||||||5..7 Value
-        ||||||||||||5..6 Number
+        ||||||||||||5..6 NumberLiteral
         |||||||||||||Number
         ||||||||||||Whitespace
         ||||||||||Plus
         ||||||||||Whitespace
         ||||||||||9..10 Expression
         |||||||||||9..10 Value
-        ||||||||||||9..10 Number
+        ||||||||||||9..10 NumberLiteral
         |||||||||||||Number
         ||||||||ParensClose
         ,

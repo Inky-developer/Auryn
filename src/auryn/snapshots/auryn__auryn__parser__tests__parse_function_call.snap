@@ -15,7 +15,7 @@ AnnotatedParserOutput {
         ||||||6..7 ArgumentList
         |||||||6..7 Expression
         ||||||||6..7 Value
-        |||||||||6..7 Number
+        |||||||||6..7 NumberLiteral
         ||||||||||Number
         ||||||ParensClose
         ,

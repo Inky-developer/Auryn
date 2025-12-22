@@ -24,6 +24,7 @@ impl BinaryOperatorToken {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenKind {
     Number,
+    StringLiteral,
     Identifier,
     Plus,
     Times,
@@ -122,6 +123,31 @@ impl<'a> Tokenizer<'a> {
         })
     }
 
+    fn consume_string_literal(&mut self) -> Token<'a> {
+        let mut len = 0;
+        let mut found_end = false;
+        for (size, char) in self.input.char_indices().skip(1) {
+            len = size;
+            if found_end {
+                found_end = false;
+                break;
+            }
+            if char == '"' {
+                found_end = true;
+            }
+        }
+        // If we found the end but there was no next char, the literal takes the full len of our input
+        if found_end {
+            len = self.input.len();
+        }
+        let (fit, rest) = self.input.split_at(len);
+        self.input = rest;
+        Token {
+            kind: TokenKind::StringLiteral,
+            text: fit,
+        }
+    }
+
     fn consume_text(&mut self, arg: &str) -> &'a str {
         let (text, rest) = self.input.split_at(arg.len());
         assert_eq!(
@@ -201,6 +227,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("if"),
                 });
             }
+            '"' => return Some(self.consume_string_literal()),
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
             char if char.is_ascii_digit() => return self.consume_number(),
@@ -236,5 +263,6 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6"
         ));
+        insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
     }
 }

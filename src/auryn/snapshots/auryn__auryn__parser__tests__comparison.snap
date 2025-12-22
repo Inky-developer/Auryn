@@ -11,14 +11,14 @@ AnnotatedParserOutput {
         ||||0..6 BinaryOperation
         |||||0..2 Expression
         ||||||0..2 Value
-        |||||||0..1 Number
+        |||||||0..1 NumberLiteral
         ||||||||Number
         |||||||Whitespace
         |||||DoubleEqual
         |||||Whitespace
         |||||5..6 Expression
         ||||||5..6 Value
-        |||||||5..6 Number
+        |||||||5..6 NumberLiteral
         ||||||||Number
         ,
     ),

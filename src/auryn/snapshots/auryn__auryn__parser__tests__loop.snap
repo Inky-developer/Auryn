@@ -18,14 +18,14 @@ AnnotatedParserOutput {
         |||||||7..13 BinaryOperation
         ||||||||7..9 Expression
         |||||||||7..9 Value
-        ||||||||||7..8 Number
+        ||||||||||7..8 NumberLiteral
         |||||||||||Number
         ||||||||||Whitespace
         ||||||||Plus
         ||||||||Whitespace
         ||||||||11..13 Expression
         |||||||||11..13 Value
-        ||||||||||11..12 Number
+        ||||||||||11..12 NumberLiteral
         |||||||||||Number
         ||||||||||Whitespace
         ||||BraceClose
