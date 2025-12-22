@@ -5,13 +5,29 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Air {
-    pub blocks: FastMap<AirBlockId, AirBlock>,
+    pub functions: FastMap<AirFunctionId, AirFunction>,
 }
 
 impl Air {
-    pub fn root_block(&self) -> &AirBlock {
-        &self.blocks[&AirBlockId::ROOT]
+    pub fn main_function(&self) -> (AirFunctionId, &AirFunction) {
+        let mut main_functions = self
+            .functions
+            .iter()
+            .filter(|(_, it)| it.ident.as_ref() == "main");
+        let (id, function) = main_functions.next().unwrap();
+        assert!(main_functions.next().is_none());
+        (*id, function)
     }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct AirFunctionId(pub SyntaxId);
+
+#[derive(Debug)]
+pub struct AirFunction {
+    pub r#type: Type,
+    pub ident: SmallString,
+    pub blocks: FastMap<AirBlockId, AirBlock>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

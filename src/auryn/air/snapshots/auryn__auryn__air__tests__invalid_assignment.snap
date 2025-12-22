@@ -4,131 +4,66 @@ expression: "compile(\"let a = print(1)\\nprint(a + 1)\")"
 ---
 AirOutput {
     air: Air {
-        blocks: {
-            AirBlockId(
-                0,
-            ): AirBlock {
-                nodes: [
-                    AirNode {
-                        id: SyntaxId {
-                            file_id: FileId(
-                                0,
-                            ),
-                            number: Some(
-                                4,
-                            ),
-                        },
-                        kind: Assignment(
-                            Assignment {
-                                target: AirValueId(
-                                    1,
-                                ),
-                                expression: AirExpression {
-                                    id: SyntaxId {
-                                        file_id: FileId(
-                                            0,
-                                        ),
-                                        number: Some(
-                                            80421421917331,
-                                        ),
-                                    },
-                                    type: Computed(
-                                        Null,
-                                    ),
-                                    kind: IntrinsicCall(
-                                        IntrinsicCall {
-                                            intrinsic: Print,
-                                            arguments: [
-                                                AirExpression {
-                                                    id: SyntaxId {
-                                                        file_id: FileId(
-                                                            0,
-                                                        ),
-                                                        number: Some(
-                                                            87123207077109,
-                                                        ),
-                                                    },
-                                                    type: Computed(
-                                                        Number,
-                                                    ),
-                                                    kind: Constant(
-                                                        Number(
-                                                            1,
-                                                        ),
-                                                    ),
-                                                },
-                                            ],
-                                        },
-                                    ),
-                                },
-                            },
-                        ),
+        functions: {
+            AirFunctionId(
+                SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        1,
+                    ),
+                },
+            ): AirFunction {
+                type: Function(
+                    FunctionType {
+                        parameters: [],
+                        return_type: Null,
                     },
-                    AirNode {
-                        id: SyntaxId {
-                            file_id: FileId(
-                                0,
-                            ),
-                            number: Some(
-                                187649984473774,
-                            ),
-                        },
-                        kind: Expression(
-                            AirExpression {
+                ),
+                ident: "main",
+                blocks: {
+                    AirBlockId(
+                        0,
+                    ): AirBlock {
+                        nodes: [
+                            AirNode {
                                 id: SyntaxId {
                                     file_id: FileId(
                                         0,
                                     ),
                                     number: Some(
-                                        187649984473774,
+                                        4,
                                     ),
                                 },
-                                type: Computed(
-                                    Null,
-                                ),
-                                kind: IntrinsicCall(
-                                    IntrinsicCall {
-                                        intrinsic: Print,
-                                        arguments: [
-                                            AirExpression {
-                                                id: SyntaxId {
-                                                    file_id: FileId(
-                                                        0,
-                                                    ),
-                                                    number: Some(
-                                                        234562480592217,
-                                                    ),
-                                                },
-                                                type: Computed(
-                                                    Number,
+                                kind: Assignment(
+                                    Assignment {
+                                        target: AirValueId(
+                                            1,
+                                        ),
+                                        expression: AirExpression {
+                                            id: SyntaxId {
+                                                file_id: FileId(
+                                                    0,
                                                 ),
-                                                kind: BinaryOperator(
-                                                    BinaryOperation {
-                                                        lhs: AirExpression {
+                                                number: Some(
+                                                    80421421917331,
+                                                ),
+                                            },
+                                            type: Computed(
+                                                Null,
+                                            ),
+                                            kind: IntrinsicCall(
+                                                IntrinsicCall {
+                                                    intrinsic: Print,
+                                                    arguments: [
+                                                        AirExpression {
                                                             id: SyntaxId {
                                                                 file_id: FileId(
                                                                     0,
                                                                 ),
                                                                 number: Some(
-                                                                    234562480592221,
-                                                                ),
-                                                            },
-                                                            type: Computed(
-                                                                Null,
-                                                            ),
-                                                            kind: Variable(
-                                                                AirValueId(
-                                                                    1,
-                                                                ),
-                                                            ),
-                                                        },
-                                                        rhs: AirExpression {
-                                                            id: SyntaxId {
-                                                                file_id: FileId(
-                                                                    0,
-                                                                ),
-                                                                number: Some(
-                                                                    252154666636632,
+                                                                    87123207077109,
                                                                 ),
                                                             },
                                                             type: Computed(
@@ -140,18 +75,103 @@ AirOutput {
                                                                 ),
                                                             ),
                                                         },
-                                                        operator: Plus,
-                                                    },
-                                                ),
-                                            },
-                                        ],
+                                                    ],
+                                                },
+                                            ),
+                                        },
                                     },
                                 ),
                             },
-                        ),
+                            AirNode {
+                                id: SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        187649984473774,
+                                    ),
+                                },
+                                kind: Expression(
+                                    AirExpression {
+                                        id: SyntaxId {
+                                            file_id: FileId(
+                                                0,
+                                            ),
+                                            number: Some(
+                                                187649984473774,
+                                            ),
+                                        },
+                                        type: Computed(
+                                            Null,
+                                        ),
+                                        kind: IntrinsicCall(
+                                            IntrinsicCall {
+                                                intrinsic: Print,
+                                                arguments: [
+                                                    AirExpression {
+                                                        id: SyntaxId {
+                                                            file_id: FileId(
+                                                                0,
+                                                            ),
+                                                            number: Some(
+                                                                234562480592217,
+                                                            ),
+                                                        },
+                                                        type: Computed(
+                                                            Number,
+                                                        ),
+                                                        kind: BinaryOperator(
+                                                            BinaryOperation {
+                                                                lhs: AirExpression {
+                                                                    id: SyntaxId {
+                                                                        file_id: FileId(
+                                                                            0,
+                                                                        ),
+                                                                        number: Some(
+                                                                            234562480592221,
+                                                                        ),
+                                                                    },
+                                                                    type: Computed(
+                                                                        Null,
+                                                                    ),
+                                                                    kind: Variable(
+                                                                        AirValueId(
+                                                                            1,
+                                                                        ),
+                                                                    ),
+                                                                },
+                                                                rhs: AirExpression {
+                                                                    id: SyntaxId {
+                                                                        file_id: FileId(
+                                                                            0,
+                                                                        ),
+                                                                        number: Some(
+                                                                            252154666636632,
+                                                                        ),
+                                                                    },
+                                                                    type: Computed(
+                                                                        Number,
+                                                                    ),
+                                                                    kind: Constant(
+                                                                        Number(
+                                                                            1,
+                                                                        ),
+                                                                    ),
+                                                                },
+                                                                operator: Plus,
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                            },
+                                        ),
+                                    },
+                                ),
+                            },
+                        ],
+                        finalizer: Return,
                     },
-                ],
-                finalizer: Return,
+                },
             },
         },
     },

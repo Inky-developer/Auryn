@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     java::{
-        class::{self, ConstantPoolIndex, TypeCategory, VerificationTypeInfo},
+        class::{self, ConstantPoolEntry, ConstantPoolIndex, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
         source_graph::{BasicBlock, BasicBlockId, SourceGraph},
     },
@@ -102,14 +102,14 @@ impl Display for FieldDescriptor {
 
 #[derive(Debug, Clone)]
 pub struct MethodDescriptor {
-    pub arguments: Vec<FieldDescriptor>,
+    pub parameters: Vec<FieldDescriptor>,
     pub return_type: FieldDescriptor,
 }
 
 impl Display for MethodDescriptor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "(")?;
-        for arg in &self.arguments {
+        for arg in &self.parameters {
             arg.fmt(f)?;
         }
         write!(f, ")")?;
@@ -145,6 +145,21 @@ pub enum Primitive {
 }
 
 impl Primitive {
+    pub fn to_field_descriptor(self, pool: &mut ConstantPoolBuilder) -> FieldDescriptor {
+        match self {
+            Primitive::Integer => FieldDescriptor::Integer,
+            Primitive::Object(constant_pool_index) => {
+                let ConstantPoolEntry::Class { name_index } = &pool[constant_pool_index] else {
+                    unreachable!("Invalid object ref");
+                };
+                let ConstantPoolEntry::Utf8(text) = &pool[*name_index] else {
+                    unreachable!("Invalid class ref");
+                };
+                FieldDescriptor::Object(text.clone())
+            }
+        }
+    }
+
     pub fn to_verification_type(self) -> VerificationTypeInfo {
         match self {
             Primitive::Integer => VerificationTypeInfo::Integer,
@@ -161,15 +176,23 @@ impl Primitive {
 
 #[derive(Debug, Clone)]
 pub enum Instruction {
+    /// Loads a class variable
     GetStatic {
         class_name: SmallString,
         name: SmallString,
-        field_type: FieldDescriptor,
+        field_descriptor: FieldDescriptor,
     },
+    /// Invokes an instance method
     InvokeVirtual {
         class_name: SmallString,
         name: SmallString,
-        method_type: MethodDescriptor,
+        method_descriptor: MethodDescriptor,
+    },
+    /// Invokes a class method
+    InvokeStatic {
+        class_name: SmallString,
+        name: SmallString,
+        method_descriptor: MethodDescriptor,
     },
     LoadConstant {
         value: ConstantValue,
@@ -191,44 +214,48 @@ pub struct VariableId {
 }
 
 #[derive(Debug)]
-pub struct Assembler {
-    pub constant_pool: ConstantPoolBuilder,
+pub struct FunctionAssembler<'a> {
+    pub function_name: SmallString,
+    pub descriptor: MethodDescriptor,
+    pub constant_pool: &'a mut ConstantPoolBuilder,
     blocks: SourceGraph,
     next_variable_index: u16,
-    pub function_arguments: Vec<VerificationTypeInfo>,
 }
 
-impl Default for Assembler {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Assembler {
-    pub fn new() -> Self {
-        let mut constant_pool = ConstantPoolBuilder::default();
-        let main_function_arguments = vec![VerificationTypeInfo::Object {
-            constant_pool_index: constant_pool.add_class("[Ljava/lang/String;".into()),
-        }];
-        let next_variable_index = main_function_arguments.len() as u16;
+impl<'a> FunctionAssembler<'a> {
+    pub fn new(
+        name: SmallString,
+        descriptor: MethodDescriptor,
+        constant_pool: &'a mut ConstantPoolBuilder,
+    ) -> Self {
+        let next_variable_index = descriptor.parameters.len().try_into().unwrap();
         Self {
+            function_name: name,
+            descriptor,
             constant_pool,
             blocks: SourceGraph::default(),
             next_variable_index,
-            function_arguments: main_function_arguments,
         }
     }
 
-    pub fn assemble(mut self, class_name: SmallString) -> class::ClassData {
+    pub fn assemble(self) -> class::Method {
+        let function_parameters = self
+            .descriptor
+            .parameters
+            .iter()
+            .map(|it| it.to_verification_type(self.constant_pool))
+            .collect();
         let (class_instructions, stack_map_frame) = self
             .blocks
-            .assemble(&mut self.constant_pool, self.function_arguments);
-        let name_index = self.constant_pool.add_utf8("main".into());
-        let descriptor_index = self.constant_pool.add_utf8("([Ljava/lang/String;)V".into());
+            .assemble(self.constant_pool, function_parameters);
+        let name_index = self.constant_pool.add_utf8(self.function_name);
+        let descriptor_index = self
+            .constant_pool
+            .add_utf8(self.descriptor.to_string().into());
         let code_name_index = self.constant_pool.add_utf8("Code".into());
         // It must be at least 2 bigger than the highest index to a 2-sized variable
         let max_locals = self.next_variable_index + 1;
-        let method = class::Method {
+        class::Method {
             flags: (class::MethodAccessFlag::Public as u16)
                 | (class::MethodAccessFlag::Static as u16),
             name_index,
@@ -244,11 +271,7 @@ impl Assembler {
                     }],
                 }),
             }],
-        };
-
-        let mut class_data = class::ClassData::new(class_name, self.constant_pool);
-        class_data.methods.push(method);
-        class_data
+        }
     }
 
     pub fn current_block_id(&self) -> BasicBlockId {
@@ -286,18 +309,29 @@ impl Assembler {
 
 #[cfg(test)]
 mod tests {
-    use crate::java::assembler::{
-        Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor,
+    use crate::java::{
+        constant_pool_builder::ConstantPoolBuilder,
+        function_assembler::{
+            ConstantValue, FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor,
+        },
     };
 
     #[test]
     fn test_hello_world() {
-        let mut assembler = Assembler::new();
+        let mut pool = ConstantPoolBuilder::default();
+        let mut assembler = FunctionAssembler::new(
+            "main".into(),
+            MethodDescriptor {
+                parameters: vec![],
+                return_type: FieldDescriptor::Void,
+            },
+            &mut pool,
+        );
         assembler.add_all([
             Instruction::GetStatic {
                 class_name: "java/lang/System".into(),
                 name: "out".into(),
-                field_type: FieldDescriptor::print_stream(),
+                field_descriptor: FieldDescriptor::print_stream(),
             },
             Instruction::LoadConstant {
                 value: ConstantValue::String("Hello World!".into()),
@@ -305,16 +339,16 @@ mod tests {
             Instruction::InvokeVirtual {
                 class_name: "java/io/PrintStream".into(),
                 name: "println".into(),
-                method_type: MethodDescriptor {
-                    arguments: vec![FieldDescriptor::string()],
+                method_descriptor: MethodDescriptor {
+                    parameters: vec![FieldDescriptor::string()],
                     return_type: FieldDescriptor::Void,
                 },
             },
             Instruction::ReturnNull,
         ]);
 
-        let class_data = assembler.assemble("Helloworld".into());
+        let method = assembler.assemble();
 
-        insta::assert_debug_snapshot!(class_data);
+        insta::assert_debug_snapshot!((pool, method));
     }
 }

@@ -1,17 +1,19 @@
+use std::collections::VecDeque;
+
 use crate::{
     auryn::{
         air::{
             data::{
-                Air, AirBlock, AirBlockFinalizer, AirConstant, AirExpression, AirExpressionKind,
-                AirNode, AirNodeKind, AirType, AirValueId, Assignment, BinaryOperation,
-                IntrinsicCall,
+                Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirNode, AirNodeKind, AirType, AirValueId,
+                Assignment, BinaryOperation, IntrinsicCall,
             },
             types::Type,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
     },
-    utils::fast_map::FastMap,
+    utils::fast_map::{FastMap, FastSet},
 };
 
 pub fn typecheck_air(air: &mut Air) -> Vec<Diagnostic> {
@@ -26,8 +28,8 @@ pub struct Typechecker {
 
 impl Typechecker {
     pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
-        for block in air.blocks.values_mut() {
-            self.typecheck_block(block);
+        for function in air.functions.values_mut() {
+            self.typecheck_function(function);
         }
 
         self.diagnostics
@@ -72,21 +74,49 @@ impl Typechecker {
 }
 
 impl Typechecker {
-    fn typecheck_block(&mut self, block: &mut AirBlock) {
+    fn typecheck_function(&mut self, function: &mut AirFunction) {
+        let mut visited_blocks = FastSet::default();
+        let mut pending_blocks = VecDeque::default();
+
+        pending_blocks.push_front(AirBlockId::ROOT);
+
+        while let Some(id) = pending_blocks.pop_front() {
+            let block = function.blocks.get_mut(&id).unwrap();
+            visited_blocks.insert(id);
+
+            self.typecheck_block(block, |next_id| {
+                if !visited_blocks.contains(&next_id) && !pending_blocks.contains(&next_id) {
+                    pending_blocks.push_back(next_id);
+                }
+            });
+        }
+    }
+
+    fn typecheck_block(&mut self, block: &mut AirBlock, on_next_id: impl FnMut(AirBlockId)) {
         for node in &mut block.nodes {
             self.typecheck_node(node);
         }
 
-        self.typecheck_finalizer(&mut block.finalizer);
+        self.typecheck_finalizer(&mut block.finalizer, on_next_id);
     }
 
-    fn typecheck_finalizer(&mut self, finalizer: &mut AirBlockFinalizer) {
+    fn typecheck_finalizer(
+        &mut self,
+        finalizer: &mut AirBlockFinalizer,
+        mut on_next_id: impl FnMut(AirBlockId),
+    ) {
         match finalizer {
             AirBlockFinalizer::Return => {}
-            AirBlockFinalizer::Goto(_) => {}
-            AirBlockFinalizer::Branch { value, .. } => {
+            AirBlockFinalizer::Goto(next_id) => on_next_id(*next_id),
+            AirBlockFinalizer::Branch {
+                value,
+                pos_block,
+                neg_block,
+            } => {
                 self.typecheck_expression(value);
                 self.expect_type(value, Type::Number);
+                on_next_id(*pos_block);
+                on_next_id(*neg_block);
             }
         }
     }

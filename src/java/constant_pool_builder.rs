@@ -66,10 +66,10 @@ impl ConstantPoolBuilder {
         &mut self,
         class: SmallString,
         name: SmallString,
-        method_type: SmallString,
+        method_descriptor: SmallString,
     ) -> ConstantPoolIndex {
         let class_index = self.add_class(class);
-        let name_and_type_index = self.add_name_and_type(name, method_type);
+        let name_and_type_index = self.add_name_and_type(name, method_descriptor);
         self.add(ConstantPoolEntry::MethodRef {
             class_index,
             name_and_type_index,

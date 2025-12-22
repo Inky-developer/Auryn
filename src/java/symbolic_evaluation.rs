@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
 use crate::java::{
-    assembler::Instruction,
     class::VerificationTypeInfo,
     constant_pool_builder::ConstantPoolBuilder,
+    function_assembler::Instruction,
     source_graph::{BasicBlock, BlockFinalizer},
 };
 
@@ -54,18 +54,28 @@ impl SymbolicEvaluator {
 
     pub fn eval(&mut self, instruction: &Instruction, pool: &mut ConstantPoolBuilder) {
         match instruction {
-            Instruction::GetStatic { field_type, .. } => {
+            Instruction::GetStatic {
+                field_descriptor: field_type,
+                ..
+            } => {
                 let verification_type = field_type.to_verification_type(pool);
                 self.stack.push(verification_type);
             }
-            Instruction::InvokeVirtual { method_type, .. } => {
-                for argument in method_type.arguments.iter().rev() {
+            Instruction::InvokeVirtual {
+                method_descriptor, ..
+            }
+            | Instruction::InvokeStatic {
+                method_descriptor, ..
+            } => {
+                for argument in method_descriptor.parameters.iter().rev() {
                     let verification_type = argument.to_verification_type(pool);
                     assert_eq!(self.stack.pop(), Some(verification_type));
                 }
-                self.stack
-                    .pop()
-                    .expect("Should supply objectref when calling a method");
+                if matches!(instruction, Instruction::InvokeVirtual { .. }) {
+                    self.stack
+                        .pop()
+                        .expect("Should supply objectref when calling a method");
+                }
             }
             Instruction::LoadConstant { value } => {
                 let verification_type = value.to_verification_type(pool);

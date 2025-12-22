@@ -2,8 +2,8 @@ use std::{fs::OpenOptions, io::Write};
 
 use auryn::{
     auryn::{
-        air::query_air, ast::query_ast2, codegen_java::query_class, diagnostic::ComputedDiagnostic,
-        file_id::FileId, parser::Parser,
+        air::query_air, ast::query_ast2, codegen_java::class_generator::generate_class,
+        diagnostic::ComputedDiagnostic, file_id::FileId, parser::Parser,
     },
     java::class::ClassData,
 };
@@ -38,12 +38,12 @@ fn run(class: ClassData) {
         .create(true)
         .truncate(true)
         .write(true)
-        .open("Helloworld.class")
+        .open("Main.class")
         .unwrap();
     class.serialize(&mut f).unwrap();
 
     let mut handle = std::process::Command::new("java")
-        .arg("Helloworld")
+        .arg("Main")
         .spawn()
         .unwrap();
     handle.wait().unwrap();
@@ -68,7 +68,7 @@ fn get_class(input: &str) -> ClassData {
     if !diagnostics.is_empty() {
         println!("Warn: {diagnostics:?}");
     }
-    query_class("Helloworld".into(), &air.air)
+    generate_class(&air.air)
 }
 
 fn read_user_input(buf: &mut String) {

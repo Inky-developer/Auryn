@@ -2,20 +2,22 @@ use crate::{
     auryn::{
         air::{
             data::{
-                Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirNode, AirNodeKind, AirValueId, Assignment, BinaryOperation,
-                Intrinsic, IntrinsicCall,
+                AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirNode, AirNodeKind, AirValueId, Assignment,
+                BinaryOperation, Intrinsic, IntrinsicCall,
             },
             types::Type,
         },
+        codegen_java::utils::translate_type,
         tokenizer::BinaryOperatorToken,
     },
     java::{
-        assembler::{
-            Assembler, ConstantValue, FieldDescriptor, Instruction, MethodDescriptor, Primitive,
+        class::{self, Comparison, TypeCategory, VerificationTypeInfo},
+        constant_pool_builder::ConstantPoolBuilder,
+        function_assembler::{
+            ConstantValue, FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor,
             VariableId,
         },
-        class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
     utils::{
@@ -25,27 +27,35 @@ use crate::{
 };
 use indexmap::IndexSet;
 
-pub fn query_class(class_name: SmallString, air: &Air) -> ClassData {
-    let mut generator = Generator::new();
-    generator.generate_from_air(air);
+pub fn generate_function(
+    pool: &mut ConstantPoolBuilder,
+    function: &AirFunction,
+    method_descriptor: MethodDescriptor,
+) -> class::Method {
+    let mut generator = FunctionGenerator::new(function.ident.clone(), method_descriptor, pool);
+    generator.generate_from_function(function);
 
-    generator.finish(class_name)
+    generator.finish()
 }
 
-struct Generator {
-    assembler: Assembler,
+struct FunctionGenerator<'a> {
+    assembler: FunctionAssembler<'a>,
     variable_map: FastMap<AirValueId, VariableId>,
     block_translation: FastMap<AirBlockId, BasicBlockId>,
     generated_blocks: FastSet<AirBlockId>,
     pending_blocks: IndexSet<AirBlockId>,
 }
 
-impl Generator {
-    pub fn new() -> Self {
+impl<'a> FunctionGenerator<'a> {
+    pub fn new(
+        name: SmallString,
+        method_descriptor: MethodDescriptor,
+        pool: &'a mut ConstantPoolBuilder,
+    ) -> Self {
         let mut block_translation = FastMap::default();
         block_translation.insert(AirBlockId::ROOT, BasicBlockId(0));
         Self {
-            assembler: Assembler::new(),
+            assembler: FunctionAssembler::new(name, method_descriptor, pool),
             block_translation,
             variable_map: FastMap::default(),
             generated_blocks: FastSet::default(),
@@ -53,21 +63,21 @@ impl Generator {
         }
     }
 
-    pub fn finish(self, class_name: SmallString) -> ClassData {
-        self.assembler.assemble(class_name)
+    pub fn finish(self) -> class::Method {
+        self.assembler.assemble()
     }
 
-    pub fn generate_from_air(&mut self, air: &Air) {
-        let root_block = air.root_block();
+    pub fn generate_from_function(&mut self, function: &AirFunction) {
+        let root_block = &function.blocks[&AirBlockId::ROOT];
         self.generate_block(root_block, AirBlockId::ROOT);
 
         while let Some(id) = self.pending_blocks.pop() {
-            self.generate_block(&air.blocks[&id], id);
+            self.generate_block(&function.blocks[&id], id);
         }
     }
 }
 
-impl Generator {
+impl FunctionGenerator<'_> {
     fn translate_block_id(&mut self, air_block_id: AirBlockId) -> BasicBlockId {
         if !self.generated_blocks.contains(&air_block_id) {
             self.pending_blocks.insert(air_block_id);
@@ -77,19 +87,9 @@ impl Generator {
             .entry(air_block_id)
             .or_insert_with(|| self.assembler.add_block())
     }
-
-    fn translate_type(&mut self, air_type: &Type) -> Primitive {
-        match air_type {
-            Type::Number => Primitive::Integer,
-            Type::String => Primitive::Object(self.assembler.constant_pool.get_string_index()),
-            Type::Top => todo!("The top type cannot be represented yet"),
-            Type::Null => unreachable!("Null type is not represented in java"),
-            Type::Error => unreachable!("Called with error type"),
-        }
-    }
 }
 
-impl Generator {
+impl FunctionGenerator<'_> {
     fn generate_block(&mut self, block: &AirBlock, air_id: AirBlockId) {
         self.generated_blocks.insert(air_id);
         let block_id = self.translate_block_id(air_id);
@@ -148,8 +148,8 @@ impl Generator {
             self.variable_map[&assignment.target]
         } else {
             let air_type = assignment.expression.r#type.computed();
-            let verification_type = self.translate_type(air_type);
-            let variable_id = self.assembler.alloc_variable(verification_type);
+            let primitive = translate_type(self.assembler.constant_pool, air_type);
+            let variable_id = self.assembler.alloc_variable(primitive);
             self.variable_map.insert(assignment.target, variable_id);
             variable_id
         };
@@ -175,7 +175,7 @@ impl Generator {
             AirConstant::Number(number) => {
                 let value = ConstantValue::Integer(*number);
                 let category = value
-                    .to_verification_type(&mut self.assembler.constant_pool)
+                    .to_verification_type(self.assembler.constant_pool)
                     .category();
                 self.assembler.add(Instruction::LoadConstant { value });
                 category
@@ -183,7 +183,7 @@ impl Generator {
             AirConstant::String(text) => {
                 let value = ConstantValue::String(text.clone());
                 let category = value
-                    .to_verification_type(&mut self.assembler.constant_pool)
+                    .to_verification_type(self.assembler.constant_pool)
                     .category();
                 self.assembler.add(Instruction::LoadConstant { value });
                 category
@@ -254,21 +254,15 @@ impl Generator {
                 self.assembler.add(Instruction::GetStatic {
                     class_name: "java/lang/System".into(),
                     name: "out".into(),
-                    field_type: FieldDescriptor::print_stream(),
+                    field_descriptor: FieldDescriptor::print_stream(),
                 });
                 self.generate_expression(&intrinsic.arguments[0]);
                 let field_descriptor = match intrinsic.arguments[0].r#type.computed() {
-                    Type::Top => {
-                        self.assembler.add(Instruction::LoadConstant {
-                            value: ConstantValue::String("Top".into()),
-                        });
-                        FieldDescriptor::string()
-                    }
                     Type::Number => FieldDescriptor::Integer,
                     Type::String => FieldDescriptor::string(),
-                    Type::Null => {
+                    ty @ (Type::Top | Type::Null | Type::Function(_)) => {
                         self.assembler.add(Instruction::LoadConstant {
-                            value: ConstantValue::String("Null".into()),
+                            value: ConstantValue::String(ty.to_string().into()),
                         });
                         FieldDescriptor::string()
                     }
@@ -278,8 +272,8 @@ impl Generator {
                     class_name: "java/io/PrintStream".into(),
                     name: "println".into(),
                     // method_type: MethodDescriptor("(I)V".to_string()),
-                    method_type: MethodDescriptor {
-                        arguments: vec![field_descriptor],
+                    method_descriptor: MethodDescriptor {
+                        parameters: vec![field_descriptor],
                         return_type: FieldDescriptor::Void,
                     },
                 });
@@ -287,126 +281,5 @@ impl Generator {
                 None
             }
         }
-    }
-
-    // fn generate_if_statement(&mut self, if_statement: &IfStatement) -> CodegenResult {
-    //     self.generate_expression(if_statement.expression()?)?;
-    //
-    //     let pos_block = self.assembler.add_block();
-    //     let next_block = self.assembler.add_block();
-    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
-    //         comparison: Comparison::NotEqual,
-    //         positive_block: pos_block,
-    //         negative_block: next_block,
-    //     };
-    //
-    //     self.assembler.set_current_block_id(pos_block);
-    //     self.generate_block(if_statement.block()?)?;
-    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
-    //
-    //     self.assembler.set_current_block_id(next_block);
-    //
-    //     Ok(())
-    // }
-    //
-    // fn generate_loop(&mut self, loop_statement: &LoopStatement) -> CodegenResult {
-    //     let loop_block = self.assembler.add_block();
-    //     let next_block = self.assembler.add_block();
-    //
-    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
-    //     self.assembler.set_current_block_id(loop_block);
-    //
-    //     self.loops.push(LoopInfo {
-    //         _continue_target: loop_block,
-    //         break_target: next_block,
-    //     });
-    //     self.generate_block(loop_statement.block()?)?;
-    //     self.loops.pop();
-    //
-    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_block);
-    //
-    //     // Currently everything that goes here is dead code
-    //     self.assembler.set_current_block_id(next_block);
-    //
-    //     Ok(())
-    // }
-    //
-    // fn generate_break(&mut self, _break_statement: &BreakStatement) -> CodegenResult {
-    //     let Some(loop_info) = self.loops.last() else {
-    //         panic!("Not in a loop D:");
-    //     };
-    //
-    //     // This block is for potential code that comes after the break statement
-    //     let dead_code_block = self.assembler.add_block();
-    //
-    //     self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(loop_info.break_target);
-    //     self.assembler.set_current_block_id(dead_code_block);
-    //
-    //     Ok(())
-    // }
-    //
-    // fn generate_update(&mut self, _update: &VariableUpdate) -> CodegenResult {
-    //     // self.generate_expression(update.expression()?)?;
-    //     //
-    //     // let variable_id = self.variable_map[&update.ident];
-    //     // self.assembler.add(Instruction::IStore(variable_id));
-    //
-    //     Ok(())
-    // }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        auryn::{
-            air::query_air, ast::query_ast2, codegen_java::query_class, file_id::FileId,
-            parser::Parser,
-        },
-        java::class::ClassData,
-    };
-
-    fn generate_class(input: &str) -> ClassData {
-        let result = Parser::new(FileId::MAIN_FILE, input).parse();
-        let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
-        let air = query_air(ast.unwrap());
-        assert!(air.diagnostics.is_empty());
-
-        query_class("Helloworld".into(), &air.air)
-    }
-
-    #[test]
-    fn test_simple() {
-        insta::assert_debug_snapshot!(generate_class("1 + 2 * 3"));
-    }
-
-    #[test]
-    fn test_print() {
-        insta::assert_debug_snapshot!(generate_class("print(2 * 3)"));
-        insta::assert_debug_snapshot!(generate_class("print(print(\"Hallo, Welt!\"))"));
-    }
-
-    #[test]
-    fn test_assignment() {
-        insta::assert_debug_snapshot!(generate_class("let a = 1"));
-        insta::assert_debug_snapshot!(generate_class("let a = 1\nprint(a)"));
-        insta::assert_debug_snapshot!(generate_class("let a = 7\na = a * a\nprint(a)"));
-    }
-
-    #[test]
-    fn test_weird() {
-        insta::assert_debug_snapshot!(generate_class("loop { loop {} }"));
-    }
-
-    #[test]
-    fn test_stack_map_table_generation() {
-        insta::assert_debug_snapshot!(generate_class(
-            "loop {\nif 1 {\nprint(42)\n}\nprint(100)\n}"
-        ));
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_reject_invalid_variable() {
-        insta::assert_debug_snapshot!(generate_class("let a = a"));
     }
 }

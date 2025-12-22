@@ -2,11 +2,11 @@ use std::io::Write;
 
 use crate::{
     java::{
-        assembler::{ConstantValue, Instruction, Primitive},
         class::{
             self, Comparison, JumpPoint, StackMapTableAttribute, TypeCategory, VerificationTypeInfo,
         },
         constant_pool_builder::ConstantPoolBuilder,
+        function_assembler::{ConstantValue, Instruction, Primitive},
         symbolic_evaluation::{Frame, SymbolicEvaluator},
     },
     utils::{fast_map::FastMap, graph::Graph},
@@ -100,7 +100,7 @@ impl SourceGraph {
     pub fn assemble(
         self,
         constant_pool: &'_ mut ConstantPoolBuilder,
-        arguments: Vec<VerificationTypeInfo>,
+        parameters: Vec<VerificationTypeInfo>,
     ) -> (Vec<class::Instruction>, StackMapTableAttribute) {
         let mut context = AssemblyContext(constant_pool);
         let mut graph = build_graph(self.graph);
@@ -109,7 +109,7 @@ impl SourceGraph {
         // but now we want to query the blocks from which a block can be reached, so the graph must be inverted.
         graph.invert_edges();
 
-        let mut frames = context.compute_frames(&graph, &block_order, arguments);
+        let mut frames = context.compute_frames(&graph, &block_order, parameters);
 
         let mut block_to_byte_offset: FastMap<BasicBlockId, u16> = FastMap::default();
         let mut current_offset: u16 = 0;
@@ -172,7 +172,7 @@ impl AssemblyContext<'_> {
         &mut self,
         graph: &Graph<BasicBlockId, BasicBlock>,
         block_order: &[BasicBlockId],
-        function_arguments: Vec<VerificationTypeInfo>,
+        function_parameters: Vec<VerificationTypeInfo>,
     ) -> FastMap<BasicBlockId, Frame> {
         struct BlockFrames {
             at_start: Frame,
@@ -191,7 +191,7 @@ impl AssemblyContext<'_> {
 
             let frame_at_start_of_block = if id.0 == 0 {
                 Frame {
-                    locals: function_arguments.clone(),
+                    locals: function_parameters.clone(),
                     stack: Vec::new(),
                 }
             } else {
@@ -246,7 +246,7 @@ impl AssemblyContext<'_> {
             Instruction::GetStatic {
                 class_name,
                 name,
-                field_type,
+                field_descriptor: field_type,
             } => {
                 let field_ref_index = self.0.add_field_ref(
                     class_name.clone(),
@@ -258,7 +258,7 @@ impl AssemblyContext<'_> {
             Instruction::InvokeVirtual {
                 class_name,
                 name,
-                method_type,
+                method_descriptor: method_type,
             } => {
                 let method_ref_index = self.0.add_method_ref(
                     class_name.clone(),
@@ -266,6 +266,18 @@ impl AssemblyContext<'_> {
                     method_type.to_string().into(),
                 );
                 on_instruction(class::Instruction::InvokeVirtual(method_ref_index))
+            }
+            Instruction::InvokeStatic {
+                class_name,
+                name,
+                method_descriptor,
+            } => {
+                let method_ref_index = self.0.add_method_ref(
+                    class_name.clone(),
+                    name.clone(),
+                    method_descriptor.to_string().into(),
+                );
+                on_instruction(class::Instruction::InvokeStatic(method_ref_index))
             }
             Instruction::LoadConstant { value } => {
                 let constant_index = match value {

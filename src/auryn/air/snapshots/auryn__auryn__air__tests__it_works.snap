@@ -4,22 +4,30 @@ expression: "compile(\"print(1)\")"
 ---
 AirOutput {
     air: Air {
-        blocks: {
-            AirBlockId(
-                0,
-            ): AirBlock {
-                nodes: [
-                    AirNode {
-                        id: SyntaxId {
-                            file_id: FileId(
-                                0,
-                            ),
-                            number: Some(
-                                6,
-                            ),
-                        },
-                        kind: Expression(
-                            AirExpression {
+        functions: {
+            AirFunctionId(
+                SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        1,
+                    ),
+                },
+            ): AirFunction {
+                type: Function(
+                    FunctionType {
+                        parameters: [],
+                        return_type: Null,
+                    },
+                ),
+                ident: "main",
+                blocks: {
+                    AirBlockId(
+                        0,
+                    ): AirBlock {
+                        nodes: [
+                            AirNode {
                                 id: SyntaxId {
                                     file_id: FileId(
                                         0,
@@ -28,39 +36,51 @@ AirOutput {
                                         6,
                                     ),
                                 },
-                                type: Computed(
-                                    Null,
-                                ),
-                                kind: IntrinsicCall(
-                                    IntrinsicCall {
-                                        intrinsic: Print,
-                                        arguments: [
-                                            AirExpression {
-                                                id: SyntaxId {
-                                                    file_id: FileId(
-                                                        0,
-                                                    ),
-                                                    number: Some(
-                                                        140737488355334,
-                                                    ),
-                                                },
-                                                type: Computed(
-                                                    Number,
-                                                ),
-                                                kind: Constant(
-                                                    Number(
-                                                        1,
-                                                    ),
-                                                ),
+                                kind: Expression(
+                                    AirExpression {
+                                        id: SyntaxId {
+                                            file_id: FileId(
+                                                0,
+                                            ),
+                                            number: Some(
+                                                6,
+                                            ),
+                                        },
+                                        type: Computed(
+                                            Null,
+                                        ),
+                                        kind: IntrinsicCall(
+                                            IntrinsicCall {
+                                                intrinsic: Print,
+                                                arguments: [
+                                                    AirExpression {
+                                                        id: SyntaxId {
+                                                            file_id: FileId(
+                                                                0,
+                                                            ),
+                                                            number: Some(
+                                                                140737488355334,
+                                                            ),
+                                                        },
+                                                        type: Computed(
+                                                            Number,
+                                                        ),
+                                                        kind: Constant(
+                                                            Number(
+                                                                1,
+                                                            ),
+                                                        ),
+                                                    },
+                                                ],
                                             },
-                                        ],
+                                        ),
                                     },
                                 ),
                             },
-                        ),
+                        ],
+                        finalizer: Return,
                     },
-                ],
-                finalizer: Return,
+                },
             },
         },
     },

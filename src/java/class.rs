@@ -564,7 +564,11 @@ pub const JVM_VERSION: JVMVersion = JVMVersion {
 pub const ACCESSS_FLAG: u16 = (ClassAccessFlag::Public as u16) | (ClassAccessFlag::Final as u16);
 
 impl ClassData {
-    pub fn new(class_name: SmallString, mut builder: ConstantPoolBuilder) -> Self {
+    pub fn new(
+        class_name: SmallString,
+        mut builder: ConstantPoolBuilder,
+        methods: Vec<Method>,
+    ) -> Self {
         let this_class = builder.add_class(class_name);
         let super_class = builder.add_class("java/lang/Object".into());
         let constant_pool = builder.build();
@@ -572,7 +576,7 @@ impl ClassData {
             constant_pool,
             this_class,
             super_class,
-            methods: Vec::new(),
+            methods,
         }
     }
 

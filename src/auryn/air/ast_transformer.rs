@@ -1,8 +1,12 @@
 use crate::{
     auryn::{
-        air::data::{
-            self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-            AirExpressionKind, AirNode, AirNodeKind, AirValueId, Intrinsic, IntrinsicCall,
+        air::{
+            data::{
+                self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirValueId,
+                Intrinsic, IntrinsicCall,
+            },
+            types::{FunctionType, Type},
         },
         ast::ast_node::{
             Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall, Ident,
@@ -25,10 +29,18 @@ pub struct AirOutput {
 pub fn transform_ast(ast: Root) -> AirOutput {
     let mut transformer = AstTransformer::new();
     transformer.transform_root(ast);
+    let main_function = AirFunction {
+        r#type: Type::Function(Box::new(FunctionType {
+            parameters: Vec::new(),
+            return_type: Type::Null,
+        })),
+        ident: "main".into(),
+        blocks: transformer.finished_blocks,
+    };
+    let mut functions = FastMap::default();
+    functions.insert(AirFunctionId(ast.id()), main_function);
     AirOutput {
-        air: Air {
-            blocks: transformer.finished_blocks,
-        },
+        air: Air { functions },
         diagnostics: transformer.diagnostics,
     }
 }
