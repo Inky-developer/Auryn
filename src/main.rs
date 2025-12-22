@@ -25,9 +25,10 @@ fn main() -> std::io::Result<()> {
 fn repl() {
     let mut input = String::new();
     loop {
-        read_user_input(&mut input);
-        let class = get_class(&input);
         input.clear();
+        read_user_input(&mut input);
+        let input = format!("fn main() {{ {input} }}");
+        let class = get_class(&input);
 
         run(class);
     }
