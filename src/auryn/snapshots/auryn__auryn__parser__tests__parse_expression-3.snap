@@ -12,7 +12,7 @@ AnnotatedParserOutput {
         |||||0..2 Expression
         ||||||0..2 Value
         |||||||0..1 NumberLiteral
-        ||||||||Number `1`
+        ||||||||NumberLiteral `1`
         |||||||Whitespace ` `
         |||||Times `*`
         |||||Whitespace ` `

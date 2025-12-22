@@ -68,7 +68,7 @@ fn get_class(input: &str) -> ClassData {
     if !diagnostics.is_empty() {
         println!("Warn: {diagnostics:?}");
     }
-    query_class("Helloworld".to_string(), &air.air)
+    query_class("Helloworld".into(), &air.air)
 }
 
 fn read_user_input(buf: &mut String) {

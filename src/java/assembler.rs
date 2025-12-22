@@ -1,9 +1,12 @@
 use std::fmt::Display;
 
-use crate::java::{
-    class::{self, TypeCategory, VerificationTypeInfo},
-    constant_pool_builder::ConstantPoolBuilder,
-    source_graph::{BasicBlock, BasicBlockId, SourceGraph},
+use crate::{
+    java::{
+        class::{self, ConstantPoolIndex, TypeCategory, VerificationTypeInfo},
+        constant_pool_builder::ConstantPoolBuilder,
+        source_graph::{BasicBlock, BasicBlockId, SourceGraph},
+    },
+    utils::small_string::SmallString,
 };
 
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType
@@ -15,7 +18,7 @@ pub enum FieldDescriptor {
     Float,
     Integer,
     Long,
-    Object(String),
+    Object(SmallString),
     Short,
     Boolean,
     Array {
@@ -27,6 +30,14 @@ pub enum FieldDescriptor {
 }
 
 impl FieldDescriptor {
+    pub fn string() -> Self {
+        FieldDescriptor::Object("java/lang/String".into())
+    }
+
+    pub fn print_stream() -> Self {
+        FieldDescriptor::Object("java/io/PrintStream".into())
+    }
+
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.10.1.2
     pub fn to_verification_type(
         &self,
@@ -50,7 +61,7 @@ impl FieldDescriptor {
             // Arrays are represented as classes with the name matching their field descriptor
             // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
             FieldDescriptor::Array { .. } => {
-                let constant_pool_index = constant_pool_builder.add_class(self.to_string());
+                let constant_pool_index = constant_pool_builder.add_class(self.to_string().into());
                 VerificationTypeInfo::Object {
                     constant_pool_index,
                 }
@@ -110,7 +121,7 @@ impl Display for MethodDescriptor {
 
 #[derive(Debug, Clone)]
 pub enum ConstantValue {
-    String(String),
+    String(SmallString),
     Integer(i32),
 }
 impl ConstantValue {
@@ -130,12 +141,16 @@ impl ConstantValue {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Primitive {
     Integer,
+    Object(ConstantPoolIndex),
 }
 
 impl Primitive {
-    pub fn to_verification_type(&self) -> VerificationTypeInfo {
+    pub fn to_verification_type(self) -> VerificationTypeInfo {
         match self {
             Primitive::Integer => VerificationTypeInfo::Integer,
+            Primitive::Object(object) => VerificationTypeInfo::Object {
+                constant_pool_index: object,
+            },
         }
     }
 
@@ -147,13 +162,13 @@ impl Primitive {
 #[derive(Debug, Clone)]
 pub enum Instruction {
     GetStatic {
-        class_name: String,
-        name: String,
+        class_name: SmallString,
+        name: SmallString,
         field_type: FieldDescriptor,
     },
     InvokeVirtual {
-        class_name: String,
-        name: String,
+        class_name: SmallString,
+        name: SmallString,
         method_type: MethodDescriptor,
     },
     LoadConstant {
@@ -193,7 +208,7 @@ impl Assembler {
     pub fn new() -> Self {
         let mut constant_pool = ConstantPoolBuilder::default();
         let main_function_arguments = vec![VerificationTypeInfo::Object {
-            constant_pool_index: constant_pool.add_class("[Ljava/lang/String;".to_string()),
+            constant_pool_index: constant_pool.add_class("[Ljava/lang/String;".into()),
         }];
         let next_variable_index = main_function_arguments.len() as u16;
         Self {
@@ -204,15 +219,13 @@ impl Assembler {
         }
     }
 
-    pub fn assemble(mut self, class_name: String) -> class::ClassData {
+    pub fn assemble(mut self, class_name: SmallString) -> class::ClassData {
         let (class_instructions, stack_map_frame) = self
             .blocks
             .assemble(&mut self.constant_pool, self.function_arguments);
-        let name_index = self.constant_pool.add_utf8("main".to_string());
-        let descriptor_index = self
-            .constant_pool
-            .add_utf8("([Ljava/lang/String;)V".to_string());
-        let code_name_index = self.constant_pool.add_utf8("Code".to_string());
+        let name_index = self.constant_pool.add_utf8("main".into());
+        let descriptor_index = self.constant_pool.add_utf8("([Ljava/lang/String;)V".into());
+        let code_name_index = self.constant_pool.add_utf8("Code".into());
         // It must be at least 2 bigger than the highest index to a 2-sized variable
         let max_locals = self.next_variable_index + 1;
         let method = class::Method {
@@ -226,7 +239,7 @@ impl Assembler {
                     max_locals,
                     code: class_instructions,
                     attributes: vec![class::AttributeInfo {
-                        name_index: self.constant_pool.add_utf8("StackMapTable".to_string()),
+                        name_index: self.constant_pool.add_utf8("StackMapTable".into()),
                         attribute: class::Attribute::StackMapTable(stack_map_frame),
                     }],
                 }),
@@ -282,25 +295,25 @@ mod tests {
         let mut assembler = Assembler::new();
         assembler.add_all([
             Instruction::GetStatic {
-                class_name: "java/lang/System".to_string(),
-                name: "out".to_string(),
-                field_type: FieldDescriptor::Object("java/io/PrintStream".to_string()),
+                class_name: "java/lang/System".into(),
+                name: "out".into(),
+                field_type: FieldDescriptor::print_stream(),
             },
             Instruction::LoadConstant {
-                value: ConstantValue::String("Hello World!".to_string()),
+                value: ConstantValue::String("Hello World!".into()),
             },
             Instruction::InvokeVirtual {
-                class_name: "java/io/PrintStream".to_string(),
-                name: "println".to_string(),
+                class_name: "java/io/PrintStream".into(),
+                name: "println".into(),
                 method_type: MethodDescriptor {
-                    arguments: vec![FieldDescriptor::Object("java/lang/String".to_string())],
+                    arguments: vec![FieldDescriptor::string()],
                     return_type: FieldDescriptor::Void,
                 },
             },
             Instruction::ReturnNull,
         ]);
 
-        let class_data = assembler.assemble("Helloworld".to_string());
+        let class_data = assembler.assemble("Helloworld".into());
 
         insta::assert_debug_snapshot!(class_data);
     }

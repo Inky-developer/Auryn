@@ -12,7 +12,7 @@ AnnotatedParserOutput {
         |||||0..2 Expression
         ||||||0..2 Value
         |||||||0..1 NumberLiteral
-        ||||||||Number `1`
+        ||||||||NumberLiteral `1`
         |||||||Whitespace ` `
         |||||Plus `+`
         |||||Whitespace ` `
@@ -21,14 +21,14 @@ AnnotatedParserOutput {
         |||||||4..6 Expression
         ||||||||4..6 Value
         |||||||||4..5 NumberLiteral
-        ||||||||||Number `2`
+        ||||||||||NumberLiteral `2`
         |||||||||Whitespace ` `
         |||||||Times `*`
         |||||||Whitespace ` `
         |||||||8..9 Expression
         ||||||||8..9 Value
         |||||||||8..9 NumberLiteral
-        ||||||||||Number `3`
+        ||||||||||NumberLiteral `3`
         ,
     ),
     diagnostics: [],

@@ -16,7 +16,7 @@ expression: "tokenize(\" hello_World(1 + 1, 2)\")"
         text: "(",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "1",
     },
     Token {
@@ -32,7 +32,7 @@ expression: "tokenize(\" hello_World(1 + 1, 2)\")"
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "1",
     },
     Token {
@@ -44,7 +44,7 @@ expression: "tokenize(\" hello_World(1 + 1, 2)\")"
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "2",
     },
     Token {

@@ -248,9 +248,11 @@ impl AssemblyContext<'_> {
                 name,
                 field_type,
             } => {
-                let field_ref_index =
-                    self.0
-                        .add_field_ref(class_name.clone(), name.clone(), field_type.to_string());
+                let field_ref_index = self.0.add_field_ref(
+                    class_name.clone(),
+                    name.clone(),
+                    field_type.to_string().into(),
+                );
                 on_instruction(class::Instruction::GetStatic(field_ref_index))
             }
             Instruction::InvokeVirtual {
@@ -261,7 +263,7 @@ impl AssemblyContext<'_> {
                 let method_ref_index = self.0.add_method_ref(
                     class_name.clone(),
                     name.clone(),
-                    method_type.to_string(),
+                    method_type.to_string().into(),
                 );
                 on_instruction(class::Instruction::InvokeVirtual(method_ref_index))
             }
@@ -282,9 +284,11 @@ impl AssemblyContext<'_> {
             Instruction::IMul => on_instruction(class::Instruction::IMul),
             Instruction::Store(id) => on_instruction(match id.r#type {
                 Primitive::Integer => class::Instruction::IStore(id.index),
+                Primitive::Object(_) => class::Instruction::AStore(id.index),
             }),
             Instruction::Load(id) => on_instruction(match id.r#type {
                 Primitive::Integer => class::Instruction::ILoad(id.index),
+                Primitive::Object(_) => class::Instruction::ALoad(id.index),
             }),
             Instruction::Nop => on_instruction(class::Instruction::Nop),
             Instruction::Pop(category) => match category {

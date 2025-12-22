@@ -8,7 +8,7 @@ expression: "tokenize(\" 1 +4  \\n\")"
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "1",
     },
     Token {
@@ -20,7 +20,7 @@ expression: "tokenize(\" 1 +4  \\n\")"
         text: "+",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "4",
     },
     Token {

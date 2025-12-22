@@ -19,14 +19,14 @@ AnnotatedParserOutput {
         ||||||||7..9 Expression
         |||||||||7..9 Value
         ||||||||||7..8 NumberLiteral
-        |||||||||||Number `1`
+        |||||||||||NumberLiteral `1`
         ||||||||||Whitespace ` `
         ||||||||Plus `+`
         ||||||||Whitespace ` `
         ||||||||11..13 Expression
         |||||||||11..13 Value
         ||||||||||11..12 NumberLiteral
-        |||||||||||Number `2`
+        |||||||||||NumberLiteral `2`
         ||||||||||Whitespace ` `
         ||||BraceClose `}`
         ,

@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use crate::{
     java::class::{ConstantPoolEntry, ConstantPoolIndex},
-    utils::fast_map::FastIndexMap,
+    utils::{fast_map::FastIndexMap, small_string::SmallString},
 };
 
 #[derive(Debug, Default)]
@@ -26,18 +26,22 @@ impl ConstantPoolBuilder {
         *entry.or_insert(ConstantPoolIndex::new(index + 1))
     }
 
-    pub fn add_utf8(&mut self, text: String) -> ConstantPoolIndex {
+    pub fn add_utf8(&mut self, text: SmallString) -> ConstantPoolIndex {
         self.add(ConstantPoolEntry::Utf8(text))
     }
 
-    pub fn add_class(&mut self, class_name: String) -> ConstantPoolIndex {
+    pub fn add_class(&mut self, class_name: SmallString) -> ConstantPoolIndex {
         let name_index = self.add_utf8(class_name);
         self.add(ConstantPoolEntry::Class { name_index })
     }
 
-    pub fn add_name_and_type(&mut self, name: String, type_: String) -> ConstantPoolIndex {
+    pub fn add_name_and_type(
+        &mut self,
+        name: SmallString,
+        r#type: SmallString,
+    ) -> ConstantPoolIndex {
         let name_index = self.add_utf8(name);
-        let type_index = self.add_utf8(type_);
+        let type_index = self.add_utf8(r#type);
         self.add(ConstantPoolEntry::NameAndType {
             name_index,
             type_index,
@@ -46,9 +50,9 @@ impl ConstantPoolBuilder {
 
     pub fn add_field_ref(
         &mut self,
-        class: String,
-        name: String,
-        field_type: String,
+        class: SmallString,
+        name: SmallString,
+        field_type: SmallString,
     ) -> ConstantPoolIndex {
         let class_index = self.add_class(class);
         let name_and_type_index = self.add_name_and_type(name, field_type);
@@ -60,9 +64,9 @@ impl ConstantPoolBuilder {
 
     pub fn add_method_ref(
         &mut self,
-        class: String,
-        name: String,
-        method_type: String,
+        class: SmallString,
+        name: SmallString,
+        method_type: SmallString,
     ) -> ConstantPoolIndex {
         let class_index = self.add_class(class);
         let name_and_type_index = self.add_name_and_type(name, method_type);
@@ -72,7 +76,7 @@ impl ConstantPoolBuilder {
         })
     }
 
-    pub fn add_string(&mut self, string: String) -> ConstantPoolIndex {
+    pub fn add_string(&mut self, string: SmallString) -> ConstantPoolIndex {
         let string_index = self.add_utf8(string);
         self.add(ConstantPoolEntry::String { string_index })
     }
@@ -82,7 +86,7 @@ impl ConstantPoolBuilder {
     }
 
     pub fn get_string_index(&mut self) -> ConstantPoolIndex {
-        self.add_class("java/lang/String".to_string())
+        self.add_class("java/lang/String".into())
     }
 }
 

@@ -6,8 +6,8 @@ use crate::{
         },
         ast::ast_node::{
             Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall, Ident,
-            IfStatement, LoopStatement, Number, Parenthesis, Root, Statement, Value,
-            VariableUpdate,
+            IfStatement, LoopStatement, NumberLiteral, Parenthesis, Root, Statement, StringLiteral,
+            Value, VariableUpdate,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -299,14 +299,15 @@ impl AstTransformer {
 
     fn transform_value(&mut self, value: Value) -> AirExpression {
         match value {
-            Value::Number(number) => self.transform_number(number),
+            Value::NumberLiteral(number) => self.transform_number(number),
+            Value::StringLiteral(string) => self.transform_string(string),
             Value::Ident(ident) => self.transform_ident(ident),
             Value::FunctionCall(function_call) => self.transform_function_call(function_call),
             Value::Parenthesis(parenthesis) => self.transform_parenthesis(parenthesis),
         }
     }
 
-    fn transform_number(&mut self, number: Number) -> AirExpression {
+    fn transform_number(&mut self, number: NumberLiteral) -> AirExpression {
         let Ok(token) = number.value() else {
             return AirExpression::error(number.id());
         };
@@ -319,6 +320,18 @@ impl AstTransformer {
         AirExpression::new(
             number.id(),
             AirExpressionKind::Constant(AirConstant::Number(value)),
+        )
+    }
+
+    fn transform_string(&mut self, string: StringLiteral) -> AirExpression {
+        let Ok(token) = string.value() else {
+            return AirExpression::error(string.id());
+        };
+
+        let text = token.text.trim_start_matches("\"").trim_end_matches("\"");
+        AirExpression::new(
+            token.id,
+            AirExpressionKind::Constant(AirConstant::String(text.into())),
         )
     }
 

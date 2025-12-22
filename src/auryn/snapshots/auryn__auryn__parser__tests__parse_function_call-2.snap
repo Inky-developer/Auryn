@@ -16,7 +16,7 @@ AnnotatedParserOutput {
         |||||||6..7 Expression
         ||||||||6..7 Value
         |||||||||6..7 NumberLiteral
-        ||||||||||Number `1`
+        ||||||||||NumberLiteral `1`
         ||||||ParensClose `)`
         ||Newline `\n`
         ,

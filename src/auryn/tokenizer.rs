@@ -23,7 +23,7 @@ impl BinaryOperatorToken {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TokenKind {
-    Number,
+    NumberLiteral,
     StringLiteral,
     Identifier,
     Plus,
@@ -110,7 +110,7 @@ impl<'a> Tokenizer<'a> {
 
     fn consume_number(&mut self) -> Option<Token<'a>> {
         Some(Token {
-            kind: TokenKind::Number,
+            kind: TokenKind::NumberLiteral,
             text: self.consume_while(|char| char.is_ascii_digit()),
         })
     }

@@ -1,6 +1,6 @@
 use crate::{
     auryn::{air::types::Type, syntax_id::SyntaxId, tokenizer::BinaryOperatorToken},
-    utils::fast_map::FastMap,
+    utils::{fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Debug)]
@@ -109,6 +109,7 @@ pub struct LoadConstant {
 #[derive(Debug)]
 pub enum AirConstant {
     Number(i32),
+    String(SmallString),
 }
 
 #[derive(Debug)]
@@ -125,7 +126,7 @@ pub enum Intrinsic {
 impl Intrinsic {
     pub fn signature(&self) -> (&'static [Type], Type) {
         match self {
-            Intrinsic::Print => (&[Type::Number], Type::Null),
+            Intrinsic::Print => (&[Type::Top], Type::Null),
         }
     }
 }

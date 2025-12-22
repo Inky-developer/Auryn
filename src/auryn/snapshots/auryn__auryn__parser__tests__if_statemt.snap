@@ -13,7 +13,7 @@ AnnotatedParserOutput {
         ||||3..5 Expression
         |||||3..5 Value
         ||||||3..4 NumberLiteral
-        |||||||Number `1`
+        |||||||NumberLiteral `1`
         ||||||Whitespace ` `
         ||||BraceOpen `{`
         ||||Whitespace ` `
@@ -28,7 +28,7 @@ AnnotatedParserOutput {
         ||||||||||13..15 Expression
         |||||||||||13..15 Value
         ||||||||||||13..15 NumberLiteral
-        |||||||||||||Number `42`
+        |||||||||||||NumberLiteral `42`
         |||||||||ParensClose `)`
         ||||||||Whitespace ` `
         ||||BraceClose `}`

@@ -15,7 +15,7 @@ AnnotatedParserOutput {
         ||||4..5 Expression
         |||||4..5 Value
         ||||||4..5 NumberLiteral
-        |||||||Number `3`
+        |||||||NumberLiteral `3`
         ,
     ),
     diagnostics: [],

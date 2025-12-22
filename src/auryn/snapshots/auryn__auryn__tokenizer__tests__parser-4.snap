@@ -60,7 +60,7 @@ expression: "tokenize(\"loop let some_text = if true { 2 } else { break }\")"
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "2",
     },
     Token {

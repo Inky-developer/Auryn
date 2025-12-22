@@ -18,11 +18,14 @@ use crate::{
         class::{ClassData, Comparison, TypeCategory, VerificationTypeInfo},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
-    utils::fast_map::{FastMap, FastSet},
+    utils::{
+        fast_map::{FastMap, FastSet},
+        small_string::SmallString,
+    },
 };
 use indexmap::IndexSet;
 
-pub fn query_class(class_name: String, air: &Air) -> ClassData {
+pub fn query_class(class_name: SmallString, air: &Air) -> ClassData {
     let mut generator = Generator::new();
     generator.generate_from_air(air);
 
@@ -50,7 +53,7 @@ impl Generator {
         }
     }
 
-    pub fn finish(self, class_name: String) -> ClassData {
+    pub fn finish(self, class_name: SmallString) -> ClassData {
         self.assembler.assemble(class_name)
     }
 
@@ -75,26 +78,14 @@ impl Generator {
             .or_insert_with(|| self.assembler.add_block())
     }
 
-    fn _intrinsics_print_int(&mut self) {
-        let result_id = self.assembler.alloc_variable(Primitive::Integer);
-        self.assembler.add_all([
-            Instruction::Store(result_id),
-            Instruction::GetStatic {
-                class_name: "java/lang/System".to_string(),
-                name: "out".to_string(),
-                field_type: FieldDescriptor::Object("java/io/PrintStream".to_string()),
-            },
-            Instruction::Load(result_id),
-            Instruction::InvokeVirtual {
-                class_name: "java/io/PrintStream".to_string(),
-                name: "println".to_string(),
-                // method_type: MethodDescriptor("(I)V".to_string()),
-                method_type: MethodDescriptor {
-                    arguments: vec![FieldDescriptor::Integer],
-                    return_type: FieldDescriptor::Void,
-                },
-            },
-        ]);
+    fn translate_type(&mut self, air_type: &Type) -> Primitive {
+        match air_type {
+            Type::Number => Primitive::Integer,
+            Type::String => Primitive::Object(self.assembler.constant_pool.get_string_index()),
+            Type::Top => todo!("The top type cannot be represented yet"),
+            Type::Null => unreachable!("Null type is not represented in java"),
+            Type::Error => unreachable!("Called with error type"),
+        }
     }
 }
 
@@ -156,8 +147,9 @@ impl Generator {
         let variable_id = if self.variable_map.contains_key(&assignment.target) {
             self.variable_map[&assignment.target]
         } else {
-            let variable_type = assignment.expression.r#type.computed().as_primitive();
-            let variable_id = self.assembler.alloc_variable(variable_type);
+            let air_type = assignment.expression.r#type.computed();
+            let verification_type = self.translate_type(air_type);
+            let variable_id = self.assembler.alloc_variable(verification_type);
             self.variable_map.insert(assignment.target, variable_id);
             variable_id
         };
@@ -182,6 +174,14 @@ impl Generator {
         match constant {
             AirConstant::Number(number) => {
                 let value = ConstantValue::Integer(*number);
+                let category = value
+                    .to_verification_type(&mut self.assembler.constant_pool)
+                    .category();
+                self.assembler.add(Instruction::LoadConstant { value });
+                category
+            }
+            AirConstant::String(text) => {
+                let value = ConstantValue::String(text.clone());
                 let category = value
                     .to_verification_type(&mut self.assembler.constant_pool)
                     .category();
@@ -252,17 +252,34 @@ impl Generator {
         match intrinsic.intrinsic {
             Intrinsic::Print => {
                 self.assembler.add(Instruction::GetStatic {
-                    class_name: "java/lang/System".to_string(),
-                    name: "out".to_string(),
-                    field_type: FieldDescriptor::Object("java/io/PrintStream".to_string()),
+                    class_name: "java/lang/System".into(),
+                    name: "out".into(),
+                    field_type: FieldDescriptor::print_stream(),
                 });
                 self.generate_expression(&intrinsic.arguments[0]);
+                let field_descriptor = match intrinsic.arguments[0].r#type.computed() {
+                    Type::Top => {
+                        self.assembler.add(Instruction::LoadConstant {
+                            value: ConstantValue::String("Top".into()),
+                        });
+                        FieldDescriptor::string()
+                    }
+                    Type::Number => FieldDescriptor::Integer,
+                    Type::String => FieldDescriptor::string(),
+                    Type::Null => {
+                        self.assembler.add(Instruction::LoadConstant {
+                            value: ConstantValue::String("Null".into()),
+                        });
+                        FieldDescriptor::string()
+                    }
+                    Type::Error => unreachable!(),
+                };
                 self.assembler.add(Instruction::InvokeVirtual {
-                    class_name: "java/io/PrintStream".to_string(),
-                    name: "println".to_string(),
+                    class_name: "java/io/PrintStream".into(),
+                    name: "println".into(),
                     // method_type: MethodDescriptor("(I)V".to_string()),
                     method_type: MethodDescriptor {
-                        arguments: vec![FieldDescriptor::Integer],
+                        arguments: vec![field_descriptor],
                         return_type: FieldDescriptor::Void,
                     },
                 });
@@ -338,16 +355,6 @@ impl Generator {
     // }
 }
 
-impl Type {
-    fn as_primitive(&self) -> Primitive {
-        match self {
-            Type::Number => Primitive::Integer,
-            Type::Null => todo!("Decide how to represent the null type"),
-            Type::Error => unreachable!("Type error should not be present in air"),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -364,7 +371,7 @@ mod tests {
         let air = query_air(ast.unwrap());
         assert!(air.diagnostics.is_empty());
 
-        query_class("Helloworld".to_string(), &air.air)
+        query_class("Helloworld".into(), &air.air)
     }
 
     #[test]
@@ -375,6 +382,7 @@ mod tests {
     #[test]
     fn test_print() {
         insta::assert_debug_snapshot!(generate_class("print(2 * 3)"));
+        insta::assert_debug_snapshot!(generate_class("print(print(\"Hallo, Welt!\"))"));
     }
 
     #[test]

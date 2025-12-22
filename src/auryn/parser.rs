@@ -418,7 +418,7 @@ impl Parser<'_> {
 
         match self.peek().kind {
             TokenKind::Identifier => self.parse_identifier_or_function_call()?,
-            TokenKind::Number => self.parse_number()?,
+            TokenKind::NumberLiteral => self.parse_number()?,
             TokenKind::StringLiteral => self.parse_string_literal()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             other => {
@@ -475,7 +475,7 @@ impl Parser<'_> {
     fn parse_number(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::Number)?;
+        self.expect(TokenKind::NumberLiteral)?;
 
         self.finish_node(watcher, SyntaxNodeKind::NumberLiteral);
         Ok(())

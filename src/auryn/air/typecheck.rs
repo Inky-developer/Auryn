@@ -43,10 +43,26 @@ impl Typechecker {
         self.add_error(
             received.id,
             DiagnosticError::TypeMismatch {
-                expected,
+                expected: expected.clone(),
                 got: received.r#type.clone(),
             },
         )
+    }
+
+    fn expect_assignable(&mut self, received: &AirExpression, expected: Type) {
+        if let AirType::Computed(got) = &received.r#type
+            && got.is_subtype(&expected)
+        {
+            return;
+        }
+
+        self.add_error(
+            received.id,
+            DiagnosticError::TypeMismatch {
+                expected: expected.clone(),
+                got: received.r#type.clone(),
+            },
+        );
     }
 
     fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
@@ -85,7 +101,7 @@ impl Typechecker {
     fn typecheck_assignment(&mut self, assignment: &mut Assignment) {
         self.typecheck_expression(&mut assignment.expression);
         if let Some(expected_type) = self.variables.get(&assignment.target) {
-            self.expect_type(&assignment.expression, expected_type.clone());
+            self.expect_assignable(&assignment.expression, expected_type.clone());
         } else {
             self.variables.insert(
                 assignment.target,
@@ -113,6 +129,7 @@ impl Typechecker {
     fn typecheck_constant(&self, constant: &AirConstant) -> Type {
         match constant {
             AirConstant::Number(_) => Type::Number,
+            AirConstant::String(_) => Type::String,
         }
     }
 
@@ -151,7 +168,7 @@ impl Typechecker {
         }
 
         for (expected, actual) in signature.0.iter().zip(intrinsic.arguments.iter()) {
-            self.expect_type(actual, expected.clone());
+            self.expect_assignable(actual, expected.clone());
         }
 
         Type::Null

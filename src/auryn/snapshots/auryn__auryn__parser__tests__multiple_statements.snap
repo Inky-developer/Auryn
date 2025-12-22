@@ -17,7 +17,7 @@ AnnotatedParserOutput {
         ||||8..9 Expression
         |||||8..9 Value
         ||||||8..9 NumberLiteral
-        |||||||Number `1`
+        |||||||NumberLiteral `1`
         ||Newline `\n`
         ||10..19 Statement
         |||10..19 Assignment
@@ -30,7 +30,7 @@ AnnotatedParserOutput {
         ||||18..19 Expression
         |||||18..19 Value
         ||||||18..19 NumberLiteral
-        |||||||Number `2`
+        |||||||NumberLiteral `2`
         ,
     ),
     diagnostics: [],

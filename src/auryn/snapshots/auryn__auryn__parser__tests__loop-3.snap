@@ -29,7 +29,7 @@ AnnotatedParserOutput {
         ||||||||||19..20 Expression
         |||||||||||19..20 Value
         ||||||||||||19..20 NumberLiteral
-        |||||||||||||Number `1`
+        |||||||||||||NumberLiteral `1`
         |||||||||ParensClose `)`
         ||||||||Whitespace `\t`
         |||||Newline `\n`

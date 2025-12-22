@@ -3,7 +3,7 @@ use std::{
     num::NonZeroU16,
 };
 
-use crate::java::constant_pool_builder::ConstantPoolBuilder;
+use crate::{java::constant_pool_builder::ConstantPoolBuilder, utils::small_string::SmallString};
 
 #[derive(Debug, Clone, Copy)]
 pub struct JVMVersion {
@@ -46,7 +46,7 @@ pub enum ConstantPoolEntry {
         /// Index to Utf8, must be a valid descriptor
         type_index: ConstantPoolIndex,
     },
-    Utf8(String),
+    Utf8(SmallString),
     String {
         string_index: ConstantPoolIndex,
     },
@@ -141,19 +141,26 @@ pub enum Instruction {
     /// Static must be a FieldRef
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
     GetStatic(ConstantPoolIndex),
-    /// Must be -1 <= value <= 8
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
-    Iconst(i8),
     /// Static must be a MethodRef
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokestatic
     InvokeStatic(ConstantPoolIndex),
     /// Index must be a MethodRef
     InvokeVirtual(ConstantPoolIndex),
     Ireturn,
-    /// Loads a constant
+    /// Loads a constant from the constant pool
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc
     Ldc(u8),
     /// Returns void
     Return,
+    // Load a reference
+    // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aload
+    ALoad(u16),
+    // Store a reference
+    // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.astore
+    AStore(u16),
+    /// Must be -1 <= value <= 8
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
+    Iconst(i8),
     IAdd,
     IMul,
     IStore(u16),
@@ -223,6 +230,18 @@ impl Instruction {
                     .try_into()
                     .expect("TODO: Implement support for wide loads");
                 buf.write_all(&[0x15, index])?;
+            }
+            Instruction::ALoad(index) => {
+                let index: u8 = index
+                    .try_into()
+                    .expect("TODO: Implement support for wide loads");
+                buf.write_all(&[0x19, index])?;
+            }
+            Instruction::AStore(index) => {
+                let index: u8 = index
+                    .try_into()
+                    .expect("TODO: Implement support for wide stores");
+                buf.write_all(&[0x3a, index])?;
             }
             Instruction::Goto(jump_point) => {
                 let offset: i16 = jump_point.0 as i16 - current_index as i16;
@@ -545,9 +564,9 @@ pub const JVM_VERSION: JVMVersion = JVMVersion {
 pub const ACCESSS_FLAG: u16 = (ClassAccessFlag::Public as u16) | (ClassAccessFlag::Final as u16);
 
 impl ClassData {
-    pub fn new(class_name: String, mut builder: ConstantPoolBuilder) -> Self {
+    pub fn new(class_name: SmallString, mut builder: ConstantPoolBuilder) -> Self {
         let this_class = builder.add_class(class_name);
-        let super_class = builder.add_class("java/lang/Object".to_string());
+        let super_class = builder.add_class("java/lang/Object".into());
         let constant_pool = builder.build();
         Self {
             constant_pool,

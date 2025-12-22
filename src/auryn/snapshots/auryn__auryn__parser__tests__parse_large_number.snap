@@ -10,7 +10,7 @@ AnnotatedParserOutput {
         |||0..13 Expression
         ||||0..13 Value
         |||||0..13 NumberLiteral
-        ||||||Number `9999999999999`
+        ||||||NumberLiteral `9999999999999`
         ,
     ),
     diagnostics: [],

@@ -36,7 +36,7 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "1",
     },
     Token {
@@ -72,7 +72,7 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "2",
     },
     Token {
@@ -108,7 +108,7 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "3",
     },
     Token {
@@ -144,7 +144,7 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "4",
     },
     Token {
@@ -180,7 +180,7 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "5",
     },
     Token {
@@ -216,7 +216,7 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
         text: " ",
     },
     Token {
-        kind: Number,
+        kind: NumberLiteral,
         text: "6",
     },
 ]
