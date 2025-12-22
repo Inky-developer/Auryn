@@ -289,7 +289,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
                         for _ in 0..(depth + 1) {
                             write!(f, "|")?;
                         }
-                        writeln!(f, "{:?}", token.kind)?;
+                        writeln!(f, "{:?} `{}`", token.kind, token.text.escape_default())?;
                     }
                     SyntaxItem::Error(error) => {
                         for _ in 0..(depth + 1) {

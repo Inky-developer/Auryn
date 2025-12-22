@@ -5,39 +5,39 @@ expression: "verify(\"\\t\\nloop {\\t\\n\\t\\n\\tprint(1)\\t\\n\\t}\\t\\n\\t\")"
 AnnotatedParserOutput {
     ast: Some(
         0..28 Root
-        |Whitespace
+        |Whitespace `\t`
         |1..28 Block
-        ||Newline
+        ||Newline `\n`
         ||2..26 Statement
         |||2..25 Loop
-        ||||KeywordLoop
-        ||||Whitespace
-        ||||BraceOpen
-        ||||Whitespace
+        ||||KeywordLoop `loop`
+        ||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Whitespace `\t`
         ||||9..24 Block
-        |||||Newline
-        |||||Whitespace
-        |||||Newline
-        |||||Whitespace
+        |||||Newline `\n`
+        |||||Whitespace `\t`
+        |||||Newline `\n`
+        |||||Whitespace `\t`
         |||||13..22 Statement
         ||||||13..22 Expression
         |||||||13..22 Value
         ||||||||13..21 FunctionCall
-        |||||||||Identifier
-        |||||||||ParensOpen
+        |||||||||Identifier `print`
+        |||||||||ParensOpen `(`
         |||||||||19..20 ArgumentList
         ||||||||||19..20 Expression
         |||||||||||19..20 Value
         ||||||||||||19..20 NumberLiteral
-        |||||||||||||Number
-        |||||||||ParensClose
-        ||||||||Whitespace
-        |||||Newline
-        |||||Whitespace
-        ||||BraceClose
-        |||Whitespace
-        ||Newline
-        ||Whitespace
+        |||||||||||||Number `1`
+        |||||||||ParensClose `)`
+        ||||||||Whitespace `\t`
+        |||||Newline `\n`
+        |||||Whitespace `\t`
+        ||||BraceClose `}`
+        |||Whitespace `\t`
+        ||Newline `\n`
+        ||Whitespace `\t`
         ,
     ),
     diagnostics: [],

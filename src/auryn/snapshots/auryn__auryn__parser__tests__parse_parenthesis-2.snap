@@ -10,17 +10,17 @@ AnnotatedParserOutput {
         |||0..5 Expression
         ||||0..5 Value
         |||||0..5 Parenthesis
-        ||||||ParensOpen
+        ||||||ParensOpen `(`
         ||||||1..4 Expression
         |||||||1..4 Value
         ||||||||1..4 Parenthesis
-        |||||||||ParensOpen
+        |||||||||ParensOpen `(`
         |||||||||2..3 Expression
         ||||||||||2..3 Value
         |||||||||||2..3 NumberLiteral
-        ||||||||||||Number
-        |||||||||ParensClose
-        ||||||ParensClose
+        ||||||||||||Number `3`
+        |||||||||ParensClose `)`
+        ||||||ParensClose `)`
         ,
     ),
     diagnostics: [],

@@ -8,30 +8,30 @@ AnnotatedParserOutput {
         |0..18 Block
         ||0..18 Statement
         |||0..18 IfStatement
-        ||||KeywordIf
-        ||||Whitespace
+        ||||KeywordIf `if`
+        ||||Whitespace ` `
         ||||3..5 Expression
         |||||3..5 Value
         ||||||3..4 NumberLiteral
-        |||||||Number
-        ||||||Whitespace
-        ||||BraceOpen
-        ||||Whitespace
+        |||||||Number `1`
+        ||||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Whitespace ` `
         ||||7..17 Block
         |||||7..17 Statement
         ||||||7..17 Expression
         |||||||7..17 Value
         ||||||||7..16 FunctionCall
-        |||||||||Identifier
-        |||||||||ParensOpen
+        |||||||||Identifier `print`
+        |||||||||ParensOpen `(`
         |||||||||13..15 ArgumentList
         ||||||||||13..15 Expression
         |||||||||||13..15 Value
         ||||||||||||13..15 NumberLiteral
-        |||||||||||||Number
-        |||||||||ParensClose
-        ||||||||Whitespace
-        ||||BraceClose
+        |||||||||||||Number `42`
+        |||||||||ParensClose `)`
+        ||||||||Whitespace ` `
+        ||||BraceClose `}`
         ,
     ),
     diagnostics: [],

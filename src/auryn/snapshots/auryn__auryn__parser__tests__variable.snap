@@ -10,14 +10,14 @@ AnnotatedParserOutput {
         |||0..12 Expression
         ||||0..12 Value
         |||||0..12 FunctionCall
-        ||||||Identifier
-        ||||||ParensOpen
+        ||||||Identifier `print`
+        ||||||ParensOpen `(`
         ||||||6..11 ArgumentList
         |||||||6..11 Expression
         ||||||||6..11 Value
         |||||||||6..11 Ident
-        ||||||||||Identifier
-        ||||||ParensClose
+        ||||||||||Identifier `hello`
+        ||||||ParensClose `)`
         ,
     ),
     diagnostics: [],

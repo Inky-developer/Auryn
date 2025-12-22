@@ -10,42 +10,42 @@ AnnotatedParserOutput {
         |||0..2 Expression
         ||||0..2 Value
         |||||0..1 NumberLiteral
-        ||||||Number
-        |||||Whitespace
+        ||||||Number `1`
+        |||||Whitespace ` `
         ||Error(ExpectedNewline)
         ||2..4 Statement
         |||2..4 Expression
         ||||2..4 Value
         |||||2..3 NumberLiteral
-        ||||||Number
-        |||||Whitespace
+        ||||||Number `1`
+        |||||Whitespace ` `
         ||Error(ExpectedNewline)
         ||4..6 Statement
         |||4..6 Expression
         ||||4..6 Value
         |||||4..5 NumberLiteral
-        ||||||Number
-        |||||Whitespace
+        ||||||Number `1`
+        |||||Whitespace ` `
         ||Error(ExpectedNewline)
         ||6..8 Statement
         |||6..8 Expression
         ||||6..8 Value
         |||||6..7 NumberLiteral
-        ||||||Number
-        |||||Whitespace
+        ||||||Number `1`
+        |||||Whitespace ` `
         ||Error(ExpectedNewline)
         ||8..11 Statement
         |||8..11 Expression
         ||||8..11 Value
         |||||8..10 NumberLiteral
-        ||||||Number
-        |||||Whitespace
+        ||||||Number `11`
+        |||||Whitespace ` `
         ||Error(ExpectedNewline)
         ||11..12 Statement
         |||11..12 Expression
         ||||11..12 Value
         |||||11..12 NumberLiteral
-        ||||||Number
+        ||||||Number `1`
         ,
     ),
     diagnostics: [

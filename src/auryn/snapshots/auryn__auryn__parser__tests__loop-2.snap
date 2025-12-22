@@ -8,16 +8,16 @@ AnnotatedParserOutput {
         |0..14 Block
         ||0..14 Statement
         |||0..14 Loop
-        ||||KeywordLoop
-        ||||Whitespace
-        ||||BraceOpen
-        ||||Whitespace
+        ||||KeywordLoop `loop`
+        ||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Whitespace ` `
         ||||7..13 Block
         |||||7..13 Statement
         ||||||7..12 Break
-        |||||||KeywordBreak
-        ||||||Whitespace
-        ||||BraceClose
+        |||||||KeywordBreak `break`
+        ||||||Whitespace ` `
+        ||||BraceClose `}`
         ,
     ),
     diagnostics: [],

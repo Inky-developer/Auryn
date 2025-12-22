@@ -8,14 +8,14 @@ AnnotatedParserOutput {
         |0..5 Block
         ||0..5 Statement
         |||0..5 VariableUpdate
-        ||||Identifier
-        ||||Whitespace
-        ||||Equal
-        ||||Whitespace
+        ||||Identifier `a`
+        ||||Whitespace ` `
+        ||||Equal `=`
+        ||||Whitespace ` `
         ||||4..5 Expression
         |||||4..5 Value
         ||||||4..5 NumberLiteral
-        |||||||Number
+        |||||||Number `3`
         ,
     ),
     diagnostics: [],
