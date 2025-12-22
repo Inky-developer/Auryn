@@ -507,11 +507,9 @@ impl Parser<'_> {
 
         match self.peek().kind {
             TokenKind::ParensOpen => {
-                self.expect(TokenKind::ParensOpen)?;
                 if let Err(()) = self.parse_argument_list() {
                     // self.recover(|k| matches!(k, TokenKind::ParensClose))?;
                 }
-                self.expect(TokenKind::ParensClose)?;
 
                 self.finish_node(watcher, SyntaxNodeKind::FunctionCall);
             }
@@ -533,14 +531,19 @@ impl Parser<'_> {
 
     fn parse_argument_list(&mut self) -> ParseResult {
         let watcher = self.push_node();
+
+        self.expect(TokenKind::ParensOpen)?;
         loop {
+            if self.peek().kind == TokenKind::ParensClose {
+                break;
+            }
             self.parse_expression()?;
             if self.peek().kind != TokenKind::Comma {
                 break;
             }
-
-            self.consume();
+            self.expect(TokenKind::Comma)?;
         }
+        self.expect(TokenKind::ParensClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ArgumentList);
         Ok(())
@@ -653,6 +656,7 @@ mod tests {
     fn test_parse_function_call() {
         insta::assert_debug_snapshot!(verify_block("print(1)"));
         insta::assert_debug_snapshot!(verify_block("print(1)\n"));
+        insta::assert_debug_snapshot!(verify_block("print()"));
     }
 
     #[test]

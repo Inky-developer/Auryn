@@ -39,14 +39,14 @@ AnnotatedParserOutput {
         ||||||29..41 Value
         |||||||29..41 FunctionCall
         ||||||||Identifier `print`
-        ||||||||ParensOpen `(`
-        ||||||||35..39 ArgumentList
+        ||||||||34..41 ArgumentList
+        |||||||||ParensOpen `(`
         |||||||||35..39 Expression
         ||||||||||35..39 Value
         |||||||||||35..39 NumberLiteral
         ||||||||||||NumberLiteral `9000`
-        ||||||||ParensClose `)`
-        ||||||||Whitespace ` `
+        |||||||||ParensClose `)`
+        |||||||||Whitespace ` `
         |||BraceClose `}`
         ,
     ),

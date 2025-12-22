@@ -1,0 +1,20 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"print()\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..7 Root
+        |0..7 Block
+        ||0..7 Statement
+        |||0..7 Expression
+        ||||0..7 Value
+        |||||0..7 FunctionCall
+        ||||||Identifier `print`
+        ||||||5..7 ArgumentList
+        |||||||ParensOpen `(`
+        |||||||ParensClose `)`
+        ,
+    ),
+    diagnostics: [],
+}

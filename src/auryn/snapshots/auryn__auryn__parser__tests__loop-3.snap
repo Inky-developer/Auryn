@@ -24,14 +24,14 @@ AnnotatedParserOutput {
         |||||||13..22 Value
         ||||||||13..22 FunctionCall
         |||||||||Identifier `print`
-        |||||||||ParensOpen `(`
-        |||||||||19..20 ArgumentList
+        |||||||||18..22 ArgumentList
+        ||||||||||ParensOpen `(`
         ||||||||||19..20 Expression
         |||||||||||19..20 Value
         ||||||||||||19..20 NumberLiteral
         |||||||||||||NumberLiteral `1`
-        |||||||||ParensClose `)`
-        |||||||||Whitespace `\t`
+        ||||||||||ParensClose `)`
+        ||||||||||Whitespace `\t`
         |||||Newline `\n`
         |||||Whitespace `\t`
         ||||BraceClose `}`
