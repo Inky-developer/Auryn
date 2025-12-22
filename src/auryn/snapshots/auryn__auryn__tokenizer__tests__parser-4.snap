@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"loop let some_text = if true { 2 } else { break }\")"
+expression: "tokenize(\"loop let some_text = if true { 2 } else { break } fn foo\")"
 ---
 [
     Token {
@@ -102,5 +102,21 @@ expression: "tokenize(\"loop let some_text = if true { 2 } else { break }\")"
     Token {
         kind: BraceClose,
         text: "}",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordFn,
+        text: "fn",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "foo",
     },
 ]

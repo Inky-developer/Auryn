@@ -30,7 +30,8 @@ mod tests {
     };
 
     fn compile(input: &str) -> AirOutput {
-        let output = Parser::new(FileId::MAIN_FILE, input).parse();
+        let wrapped_input = format!("fn main() {{ {input} }}");
+        let output = Parser::new(FileId::MAIN_FILE, &wrapped_input).parse();
         let diagnostics = output
             .syntax_tree
             .as_ref()

@@ -8,7 +8,7 @@ use crate::{
                 AirExpressionKind, AirFunction, AirNode, AirNodeKind, AirType, AirValueId,
                 Assignment, BinaryOperation, IntrinsicCall,
             },
-            types::Type,
+            types::{FunctionType, Type},
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -75,6 +75,8 @@ impl Typechecker {
 
 impl Typechecker {
     fn typecheck_function(&mut self, function: &mut AirFunction) {
+        self.compute_function_signature(function);
+
         let mut visited_blocks = FastSet::default();
         let mut pending_blocks = VecDeque::default();
 
@@ -90,6 +92,18 @@ impl Typechecker {
                 }
             });
         }
+    }
+
+    fn compute_function_signature(&mut self, function: &mut AirFunction) {
+        let parameters = function
+            .declared_parameters
+            .iter()
+            .filter_map(|ident| ident.parse().ok())
+            .collect();
+        function.r#type = AirType::Computed(Type::Function(Box::new(FunctionType {
+            parameters,
+            return_type: Type::Null,
+        })))
     }
 
     fn typecheck_block(&mut self, block: &mut AirBlock, on_next_id: impl FnMut(AirBlockId)) {

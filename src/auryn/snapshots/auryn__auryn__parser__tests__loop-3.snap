@@ -1,6 +1,6 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"\\t\\nloop {\\t\\n\\t\\n\\tprint(1)\\t\\n\\t}\\t\\n\\t\")"
+expression: "verify_block(\"\\t\\nloop {\\t\\n\\t\\n\\tprint(1)\\t\\n\\t}\\t\\n\\t\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
@@ -9,7 +9,7 @@ AnnotatedParserOutput {
         |1..28 Block
         ||Newline `\n`
         ||2..26 Statement
-        |||2..25 Loop
+        |||2..26 Loop
         ||||KeywordLoop `loop`
         ||||Whitespace ` `
         ||||BraceOpen `{`
@@ -22,7 +22,7 @@ AnnotatedParserOutput {
         |||||13..22 Statement
         ||||||13..22 Expression
         |||||||13..22 Value
-        ||||||||13..21 FunctionCall
+        ||||||||13..22 FunctionCall
         |||||||||Identifier `print`
         |||||||||ParensOpen `(`
         |||||||||19..20 ArgumentList
@@ -31,11 +31,11 @@ AnnotatedParserOutput {
         ||||||||||||19..20 NumberLiteral
         |||||||||||||NumberLiteral `1`
         |||||||||ParensClose `)`
-        ||||||||Whitespace `\t`
+        |||||||||Whitespace `\t`
         |||||Newline `\n`
         |||||Whitespace `\t`
         ||||BraceClose `}`
-        |||Whitespace `\t`
+        ||||Whitespace `\t`
         ||Newline `\n`
         ||Whitespace `\t`
         ,

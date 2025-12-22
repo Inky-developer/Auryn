@@ -1,17 +1,14 @@
 use crate::{
     auryn::{
-        air::{
-            data::{
-                self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirValueId,
-                Intrinsic, IntrinsicCall,
-            },
-            types::{FunctionType, Type},
+        air::data::{
+            self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+            AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
+            AirValueId, Intrinsic, IntrinsicCall,
         },
         ast::ast_node::{
-            Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall, Ident,
-            IfStatement, LoopStatement, NumberLiteral, Parenthesis, Root, Statement, StringLiteral,
-            Value, VariableUpdate,
+            self, Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall,
+            FunctionDefinition, Ident, IfStatement, LoopStatement, NumberLiteral, Parenthesis,
+            Root, Statement, StringLiteral, Value, VariableUpdate,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -27,21 +24,67 @@ pub struct AirOutput {
 }
 
 pub fn transform_ast(ast: Root) -> AirOutput {
-    let mut transformer = AstTransformer::new();
+    let mut transformer = AstTransformer::default();
     transformer.transform_root(ast);
-    let main_function = AirFunction {
-        r#type: Type::Function(Box::new(FunctionType {
-            parameters: Vec::new(),
-            return_type: Type::Null,
-        })),
-        ident: "main".into(),
-        blocks: transformer.finished_blocks,
-    };
-    let mut functions = FastMap::default();
-    functions.insert(AirFunctionId(ast.id()), main_function);
+    let functions = transformer.functions;
     AirOutput {
         air: Air { functions },
         diagnostics: transformer.diagnostics,
+    }
+}
+
+#[derive(Debug, Default)]
+struct AstTransformer {
+    functions: FastMap<AirFunctionId, AirFunction>,
+    diagnostics: Vec<Diagnostic>,
+}
+
+impl AstTransformer {
+    pub fn transform_root(&mut self, root: Root) {
+        let Ok(file) = root.file() else {
+            return;
+        };
+
+        for function in file.functions() {
+            self.transform_function(function);
+        }
+    }
+
+    fn transform_function(&mut self, function_definition: FunctionDefinition) {
+        let Ok(ident) = function_definition.ident() else {
+            return;
+        };
+        let Ok(parameters) = function_definition.parameter_list() else {
+            return;
+        };
+        let Ok(block) = function_definition.block() else {
+            return;
+        };
+
+        let ident = ident.text.clone();
+        let declared_parameters = parameters
+            .parameters()
+            .filter_map(|param| {
+                param.r#type().ok().and_then(|ty| match ty {
+                    ast_node::Type::Ident(ident) => {
+                        ident.ident().ok().map(|ident| ident.text.clone())
+                    }
+                })
+            })
+            .collect();
+
+        let mut function_transformer = FunctionTransformer::new(&mut self.diagnostics);
+        function_transformer.transform_function_body(block);
+
+        let function = AirFunction {
+            r#type: AirType::Inferred,
+            declared_parameters,
+            ident,
+            blocks: function_transformer.finished_blocks,
+        };
+
+        self.functions
+            .insert(AirFunctionId(function_definition.id()), function);
     }
 }
 
@@ -58,25 +101,25 @@ pub struct LoopInfo {
 }
 
 #[derive(Debug)]
-pub struct AstTransformer {
+struct FunctionTransformer<'a> {
     block_builders: FastMap<AirBlockId, BlockBuilder>,
     current_builder: AirBlockId,
     finished_blocks: FastMap<AirBlockId, AirBlock>,
     next_value_id: usize,
     variables: FastMap<SmallString, AirValueId>,
-    diagnostics: Vec<Diagnostic>,
+    diagnostics: &'a mut Vec<Diagnostic>,
     loops: Vec<LoopInfo>,
 }
 
-impl AstTransformer {
-    fn new() -> Self {
+impl<'a> FunctionTransformer<'a> {
+    fn new(diagnostics: &'a mut Vec<Diagnostic>) -> Self {
         Self {
             block_builders: FastMap::default(),
             current_builder: AirBlockId(0),
             finished_blocks: FastMap::default(),
             next_value_id: 1,
             variables: FastMap::default(),
-            diagnostics: Vec::new(),
+            diagnostics,
             loops: Vec::new(),
         }
     }
@@ -136,11 +179,8 @@ impl AstTransformer {
     }
 }
 
-impl AstTransformer {
-    fn transform_root(&mut self, root: Root) {
-        let Ok(block) = root.block() else {
-            return;
-        };
+impl FunctionTransformer<'_> {
+    fn transform_function_body(&mut self, block: Block) {
         let block_id = self.add_block();
         self.transform_block(block);
         self.finish_block(block_id, AirBlockFinalizer::Return);

@@ -59,7 +59,7 @@ impl ClassGenerator {
     }
 
     fn generate_function(&mut self, id: AirFunctionId, function: &AirFunction) {
-        let Type::Function(function_type) = &function.r#type else {
+        let Type::Function(function_type) = &function.r#type.computed() else {
             unreachable!("Function should have a function type");
         };
         let method_descriptor = translate_function_type(&mut self.constant_pool, function_type);
@@ -130,7 +130,8 @@ mod tests {
     };
 
     fn generate_class(input: &str) -> ClassData {
-        let result = Parser::new(FileId::MAIN_FILE, input).parse();
+        let wrapped_input = format!("fn main() {{ {input} }}");
+        let result = Parser::new(FileId::MAIN_FILE, &wrapped_input).parse();
         let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
         let air = query_air(ast.unwrap());
         assert!(air.diagnostics.is_empty());

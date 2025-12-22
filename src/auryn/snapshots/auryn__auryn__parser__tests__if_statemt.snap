@@ -1,6 +1,6 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"if 1 { print(42) }\")"
+expression: "verify_block(\"if 1 { print(42) }\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
@@ -12,16 +12,16 @@ AnnotatedParserOutput {
         ||||Whitespace ` `
         ||||3..5 Expression
         |||||3..5 Value
-        ||||||3..4 NumberLiteral
+        ||||||3..5 NumberLiteral
         |||||||NumberLiteral `1`
-        ||||||Whitespace ` `
+        |||||||Whitespace ` `
         ||||BraceOpen `{`
         ||||Whitespace ` `
         ||||7..17 Block
         |||||7..17 Statement
         ||||||7..17 Expression
         |||||||7..17 Value
-        ||||||||7..16 FunctionCall
+        ||||||||7..17 FunctionCall
         |||||||||Identifier `print`
         |||||||||ParensOpen `(`
         |||||||||13..15 ArgumentList
@@ -30,7 +30,7 @@ AnnotatedParserOutput {
         ||||||||||||13..15 NumberLiteral
         |||||||||||||NumberLiteral `42`
         |||||||||ParensClose `)`
-        ||||||||Whitespace ` `
+        |||||||||Whitespace ` `
         ||||BraceClose `}`
         ,
     ),

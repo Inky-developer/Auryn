@@ -16,6 +16,11 @@ use crate::{
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SyntaxNodeKind {
     Root,
+    File,
+    FunctionDefinition,
+    ParameterList,
+    ParameterDefinition,
+    Type,
     Block,
     Statement,
     Expression,

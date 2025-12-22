@@ -11,16 +11,19 @@ AirOutput {
                         0,
                     ),
                     number: Some(
-                        1,
+                        3,
                     ),
                 },
             ): AirFunction {
-                type: Function(
-                    FunctionType {
-                        parameters: [],
-                        return_type: Null,
-                    },
+                type: Computed(
+                    Function(
+                        FunctionType {
+                            parameters: [],
+                            return_type: Null,
+                        },
+                    ),
                 ),
+                declared_parameters: [],
                 ident: "main",
                 blocks: {
                     AirBlockId(
@@ -33,7 +36,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        6,
+                                        211106232532994,
                                     ),
                                 },
                                 kind: Expression(
@@ -43,7 +46,7 @@ AirOutput {
                                                 0,
                                             ),
                                             number: Some(
-                                                6,
+                                                211106232532994,
                                             ),
                                         },
                                         type: Computed(
@@ -59,7 +62,7 @@ AirOutput {
                                                                 0,
                                                             ),
                                                             number: Some(
-                                                                140737488355334,
+                                                                225179981368528,
                                                             ),
                                                         },
                                                         type: Computed(

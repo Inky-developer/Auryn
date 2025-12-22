@@ -1,6 +1,6 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"loop { break }\")"
+expression: "verify_block(\"loop { break }\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
@@ -14,9 +14,9 @@ AnnotatedParserOutput {
         ||||Whitespace ` `
         ||||7..13 Block
         |||||7..13 Statement
-        ||||||7..12 Break
+        ||||||7..13 Break
         |||||||KeywordBreak `break`
-        ||||||Whitespace ` `
+        |||||||Whitespace ` `
         ||||BraceClose `}`
         ,
     ),

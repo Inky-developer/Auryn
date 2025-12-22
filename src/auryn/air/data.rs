@@ -14,7 +14,9 @@ impl Air {
             .functions
             .iter()
             .filter(|(_, it)| it.ident.as_ref() == "main");
-        let (id, function) = main_functions.next().unwrap();
+        let (id, function) = main_functions
+            .next()
+            .expect("There should be a main function");
         assert!(main_functions.next().is_none());
         (*id, function)
     }
@@ -25,7 +27,8 @@ pub struct AirFunctionId(pub SyntaxId);
 
 #[derive(Debug)]
 pub struct AirFunction {
-    pub r#type: Type,
+    pub r#type: AirType,
+    pub declared_parameters: Vec<SmallString>,
     pub ident: SmallString,
     pub blocks: FastMap<AirBlockId, AirBlock>,
 }
@@ -66,7 +69,11 @@ pub struct Assignment {
 
 #[derive(Debug, Clone)]
 pub enum AirType {
+    /// Represent a type that has been resolved
     Computed(Type),
+    /// Represents a type that was explicitly specified in the source ode
+    Explicit(SmallString),
+    /// Represents a type was left implicit in the code
     Inferred,
 }
 
@@ -74,7 +81,7 @@ impl AirType {
     pub fn computed(&self) -> &Type {
         match self {
             AirType::Computed(computed) => computed,
-            AirType::Inferred => panic!("Expected computed type, got inferred"),
+            other => panic!("Expected computed type, got {other:?}"),
         }
     }
 }

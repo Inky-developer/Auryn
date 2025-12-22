@@ -75,12 +75,20 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(mut self) -> ParserOutput {
+    pub fn parse(self) -> ParserOutput {
+        self.parse_with(Self::parse_file)
+    }
+
+    pub fn parse_statements(self) -> ParserOutput {
+        self.parse_with(|this| this.parse_block(|it| it == TokenKind::EndOfInput))
+    }
+
+    fn parse_with(mut self, parse: impl FnOnce(&mut Self) -> ParseResult) -> ParserOutput {
         let watcher = self.push_node();
 
         self.consume_whitespace();
         // Nothing left to recover if there is an error
-        let _ = self.parse_block(|kind| kind == TokenKind::EndOfInput);
+        let _ = parse(&mut self);
         let _ = self.peek_expect(TokenKind::EndOfInput);
         let Some(mut root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
             return ParserOutput { syntax_tree: None };
@@ -125,7 +133,9 @@ impl<'a> Parser<'a> {
         })));
     }
 
-    fn consume(&mut self) -> Token<'a> {
+    /// Consumes a single token and does nothing else, unlike [`Self::consume`], which also
+    /// consumes whitespace after the consumed token
+    fn consume_single(&mut self) -> Token<'a> {
         let token = self.input.get(self.index).copied().unwrap_or(Token {
             kind: TokenKind::EndOfInput,
             text: "",
@@ -138,6 +148,13 @@ impl<'a> Parser<'a> {
             text: token.text.into(),
         }));
         token
+    }
+
+    /// Like [`Self::consume_no_whitespace`], but also consume whitespace after the consumed token
+    fn consume(&mut self) -> Token<'a> {
+        let result = self.consume_single();
+        self.consume_whitespace();
+        result
     }
 
     fn consume_if<T, F: FnOnce(Token<'a>) -> Option<T>>(
@@ -153,10 +170,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn consume_whitespace(&mut self) -> u32 {
-        match self.consume_if(|token| (token.kind == TokenKind::Whitespace).then_some(token)) {
-            Ok(token) => token.text.len().try_into().expect("Token too long"),
-            Err(_) => 0,
+    fn consume_whitespace(&mut self) {
+        if self.peek().kind == TokenKind::Whitespace {
+            self.consume_single();
         }
     }
 
@@ -246,6 +262,75 @@ impl<'a> Parser<'a> {
 
 /// Parsing methods
 impl Parser<'_> {
+    fn parse_file(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        loop {
+            self.consume_whitespace_and_newlines();
+            if self.peek().kind == TokenKind::EndOfInput {
+                break;
+            }
+            self.parse_function_definition()?;
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::File);
+        Ok(())
+    }
+
+    fn parse_function_definition(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordFn)?;
+        self.expect(TokenKind::Identifier)?;
+        self.parse_parameter_list()?;
+        self.expect(TokenKind::BraceOpen)?;
+        self.parse_block(|it| it == TokenKind::BraceClose)?;
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::FunctionDefinition);
+        Ok(())
+    }
+
+    fn parse_parameter_list(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::ParensOpen)?;
+        loop {
+            if self.peek().kind == TokenKind::ParensClose {
+                break;
+            }
+            self.parse_parameter_definition()?;
+            if self.peek().kind != TokenKind::Comma {
+                break;
+            }
+            self.expect(TokenKind::Comma)?;
+        }
+        self.expect(TokenKind::ParensClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ParameterList);
+        Ok(())
+    }
+
+    fn parse_parameter_definition(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::Colon)?;
+        self.parse_type()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ParameterDefinition);
+        Ok(())
+    }
+
+    fn parse_type(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.parse_identifier()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Type);
+        Ok(())
+    }
+
     fn parse_block(&mut self, end_set: impl Fn(TokenKind) -> bool) -> ParseResult {
         let watcher = self.push_node();
 
@@ -261,7 +346,6 @@ impl Parser<'_> {
         }
 
         self.finish_node(watcher, SyntaxNodeKind::Block);
-
         Ok(())
     }
 
@@ -290,11 +374,8 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordLet)?;
-        self.consume_whitespace();
         self.expect(TokenKind::Identifier)?;
-        self.consume_whitespace();
         self.expect(TokenKind::Equal)?;
-        self.consume_whitespace();
         self.parse_expression()?;
 
         self.finish_node(watcher, SyntaxNodeKind::Assignment);
@@ -305,15 +386,12 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordIf)?;
-        self.consume_whitespace();
         self.parse_expression()?;
         self.expect(TokenKind::BraceOpen)?;
-        self.consume_whitespace();
         self.parse_block(|kind| kind == TokenKind::BraceClose)?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::IfStatement);
-
         Ok(())
     }
 
@@ -321,14 +399,12 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordLoop)?;
-        self.consume_whitespace();
         self.expect(TokenKind::BraceOpen)?;
         self.consume_whitespace();
         self.parse_block(|kind| kind == TokenKind::BraceClose)?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::Loop);
-
         Ok(())
     }
 
@@ -338,7 +414,6 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordBreak)?;
 
         self.finish_node(watcher, SyntaxNodeKind::Break);
-
         Ok(())
     }
 
@@ -346,13 +421,10 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::Identifier)?;
-        self.consume_whitespace();
         self.expect(TokenKind::Equal)?;
-        self.consume_whitespace();
         self.parse_expression()?;
 
         self.finish_node(watcher, SyntaxNodeKind::VariableUpdate);
-
         Ok(())
     }
 
@@ -385,7 +457,6 @@ impl Parser<'_> {
                 parent.children.push(SyntaxItem::Node(node));
 
                 this.parse_binary_operator_token()?;
-                this.consume_whitespace();
                 this.parse_expression_pratt(binding_power)?;
 
                 let node = this
@@ -402,14 +473,12 @@ impl Parser<'_> {
         let watcher = self.push_node();
         let watcher = inner(self, watcher, min_binding_power)?;
         self.finish_node(watcher, SyntaxNodeKind::Expression);
-
         Ok(())
     }
 
     fn parse_binary_operator_token(&mut self) -> ParseResult {
         self.consume_if(|token| token.kind.to_binary_operator())
             .map_err(|_| ())?;
-
         Ok(())
     }
 
@@ -428,7 +497,6 @@ impl Parser<'_> {
         };
 
         self.finish_node(watcher, SyntaxNodeKind::Value);
-
         Ok(())
     }
 
@@ -436,7 +504,6 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::Identifier)?;
-        self.consume_whitespace();
 
         match self.peek().kind {
             TokenKind::ParensOpen => {
@@ -452,7 +519,15 @@ impl Parser<'_> {
                 self.finish_node(watcher, SyntaxNodeKind::Ident);
             }
         }
+        Ok(())
+    }
 
+    fn parse_identifier(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Ident);
         Ok(())
     }
 
@@ -468,7 +543,6 @@ impl Parser<'_> {
         }
 
         self.finish_node(watcher, SyntaxNodeKind::ArgumentList);
-
         Ok(())
     }
 
@@ -510,10 +584,6 @@ mod tests {
         parser::{Parser, ParserOutput},
     };
 
-    fn parse(input: &str) -> ParserOutput {
-        Parser::new(FileId::MAIN_FILE, input).parse()
-    }
-
     struct AnnotatedParserOutput<'a> {
         output: ParserOutput,
         diagnostics: Vec<ComputedDiagnostic>,
@@ -531,8 +601,22 @@ mod tests {
         }
     }
 
+    fn verify_block(input: &str) -> impl Debug {
+        let output = Parser::new(FileId::MAIN_FILE, input).parse_statements();
+        let diagnostics = output
+            .syntax_tree
+            .as_ref()
+            .map(|it| it.collect_diagnostics())
+            .unwrap_or_default();
+        AnnotatedParserOutput {
+            output,
+            input,
+            diagnostics,
+        }
+    }
+
     fn verify(input: &str) -> impl Debug {
-        let output = parse(input);
+        let output = Parser::new(FileId::MAIN_FILE, input).parse();
         let diagnostics = output
             .syntax_tree
             .as_ref()
@@ -547,69 +631,74 @@ mod tests {
 
     #[test]
     fn test_parse_expression() {
-        insta::assert_debug_snapshot!(verify("1 + 2 * 3"));
-        insta::assert_debug_snapshot!(verify("1 * 2 + 3"));
-        insta::assert_debug_snapshot!(verify("1 * \"test\""));
+        insta::assert_debug_snapshot!(verify_block("1 + 2 * 3"));
+        insta::assert_debug_snapshot!(verify_block("1 * 2 + 3"));
+        insta::assert_debug_snapshot!(verify_block("1 * \"test\""));
     }
 
     #[test]
     fn test_parse_large_number() {
-        insta::assert_debug_snapshot!(verify("9999999999999"));
+        insta::assert_debug_snapshot!(verify_block("9999999999999"));
     }
 
     #[test]
     fn test_parse_parenthesis() {
-        insta::assert_debug_snapshot!(verify("(3)"));
-        insta::assert_debug_snapshot!(verify("((3))"));
-        insta::assert_debug_snapshot!(verify("1 + (2 + 3)"));
-        insta::assert_debug_snapshot!(verify("1 * (2 + 3)"));
+        insta::assert_debug_snapshot!(verify_block("(3)"));
+        insta::assert_debug_snapshot!(verify_block("((3))"));
+        insta::assert_debug_snapshot!(verify_block("1 + (2 + 3)"));
+        insta::assert_debug_snapshot!(verify_block("1 * (2 + 3)"));
     }
 
     #[test]
     fn test_parse_function_call() {
-        insta::assert_debug_snapshot!(verify("print(1)"));
-        insta::assert_debug_snapshot!(verify("print(1)\n"));
+        insta::assert_debug_snapshot!(verify_block("print(1)"));
+        insta::assert_debug_snapshot!(verify_block("print(1)\n"));
     }
 
     #[test]
     fn test_parse_assignment() {
-        insta::assert_debug_snapshot!(verify("let helloworld = 1\n"));
+        insta::assert_debug_snapshot!(verify_block("let helloworld = 1\n"));
     }
 
     #[test]
     fn test_variable() {
-        insta::assert_debug_snapshot!(verify("print(hello)"));
+        insta::assert_debug_snapshot!(verify_block("print(hello)"));
     }
 
     #[test]
     fn test_variable_update() {
-        insta::assert_debug_snapshot!(verify("a = 3"));
+        insta::assert_debug_snapshot!(verify_block("a = 3"));
     }
 
     #[test]
     fn test_comparison() {
-        insta::assert_debug_snapshot!(verify("1 == 1"));
+        insta::assert_debug_snapshot!(verify_block("1 == 1"));
     }
 
     #[test]
     fn test_if_statemt() {
-        insta::assert_debug_snapshot!(verify("if 1 { print(42) }"));
+        insta::assert_debug_snapshot!(verify_block("if 1 { print(42) }"));
     }
 
     #[test]
     fn test_loop() {
-        insta::assert_debug_snapshot!(verify("loop { 1 + 2 }"));
-        insta::assert_debug_snapshot!(verify("loop { break }"));
-        insta::assert_debug_snapshot!(verify("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"))
+        insta::assert_debug_snapshot!(verify_block("loop { 1 + 2 }"));
+        insta::assert_debug_snapshot!(verify_block("loop { break }"));
+        insta::assert_debug_snapshot!(verify_block("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"))
+    }
+
+    #[test]
+    fn test_function() {
+        insta::assert_debug_snapshot!(verify("fn foo(a: Int, b: String,) { print(9000) }"));
     }
 
     #[test]
     fn test_multiple_statements() {
-        insta::assert_debug_snapshot!(verify("let a = 1\nlet b = 2"))
+        insta::assert_debug_snapshot!(verify_block("let a = 1\nlet b = 2"))
     }
 
     #[test]
     fn test_reject_extra_input() {
-        insta::assert_debug_snapshot!(verify("1 1 1 1 11 1"));
+        insta::assert_debug_snapshot!(verify_block("1 1 1 1 11 1"));
     }
 }

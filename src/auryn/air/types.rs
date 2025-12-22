@@ -1,4 +1,5 @@
 use core::fmt;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Type {
@@ -19,6 +20,18 @@ pub struct FunctionType {
 impl Type {
     pub fn is_subtype(&self, other: &Type) -> bool {
         self == other || matches!(other, Type::Top)
+    }
+}
+
+impl FromStr for Type {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Number" => Type::Number,
+            "String" => Type::String,
+            _ => return Err(()),
+        })
     }
 }
 

@@ -114,7 +114,32 @@ macro_rules! gen_ast_node_inner {
 }
 
 ast_node! {
-    pub struct Root = SyntaxNodeKind::Root as { block: Block, }
+    pub struct Root = SyntaxNodeKind::Root as { file: File, }
+}
+
+ast_node! {
+    pub struct File = SyntaxNodeKind::File as { ...functions: FunctionDefinition }
+}
+
+ast_node! {
+    pub struct FunctionDefinition = SyntaxNodeKind::FunctionDefinition as {
+        token ident: TokenKind::Identifier,
+        parameter_list: ParameterList,
+        block: Block,
+    }
+}
+
+ast_node! {
+    pub struct ParameterList = SyntaxNodeKind::ParameterList as { ...parameters: Parameter }
+}
+
+ast_node! {
+    pub struct Parameter = SyntaxNodeKind::ParameterDefinition as { token ident: TokenKind::Identifier, r#type: Type, }
+}
+
+ast_node! {
+    pub enum Type = SyntaxNodeKind::Type as
+        | SyntaxNodeKind::Ident as Ident
 }
 
 ast_node! {

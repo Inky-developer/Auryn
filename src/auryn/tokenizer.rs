@@ -43,11 +43,13 @@ pub enum TokenKind {
     KeywordLoop,
     KeywordBreak,
     KeywordIf,
+    KeywordFn,
     Whitespace,
     Newline,
     Error,
     EndOfInput,
     Comma,
+    Colon,
 }
 
 impl TokenKind {
@@ -202,6 +204,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '{' => TokenKind::BraceOpen,
             '}' => TokenKind::BraceClose,
             ',' => TokenKind::Comma,
+            ':' => TokenKind::Colon,
             '\n' => TokenKind::Newline,
             'l' if self.starts_with_keyword("let") => {
                 return Some(Token {
@@ -219,6 +222,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(Token {
                     kind: TokenKind::KeywordBreak,
                     text: self.consume_text("break"),
+                });
+            }
+            'f' if self.starts_with_keyword("fn") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordFn,
+                    text: self.consume_text("fn"),
                 });
             }
             'i' if self.starts_with_keyword("if") => {
@@ -258,7 +267,7 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
         insta::assert_debug_snapshot!(tokenize(
-            "loop let some_text = if true { 2 } else { break }"
+            "loop let some_text = if true { 2 } else { break } fn foo"
         ));
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6"

@@ -1,6 +1,6 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"loop { 1 + 2 }\")"
+expression: "verify_block(\"loop { 1 + 2 }\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
@@ -18,16 +18,16 @@ AnnotatedParserOutput {
         |||||||7..13 BinaryOperation
         ||||||||7..9 Expression
         |||||||||7..9 Value
-        ||||||||||7..8 NumberLiteral
+        ||||||||||7..9 NumberLiteral
         |||||||||||NumberLiteral `1`
-        ||||||||||Whitespace ` `
+        |||||||||||Whitespace ` `
         ||||||||Plus `+`
         ||||||||Whitespace ` `
         ||||||||11..13 Expression
         |||||||||11..13 Value
-        ||||||||||11..12 NumberLiteral
+        ||||||||||11..13 NumberLiteral
         |||||||||||NumberLiteral `2`
-        ||||||||||Whitespace ` `
+        |||||||||||Whitespace ` `
         ||||BraceClose `}`
         ,
     ),
