@@ -95,22 +95,6 @@ impl<'a> Parser<'a> {
 
 /// Utility methods
 impl<'a> Parser<'a> {
-    fn diagnostic(&mut self, kind: impl Into<DiagnosticKind>) {
-        let current = self
-            .node_stack
-            .last_mut()
-            .expect("Should not emit diagnostics if there is no node");
-        let Some(SyntaxItem::Token(token)) = current.children.last_mut() else {
-            panic!("Expected a token to attach the diagnostic onto");
-        };
-        let text = std::mem::take(&mut token.text);
-        *current.children.last_mut().unwrap() = SyntaxItem::Error(Box::new(ErrorNode {
-            id: SyntaxId::new_unset(self.file_id),
-            text,
-            diagnostic: kind.into(),
-        }))
-    }
-
     fn peek(&self) -> Token<'a> {
         self.input.get(self.index).copied().unwrap_or(Token {
             kind: TokenKind::EndOfInput,
@@ -490,10 +474,7 @@ impl Parser<'_> {
     fn parse_number(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        let text = self.expect(TokenKind::Number)?;
-        if text.parse::<i32>().is_err() {
-            self.diagnostic(DiagnosticError::InvalidNumber);
-        };
+        self.expect(TokenKind::Number)?;
 
         self.finish_node(watcher, SyntaxNodeKind::Number);
         Ok(())
@@ -561,6 +542,11 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_large_number() {
+        insta::assert_debug_snapshot!(verify("9999999999999"));
+    }
+
+    #[test]
     fn test_parse_parenthesis() {
         insta::assert_debug_snapshot!(verify("(3)"));
         insta::assert_debug_snapshot!(verify("((3))"));
@@ -614,10 +600,5 @@ mod tests {
     #[test]
     fn test_reject_extra_input() {
         insta::assert_debug_snapshot!(verify("1 1 1 1 11 1"));
-    }
-
-    #[test]
-    fn test_reject_large_number() {
-        insta::assert_debug_snapshot!(verify("9999999999999"));
     }
 }
