@@ -457,11 +457,19 @@ impl FunctionTransformer<'_> {
                 }),
             )
         } else {
-            let function = self.namespace[&ident.text];
+            let Some(function) = self.namespace.get(&ident.text) else {
+                self.add_error(
+                    function_call.id(),
+                    DiagnosticError::UndefinedVariable {
+                        ident: ident.text.clone(),
+                    },
+                );
+                return AirExpression::error(function_call.id());
+            };
             AirExpression::new(
                 function_call.id(),
                 AirExpressionKind::Call(Call {
-                    function,
+                    function: *function,
                     arguments,
                 }),
             )
