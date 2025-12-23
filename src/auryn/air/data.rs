@@ -30,9 +30,20 @@ pub struct AirFunctionId(pub SyntaxId);
 #[derive(Debug)]
 pub struct AirFunction {
     pub r#type: AirType,
-    pub declared_parameters: Vec<SmallString>,
+    pub declared_parameter_types: Vec<SmallString>,
     pub ident: SmallString,
     pub blocks: FastMap<AirBlockId, AirBlock>,
+}
+
+impl AirFunction {
+    /// Returns value ids for the arguments.
+    /// The value ids increment for each arguent.
+    pub fn argument_ids(&self) -> impl Iterator<Item = AirValueId> {
+        self.declared_parameter_types
+            .iter()
+            .enumerate()
+            .map(|(index, _)| AirValueId(index))
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

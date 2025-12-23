@@ -29,9 +29,13 @@ mod tests {
         parser::Parser,
     };
 
-    fn compile(input: &str) -> AirOutput {
+    fn compile_wrapped(input: &str) -> AirOutput {
         let wrapped_input = format!("fn main() {{ {input} }}");
-        let output = Parser::new(FileId::MAIN_FILE, &wrapped_input).parse();
+        compile(&wrapped_input)
+    }
+
+    fn compile(input: &str) -> AirOutput {
+        let output = Parser::new(FileId::MAIN_FILE, input).parse();
         let diagnostics = output
             .syntax_tree
             .as_ref()
@@ -49,11 +53,18 @@ mod tests {
 
     #[test]
     fn it_works() {
-        insta::assert_debug_snapshot!(compile("print(1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("print(1)"));
+    }
+
+    #[test]
+    fn test_function_call() {
+        insta::assert_debug_snapshot!(compile(
+            "fn main() { foo(1) }\nfn foo(bar: Number) { print(bar) }"
+        ));
     }
 
     #[test]
     fn invalid_assignment() {
-        insta::assert_debug_snapshot!(compile("let a = print(1)\nprint(a + 1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a = print(1)\nprint(a + 1)"));
     }
 }

@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(\"print(1)\")"
+expression: "compile_wrapped(\"print(1)\")"
 ---
 AirOutput {
     air: Air {
@@ -23,7 +23,7 @@ AirOutput {
                         },
                     ),
                 ),
-                declared_parameters: [],
+                declared_parameter_types: [],
                 ident: "main",
                 blocks: {
                     AirBlockId(

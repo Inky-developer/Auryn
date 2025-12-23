@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(\"let a = print(1)\\nprint(a + 1)\")"
+expression: "compile_wrapped(\"let a = print(1)\\nprint(a + 1)\")"
 ---
 AirOutput {
     air: Air {
@@ -23,7 +23,7 @@ AirOutput {
                         },
                     ),
                 ),
-                declared_parameters: [],
+                declared_parameter_types: [],
                 ident: "main",
                 blocks: {
                     AirBlockId(
@@ -42,7 +42,7 @@ AirOutput {
                                 kind: Assignment(
                                     Assignment {
                                         target: AirValueId(
-                                            1,
+                                            0,
                                         ),
                                         expression: AirExpression {
                                             id: SyntaxId {
@@ -139,7 +139,7 @@ AirOutput {
                                                                     ),
                                                                     kind: Variable(
                                                                         AirValueId(
-                                                                            1,
+                                                                            0,
                                                                         ),
                                                                     ),
                                                                 },

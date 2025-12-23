@@ -119,11 +119,12 @@ fn translate_function_type(pool: &mut ConstantPoolBuilder, ty: &FunctionType) ->
     let parameters = ty
         .parameters
         .iter()
-        .map(|it| translate_type(pool, it).to_field_descriptor(pool))
+        .flat_map(|it| translate_type(pool, it).map(|it| it.to_field_descriptor(pool)))
         .collect();
     let return_type = match &ty.return_type {
         Type::Null => FieldDescriptor::Void,
-        other => translate_type(pool, other).to_field_descriptor(pool),
+        other => translate_type(pool, other)
+            .map_or(FieldDescriptor::Void, |it| it.to_field_descriptor(pool)),
     };
     MethodDescriptor {
         parameters,
@@ -143,9 +144,9 @@ mod tests {
     }
 
     fn generate_class(input: &str) -> ClassData {
-        let result = dbg!(Parser::new(FileId::MAIN_FILE, input).parse());
+        let result = Parser::new(FileId::MAIN_FILE, input).parse();
         let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
-        let air = dbg!(query_air(ast.unwrap()));
+        let air = query_air(ast.unwrap());
         assert!(air.diagnostics.is_empty());
 
         super::generate_class(&air.air)

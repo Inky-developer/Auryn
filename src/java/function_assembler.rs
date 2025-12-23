@@ -209,7 +209,7 @@ pub enum Instruction {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct VariableId {
-    pub(super) index: u16,
+    pub index: u16,
     pub r#type: Primitive,
 }
 

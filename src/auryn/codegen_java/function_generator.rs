@@ -37,6 +37,7 @@ pub fn generate_function(
 ) -> class::Method {
     let mut generator = FunctionGenerator::new(
         mangled_name,
+        function,
         method_descriptor,
         class_name,
         function_infos,
@@ -60,19 +61,41 @@ struct FunctionGenerator<'a> {
 impl<'a> FunctionGenerator<'a> {
     pub fn new(
         name: SmallString,
+        function: &AirFunction,
         method_descriptor: MethodDescriptor,
         class_name: &'a SmallString,
         function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
         pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
+        let Type::Function(function_type) = function.r#type.computed() else {
+            panic!("Invalid function type");
+        };
         let mut block_translation = FastMap::default();
         block_translation.insert(AirBlockId::ROOT, BasicBlockId(0));
+
+        let mut variable_map = FastMap::default();
+
+        let mut variable_index = 0;
+        for (parameter, argument_id) in function_type.parameters.iter().zip(function.argument_ids())
+        {
+            if let Some(primitive) = translate_type(pool, parameter) {
+                let variable_id = VariableId {
+                    index: variable_index,
+                    r#type: primitive,
+                };
+                variable_index += 1;
+                variable_map.insert(argument_id, variable_id);
+            }
+        }
+
+        let assembler = FunctionAssembler::new(name, method_descriptor, pool);
+
         Self {
             class_name,
             function_infos,
-            assembler: FunctionAssembler::new(name, method_descriptor, pool),
+            assembler,
             block_translation,
-            variable_map: FastMap::default(),
+            variable_map,
             generated_blocks: FastSet::default(),
             pending_blocks: IndexSet::default(),
         }
@@ -160,16 +183,21 @@ impl FunctionGenerator<'_> {
         self.generate_expression(&assignment.expression);
 
         let variable_id = if self.variable_map.contains_key(&assignment.target) {
-            self.variable_map[&assignment.target]
+            Some(self.variable_map[&assignment.target])
         } else {
             let air_type = assignment.expression.r#type.computed();
-            let primitive = translate_type(self.assembler.constant_pool, air_type);
-            let variable_id = self.assembler.alloc_variable(primitive);
-            self.variable_map.insert(assignment.target, variable_id);
-            variable_id
+            if let Some(primitive) = translate_type(self.assembler.constant_pool, air_type) {
+                let variable_id = self.assembler.alloc_variable(primitive);
+                self.variable_map.insert(assignment.target, variable_id);
+                Some(variable_id)
+            } else {
+                None
+            }
         };
 
-        self.assembler.add(Instruction::Store(variable_id));
+        if let Some(variable_id) = variable_id {
+            self.assembler.add(Instruction::Store(variable_id));
+        }
     }
 
     /// The return value indicates the stack usage
@@ -265,6 +293,10 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_call(&mut self, call: &Call) -> Option<TypeCategory> {
+        for argument in &call.arguments {
+            self.generate_expression(argument);
+        }
+
         let GeneratedMethodData {
             generated_name,
             method_descriptor,

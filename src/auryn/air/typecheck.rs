@@ -81,9 +81,20 @@ impl Typechecker {
 impl Typechecker {
     fn typecheck_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
         let parameters = function
-            .declared_parameters
+            .declared_parameter_types
             .iter()
-            .filter_map(|ident| ident.parse().ok())
+            .map(|ident| match ident.parse() {
+                Ok(r#type) => r#type,
+                Err(_) => {
+                    self.add_error(
+                        id.0,
+                        DiagnosticError::UndefinedVariable {
+                            ident: ident.clone(),
+                        },
+                    );
+                    Type::Error
+                }
+            })
             .collect();
         let function_type = FunctionType {
             parameters,
@@ -94,6 +105,15 @@ impl Typechecker {
     }
 
     fn typecheck_function_body(&mut self, function: &mut AirFunction) {
+        let Type::Function(function_type) = function.r#type.computed() else {
+            panic!("Invalid type for function: {:?}", function.r#type);
+        };
+
+        self.variables.clear();
+        for (id, r#type) in function.argument_ids().zip(function_type.parameters.iter()) {
+            self.variables.insert(id, r#type.clone());
+        }
+
         let mut visited_blocks = FastSet::default();
         let mut pending_blocks = VecDeque::default();
 
@@ -202,6 +222,10 @@ impl Typechecker {
     }
 
     fn typecheck_call(&mut self, id: SyntaxId, call: &mut Call) -> Type {
+        for argument in &mut call.arguments {
+            self.typecheck_expression(argument);
+        }
+
         let function_type = self.functions[&call.function].clone();
         let parameters = function_type.parameters;
 

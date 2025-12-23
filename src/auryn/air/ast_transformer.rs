@@ -85,16 +85,20 @@ impl AstTransformer {
                     }
                 })
             })
-            .collect();
+            .collect::<Vec<_>>();
+        let parameter_idents = parameters
+            .parameters()
+            .filter_map(|param| param.ident().ok().map(|ident| ident.text.clone()))
+            .collect::<Vec<_>>();
 
         let mut function_transformer =
-            FunctionTransformer::new(&mut self.diagnostics, &self.namespace);
+            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
         function_transformer.transform_function_body(block);
 
         let function_id = self.namespace[&ident];
         let function = AirFunction {
             r#type: AirType::Inferred,
-            declared_parameters,
+            declared_parameter_types: declared_parameters,
             ident,
             blocks: function_transformer.finished_blocks,
         };
@@ -129,15 +133,21 @@ struct FunctionTransformer<'a> {
 
 impl<'a> FunctionTransformer<'a> {
     fn new(
+        parameter_idents: Vec<SmallString>,
         diagnostics: &'a mut Vec<Diagnostic>,
         namespace: &'a FastMap<SmallString, AirFunctionId>,
     ) -> Self {
+        let variables = parameter_idents
+            .into_iter()
+            .enumerate()
+            .map(|(index, ident)| (ident, AirValueId(index)))
+            .collect::<FastMap<_, _>>();
         Self {
             block_builders: FastMap::default(),
             current_builder: AirBlockId(0),
             finished_blocks: FastMap::default(),
-            next_value_id: 1,
-            variables: FastMap::default(),
+            next_value_id: variables.len(),
+            variables,
             diagnostics,
             namespace,
             loops: Vec::new(),
