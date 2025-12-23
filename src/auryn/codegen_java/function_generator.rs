@@ -3,12 +3,12 @@ use crate::{
         air::{
             data::{
                 AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirNode, AirNodeKind, AirValueId, Assignment,
-                BinaryOperation, Intrinsic, IntrinsicCall,
+                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirValueId,
+                Assignment, BinaryOperation, Call, Intrinsic, IntrinsicCall,
             },
             types::Type,
         },
-        codegen_java::utils::translate_type,
+        codegen_java::{class_generator::GeneratedMethodData, utils::translate_type},
         tokenizer::BinaryOperatorToken,
     },
     java::{
@@ -29,10 +29,19 @@ use indexmap::IndexSet;
 
 pub fn generate_function(
     pool: &mut ConstantPoolBuilder,
+    function_infos: &FastMap<AirFunctionId, GeneratedMethodData>,
+    class_name: &SmallString,
     function: &AirFunction,
+    mangled_name: SmallString,
     method_descriptor: MethodDescriptor,
 ) -> class::Method {
-    let mut generator = FunctionGenerator::new(function.ident.clone(), method_descriptor, pool);
+    let mut generator = FunctionGenerator::new(
+        mangled_name,
+        method_descriptor,
+        class_name,
+        function_infos,
+        pool,
+    );
     generator.generate_from_function(function);
 
     generator.finish()
@@ -44,17 +53,23 @@ struct FunctionGenerator<'a> {
     block_translation: FastMap<AirBlockId, BasicBlockId>,
     generated_blocks: FastSet<AirBlockId>,
     pending_blocks: IndexSet<AirBlockId>,
+    function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
+    class_name: &'a SmallString,
 }
 
 impl<'a> FunctionGenerator<'a> {
     pub fn new(
         name: SmallString,
         method_descriptor: MethodDescriptor,
+        class_name: &'a SmallString,
+        function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
         pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
         let mut block_translation = FastMap::default();
         block_translation.insert(AirBlockId::ROOT, BasicBlockId(0));
         Self {
+            class_name,
+            function_infos,
             assembler: FunctionAssembler::new(name, method_descriptor, pool),
             block_translation,
             variable_map: FastMap::default(),
@@ -165,6 +180,7 @@ impl FunctionGenerator<'_> {
                 Some(self.generate_binary_operation(binary_operator))
             }
             AirExpressionKind::Variable(variable) => Some(self.generate_variable(variable)),
+            AirExpressionKind::Call(call) => self.generate_call(call),
             AirExpressionKind::IntrinsicCall(intrinsic) => self.generate_intrinsic_call(intrinsic),
             AirExpressionKind::Error => unreachable!("Codegen was started with invalid air"),
         }
@@ -246,6 +262,26 @@ impl FunctionGenerator<'_> {
         let variable_id = self.variable_map[variable];
         self.assembler.add(Instruction::Load(variable_id));
         variable_id.r#type.to_verification_type().category()
+    }
+
+    fn generate_call(&mut self, call: &Call) -> Option<TypeCategory> {
+        let GeneratedMethodData {
+            generated_name,
+            method_descriptor,
+        } = &self.function_infos[&call.function];
+        self.assembler.add(Instruction::InvokeStatic {
+            class_name: self.class_name.clone(),
+            name: generated_name.clone(),
+            method_descriptor: method_descriptor.clone(),
+        });
+        match &method_descriptor.return_type {
+            FieldDescriptor::Void => None,
+            other => Some(
+                other
+                    .to_verification_type(self.assembler.constant_pool)
+                    .category(),
+            ),
+        }
     }
 
     fn generate_intrinsic_call(&mut self, intrinsic: &IntrinsicCall) -> Option<TypeCategory> {

@@ -3,7 +3,7 @@ use crate::{
         air::data::{
             self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-            AirValueId, Intrinsic, IntrinsicCall,
+            AirValueId, Call, IntrinsicCall,
         },
         ast::ast_node::{
             self, Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall,
@@ -36,6 +36,7 @@ pub fn transform_ast(ast: Root) -> AirOutput {
 #[derive(Debug, Default)]
 struct AstTransformer {
     functions: FastMap<AirFunctionId, AirFunction>,
+    namespace: FastMap<SmallString, AirFunctionId>,
     diagnostics: Vec<Diagnostic>,
 }
 
@@ -46,8 +47,21 @@ impl AstTransformer {
         };
 
         for function in file.functions() {
+            self.register_function(function);
+        }
+
+        for function in file.functions() {
             self.transform_function(function);
         }
+    }
+
+    fn register_function(&mut self, function_definition: FunctionDefinition) {
+        let Ok(ident) = function_definition.ident() else {
+            return;
+        };
+
+        self.namespace
+            .insert(ident.text.clone(), AirFunctionId(function_definition.id()));
     }
 
     fn transform_function(&mut self, function_definition: FunctionDefinition) {
@@ -73,9 +87,11 @@ impl AstTransformer {
             })
             .collect();
 
-        let mut function_transformer = FunctionTransformer::new(&mut self.diagnostics);
+        let mut function_transformer =
+            FunctionTransformer::new(&mut self.diagnostics, &self.namespace);
         function_transformer.transform_function_body(block);
 
+        let function_id = self.namespace[&ident];
         let function = AirFunction {
             r#type: AirType::Inferred,
             declared_parameters,
@@ -83,8 +99,7 @@ impl AstTransformer {
             blocks: function_transformer.finished_blocks,
         };
 
-        self.functions
-            .insert(AirFunctionId(function_definition.id()), function);
+        self.functions.insert(function_id, function);
     }
 }
 
@@ -108,11 +123,15 @@ struct FunctionTransformer<'a> {
     next_value_id: usize,
     variables: FastMap<SmallString, AirValueId>,
     diagnostics: &'a mut Vec<Diagnostic>,
+    namespace: &'a FastMap<SmallString, AirFunctionId>,
     loops: Vec<LoopInfo>,
 }
 
 impl<'a> FunctionTransformer<'a> {
-    fn new(diagnostics: &'a mut Vec<Diagnostic>) -> Self {
+    fn new(
+        diagnostics: &'a mut Vec<Diagnostic>,
+        namespace: &'a FastMap<SmallString, AirFunctionId>,
+    ) -> Self {
         Self {
             block_builders: FastMap::default(),
             current_builder: AirBlockId(0),
@@ -120,6 +139,7 @@ impl<'a> FunctionTransformer<'a> {
             next_value_id: 1,
             variables: FastMap::default(),
             diagnostics,
+            namespace,
             loops: Vec::new(),
         }
     }
@@ -418,26 +438,24 @@ impl FunctionTransformer<'_> {
             .map(|arg| self.transform_expression(arg))
             .collect();
 
-        let intrinsic = match ident.text.as_ref() {
-            "print" => Intrinsic::Print,
-            _ => {
-                self.add_error(
-                    ident.id,
-                    DiagnosticError::UnknownIntrinsic {
-                        ident: ident.text.clone(),
-                    },
-                );
-                return AirExpression::error(ident.id);
-            }
-        };
-
-        AirExpression::new(
-            function_call.id(),
-            AirExpressionKind::IntrinsicCall(IntrinsicCall {
-                intrinsic,
-                arguments,
-            }),
-        )
+        if let Ok(intrinsic) = ident.text.parse() {
+            AirExpression::new(
+                function_call.id(),
+                AirExpressionKind::IntrinsicCall(IntrinsicCall {
+                    intrinsic,
+                    arguments,
+                }),
+            )
+        } else {
+            let function = self.namespace[&ident.text];
+            AirExpression::new(
+                function_call.id(),
+                AirExpressionKind::Call(Call {
+                    function,
+                    arguments,
+                }),
+            )
+        }
     }
 
     fn transform_parenthesis(&mut self, parenthesis: Parenthesis) -> AirExpression {

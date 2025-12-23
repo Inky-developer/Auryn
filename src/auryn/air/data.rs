@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::{
     auryn::{air::types::Type, syntax_id::SyntaxId, tokenizer::BinaryOperatorToken},
     utils::{fast_map::FastMap, small_string::SmallString},
@@ -113,6 +115,7 @@ pub enum AirExpressionKind {
     Constant(AirConstant),
     BinaryOperator(BinaryOperation),
     Variable(AirValueId),
+    Call(Call),
     IntrinsicCall(IntrinsicCall),
     Error,
 }
@@ -136,6 +139,12 @@ pub enum AirConstant {
 }
 
 #[derive(Debug)]
+pub struct Call {
+    pub function: AirFunctionId,
+    pub arguments: Vec<AirExpression>,
+}
+
+#[derive(Debug)]
 pub struct IntrinsicCall {
     pub intrinsic: Intrinsic,
     pub arguments: Vec<AirExpression>,
@@ -151,6 +160,17 @@ impl Intrinsic {
         match self {
             Intrinsic::Print => (&[Type::Top], Type::Null),
         }
+    }
+}
+
+impl FromStr for Intrinsic {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "print" => Intrinsic::Print,
+            _ => return Err(()),
+        })
     }
 }
 

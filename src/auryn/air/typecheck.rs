@@ -5,8 +5,8 @@ use crate::{
         air::{
             data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirNode, AirNodeKind, AirType, AirValueId,
-                Assignment, BinaryOperation, IntrinsicCall,
+                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
+                AirValueId, Assignment, BinaryOperation, Call, IntrinsicCall,
             },
             types::{FunctionType, Type},
         },
@@ -22,14 +22,19 @@ pub fn typecheck_air(air: &mut Air) -> Vec<Diagnostic> {
 
 #[derive(Debug, Default)]
 pub struct Typechecker {
+    functions: FastMap<AirFunctionId, FunctionType>,
     variables: FastMap<AirValueId, Type>,
     diagnostics: Vec<Diagnostic>,
 }
 
 impl Typechecker {
     pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
+        for (id, function) in &mut air.functions {
+            self.typecheck_function_signature(*id, function);
+        }
+
         for function in air.functions.values_mut() {
-            self.typecheck_function(function);
+            self.typecheck_function_body(function);
         }
 
         self.diagnostics
@@ -74,9 +79,21 @@ impl Typechecker {
 }
 
 impl Typechecker {
-    fn typecheck_function(&mut self, function: &mut AirFunction) {
-        self.compute_function_signature(function);
+    fn typecheck_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
+        let parameters = function
+            .declared_parameters
+            .iter()
+            .filter_map(|ident| ident.parse().ok())
+            .collect();
+        let function_type = FunctionType {
+            parameters,
+            return_type: Type::Null,
+        };
+        function.r#type = AirType::Computed(Type::Function(Box::new(function_type.clone())));
+        self.functions.insert(id, function_type);
+    }
 
+    fn typecheck_function_body(&mut self, function: &mut AirFunction) {
         let mut visited_blocks = FastSet::default();
         let mut pending_blocks = VecDeque::default();
 
@@ -92,18 +109,6 @@ impl Typechecker {
                 }
             });
         }
-    }
-
-    fn compute_function_signature(&mut self, function: &mut AirFunction) {
-        let parameters = function
-            .declared_parameters
-            .iter()
-            .filter_map(|ident| ident.parse().ok())
-            .collect();
-        function.r#type = AirType::Computed(Type::Function(Box::new(FunctionType {
-            parameters,
-            return_type: Type::Null,
-        })))
     }
 
     fn typecheck_block(&mut self, block: &mut AirBlock, on_next_id: impl FnMut(AirBlockId)) {
@@ -161,6 +166,7 @@ impl Typechecker {
                 self.typecheck_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(value) => self.typecheck_value(value),
+            AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call),
             AirExpressionKind::IntrinsicCall(intrinsic) => {
                 self.typecheck_intrinsic(expression.id, intrinsic)
             }
@@ -193,6 +199,27 @@ impl Typechecker {
             .get(value)
             .expect("Should have type for value");
         computed_type.clone()
+    }
+
+    fn typecheck_call(&mut self, id: SyntaxId, call: &mut Call) -> Type {
+        let function_type = self.functions[&call.function].clone();
+        let parameters = function_type.parameters;
+
+        if parameters.len() != call.arguments.len() {
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: parameters.len(),
+                    got: call.arguments.len(),
+                },
+            );
+        }
+
+        for (expected, actual) in parameters.into_iter().zip(call.arguments.iter()) {
+            self.expect_assignable(actual, expected);
+        }
+
+        function_type.return_type
     }
 
     fn typecheck_intrinsic(&mut self, id: SyntaxId, intrinsic: &mut IntrinsicCall) -> Type {

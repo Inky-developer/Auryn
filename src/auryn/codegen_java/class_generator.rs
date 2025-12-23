@@ -7,7 +7,7 @@ use crate::{
         codegen_java::{function_generator::generate_function, utils::translate_type},
     },
     java::{
-        class::{self, ConstantPoolEntry},
+        class::{self},
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor},
     },
@@ -21,9 +21,9 @@ pub fn generate_class(air: &Air) -> class::ClassData {
 }
 
 #[derive(Debug, Clone)]
-struct GeneratedMethodData {
-    generated_name: SmallString,
-    method_descriptor: MethodDescriptor,
+pub struct GeneratedMethodData {
+    pub generated_name: SmallString,
+    pub method_descriptor: MethodDescriptor,
 }
 
 pub struct ClassGenerator {
@@ -51,6 +51,23 @@ impl ClassGenerator {
 impl ClassGenerator {
     fn generate_from_air(&mut self, air: &Air) {
         for (function_id, function) in &air.functions {
+            let Type::Function(function_type) = function.r#type.computed() else {
+                unreachable!("Function should have a function type");
+            };
+            let method_descriptor = translate_function_type(&mut self.constant_pool, function_type);
+
+            let mangled_name = function.ident.clone();
+
+            self.generated_methods.insert(
+                *function_id,
+                GeneratedMethodData {
+                    generated_name: mangled_name,
+                    method_descriptor,
+                },
+            );
+        }
+
+        for (function_id, function) in &air.functions {
             self.generate_function(*function_id, function);
         }
 
@@ -59,24 +76,15 @@ impl ClassGenerator {
     }
 
     fn generate_function(&mut self, id: AirFunctionId, function: &AirFunction) {
-        let Type::Function(function_type) = &function.r#type.computed() else {
-            unreachable!("Function should have a function type");
-        };
-        let method_descriptor = translate_function_type(&mut self.constant_pool, function_type);
-        let method =
-            generate_function(&mut self.constant_pool, function, method_descriptor.clone());
-
-        let ConstantPoolEntry::Utf8(generated_name) = &self.constant_pool[method.name_index] else {
-            unreachable!("Invalid method name index")
-        };
-        self.generated_methods.insert(
-            id,
-            GeneratedMethodData {
-                generated_name: generated_name.clone(),
-                method_descriptor,
-            },
+        let data = &self.generated_methods[&id];
+        let method = generate_function(
+            &mut self.constant_pool,
+            &self.generated_methods,
+            &self.class_name,
+            function,
+            data.generated_name.clone(),
+            data.method_descriptor.clone(),
         );
-
         self.methods.push(method);
     }
 
@@ -129,11 +137,15 @@ mod tests {
         java::class::ClassData,
     };
 
-    fn generate_class(input: &str) -> ClassData {
+    fn generate_class_wrapped(input: &str) -> ClassData {
         let wrapped_input = format!("fn main() {{ {input} }}");
-        let result = Parser::new(FileId::MAIN_FILE, &wrapped_input).parse();
+        generate_class(&wrapped_input)
+    }
+
+    fn generate_class(input: &str) -> ClassData {
+        let result = dbg!(Parser::new(FileId::MAIN_FILE, input).parse());
         let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
-        let air = query_air(ast.unwrap());
+        let air = dbg!(query_air(ast.unwrap()));
         assert!(air.diagnostics.is_empty());
 
         super::generate_class(&air.air)
@@ -141,37 +153,42 @@ mod tests {
 
     #[test]
     fn test_simple() {
-        insta::assert_debug_snapshot!(generate_class("1 + 2 * 3"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("1 + 2 * 3"));
     }
 
     #[test]
     fn test_print() {
-        insta::assert_debug_snapshot!(generate_class("print(2 * 3)"));
-        insta::assert_debug_snapshot!(generate_class("print(print(\"Hallo, Welt!\"))"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("print(2 * 3)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("print(print(\"Hallo, Welt!\"))"));
     }
 
     #[test]
     fn test_assignment() {
-        insta::assert_debug_snapshot!(generate_class("let a = 1"));
-        insta::assert_debug_snapshot!(generate_class("let a = 1\nprint(a)"));
-        insta::assert_debug_snapshot!(generate_class("let a = 7\na = a * a\nprint(a)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a = 1"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a = 1\nprint(a)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a = 7\na = a * a\nprint(a)"));
     }
 
     #[test]
     fn test_weird() {
-        insta::assert_debug_snapshot!(generate_class("loop { loop {} }"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("loop { loop {} }"));
     }
 
     #[test]
     fn test_stack_map_table_generation() {
-        insta::assert_debug_snapshot!(generate_class(
+        insta::assert_debug_snapshot!(generate_class_wrapped(
             "loop {\nif 1 {\nprint(42)\n}\nprint(100)\n}"
         ));
     }
 
     #[test]
+    fn test_function() {
+        insta::assert_debug_snapshot!(generate_class("fn main() { bar() }\nfn bar() { print(1) }"));
+    }
+
+    #[test]
     #[should_panic]
     fn test_reject_invalid_variable() {
-        insta::assert_debug_snapshot!(generate_class("let a = a"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a = a"));
     }
 }

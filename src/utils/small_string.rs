@@ -2,7 +2,7 @@ use std::{
     fmt::{self, Formatter},
     hash::Hash,
     num::NonZeroU8,
-    ops::Deref,
+    ops::{Add, Deref},
 };
 
 /// A very simple immutable string type that implements the small string optimization.
@@ -29,6 +29,20 @@ impl SmallString {
     /// Though it should optimize anyways.
     pub fn empty() -> Self {
         Self::Heap("".into())
+    }
+
+    pub fn concat(&self, end: &str) -> Self {
+        match self {
+            Self::Stack { data, len } if len.get() as usize + end.len() <= Self::INLINE_SIZE => {
+                let mut data = *data;
+                data[len.get() as usize..].copy_from_slice(end.as_bytes());
+                Self::Stack {
+                    data,
+                    len: len.saturating_add(end.len().try_into().unwrap()),
+                }
+            }
+            _ => Self::from(format!("{self}{end}").as_str()),
+        }
     }
 }
 
@@ -75,6 +89,14 @@ impl From<&str> for SmallString {
 impl From<String> for SmallString {
     fn from(s: String) -> Self {
         SmallString::Heap(s.into())
+    }
+}
+
+impl Add<&str> for SmallString {
+    type Output = Self;
+
+    fn add(self, rhs: &str) -> Self::Output {
+        self.concat(rhs)
     }
 }
 
