@@ -1,7 +1,10 @@
 use std::ops::Index;
 
 use crate::{
-    java::class::{ConstantPoolEntry, ConstantPoolIndex},
+    java::{
+        class::{ConstantPoolEntry, ConstantPoolIndex},
+        function_assembler::FieldDescriptor,
+    },
     utils::{fast_map::FastIndexMap, small_string::SmallString},
 };
 
@@ -83,6 +86,17 @@ impl ConstantPoolBuilder {
 
     pub fn add_integer(&mut self, integer: i32) -> ConstantPoolIndex {
         self.add(ConstantPoolEntry::Integer { integer })
+    }
+
+    pub fn add_array_class(&mut self, inner: FieldDescriptor) -> ConstantPoolIndex {
+        self.add_class(
+            FieldDescriptor::Array {
+                dimension_count: 1,
+                descriptor: Box::new(inner),
+            }
+            .to_string()
+            .into(),
+        )
     }
 
     pub fn get_string_index(&mut self) -> ConstantPoolIndex {

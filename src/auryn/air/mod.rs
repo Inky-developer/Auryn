@@ -64,6 +64,13 @@ mod tests {
     }
 
     #[test]
+    fn test_array_type() {
+        insta::assert_debug_snapshot!(compile(
+            "fn main() {}\nfn foo(array: []Number) -> []Number { return array }"
+        ));
+    }
+
+    #[test]
     fn invalid_assignment() {
         insta::assert_debug_snapshot!(compile_wrapped("let a = print(1)\nprint(a + 1)"));
     }

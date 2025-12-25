@@ -25,12 +25,34 @@ AirOutput {
                         },
                     ),
                 ),
-                declared_parameter_types: [
-                    "Number",
-                ],
-                declared_return_type: Some(
-                    "Number",
-                ),
+                unresolved_type: Function {
+                    parameters: [
+                        Ident(
+                            SyntaxId {
+                                file_id: FileId(
+                                    0,
+                                ),
+                                number: Some(
+                                    223485919008693,
+                                ),
+                            },
+                            "Number",
+                        ),
+                    ],
+                    return_type: Some(
+                        Ident(
+                            SyntaxId {
+                                file_id: FileId(
+                                    0,
+                                ),
+                                number: Some(
+                                    236299980448451,
+                                ),
+                            },
+                            "Number",
+                        ),
+                    ),
+                },
                 ident: "foo",
                 blocks: {
                     AirBlockId(
@@ -121,8 +143,10 @@ AirOutput {
                         },
                     ),
                 ),
-                declared_parameter_types: [],
-                declared_return_type: None,
+                unresolved_type: Function {
+                    parameters: [],
+                    return_type: None,
+                },
                 ident: "main",
                 blocks: {
                     AirBlockId(

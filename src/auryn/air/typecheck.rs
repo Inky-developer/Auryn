@@ -7,6 +7,7 @@ use crate::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
                 AirValueId, Assignment, BinaryOperation, Call, IntrinsicCall, ReturnValue,
+                UnresolvedType,
             },
             types::{FunctionType, Type},
         },
@@ -119,41 +120,47 @@ impl Typechecker {
 }
 
 impl Typechecker {
-    fn typecheck_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
-        let parameters = function
-            .declared_parameter_types
-            .iter()
-            .map(|ident| match ident.parse() {
+    fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
+        match unresolved {
+            UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
                     self.add_error(
-                        id.0,
+                        *id,
                         DiagnosticError::UndefinedVariable {
                             ident: ident.clone(),
                         },
                     );
                     Type::Error
                 }
-            })
-            .collect();
-        let return_type = match function.declared_return_type.as_ref().map(|it| it.parse()) {
-            Some(Ok(r#type)) => r#type,
-            Some(Err(_)) => {
-                self.add_error(
-                    id.0,
-                    DiagnosticError::UndefinedVariable {
-                        ident: function.declared_return_type.as_ref().unwrap().clone(),
-                    },
-                );
-                Type::Error
+            },
+            UnresolvedType::Function {
+                parameters,
+                return_type,
+            } => {
+                let parameters = parameters
+                    .iter()
+                    .map(|param| self.resolve_type(param))
+                    .collect();
+                let return_type = return_type
+                    .as_ref()
+                    .map_or(Type::Null, |ty| self.resolve_type(ty));
+                Type::Function(Box::new(FunctionType {
+                    parameters,
+                    return_type,
+                }))
             }
-            None => Type::Null,
+            UnresolvedType::Array(_, inner) => Type::Array(Box::new(self.resolve_type(inner))),
+        }
+    }
+
+    fn typecheck_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
+        let computed_ty = self.resolve_type(&function.unresolved_type);
+        let Type::Function(function_type) = &computed_ty else {
+            unreachable!("Should compute a function type for a function!");
         };
-        let function_type = FunctionType {
-            parameters,
-            return_type,
-        };
-        function.r#type = AirType::Computed(Type::Function(Box::new(function_type.clone())));
+        let function_type = function_type.as_ref().clone();
+        function.r#type = AirType::Computed(computed_ty);
         self.functions.insert(id, function_type);
     }
 

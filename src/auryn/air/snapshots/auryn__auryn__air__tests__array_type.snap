@@ -1,0 +1,176 @@
+---
+source: src/auryn/air/mod.rs
+expression: "compile(\"fn main() {}\\nfn foo(array: []Number) -> []Number { return array }\")"
+---
+AirOutput {
+    air: Air {
+        functions: {
+            AirFunctionId(
+                SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        187649984473771,
+                    ),
+                },
+            ): AirFunction {
+                type: Computed(
+                    Function(
+                        FunctionType {
+                            parameters: [
+                                Array(
+                                    Number,
+                                ),
+                            ],
+                            return_type: Array(
+                                Number,
+                            ),
+                        },
+                    ),
+                ),
+                unresolved_type: Function {
+                    parameters: [
+                        Array(
+                            SyntaxId {
+                                file_id: FileId(
+                                    0,
+                                ),
+                                number: Some(
+                                    223920293972752,
+                                ),
+                            },
+                            Ident(
+                                SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        223920293972753,
+                                    ),
+                                },
+                                "Number",
+                            ),
+                        ),
+                    ],
+                    return_type: Some(
+                        Array(
+                            SyntaxId {
+                                file_id: FileId(
+                                    0,
+                                ),
+                                number: Some(
+                                    238616646923434,
+                                ),
+                            },
+                            Ident(
+                                SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        238616646923435,
+                                    ),
+                                },
+                                "Number",
+                            ),
+                        ),
+                    ),
+                },
+                ident: "foo",
+                blocks: {
+                    AirBlockId(
+                        0,
+                    ): AirBlock {
+                        nodes: [],
+                        finalizer: Return(
+                            Expression(
+                                AirExpression {
+                                    id: SyntaxId {
+                                        file_id: FileId(
+                                            0,
+                                        ),
+                                        number: Some(
+                                            267574977860747,
+                                        ),
+                                    },
+                                    type: Computed(
+                                        Array(
+                                            Number,
+                                        ),
+                                    ),
+                                    kind: Variable(
+                                        AirValueId(
+                                            0,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                    },
+                    AirBlockId(
+                        1,
+                    ): AirBlock {
+                        nodes: [],
+                        finalizer: Return(
+                            Null(
+                                SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        260624978435789,
+                                    ),
+                                },
+                            ),
+                        ),
+                    },
+                },
+            },
+            AirFunctionId(
+                SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        3,
+                    ),
+                },
+            ): AirFunction {
+                type: Computed(
+                    Function(
+                        FunctionType {
+                            parameters: [],
+                            return_type: Null,
+                        },
+                    ),
+                ),
+                unresolved_type: Function {
+                    parameters: [],
+                    return_type: None,
+                },
+                ident: "main",
+                blocks: {
+                    AirBlockId(
+                        0,
+                    ): AirBlock {
+                        nodes: [],
+                        finalizer: Return(
+                            Null(
+                                SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        67017851597774,
+                                    ),
+                                },
+                            ),
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    diagnostics: [],
+}

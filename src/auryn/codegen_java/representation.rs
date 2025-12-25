@@ -12,6 +12,16 @@ pub fn get_representation(pool: &mut ConstantPoolBuilder, air_type: &Type) -> Op
     match air_type {
         Type::Number => Some(Primitive::Integer),
         Type::String => Some(Primitive::Object(pool.get_string_index())),
+        Type::Array(content_type) => {
+            let content_repr = get_representation(pool, content_type);
+            match content_repr {
+                Some(repr) => {
+                    let field_descriptor = repr.to_field_descriptor(pool);
+                    Some(Primitive::Object(pool.add_array_class(field_descriptor)))
+                }
+                None => todo!("Add representation for array of zero-sized types"),
+            }
+        }
         Type::Null | Type::Function(_) => None,
         Type::Top => todo!("The top type cannot be represented yet"),
         Type::Error => unreachable!("Called with error type"),

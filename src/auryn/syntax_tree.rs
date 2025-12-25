@@ -22,6 +22,7 @@ pub enum SyntaxNodeKind {
     ParameterDefinition,
     ReturnType,
     Type,
+    ArrayType,
     Block,
     Statement,
     Expression,

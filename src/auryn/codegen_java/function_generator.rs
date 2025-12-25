@@ -336,13 +336,12 @@ impl FunctionGenerator<'_> {
                 let field_descriptor = match intrinsic.arguments[0].r#type.computed() {
                     Type::Number => FieldDescriptor::Integer,
                     Type::String => FieldDescriptor::string(),
-                    ty @ (Type::Top | Type::Null | Type::Function(_)) => {
+                    ty => {
                         self.assembler.add(Instruction::LoadConstant {
                             value: ConstantValue::String(ty.to_string().into()),
                         });
                         FieldDescriptor::string()
                     }
-                    Type::Error => unreachable!(),
                 };
                 self.assembler.add(Instruction::InvokeVirtual {
                     class_name: "java/io/PrintStream".into(),

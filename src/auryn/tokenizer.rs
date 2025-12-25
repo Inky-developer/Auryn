@@ -37,10 +37,18 @@ pub enum TokenKind {
     GreaterOrEqual,
     Less,
     LessOrEqual,
+    /// (
     ParensOpen,
+    /// )
     ParensClose,
+    /// {
     BraceOpen,
+    /// }
     BraceClose,
+    /// [
+    BracketOpen,
+    /// ]
+    BracketClose,
     KeywordLet,
     KeywordLoop,
     KeywordBreak,
@@ -215,6 +223,8 @@ impl<'a> Iterator for Tokenizer<'a> {
             ')' => TokenKind::ParensClose,
             '{' => TokenKind::BraceOpen,
             '}' => TokenKind::BraceClose,
+            '[' => TokenKind::BracketOpen,
+            ']' => TokenKind::BracketClose,
             ',' => TokenKind::Comma,
             ':' => TokenKind::Colon,
             '\n' => TokenKind::Newline,
@@ -285,7 +295,7 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 1 -2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
         insta::assert_debug_snapshot!(tokenize(
-            "loop let some_text = if true { 2 } else { break return } fn foo"
+            "loop let some_text = if true { 2 } else { break return } fn [foo]"
         ));
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a"

@@ -11,6 +11,7 @@ use crate::{
 pub enum DiagnosticError {
     // Generate by the parser
     ExpectedNumber { got: TokenKind },
+    ExpectedType { got: TokenKind },
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
     InvalidNumber,

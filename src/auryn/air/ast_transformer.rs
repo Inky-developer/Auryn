@@ -3,10 +3,10 @@ use crate::{
         air::data::{
             self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-            AirValueId, Call, IntrinsicCall, ReturnValue,
+            AirValueId, Call, IntrinsicCall, ReturnValue, UnresolvedType,
         },
         ast::ast_node::{
-            self, Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall,
+            Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, FunctionCall,
             FunctionDefinition, Ident, IfStatement, LoopStatement, NumberLiteral, Parenthesis,
             ReturnStatement, Root, Statement, StringLiteral, Type, Value, VariableUpdate,
         },
@@ -55,6 +55,21 @@ impl AstTransformer {
         }
     }
 
+    fn transform_to_unresolved(&self, r#type: Type) -> Result<UnresolvedType, AstError> {
+        match r#type {
+            Type::ArrayType(inner) => match inner.r#type() {
+                Ok(r#type) => Ok(UnresolvedType::Array(
+                    r#type.id(),
+                    Box::new(self.transform_to_unresolved(r#type)?),
+                )),
+                Err(err) => Err(err),
+            },
+            Type::Ident(ident) => ident
+                .ident()
+                .map(|token| UnresolvedType::Ident(token.id, token.text.clone())),
+        }
+    }
+
     fn register_function(&mut self, function_definition: FunctionDefinition) {
         let Ok(ident) = function_definition.ident() else {
             return;
@@ -79,13 +94,19 @@ impl AstTransformer {
         let declared_parameters = parameters
             .parameters()
             .filter_map(|param| {
-                param.r#type().ok().and_then(|ty| match ty {
-                    ast_node::Type::Ident(ident) => {
-                        ident.ident().ok().map(|ident| ident.text.clone())
-                    }
-                })
+                param
+                    .r#type()
+                    .ok()
+                    .and_then(|ty| self.transform_to_unresolved(ty).ok())
             })
             .collect::<Vec<_>>();
+        let declared_return_type = function_definition
+            .return_type()
+            .ok()
+            .and_then(|r#type| r#type.r#type().ok())
+            .and_then(|r#type| self.transform_to_unresolved(r#type).ok())
+            .map(Box::new);
+
         let parameter_idents = parameters
             .parameters()
             .filter_map(|param| param.ident().ok().map(|ident| ident.text.clone()))
@@ -95,19 +116,13 @@ impl AstTransformer {
             FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
         function_transformer.transform_function_body(block);
 
-        let declared_return_type = function_definition
-            .return_type()
-            .ok()
-            .and_then(|r#type| r#type.r#type().ok())
-            .and_then(|r#type| match r#type {
-                Type::Ident(ident) => ident.ident().ok().map(|ident| ident.text.clone()),
-            });
-
         let function_id = self.namespace[&ident];
         let function = AirFunction {
             r#type: AirType::Inferred,
-            declared_parameter_types: declared_parameters,
-            declared_return_type,
+            unresolved_type: UnresolvedType::Function {
+                parameters: declared_parameters,
+                return_type: declared_return_type,
+            },
             ident,
             blocks: function_transformer.finished_blocks,
         };

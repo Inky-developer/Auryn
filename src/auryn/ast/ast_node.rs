@@ -144,7 +144,12 @@ ast_node! {
 
 ast_node! {
     pub enum Type = SyntaxNodeKind::Type as
+        | SyntaxNodeKind::ArrayType as ArrayType
         | SyntaxNodeKind::Ident as Ident
+}
+
+ast_node! {
+    pub struct ArrayType = SyntaxNodeKind::ArrayType as { r#type: Type, }
 }
 
 ast_node! {

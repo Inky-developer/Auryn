@@ -1,7 +1,11 @@
 use std::str::FromStr;
 
 use crate::{
-    auryn::{air::types::Type, syntax_id::SyntaxId, tokenizer::BinaryOperatorToken},
+    auryn::{
+        air::types::{FunctionType, Type},
+        syntax_id::SyntaxId,
+        tokenizer::BinaryOperatorToken,
+    },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
 
@@ -30,17 +34,35 @@ pub struct AirFunctionId(pub SyntaxId);
 #[derive(Debug)]
 pub struct AirFunction {
     pub r#type: AirType,
-    pub declared_parameter_types: Vec<SmallString>,
-    pub declared_return_type: Option<SmallString>,
+    pub unresolved_type: UnresolvedType,
     pub ident: SmallString,
     pub blocks: FastMap<AirBlockId, AirBlock>,
 }
 
 impl AirFunction {
+    pub fn computed_type(&self) -> &FunctionType {
+        let AirType::Computed(Type::Function(function_type)) = &self.r#type else {
+            unreachable!("Function type should be computed at this point");
+        };
+        function_type
+    }
+
+    pub fn unresolved_type(&self) -> (&[UnresolvedType], Option<&UnresolvedType>) {
+        let UnresolvedType::Function {
+            parameters,
+            return_type,
+        } = &self.unresolved_type
+        else {
+            unreachable!("Should be a function type");
+        };
+        (parameters, return_type.as_deref())
+    }
+
     /// Returns value ids for the arguments.
-    /// The value ids increment for each arguent.
+    /// The value ids increment for each argument.
     pub fn argument_ids(&self) -> impl Iterator<Item = AirValueId> {
-        self.declared_parameter_types
+        self.unresolved_type()
+            .0
             .iter()
             .enumerate()
             .map(|(index, _)| AirValueId(index))
@@ -81,21 +103,29 @@ pub struct Assignment {
     pub expression: Box<AirExpression>,
 }
 
+/// Represents a type that was written by the user but not resolved yet.
+#[derive(Debug, Clone)]
+pub enum UnresolvedType {
+    Ident(SyntaxId, SmallString),
+    Array(SyntaxId, Box<UnresolvedType>),
+    Function {
+        parameters: Vec<UnresolvedType>,
+        return_type: Option<Box<UnresolvedType>>,
+    },
+}
+
 #[derive(Debug, Clone)]
 pub enum AirType {
-    /// Represent a type that has been resolved
-    Computed(Type),
-    /// Represents a type that was explicitly specified in the source ode
-    Explicit(SmallString),
-    /// Represents a type was left implicit in the code
     Inferred,
+    Unresolved(UnresolvedType),
+    Computed(Type),
 }
 
 impl AirType {
     pub fn computed(&self) -> &Type {
         match self {
-            AirType::Computed(computed) => computed,
-            other => panic!("Expected computed type, got {other:?}"),
+            AirType::Computed(inner) => inner,
+            _ => unreachable!("Type should be computed at this point"),
         }
     }
 }

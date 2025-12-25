@@ -7,8 +7,9 @@ pub enum Type {
     Number,
     String,
     Null,
-    Error,
     Function(Box<FunctionType>),
+    Array(Box<Type>),
+    Error,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -42,8 +43,12 @@ impl fmt::Display for Type {
             Type::Number => f.write_str("Number"),
             Type::String => f.write_str("String"),
             Type::Null => f.write_str("Null"),
-            Type::Error => f.write_str("<<Error>>"),
             Type::Function(function_type) => function_type.fmt(f),
+            Type::Array(content_type) => {
+                f.write_str("[]")?;
+                content_type.fmt(f)
+            }
+            Type::Error => f.write_str("<<Error>>"),
         }
     }
 }
