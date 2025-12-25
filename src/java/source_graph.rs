@@ -32,6 +32,8 @@ pub enum BlockFinalizer {
     Goto(BasicBlockId),
     #[default]
     ReturnNull,
+    ReturnObject,
+    ReturnInteger,
 }
 
 impl BlockFinalizer {
@@ -48,7 +50,9 @@ impl BlockFinalizer {
                 positive_block,
                 negative_block,
             } => [Some(*positive_block), Some(*negative_block)],
-            BlockFinalizer::ReturnNull => [None, None],
+            BlockFinalizer::ReturnNull
+            | BlockFinalizer::ReturnObject
+            | BlockFinalizer::ReturnInteger => [None, None],
         };
 
         targets.into_iter().flatten()
@@ -291,8 +295,8 @@ impl AssemblyContext<'_> {
                     .expect("TODO: Implement support for higher indexes");
                 on_instruction(class::Instruction::Ldc(constant_index))
             }
-            Instruction::ReturnNull => on_instruction(class::Instruction::Return),
             Instruction::IAdd => on_instruction(class::Instruction::IAdd),
+            Instruction::ISub => on_instruction(class::Instruction::ISub),
             Instruction::IMul => on_instruction(class::Instruction::IMul),
             Instruction::Store(id) => on_instruction(match id.r#type {
                 Primitive::Integer => class::Instruction::IStore(id.index),
@@ -325,6 +329,8 @@ impl AssemblyContext<'_> {
                 }
             }
             BlockFinalizer::ReturnNull => Some(class::Instruction::Return),
+            BlockFinalizer::ReturnObject => Some(class::Instruction::AReturn),
+            BlockFinalizer::ReturnInteger => Some(class::Instruction::IReturn),
             BlockFinalizer::BranchIntegerCmp {
                 comparison,
                 positive_block,

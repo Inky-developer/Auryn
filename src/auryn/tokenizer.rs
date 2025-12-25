@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperatorToken {
     Plus,
+    Minus,
     Times,
     Equal,
     NotEqual,
@@ -15,7 +16,7 @@ impl BinaryOperatorToken {
         match self {
             Self::Equal | Self::NotEqual => 1,
             Self::GreaterOrEqual | Self::Greater | Self::LessOrEqual | Self::Less => 2,
-            Self::Plus => 3,
+            Self::Plus | Self::Minus => 3,
             Self::Times => 4,
         }
     }
@@ -27,6 +28,7 @@ pub enum TokenKind {
     StringLiteral,
     Identifier,
     Plus,
+    Minus,
     Times,
     Equal,
     DoubleEqual,
@@ -44,18 +46,21 @@ pub enum TokenKind {
     KeywordBreak,
     KeywordIf,
     KeywordFn,
+    KeywordReturn,
     Whitespace,
     Newline,
     Error,
     EndOfInput,
     Comma,
     Colon,
+    Arrow,
 }
 
 impl TokenKind {
     pub fn to_binary_operator(self) -> Option<BinaryOperatorToken> {
         match self {
             TokenKind::Plus => Some(BinaryOperatorToken::Plus),
+            TokenKind::Minus => Some(BinaryOperatorToken::Minus),
             TokenKind::Times => Some(BinaryOperatorToken::Times),
             TokenKind::DoubleEqual => Some(BinaryOperatorToken::Equal),
             TokenKind::NotEqual => Some(BinaryOperatorToken::NotEqual),
@@ -168,7 +173,14 @@ impl<'a> Iterator for Tokenizer<'a> {
         let first_char = self.input.chars().next()?;
 
         let kind = match first_char {
+            '-' if self.input.starts_with("->") => {
+                return Some(Token {
+                    kind: TokenKind::Arrow,
+                    text: self.consume_text("->"),
+                });
+            }
             '+' => TokenKind::Plus,
+            '-' => TokenKind::Minus,
             '*' => TokenKind::Times,
             '=' => {
                 if self.input.starts_with("==") {
@@ -236,6 +248,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("if"),
                 });
             }
+            'r' if self.starts_with_keyword("return") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordReturn,
+                    text: self.consume_text("return"),
+                });
+            }
             '"' => return Some(self.consume_string_literal()),
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_whitespace() => return self.consume_whitespace(),
@@ -264,13 +282,13 @@ mod tests {
     #[test]
     fn test_parser() {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
-        insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 2)"));
+        insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 1 -2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
         insta::assert_debug_snapshot!(tokenize(
-            "loop let some_text = if true { 2 } else { break } fn foo"
+            "loop let some_text = if true { 2 } else { break return } fn foo"
         ));
         insta::assert_debug_snapshot!(tokenize(
-            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6"
+            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a"
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
     }

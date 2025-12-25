@@ -20,6 +20,7 @@ pub enum SyntaxNodeKind {
     FunctionDefinition,
     ParameterList,
     ParameterDefinition,
+    ReturnType,
     Type,
     Block,
     Statement,
@@ -38,6 +39,7 @@ pub enum SyntaxNodeKind {
     IfStatement,
     Loop,
     Break,
+    Return,
 }
 
 #[derive(Debug)]

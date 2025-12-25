@@ -125,6 +125,7 @@ ast_node! {
     pub struct FunctionDefinition = SyntaxNodeKind::FunctionDefinition as {
         token ident: TokenKind::Identifier,
         parameter_list: ParameterList,
+        return_type: ReturnType,
         block: Block,
     }
 }
@@ -135,6 +136,10 @@ ast_node! {
 
 ast_node! {
     pub struct Parameter = SyntaxNodeKind::ParameterDefinition as { token ident: TokenKind::Identifier, r#type: Type, }
+}
+
+ast_node! {
+    pub struct ReturnType = SyntaxNodeKind::ReturnType as { r#type: Type, }
 }
 
 ast_node! {
@@ -152,6 +157,7 @@ ast_node! {
         | SyntaxNodeKind::IfStatement as IfStatement
         | SyntaxNodeKind::Loop as LoopStatement
         | SyntaxNodeKind::Break as BreakStatement
+        | SyntaxNodeKind::Return as ReturnStatement
         | SyntaxNodeKind::VariableUpdate as VariableUpdate
         | SyntaxNodeKind::Expression as Expression
 }
@@ -170,6 +176,10 @@ ast_node! {
 
 ast_node! {
     pub struct BreakStatement = SyntaxNodeKind::Break as {}
+}
+
+ast_node! {
+    pub struct ReturnStatement = SyntaxNodeKind::Return as { expression: Expression, }
 }
 
 ast_node! {

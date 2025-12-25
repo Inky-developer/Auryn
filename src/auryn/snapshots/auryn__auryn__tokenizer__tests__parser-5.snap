@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6\")"
+expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a\")"
 ---
 [
     Token {
@@ -218,5 +218,21 @@ expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a <
     Token {
         kind: NumberLiteral,
         text: "6",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Arrow,
+        text: "->",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
     },
 ]

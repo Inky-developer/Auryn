@@ -283,6 +283,9 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordFn)?;
         self.expect(TokenKind::Identifier)?;
         self.parse_parameter_list()?;
+        if self.peek().kind == TokenKind::Arrow {
+            self.parse_return_type()?;
+        }
         self.expect(TokenKind::BraceOpen)?;
         self.parse_block(|it| it == TokenKind::BraceClose)?;
         self.expect(TokenKind::BraceClose)?;
@@ -308,6 +311,16 @@ impl Parser<'_> {
         self.expect(TokenKind::ParensClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ParameterList);
+        Ok(())
+    }
+
+    fn parse_return_type(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Arrow)?;
+        self.parse_type()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ReturnType);
         Ok(())
     }
 
@@ -357,6 +370,7 @@ impl Parser<'_> {
             TokenKind::KeywordIf => self.parse_if_statement()?,
             TokenKind::KeywordLoop => self.parse_loop()?,
             TokenKind::KeywordBreak => self.parse_break()?,
+            TokenKind::KeywordReturn => self.parse_return()?,
             _ => {
                 if let [TokenKind::Identifier, TokenKind::Equal] = self.multipeek() {
                     self.parse_variable_update()?;
@@ -417,6 +431,18 @@ impl Parser<'_> {
         Ok(())
     }
 
+    fn parse_return(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordReturn)?;
+        if Self::is_expression_start(self.peek().kind) {
+            self.parse_expression()?;
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::Return);
+        Ok(())
+    }
+
     fn parse_variable_update(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
@@ -429,6 +455,7 @@ impl Parser<'_> {
     }
 
     fn parse_expression(&mut self) -> ParseResult {
+        assert!(Self::is_expression_start(self.peek().kind));
         self.parse_expression_pratt(0)
     }
 
@@ -480,6 +507,17 @@ impl Parser<'_> {
         self.consume_if(|token| token.kind.to_binary_operator())
             .map_err(|_| ())?;
         Ok(())
+    }
+
+    /// Not nice, must be in sync with [`parse_value`].
+    fn is_expression_start(kind: TokenKind) -> bool {
+        matches!(
+            kind,
+            TokenKind::Identifier
+                | TokenKind::NumberLiteral
+                | TokenKind::StringLiteral
+                | TokenKind::ParensOpen
+        )
     }
 
     fn parse_value(&mut self) -> ParseResult {
@@ -693,7 +731,13 @@ mod tests {
 
     #[test]
     fn test_function() {
-        insta::assert_debug_snapshot!(verify("fn foo(a: Int, b: String,) { print(9000) }"));
+        insta::assert_debug_snapshot!(verify("fn foo(a: Int, b: String,) -> Null { print(9000) }"));
+    }
+
+    #[test]
+    fn test_return() {
+        insta::assert_debug_snapshot!(verify("fn foo() { return }"));
+        insta::assert_debug_snapshot!(verify("fn foo() { return 15 * 15 }"));
     }
 
     #[test]

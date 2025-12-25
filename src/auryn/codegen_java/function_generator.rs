@@ -8,15 +8,15 @@ use crate::{
             },
             types::Type,
         },
-        codegen_java::{class_generator::GeneratedMethodData, utils::translate_type},
+        codegen_java::{class_generator::GeneratedMethodData, representation::get_representation},
         tokenizer::BinaryOperatorToken,
     },
     java::{
-        class::{self, Comparison, TypeCategory, VerificationTypeInfo},
+        class::{self, Comparison, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{
             ConstantValue, FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor,
-            VariableId,
+            ReturnDescriptor, VariableId,
         },
         source_graph::{BasicBlockId, BlockFinalizer},
     },
@@ -78,7 +78,7 @@ impl<'a> FunctionGenerator<'a> {
         let mut variable_index = 0;
         for (parameter, argument_id) in function_type.parameters.iter().zip(function.argument_ids())
         {
-            if let Some(primitive) = translate_type(pool, parameter) {
+            if let Some(primitive) = get_representation(pool, parameter) {
                 let variable_id = VariableId {
                     index: variable_index,
                     r#type: primitive,
@@ -142,8 +142,19 @@ impl FunctionGenerator<'_> {
 
     fn generate_finalizer(&mut self, finalizer: &AirBlockFinalizer) {
         match finalizer {
-            AirBlockFinalizer::Return => {
-                self.assembler.current_block_mut().finalizer = BlockFinalizer::ReturnNull
+            AirBlockFinalizer::Return(r#return) => {
+                let result = r#return
+                    .expression()
+                    .and_then(|expr| self.generate_expression(expr));
+                let finalizer = match result {
+                    None => BlockFinalizer::ReturnNull,
+                    Some(r#type) => match r#type {
+                        VerificationTypeInfo::Integer => BlockFinalizer::ReturnInteger,
+                        VerificationTypeInfo::Object { .. } => BlockFinalizer::ReturnObject,
+                        other => panic!("Cannot return {other:?}"),
+                    },
+                };
+                self.assembler.current_block_mut().finalizer = finalizer
             }
             AirBlockFinalizer::Goto(target) => {
                 let block_id = self.translate_block_id(*target);
@@ -157,7 +168,7 @@ impl FunctionGenerator<'_> {
                 let pos_block_id = self.translate_block_id(*pos_block);
                 let neg_block_id = self.translate_block_id(*neg_block);
                 let result = self.generate_expression(value);
-                assert_eq!(result, Some(TypeCategory::Normal));
+                assert_eq!(result, Some(VerificationTypeInfo::Integer));
                 self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
                     comparison: Comparison::NotEqual,
                     positive_block: pos_block_id,
@@ -173,7 +184,7 @@ impl FunctionGenerator<'_> {
             AirNodeKind::Expression(expression) => {
                 let leftover = self.generate_expression(expression);
                 if let Some(leftover) = leftover {
-                    self.assembler.add(Instruction::Pop(leftover));
+                    self.assembler.add(Instruction::Pop(leftover.category()));
                 }
             }
         }
@@ -186,7 +197,7 @@ impl FunctionGenerator<'_> {
             Some(self.variable_map[&assignment.target])
         } else {
             let air_type = assignment.expression.r#type.computed();
-            if let Some(primitive) = translate_type(self.assembler.constant_pool, air_type) {
+            if let Some(primitive) = get_representation(self.assembler.constant_pool, air_type) {
                 let variable_id = self.assembler.alloc_variable(primitive);
                 self.variable_map.insert(assignment.target, variable_id);
                 Some(variable_id)
@@ -201,7 +212,7 @@ impl FunctionGenerator<'_> {
     }
 
     /// The return value indicates the stack usage
-    fn generate_expression(&mut self, expression: &AirExpression) -> Option<TypeCategory> {
+    fn generate_expression(&mut self, expression: &AirExpression) -> Option<VerificationTypeInfo> {
         match &expression.kind {
             AirExpressionKind::Constant(constant) => Some(self.generate_constant(constant)),
             AirExpressionKind::BinaryOperator(binary_operator) => {
@@ -214,36 +225,35 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_constant(&mut self, constant: &AirConstant) -> TypeCategory {
+    fn generate_constant(&mut self, constant: &AirConstant) -> VerificationTypeInfo {
         match constant {
             AirConstant::Number(number) => {
                 let value = ConstantValue::Integer(*number);
-                let category = value
-                    .to_verification_type(self.assembler.constant_pool)
-                    .category();
+                let r#type = value.to_verification_type(self.assembler.constant_pool);
                 self.assembler.add(Instruction::LoadConstant { value });
-                category
+                r#type
             }
             AirConstant::String(text) => {
                 let value = ConstantValue::String(text.clone());
-                let category = value
-                    .to_verification_type(self.assembler.constant_pool)
-                    .category();
+                let r#type = value.to_verification_type(self.assembler.constant_pool);
                 self.assembler.add(Instruction::LoadConstant { value });
-                category
+                r#type
             }
         }
     }
 
-    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> TypeCategory {
-        let lhs_category = self.generate_expression(&operation.lhs);
-        let rhs_category = self.generate_expression(&operation.rhs);
-        assert_eq!(lhs_category, rhs_category);
-        assert_eq!(lhs_category, Some(TypeCategory::Normal));
+    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> VerificationTypeInfo {
+        let lhs_type = self.generate_expression(&operation.lhs);
+        let rhs_type = self.generate_expression(&operation.rhs);
+        assert_eq!(lhs_type, rhs_type);
+        assert_eq!(lhs_type, Some(VerificationTypeInfo::Integer));
 
         match operation.operator {
             BinaryOperatorToken::Plus => {
                 self.assembler.add(Instruction::IAdd);
+            }
+            BinaryOperatorToken::Minus => {
+                self.assembler.add(Instruction::ISub);
             }
             BinaryOperatorToken::Times => {
                 self.assembler.add(Instruction::IMul);
@@ -258,7 +268,7 @@ impl FunctionGenerator<'_> {
             BinaryOperatorToken::LessOrEqual => self.generate_comparison(Comparison::LessOrEqual),
         };
 
-        VerificationTypeInfo::Integer.category()
+        VerificationTypeInfo::Integer
     }
 
     fn generate_comparison(&mut self, comparison: Comparison) {
@@ -286,13 +296,13 @@ impl FunctionGenerator<'_> {
         self.assembler.set_current_block_id(next_block_id);
     }
 
-    fn generate_variable(&mut self, variable: &AirValueId) -> TypeCategory {
+    fn generate_variable(&mut self, variable: &AirValueId) -> VerificationTypeInfo {
         let variable_id = self.variable_map[variable];
         self.assembler.add(Instruction::Load(variable_id));
-        variable_id.r#type.to_verification_type().category()
+        variable_id.r#type.to_verification_type()
     }
 
-    fn generate_call(&mut self, call: &Call) -> Option<TypeCategory> {
+    fn generate_call(&mut self, call: &Call) -> Option<VerificationTypeInfo> {
         for argument in &call.arguments {
             self.generate_expression(argument);
         }
@@ -306,17 +316,15 @@ impl FunctionGenerator<'_> {
             name: generated_name.clone(),
             method_descriptor: method_descriptor.clone(),
         });
-        match &method_descriptor.return_type {
-            FieldDescriptor::Void => None,
-            other => Some(
-                other
-                    .to_verification_type(self.assembler.constant_pool)
-                    .category(),
-            ),
-        }
+        method_descriptor
+            .return_type
+            .to_verification_type(self.assembler.constant_pool)
     }
 
-    fn generate_intrinsic_call(&mut self, intrinsic: &IntrinsicCall) -> Option<TypeCategory> {
+    fn generate_intrinsic_call(
+        &mut self,
+        intrinsic: &IntrinsicCall,
+    ) -> Option<VerificationTypeInfo> {
         match intrinsic.intrinsic {
             Intrinsic::Print => {
                 self.assembler.add(Instruction::GetStatic {
@@ -342,7 +350,7 @@ impl FunctionGenerator<'_> {
                     // method_type: MethodDescriptor("(I)V".to_string()),
                     method_descriptor: MethodDescriptor {
                         parameters: vec![field_descriptor],
-                        return_type: FieldDescriptor::Void,
+                        return_type: ReturnDescriptor::Void,
                     },
                 });
 

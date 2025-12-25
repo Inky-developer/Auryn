@@ -6,7 +6,7 @@ use crate::{
             data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-                AirValueId, Assignment, BinaryOperation, Call, IntrinsicCall,
+                AirValueId, Assignment, BinaryOperation, Call, IntrinsicCall, ReturnValue,
             },
             types::{FunctionType, Type},
         },
@@ -20,10 +20,36 @@ pub fn typecheck_air(air: &mut Air) -> Vec<Diagnostic> {
     Typechecker::default().typecheck(air)
 }
 
+#[derive(Debug)]
+struct FunctionContext {
+    variables: FastMap<AirValueId, Type>,
+    return_type: Type,
+}
+
+impl Default for FunctionContext {
+    fn default() -> Self {
+        Self {
+            variables: Default::default(),
+            return_type: Type::Error,
+        }
+    }
+}
+
+impl FunctionContext {
+    fn clear(&mut self, expected_return_type: Type) {
+        let FunctionContext {
+            variables,
+            return_type,
+        } = self;
+        variables.clear();
+        *return_type = expected_return_type;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Typechecker {
     functions: FastMap<AirFunctionId, FunctionType>,
-    variables: FastMap<AirValueId, Type>,
+    function: FunctionContext,
     diagnostics: Vec<Diagnostic>,
 }
 
@@ -54,6 +80,20 @@ impl Typechecker {
                 got: received.r#type.clone(),
             },
         )
+    }
+
+    fn expect_type_at(&mut self, at: SyntaxId, received: &Type, expected: Type) {
+        if received == &expected {
+            return;
+        }
+
+        self.add_error(
+            at,
+            DiagnosticError::TypeMismatch {
+                expected,
+                got: AirType::Computed(received.clone()),
+            },
+        );
     }
 
     fn expect_assignable(&mut self, received: &AirExpression, expected: Type) {
@@ -96,9 +136,22 @@ impl Typechecker {
                 }
             })
             .collect();
+        let return_type = match function.declared_return_type.as_ref().map(|it| it.parse()) {
+            Some(Ok(r#type)) => r#type,
+            Some(Err(_)) => {
+                self.add_error(
+                    id.0,
+                    DiagnosticError::UndefinedVariable {
+                        ident: function.declared_return_type.as_ref().unwrap().clone(),
+                    },
+                );
+                Type::Error
+            }
+            None => Type::Null,
+        };
         let function_type = FunctionType {
             parameters,
-            return_type: Type::Null,
+            return_type,
         };
         function.r#type = AirType::Computed(Type::Function(Box::new(function_type.clone())));
         self.functions.insert(id, function_type);
@@ -109,9 +162,9 @@ impl Typechecker {
             panic!("Invalid type for function: {:?}", function.r#type);
         };
 
-        self.variables.clear();
+        self.function.clear(function_type.return_type.clone());
         for (id, r#type) in function.argument_ids().zip(function_type.parameters.iter()) {
-            self.variables.insert(id, r#type.clone());
+            self.function.variables.insert(id, r#type.clone());
         }
 
         let mut visited_blocks = FastSet::default();
@@ -145,7 +198,15 @@ impl Typechecker {
         mut on_next_id: impl FnMut(AirBlockId),
     ) {
         match finalizer {
-            AirBlockFinalizer::Return => {}
+            AirBlockFinalizer::Return(expression) => match expression {
+                ReturnValue::Expression(expression) => {
+                    self.typecheck_expression(expression);
+                    self.expect_type(expression, self.function.return_type.clone());
+                }
+                ReturnValue::Null(id) => {
+                    self.expect_type_at(*id, &Type::Null, self.function.return_type.clone());
+                }
+            },
             AirBlockFinalizer::Goto(next_id) => on_next_id(*next_id),
             AirBlockFinalizer::Branch {
                 value,
@@ -169,10 +230,10 @@ impl Typechecker {
 
     fn typecheck_assignment(&mut self, assignment: &mut Assignment) {
         self.typecheck_expression(&mut assignment.expression);
-        if let Some(expected_type) = self.variables.get(&assignment.target) {
+        if let Some(expected_type) = self.function.variables.get(&assignment.target) {
             self.expect_assignable(&assignment.expression, expected_type.clone());
         } else {
-            self.variables.insert(
+            self.function.variables.insert(
                 assignment.target,
                 assignment.expression.r#type.computed().clone(),
             );
@@ -215,6 +276,7 @@ impl Typechecker {
 
     fn typecheck_value(&self, value: &AirValueId) -> Type {
         let computed_type = self
+            .function
             .variables
             .get(value)
             .expect("Should have type for value");

@@ -24,6 +24,7 @@ AirOutput {
                     ),
                 ),
                 declared_parameter_types: [],
+                declared_return_type: None,
                 ident: "main",
                 blocks: {
                     AirBlockId(
@@ -172,7 +173,18 @@ AirOutput {
                                 ),
                             },
                         ],
-                        finalizer: Return,
+                        finalizer: Return(
+                            Null(
+                                SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        211106232532990,
+                                    ),
+                                },
+                            ),
+                        ),
                     },
                 },
             },

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::java::{
     class::VerificationTypeInfo,
     constant_pool_builder::ConstantPoolBuilder,
-    function_assembler::Instruction,
+    function_assembler::{Instruction, ReturnDescriptor},
     source_graph::{BasicBlock, BlockFinalizer},
 };
 
@@ -49,6 +49,15 @@ impl SymbolicEvaluator {
             }
             BlockFinalizer::Goto(_) => {}
             BlockFinalizer::ReturnNull => {}
+            BlockFinalizer::ReturnObject => {
+                assert!(matches!(
+                    self.stack.pop(),
+                    Some(VerificationTypeInfo::Object { .. })
+                ));
+            }
+            BlockFinalizer::ReturnInteger => {
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+            }
         }
     }
 
@@ -76,13 +85,16 @@ impl SymbolicEvaluator {
                         .pop()
                         .expect("Should supply objectref when calling a method");
                 }
+
+                if let ReturnDescriptor::Value(value_type) = &method_descriptor.return_type {
+                    self.stack.push(value_type.to_verification_type(pool))
+                }
             }
             Instruction::LoadConstant { value } => {
                 let verification_type = value.to_verification_type(pool);
                 self.stack.push(verification_type);
             }
-            Instruction::ReturnNull => {}
-            Instruction::IAdd | Instruction::IMul => {
+            Instruction::IAdd | Instruction::IMul | Instruction::ISub => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
                 self.stack.push(VerificationTypeInfo::Integer);

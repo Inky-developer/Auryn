@@ -31,6 +31,7 @@ pub struct AirFunctionId(pub SyntaxId);
 pub struct AirFunction {
     pub r#type: AirType,
     pub declared_parameter_types: Vec<SmallString>,
+    pub declared_return_type: Option<SmallString>,
     pub ident: SmallString,
     pub blocks: FastMap<AirBlockId, AirBlock>,
 }
@@ -187,11 +188,26 @@ impl FromStr for Intrinsic {
 
 #[derive(Debug)]
 pub enum AirBlockFinalizer {
-    Return,
+    Return(ReturnValue),
     Goto(AirBlockId),
     Branch {
         value: Box<AirExpression>,
         pos_block: AirBlockId,
         neg_block: AirBlockId,
     },
+}
+
+#[derive(Debug)]
+pub enum ReturnValue {
+    Expression(Box<AirExpression>),
+    Null(SyntaxId),
+}
+
+impl ReturnValue {
+    pub fn expression(&self) -> Option<&AirExpression> {
+        match self {
+            ReturnValue::Expression(expression) => Some(expression),
+            _ => None,
+        }
+    }
 }

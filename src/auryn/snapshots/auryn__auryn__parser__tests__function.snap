@@ -1,12 +1,12 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"fn foo(a: Int, b: String,) { print(9000) }\")"
+expression: "verify(\"fn foo(a: Int, b: String,) -> Null { print(9000) }\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..42 Root
-        |0..42 File
-        ||0..42 FunctionDefinition
+        0..50 Root
+        |0..50 File
+        ||0..50 FunctionDefinition
         |||KeywordFn `fn`
         |||Whitespace ` `
         |||Identifier `foo`
@@ -31,19 +31,26 @@ AnnotatedParserOutput {
         ||||Comma `,`
         ||||ParensClose `)`
         ||||Whitespace ` `
+        |||27..35 ReturnType
+        ||||Arrow `->`
+        ||||Whitespace ` `
+        ||||30..35 Type
+        |||||30..35 Ident
+        ||||||Identifier `Null`
+        ||||||Whitespace ` `
         |||BraceOpen `{`
         |||Whitespace ` `
-        |||29..41 Block
-        ||||29..41 Statement
-        |||||29..41 Expression
-        ||||||29..41 Value
-        |||||||29..41 FunctionCall
+        |||37..49 Block
+        ||||37..49 Statement
+        |||||37..49 Expression
+        ||||||37..49 Value
+        |||||||37..49 FunctionCall
         ||||||||Identifier `print`
-        ||||||||34..41 ArgumentList
+        ||||||||42..49 ArgumentList
         |||||||||ParensOpen `(`
-        |||||||||35..39 Expression
-        ||||||||||35..39 Value
-        |||||||||||35..39 NumberLiteral
+        |||||||||43..47 Expression
+        ||||||||||43..47 Value
+        |||||||||||43..47 NumberLiteral
         ||||||||||||NumberLiteral `9000`
         |||||||||ParensClose `)`
         |||||||||Whitespace ` `

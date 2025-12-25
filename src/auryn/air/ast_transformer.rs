@@ -3,12 +3,12 @@ use crate::{
         air::data::{
             self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-            AirValueId, Call, IntrinsicCall,
+            AirValueId, Call, IntrinsicCall, ReturnValue,
         },
         ast::ast_node::{
             self, Assignment, BinaryOperation, Block, BreakStatement, Expression, FunctionCall,
             FunctionDefinition, Ident, IfStatement, LoopStatement, NumberLiteral, Parenthesis,
-            Root, Statement, StringLiteral, Value, VariableUpdate,
+            ReturnStatement, Root, Statement, StringLiteral, Type, Value, VariableUpdate,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -95,10 +95,19 @@ impl AstTransformer {
             FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
         function_transformer.transform_function_body(block);
 
+        let declared_return_type = function_definition
+            .return_type()
+            .ok()
+            .and_then(|r#type| r#type.r#type().ok())
+            .and_then(|r#type| match r#type {
+                Type::Ident(ident) => ident.ident().ok().map(|ident| ident.text.clone()),
+            });
+
         let function_id = self.namespace[&ident];
         let function = AirFunction {
             r#type: AirType::Inferred,
             declared_parameter_types: declared_parameters,
+            declared_return_type,
             ident,
             blocks: function_transformer.finished_blocks,
         };
@@ -213,7 +222,11 @@ impl FunctionTransformer<'_> {
     fn transform_function_body(&mut self, block: Block) {
         let block_id = self.add_block();
         self.transform_block(block);
-        self.finish_block(block_id, AirBlockFinalizer::Return);
+        // The Return(None) is just a placeholder, could also be replaced with an actual error variant
+        self.finish_block(
+            block_id,
+            AirBlockFinalizer::Return(data::ReturnValue::Null(block.id())),
+        );
         assert!(self.block_builders.is_empty());
     }
 
@@ -232,6 +245,9 @@ impl FunctionTransformer<'_> {
             }
             Statement::BreakStatement(break_statement) => {
                 self.transform_break_statement(break_statement)
+            }
+            Statement::ReturnStatement(return_statement) => {
+                self.transform_return_statement(return_statement)
             }
             Statement::VariableUpdate(variable_update) => {
                 self.transform_variable_update(variable_update)
@@ -319,6 +335,23 @@ impl FunctionTransformer<'_> {
 
         let dead_code_block = self.add_block();
         self.finish_block(dead_code_block, AirBlockFinalizer::Goto(break_target));
+    }
+
+    fn transform_return_statement(&mut self, r#return: ReturnStatement) {
+        let expression = r#return
+            .expression()
+            .ok()
+            .map(|expression| Box::new(self.transform_expression(expression)));
+
+        let dead_code_block = self.add_block();
+        self.finish_block(
+            dead_code_block,
+            AirBlockFinalizer::Return(
+                expression.map_or(ReturnValue::Null(r#return.id()), |expr| {
+                    data::ReturnValue::Expression(expr)
+                }),
+            ),
+        );
     }
 
     fn transform_variable_update(&mut self, variable_update: VariableUpdate) {

@@ -166,7 +166,6 @@ expression: "(pool, method)"
                                 ),
                             ),
                             Return,
-                            Return,
                         ],
                         attributes: [
                             AttributeInfo {

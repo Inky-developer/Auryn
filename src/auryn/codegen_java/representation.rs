@@ -1,0 +1,51 @@
+use crate::{
+    auryn::air::types::{FunctionType, Type},
+    java::{
+        constant_pool_builder::ConstantPoolBuilder,
+        function_assembler::{MethodDescriptor, Primitive, ReturnDescriptor},
+    },
+};
+
+/// Returns the representation of an auryn type for the jvm.
+/// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
+pub fn get_representation(pool: &mut ConstantPoolBuilder, air_type: &Type) -> Option<Primitive> {
+    match air_type {
+        Type::Number => Some(Primitive::Integer),
+        Type::String => Some(Primitive::Object(pool.get_string_index())),
+        Type::Null | Type::Function(_) => None,
+        Type::Top => todo!("The top type cannot be represented yet"),
+        Type::Error => unreachable!("Called with error type"),
+    }
+}
+
+/// Returns the representation of `air_type` as a jvm return [`ReturnDescriptor`]
+pub fn get_return_type_representation(
+    pool: &mut ConstantPoolBuilder,
+    air_type: &Type,
+) -> ReturnDescriptor {
+    get_representation(pool, air_type)
+        .map(|primitive| primitive.to_field_descriptor(pool).into())
+        .unwrap_or(ReturnDescriptor::Void)
+}
+
+/// Returns the representation of an auryn type for the jvm
+pub fn get_function_representation(
+    pool: &mut ConstantPoolBuilder,
+    ty: &FunctionType,
+) -> MethodDescriptor {
+    let parameters = ty
+        .parameters
+        .iter()
+        .flat_map(|it| get_representation(pool, it).map(|it| it.to_field_descriptor(pool)))
+        .collect();
+    let return_type = match &ty.return_type {
+        Type::Null => ReturnDescriptor::Void,
+        other => get_representation(pool, other).map_or(ReturnDescriptor::Void, |it| {
+            it.to_field_descriptor(pool).into()
+        }),
+    };
+    MethodDescriptor {
+        parameters,
+        return_type,
+    }
+}

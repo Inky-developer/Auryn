@@ -25,8 +25,6 @@ pub enum FieldDescriptor {
         dimension_count: u8,
         descriptor: Box<FieldDescriptor>,
     },
-    // Technically not part of field descriptors, but is easier implemented than adding a new enum like FieldDescriptorWithVoid
-    Void,
 }
 
 impl FieldDescriptor {
@@ -66,9 +64,6 @@ impl FieldDescriptor {
                     constant_pool_index,
                 }
             }
-            FieldDescriptor::Void => {
-                panic!("Should never try to convert a void descriptor into a verification type!")
-            }
         }
     }
 }
@@ -95,15 +90,48 @@ impl Display for FieldDescriptor {
                 descriptor.fmt(f)?;
                 Ok(())
             }
-            FieldDescriptor::Void => write!(f, "V"),
         }
+    }
+}
+
+/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-ReturnDescriptor
+#[derive(Debug, Clone)]
+pub enum ReturnDescriptor {
+    Value(FieldDescriptor),
+    Void,
+}
+
+impl ReturnDescriptor {
+    pub fn to_verification_type(
+        &self,
+        pool: &mut ConstantPoolBuilder,
+    ) -> Option<VerificationTypeInfo> {
+        match self {
+            ReturnDescriptor::Value(value) => Some(value.to_verification_type(pool)),
+            ReturnDescriptor::Void => None,
+        }
+    }
+}
+
+impl Display for ReturnDescriptor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReturnDescriptor::Value(field_descriptor) => field_descriptor.fmt(f),
+            ReturnDescriptor::Void => f.write_str("V"),
+        }
+    }
+}
+
+impl From<FieldDescriptor> for ReturnDescriptor {
+    fn from(value: FieldDescriptor) -> Self {
+        ReturnDescriptor::Value(value)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct MethodDescriptor {
     pub parameters: Vec<FieldDescriptor>,
-    pub return_type: FieldDescriptor,
+    pub return_type: ReturnDescriptor,
 }
 
 impl Display for MethodDescriptor {
@@ -197,8 +225,8 @@ pub enum Instruction {
     LoadConstant {
         value: ConstantValue,
     },
-    ReturnNull,
     IAdd,
+    ISub,
     IMul,
     Store(VariableId),
     Load(VariableId),
@@ -313,6 +341,7 @@ mod tests {
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{
             ConstantValue, FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor,
+            ReturnDescriptor,
         },
     };
 
@@ -323,7 +352,7 @@ mod tests {
             "main".into(),
             MethodDescriptor {
                 parameters: vec![],
-                return_type: FieldDescriptor::Void,
+                return_type: ReturnDescriptor::Void,
             },
             &mut pool,
         );
@@ -341,10 +370,9 @@ mod tests {
                 name: "println".into(),
                 method_descriptor: MethodDescriptor {
                     parameters: vec![FieldDescriptor::string()],
-                    return_type: FieldDescriptor::Void,
+                    return_type: ReturnDescriptor::Void,
                 },
             },
-            Instruction::ReturnNull,
         ]);
 
         let method = assembler.assemble();

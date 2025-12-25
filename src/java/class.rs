@@ -146,12 +146,18 @@ pub enum Instruction {
     InvokeStatic(ConstantPoolIndex),
     /// Index must be a MethodRef
     InvokeVirtual(ConstantPoolIndex),
-    Ireturn,
     /// Loads a constant from the constant pool
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc
     Ldc(u8),
     /// Returns void
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.return
     Return,
+    /// Returns a reference type
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.areturn
+    AReturn,
+    /// Returns Int, short, char, byte or boolean
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ireturn
+    IReturn,
     // Load a reference
     // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aload
     ALoad(u16),
@@ -162,6 +168,9 @@ pub enum Instruction {
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
     Iconst(i8),
     IAdd,
+    /// Subtract two integers
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.isub
+    ISub,
     IMul,
     IStore(u16),
     ILoad(u16),
@@ -204,17 +213,23 @@ impl Instruction {
                 buf.write_all(&[0xb6])?;
                 reference.serialize(buf)?;
             }
-            Instruction::Ireturn => {
+            Instruction::Return => {
+                buf.write_all(&[0xb1])?;
+            }
+            Instruction::AReturn => {
+                buf.write_all(&[0xb0])?;
+            }
+            Instruction::IReturn => {
                 buf.write_all(&[0xac])?;
             }
             Instruction::Ldc(index) => {
                 buf.write_all(&[0x12, index])?;
             }
-            Instruction::Return => {
-                buf.write_all(&[0xb1])?;
-            }
             Instruction::IAdd => {
                 buf.write_all(&[0x60])?;
+            }
+            Instruction::ISub => {
+                buf.write_all(&[0x64])?;
             }
             Instruction::IMul => {
                 buf.write_all(&[0x68])?;

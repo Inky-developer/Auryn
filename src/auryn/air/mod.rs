@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn test_function_call() {
         insta::assert_debug_snapshot!(compile(
-            "fn main() { foo(1) }\nfn foo(bar: Number) { print(bar) }"
+            "fn main() { foo(1) }\nfn foo(bar: Number) -> Number { print(bar) }"
         ));
     }
 

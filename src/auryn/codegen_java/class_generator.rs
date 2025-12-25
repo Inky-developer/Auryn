@@ -2,14 +2,18 @@ use crate::{
     auryn::{
         air::{
             data::{Air, AirFunction, AirFunctionId},
-            types::{FunctionType, Type},
+            types::Type,
         },
-        codegen_java::{function_generator::generate_function, utils::translate_type},
+        codegen_java::{
+            function_generator::generate_function, representation::get_function_representation,
+        },
     },
     java::{
         class::{self},
         constant_pool_builder::ConstantPoolBuilder,
-        function_assembler::{FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor},
+        function_assembler::{
+            FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor, ReturnDescriptor,
+        },
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
@@ -54,7 +58,8 @@ impl ClassGenerator {
             let Type::Function(function_type) = function.r#type.computed() else {
                 unreachable!("Function should have a function type");
             };
-            let method_descriptor = translate_function_type(&mut self.constant_pool, function_type);
+            let method_descriptor =
+                get_function_representation(&mut self.constant_pool, function_type);
 
             let mangled_name = function.ident.clone();
 
@@ -94,7 +99,7 @@ impl ClassGenerator {
                 dimension_count: 1,
                 descriptor: Box::new(FieldDescriptor::string()),
             }],
-            return_type: FieldDescriptor::Void,
+            return_type: ReturnDescriptor::Void,
         };
         let mut assembler =
             FunctionAssembler::new("main".into(), main_descriptor, &mut self.constant_pool);
@@ -115,22 +120,6 @@ impl ClassGenerator {
     }
 }
 
-fn translate_function_type(pool: &mut ConstantPoolBuilder, ty: &FunctionType) -> MethodDescriptor {
-    let parameters = ty
-        .parameters
-        .iter()
-        .flat_map(|it| translate_type(pool, it).map(|it| it.to_field_descriptor(pool)))
-        .collect();
-    let return_type = match &ty.return_type {
-        Type::Null => FieldDescriptor::Void,
-        other => translate_type(pool, other)
-            .map_or(FieldDescriptor::Void, |it| it.to_field_descriptor(pool)),
-    };
-    MethodDescriptor {
-        parameters,
-        return_type,
-    }
-}
 #[cfg(test)]
 mod tests {
     use crate::{
