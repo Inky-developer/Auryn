@@ -7,7 +7,7 @@ use crate::{
             VerificationTypeInfo,
         },
         constant_pool_builder::ConstantPoolBuilder,
-        function_assembler::{ConstantValue, Instruction, Primitive},
+        function_assembler::{ConstantValue, Instruction},
         symbolic_evaluation::{Frame, SymbolicEvaluator},
     },
     utils::{fast_map::FastMap, graph::Graph},
@@ -284,26 +284,27 @@ impl AssemblyContext<'_> {
                 );
                 on_instruction(class::Instruction::InvokeStatic(method_ref_index))
             }
-            Instruction::NewArray(element_type) => {
-                on_instruction(match element_type.to_primitive_type() {
+            Instruction::NewArray(element_type) => on_instruction(
+                match element_type.clone().to_primitive_type_or_object(self.0) {
                     Ok(primitive) => class::Instruction::NewArray(primitive),
                     Err(index) => class::Instruction::ANewArray(index),
-                })
-            }
-            Instruction::ArrayStore(element_type) => {
-                on_instruction(match element_type.to_primitive_type() {
+                },
+            ),
+            Instruction::ArrayStore(element_type) => on_instruction(
+                match element_type.clone().to_primitive_type_or_object(self.0) {
                     Ok(PrimitiveType::Int) => class::Instruction::IAStore,
                     Ok(other) => todo!("Add instruction for stroring into {other:?} arrays"),
                     Err(_) => class::Instruction::AAStore,
-                })
-            }
-            Instruction::ArrayLoad(element_type) => {
-                on_instruction(match element_type.to_primitive_type() {
+                },
+            ),
+            Instruction::ArrayLoad(element_type) => on_instruction(
+                match element_type.clone().to_primitive_type_or_object(self.0) {
                     Ok(PrimitiveType::Int) => class::Instruction::IALoad,
                     Ok(other) => todo!("Add instruction for loading from {other:?} arrays"),
                     Err(_) => class::Instruction::AALoad,
-                })
-            }
+                },
+            ),
+            Instruction::ArrayLength => on_instruction(class::Instruction::ArrayLength),
             Instruction::LoadConstant { value } => {
                 let constant_index = match value {
                     ConstantValue::String(string) => self.0.add_string(string.clone()),
@@ -319,14 +320,20 @@ impl AssemblyContext<'_> {
             Instruction::IAdd => on_instruction(class::Instruction::IAdd),
             Instruction::ISub => on_instruction(class::Instruction::ISub),
             Instruction::IMul => on_instruction(class::Instruction::IMul),
-            Instruction::Store(id) => on_instruction(match id.r#type {
-                Primitive::Integer => class::Instruction::IStore(id.index),
-                Primitive::Object(_) => class::Instruction::AStore(id.index),
-            }),
-            Instruction::Load(id) => on_instruction(match id.r#type {
-                Primitive::Integer => class::Instruction::ILoad(id.index),
-                Primitive::Object(_) => class::Instruction::ALoad(id.index),
-            }),
+            Instruction::Store(id) => on_instruction(
+                match id.r#type.clone().to_primitive_type_or_object(self.0) {
+                    Ok(PrimitiveType::Int) => class::Instruction::IStore(id.index),
+                    Ok(other) => todo!("Add support for storing {other:?}"),
+                    Err(_) => class::Instruction::AStore(id.index),
+                },
+            ),
+            Instruction::Load(id) => on_instruction(
+                match id.r#type.clone().to_primitive_type_or_object(self.0) {
+                    Ok(PrimitiveType::Int) => class::Instruction::ILoad(id.index),
+                    Ok(other) => todo!("Ad support for storing {other:?}"),
+                    Err(_) => class::Instruction::ALoad(id.index),
+                },
+            ),
             Instruction::Nop => on_instruction(class::Instruction::Nop),
             Instruction::Pop(category) => match category {
                 TypeCategory::Normal => on_instruction(class::Instruction::Pop),

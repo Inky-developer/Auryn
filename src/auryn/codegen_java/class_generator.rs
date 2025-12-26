@@ -58,8 +58,7 @@ impl ClassGenerator {
             let Type::Function(function_type) = function.r#type.computed() else {
                 unreachable!("Function should have a function type");
             };
-            let method_descriptor =
-                get_function_representation(&mut self.constant_pool, function_type);
+            let method_descriptor = get_function_representation(function_type);
 
             let mangled_name = function.ident.clone();
 

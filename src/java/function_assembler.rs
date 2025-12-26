@@ -2,10 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     java::{
-        class::{
-            self, ConstantPoolEntry, ConstantPoolIndex, PrimitiveType, TypeCategory,
-            VerificationTypeInfo,
-        },
+        class::{self, ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
         source_graph::{BasicBlock, BasicBlockId, SourceGraph},
     },
@@ -39,34 +36,22 @@ impl FieldDescriptor {
         FieldDescriptor::Object("java/io/PrintStream".into())
     }
 
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.10.1.2
-    pub fn to_verification_type(
-        &self,
-        constant_pool_builder: &mut ConstantPoolBuilder,
-    ) -> VerificationTypeInfo {
+    pub fn into_primitive(self) -> Primitive {
         match self {
             FieldDescriptor::Byte
             | FieldDescriptor::Char
             | FieldDescriptor::Integer
             | FieldDescriptor::Short
-            | FieldDescriptor::Boolean => VerificationTypeInfo::Integer,
-            FieldDescriptor::Double => VerificationTypeInfo::Double,
-            FieldDescriptor::Float => VerificationTypeInfo::Float,
-            FieldDescriptor::Long => VerificationTypeInfo::Long,
-            FieldDescriptor::Object(name) => {
-                let constant_pool_index = constant_pool_builder.add_class(name.clone());
-                VerificationTypeInfo::Object {
-                    constant_pool_index,
-                }
+            | FieldDescriptor::Boolean => Primitive::Integer,
+            FieldDescriptor::Object(name) => Primitive::Object(name),
+            FieldDescriptor::Array {
+                dimension_count,
+                descriptor,
+            } => {
+                assert_eq!(dimension_count, 1, "Higher dimensions not implemented yet");
+                Primitive::Array(Box::new(descriptor.into_primitive()))
             }
-            // Arrays are represented as classes with the name matching their field descriptor
-            // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
-            FieldDescriptor::Array { .. } => {
-                let constant_pool_index = constant_pool_builder.add_class(self.to_string().into());
-                VerificationTypeInfo::Object {
-                    constant_pool_index,
-                }
-            }
+            other => todo!("No primitive for {other} yet"),
         }
     }
 }
@@ -105,12 +90,9 @@ pub enum ReturnDescriptor {
 }
 
 impl ReturnDescriptor {
-    pub fn to_verification_type(
-        &self,
-        pool: &mut ConstantPoolBuilder,
-    ) -> Option<VerificationTypeInfo> {
+    pub fn into_primitive(self) -> Option<Primitive> {
         match self {
-            ReturnDescriptor::Value(value) => Some(value.to_verification_type(pool)),
+            ReturnDescriptor::Value(value) => Some(value.into_primitive()),
             ReturnDescriptor::Void => None,
         }
     }
@@ -156,6 +138,12 @@ pub enum ConstantValue {
     Integer(i32),
 }
 impl ConstantValue {
+    pub fn to_primitive(&self) -> Primitive {
+        match self {
+            ConstantValue::String(_) => Primitive::string(),
+            ConstantValue::Integer(_) => Primitive::Integer,
+        }
+    }
     pub fn to_verification_type(
         &self,
         constant_pool_builder: &mut ConstantPoolBuilder,
@@ -169,46 +157,62 @@ impl ConstantValue {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Primitive {
     Integer,
-    Object(ConstantPoolIndex),
+    Array(Box<Primitive>),
+    Object(SmallString),
 }
 
 impl Primitive {
-    pub fn to_field_descriptor(self, pool: &mut ConstantPoolBuilder) -> FieldDescriptor {
+    pub fn string() -> Self {
+        Primitive::Object("java/lang/String".into())
+    }
+
+    pub fn to_primitive_type_or_object(
+        self,
+        pool: &mut ConstantPoolBuilder,
+    ) -> Result<PrimitiveType, ConstantPoolIndex> {
         match self {
-            Primitive::Integer => FieldDescriptor::Integer,
-            Primitive::Object(constant_pool_index) => {
-                let ConstantPoolEntry::Class { name_index } = &pool[constant_pool_index] else {
-                    unreachable!("Invalid object ref");
-                };
-                let ConstantPoolEntry::Utf8(text) = &pool[*name_index] else {
-                    unreachable!("Invalid class ref");
-                };
-                FieldDescriptor::Object(text.clone())
+            Primitive::Integer => Ok(PrimitiveType::Int),
+            Primitive::Object(descriptor) => Err(pool.add_class(descriptor)),
+            Primitive::Array(inner) => {
+                Err(pool.add_class(inner.into_field_descriptor().to_string().into()))
             }
         }
     }
 
-    pub fn to_verification_type(self) -> VerificationTypeInfo {
+    pub fn into_field_descriptor(self) -> FieldDescriptor {
         match self {
-            Primitive::Integer => VerificationTypeInfo::Integer,
-            Primitive::Object(object) => VerificationTypeInfo::Object {
-                constant_pool_index: object,
+            Primitive::Integer => FieldDescriptor::Integer,
+            Primitive::Object(r#type) => FieldDescriptor::Object(r#type),
+            Primitive::Array(element_type) => FieldDescriptor::Array {
+                dimension_count: 1,
+                descriptor: Box::new(element_type.into_field_descriptor()),
             },
         }
     }
 
-    pub fn to_primitive_type(&self) -> Result<PrimitiveType, ConstantPoolIndex> {
+    pub fn into_verification_type(self, pool: &mut ConstantPoolBuilder) -> VerificationTypeInfo {
         match self {
-            Primitive::Integer => Ok(PrimitiveType::Int),
-            Primitive::Object(index) => Err(*index),
+            Primitive::Integer => VerificationTypeInfo::Integer,
+            Primitive::Array(inner) => VerificationTypeInfo::Object {
+                constant_pool_index: pool.add_array_class(inner.into_field_descriptor()),
+            },
+            Primitive::Object(object) => VerificationTypeInfo::Object {
+                constant_pool_index: pool.add_class(object),
+            },
+        }
+    }
+
+    pub fn category(&self) -> TypeCategory {
+        match self {
+            Primitive::Integer | Primitive::Array(_) | Primitive::Object(_) => TypeCategory::Normal,
         }
     }
 
     pub fn stack_size(&self) -> u16 {
-        self.to_verification_type().category().stack_size()
+        self.category().stack_size()
     }
 }
 
@@ -243,6 +247,8 @@ pub enum Instruction {
     /// Loads a value of the given type from an array
     /// Stack: ..., arrayref, index -> ..., value
     ArrayLoad(Primitive),
+    /// Returns the length of the given array
+    ArrayLength,
     IAdd,
     ISub,
     IMul,
@@ -255,7 +261,7 @@ pub enum Instruction {
     Dup(TypeCategory),
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VariableId {
     pub index: u16,
     pub r#type: Primitive,
@@ -290,8 +296,12 @@ impl<'a> FunctionAssembler<'a> {
         let function_parameters = self
             .descriptor
             .parameters
-            .iter()
-            .map(|it| it.to_verification_type(self.constant_pool))
+            .clone()
+            .into_iter()
+            .map(|it| {
+                it.into_primitive()
+                    .into_verification_type(self.constant_pool)
+            })
             .collect();
         let (class_instructions, stack_map_frame) = self
             .blocks

@@ -67,7 +67,10 @@ impl SymbolicEvaluator {
                 field_descriptor: field_type,
                 ..
             } => {
-                let verification_type = field_type.to_verification_type(pool);
+                let verification_type = field_type
+                    .clone()
+                    .into_primitive()
+                    .into_verification_type(pool);
                 self.stack.push(verification_type);
             }
             Instruction::InvokeVirtual {
@@ -77,7 +80,10 @@ impl SymbolicEvaluator {
                 method_descriptor, ..
             } => {
                 for argument in method_descriptor.parameters.iter().rev() {
-                    let verification_type = argument.to_verification_type(pool);
+                    let verification_type = argument
+                        .clone()
+                        .into_primitive()
+                        .into_verification_type(pool);
                     assert_eq!(self.stack.pop(), Some(verification_type));
                 }
                 if matches!(instruction, Instruction::InvokeVirtual { .. }) {
@@ -87,7 +93,12 @@ impl SymbolicEvaluator {
                 }
 
                 if let ReturnDescriptor::Value(value_type) = &method_descriptor.return_type {
-                    self.stack.push(value_type.to_verification_type(pool))
+                    self.stack.push(
+                        value_type
+                            .clone()
+                            .into_primitive()
+                            .into_verification_type(pool),
+                    )
                 }
             }
             Instruction::LoadConstant { value } => {
@@ -100,14 +111,16 @@ impl SymbolicEvaluator {
                 self.stack.push(VerificationTypeInfo::Integer);
             }
             Instruction::Store(id) => {
-                assert_eq!(self.stack.pop(), Some(id.r#type.to_verification_type()));
+                let verification_type = id.r#type.clone().into_verification_type(pool);
+                assert_eq!(self.stack.pop(), Some(verification_type));
                 // FIXME: Probably need to rework the whole locals allocation system :(
                 if self.locals.len() == id.index.into() {
-                    self.locals.push(id.r#type.to_verification_type());
+                    self.locals.push(verification_type);
                 }
             }
             Instruction::Load(id) => {
-                self.stack.push(id.r#type.to_verification_type());
+                self.stack
+                    .push(id.r#type.clone().into_verification_type(pool));
             }
             Instruction::Nop => {}
             Instruction::Pop(category) => {
@@ -118,7 +131,7 @@ impl SymbolicEvaluator {
                 let len_val = self.stack.pop();
                 assert_eq!(len_val, Some(VerificationTypeInfo::Integer));
 
-                let element_type = primitive.to_field_descriptor(pool);
+                let element_type = primitive.clone().into_field_descriptor();
                 let array_type = pool.add_array_class(element_type);
                 self.stack.push(VerificationTypeInfo::Object {
                     constant_pool_index: array_type,
@@ -126,12 +139,12 @@ impl SymbolicEvaluator {
             }
             Instruction::ArrayStore(primitive) => {
                 let value = self.stack.pop();
-                assert_eq!(value, Some(primitive.to_verification_type()));
+                assert_eq!(value, Some(primitive.clone().into_verification_type(pool)));
 
                 let index = self.stack.pop();
                 assert_eq!(index, Some(VerificationTypeInfo::Integer));
 
-                let element_type = primitive.to_field_descriptor(pool);
+                let element_type = primitive.clone().into_field_descriptor();
                 let array_type = pool.add_array_class(element_type);
                 let array = self.stack.pop();
                 assert_eq!(
@@ -145,7 +158,7 @@ impl SymbolicEvaluator {
                 let index = self.stack.pop();
                 assert_eq!(index, Some(VerificationTypeInfo::Integer));
 
-                let element_type = primitive.to_field_descriptor(pool);
+                let element_type = primitive.clone().into_field_descriptor();
                 let array_type = pool.add_array_class(element_type);
                 let array = self.stack.pop();
                 assert_eq!(
@@ -155,7 +168,13 @@ impl SymbolicEvaluator {
                     })
                 );
 
-                self.stack.push(primitive.to_verification_type());
+                self.stack
+                    .push(primitive.clone().into_verification_type(pool));
+            }
+            Instruction::ArrayLength => {
+                let array = self.stack.pop();
+                assert!(matches!(array, Some(VerificationTypeInfo::Object { .. })));
+                self.stack.push(VerificationTypeInfo::Integer);
             }
             Instruction::Dup(type_category) => {
                 let info = self.stack.last().unwrap();

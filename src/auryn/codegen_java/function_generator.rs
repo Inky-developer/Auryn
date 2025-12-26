@@ -12,11 +12,11 @@ use crate::{
         tokenizer::BinaryOperatorToken,
     },
     java::{
-        class::{self, Comparison, VerificationTypeInfo},
+        class::{self, Comparison},
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{
             ConstantValue, FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor,
-            ReturnDescriptor, VariableId,
+            Primitive, ReturnDescriptor, VariableId,
         },
         source_graph::{BasicBlockId, BlockFinalizer},
     },
@@ -78,7 +78,7 @@ impl<'a> FunctionGenerator<'a> {
         let mut variable_index = 0;
         for (parameter, argument_id) in function_type.parameters.iter().zip(function.argument_ids())
         {
-            if let Some(primitive) = get_representation(pool, parameter) {
+            if let Some(primitive) = get_representation(parameter) {
                 let variable_id = VariableId {
                     index: variable_index,
                     r#type: primitive,
@@ -149,9 +149,10 @@ impl FunctionGenerator<'_> {
                 let finalizer = match result {
                     None => BlockFinalizer::ReturnNull,
                     Some(r#type) => match r#type {
-                        VerificationTypeInfo::Integer => BlockFinalizer::ReturnInteger,
-                        VerificationTypeInfo::Object { .. } => BlockFinalizer::ReturnObject,
-                        other => panic!("Cannot return {other:?}"),
+                        Primitive::Integer => BlockFinalizer::ReturnInteger,
+                        Primitive::Object { .. } | Primitive::Array(_) => {
+                            BlockFinalizer::ReturnObject
+                        }
                     },
                 };
                 self.assembler.current_block_mut().finalizer = finalizer
@@ -168,7 +169,7 @@ impl FunctionGenerator<'_> {
                 let pos_block_id = self.translate_block_id(*pos_block);
                 let neg_block_id = self.translate_block_id(*neg_block);
                 let result = self.generate_expression(value);
-                assert_eq!(result, Some(VerificationTypeInfo::Integer));
+                assert_eq!(result, Some(Primitive::Integer));
                 self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
                     comparison: Comparison::NotEqual,
                     positive_block: pos_block_id,
@@ -194,12 +195,13 @@ impl FunctionGenerator<'_> {
         self.generate_expression(&assignment.expression);
 
         let variable_id = if self.variable_map.contains_key(&assignment.target) {
-            Some(self.variable_map[&assignment.target])
+            Some(self.variable_map[&assignment.target].clone())
         } else {
             let air_type = assignment.expression.r#type.computed();
-            if let Some(primitive) = get_representation(self.assembler.constant_pool, air_type) {
+            if let Some(primitive) = get_representation(air_type) {
                 let variable_id = self.assembler.alloc_variable(primitive);
-                self.variable_map.insert(assignment.target, variable_id);
+                self.variable_map
+                    .insert(assignment.target, variable_id.clone());
                 Some(variable_id)
             } else {
                 None
@@ -212,7 +214,7 @@ impl FunctionGenerator<'_> {
     }
 
     /// The return value indicates the stack usage
-    fn generate_expression(&mut self, expression: &AirExpression) -> Option<VerificationTypeInfo> {
+    fn generate_expression(&mut self, expression: &AirExpression) -> Option<Primitive> {
         match &expression.kind {
             AirExpressionKind::Constant(constant) => Some(self.generate_constant(constant)),
             AirExpressionKind::BinaryOperator(binary_operator) => {
@@ -227,28 +229,28 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_constant(&mut self, constant: &AirConstant) -> VerificationTypeInfo {
+    fn generate_constant(&mut self, constant: &AirConstant) -> Primitive {
         match constant {
             AirConstant::Number(number) => {
                 let value = ConstantValue::Integer(*number);
-                let r#type = value.to_verification_type(self.assembler.constant_pool);
+                let r#type = value.to_primitive();
                 self.assembler.add(Instruction::LoadConstant { value });
                 r#type
             }
             AirConstant::String(text) => {
                 let value = ConstantValue::String(text.clone());
-                let r#type = value.to_verification_type(self.assembler.constant_pool);
+                let r#type = value.to_primitive();
                 self.assembler.add(Instruction::LoadConstant { value });
                 r#type
             }
         }
     }
 
-    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> VerificationTypeInfo {
+    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> Primitive {
         let lhs_type = self.generate_expression(&operation.lhs);
         let rhs_type = self.generate_expression(&operation.rhs);
         assert_eq!(lhs_type, rhs_type);
-        assert_eq!(lhs_type, Some(VerificationTypeInfo::Integer));
+        assert_eq!(lhs_type, Some(Primitive::Integer));
 
         match operation.operator {
             BinaryOperatorToken::Plus => {
@@ -270,7 +272,7 @@ impl FunctionGenerator<'_> {
             BinaryOperatorToken::LessOrEqual => self.generate_comparison(Comparison::LessOrEqual),
         };
 
-        VerificationTypeInfo::Integer
+        Primitive::Integer
     }
 
     fn generate_comparison(&mut self, comparison: Comparison) {
@@ -298,13 +300,14 @@ impl FunctionGenerator<'_> {
         self.assembler.set_current_block_id(next_block_id);
     }
 
-    fn generate_variable(&mut self, variable: &AirValueId) -> VerificationTypeInfo {
-        let variable_id = self.variable_map[variable];
+    fn generate_variable(&mut self, variable: &AirValueId) -> Primitive {
+        let variable_id = self.variable_map[variable].clone();
+        let primitive = variable_id.r#type.clone();
         self.assembler.add(Instruction::Load(variable_id));
-        variable_id.r#type.to_verification_type()
+        primitive
     }
 
-    fn generate_call(&mut self, call: &Call) -> Option<VerificationTypeInfo> {
+    fn generate_call(&mut self, call: &Call) -> Option<Primitive> {
         for argument in &call.arguments {
             self.generate_expression(argument);
         }
@@ -318,28 +321,24 @@ impl FunctionGenerator<'_> {
             name: generated_name.clone(),
             method_descriptor: method_descriptor.clone(),
         });
-        method_descriptor
-            .return_type
-            .to_verification_type(self.assembler.constant_pool)
+        method_descriptor.return_type.clone().into_primitive()
     }
 
     fn generate_intrinsic_call(
         &mut self,
         r#type: &Type,
         intrinsic: &IntrinsicCall,
-    ) -> Option<VerificationTypeInfo> {
+    ) -> Option<Primitive> {
         match intrinsic.intrinsic {
             Intrinsic::Print => self.generate_intrinsic_print(&intrinsic.arguments),
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, &intrinsic.arguments),
             Intrinsic::ArrayGet => self.generate_intrinsic_array_get(&intrinsic.arguments),
             Intrinsic::ArraySet => self.generate_intrinsic_array_set(&intrinsic.arguments),
+            Intrinsic::ArrayLen => self.generate_intrinsic_array_len(&intrinsic.arguments),
         }
     }
 
-    fn generate_intrinsic_print(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<VerificationTypeInfo> {
+    fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
         self.assembler.add(Instruction::GetStatic {
             class_name: "java/lang/System".into(),
             name: "out".into(),
@@ -377,39 +376,31 @@ impl FunctionGenerator<'_> {
         &mut self,
         r#type: &Type,
         arguments: &[AirExpression],
-    ) -> Option<VerificationTypeInfo> {
+    ) -> Option<Primitive> {
         let Type::Array(element_type) = r#type else {
             unreachable!("Return type should be an array type");
         };
-        let repr = get_representation(self.assembler.constant_pool, element_type);
+        let repr = get_representation(element_type);
 
         match repr {
             Some(primitive) => {
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::Integer(arguments.len().try_into().unwrap()),
                 });
-                self.assembler.add(Instruction::NewArray(primitive));
+                self.assembler.add(Instruction::NewArray(primitive.clone()));
 
-                let verification_type = primitive.to_verification_type();
                 for (index, argument) in arguments.iter().enumerate() {
-                    self.assembler
-                        .add(Instruction::Dup(verification_type.category()));
+                    self.assembler.add(Instruction::Dup(primitive.category()));
                     self.assembler.add(Instruction::LoadConstant {
                         value: ConstantValue::Integer(index.try_into().unwrap()),
                     });
                     let actual_repr = self.generate_expression(argument);
-                    assert_eq!(actual_repr.as_ref(), Some(&verification_type));
-                    self.assembler.add(Instruction::ArrayStore(primitive));
+                    assert_eq!(actual_repr.as_ref(), Some(&primitive));
+                    self.assembler
+                        .add(Instruction::ArrayStore(primitive.clone()));
                 }
 
-                let field_descriptor = primitive.to_field_descriptor(self.assembler.constant_pool);
-                let constant_pool_index = self
-                    .assembler
-                    .constant_pool
-                    .add_array_class(field_descriptor);
-                Some(VerificationTypeInfo::Object {
-                    constant_pool_index,
-                })
+                Some(Primitive::Array(Box::new(primitive)))
             }
             None => unimplemented!(
                 "Decide how to represent arrays of zero sized types. Maybe just use an int?"
@@ -417,10 +408,7 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_intrinsic_array_get(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<VerificationTypeInfo> {
+    fn generate_intrinsic_array_get(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
         let [array, index] = arguments else {
             unreachable!("Should be valid call");
         };
@@ -428,20 +416,18 @@ impl FunctionGenerator<'_> {
         let Type::Array(element_type) = array.r#type.computed() else {
             unreachable!("Should be an array");
         };
-        let primitive = get_representation(self.assembler.constant_pool, element_type)
-            .expect("Zero sized element types not supported");
+        let primitive =
+            get_representation(element_type).expect("Zero sized element types not supported");
 
         self.generate_expression(array);
         self.generate_expression(index);
-        self.assembler.add(Instruction::ArrayLoad(primitive));
+        self.assembler
+            .add(Instruction::ArrayLoad(primitive.clone()));
 
-        Some(primitive.to_verification_type())
+        Some(primitive)
     }
 
-    fn generate_intrinsic_array_set(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<VerificationTypeInfo> {
+    fn generate_intrinsic_array_set(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
         let [array, index, value] = arguments else {
             unreachable!("Should be valid call");
         };
@@ -449,8 +435,8 @@ impl FunctionGenerator<'_> {
         let Type::Array(element_type) = array.r#type.computed() else {
             unreachable!("Should be an array");
         };
-        let primitive = get_representation(self.assembler.constant_pool, element_type)
-            .expect("Zero sized element types not supported");
+        let primitive =
+            get_representation(element_type).expect("Zero sized element types not supported");
 
         self.generate_expression(array);
         self.generate_expression(index);
@@ -458,5 +444,16 @@ impl FunctionGenerator<'_> {
         self.assembler.add(Instruction::ArrayStore(primitive));
 
         None
+    }
+
+    fn generate_intrinsic_array_len(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
+        let [array] = arguments else {
+            unreachable!("Should be a valid call");
+        };
+
+        self.generate_expression(array);
+        self.assembler.add(Instruction::ArrayLength);
+
+        Some(Primitive::Integer)
     }
 }

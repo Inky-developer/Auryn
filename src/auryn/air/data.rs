@@ -198,6 +198,7 @@ pub enum Intrinsic {
     ArrayOf,
     ArrayGet,
     ArraySet,
+    ArrayLen,
 }
 
 impl FromStr for Intrinsic {
@@ -209,6 +210,7 @@ impl FromStr for Intrinsic {
             "arrayOf" => Intrinsic::ArrayOf,
             "arrayGet" => Intrinsic::ArrayGet,
             "arraySet" => Intrinsic::ArraySet,
+            "arrayLen" => Intrinsic::ArrayLen,
             _ => return Err(()),
         })
     }

@@ -325,6 +325,7 @@ impl Typechecker {
             Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, &intrinsic.arguments),
             Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, &intrinsic.arguments),
             Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, &intrinsic.arguments),
+            Intrinsic::ArrayLen => self.typecheck_intrinsic_array_len(id, &intrinsic.arguments),
         }
     }
 
@@ -415,5 +416,30 @@ impl Typechecker {
         self.expect_type(value, element_type.as_ref().clone());
 
         Type::Null
+    }
+
+    fn typecheck_intrinsic_array_len(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
+        let [array] = arguments else {
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: 1,
+                    got: arguments.len(),
+                },
+            );
+            return Type::Number;
+        };
+
+        if !matches!(array.r#type.computed(), Type::Array(_)) {
+            self.add_error(
+                array.id,
+                DiagnosticError::ExpectedArray {
+                    got: array.r#type.clone(),
+                },
+            );
+            return Type::Number;
+        }
+
+        Type::Number
     }
 }
