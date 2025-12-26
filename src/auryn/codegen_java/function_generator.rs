@@ -8,16 +8,18 @@ use crate::{
             },
             types::Type,
         },
-        codegen_java::{class_generator::GeneratedMethodData, representation::get_representation},
+        codegen_java::{
+            class_generator::GeneratedMethodData,
+            representation::{
+                FieldDescriptor, MethodDescriptor, Primitive, ReturnDescriptor, get_representation,
+            },
+        },
         tokenizer::BinaryOperatorToken,
     },
     java::{
         class::{self, Comparison},
         constant_pool_builder::ConstantPoolBuilder,
-        function_assembler::{
-            ConstantValue, FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor,
-            Primitive, ReturnDescriptor, VariableId,
-        },
+        function_assembler::{ConstantValue, FunctionAssembler, Instruction, VariableId},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
     utils::{

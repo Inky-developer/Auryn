@@ -1,10 +1,8 @@
 use std::ops::Index;
 
 use crate::{
-    java::{
-        class::{ConstantPoolEntry, ConstantPoolIndex},
-        function_assembler::FieldDescriptor,
-    },
+    auryn::codegen_java::representation::FieldDescriptor,
+    java::class::{ConstantPoolEntry, ConstantPoolIndex},
     utils::{fast_map::FastIndexMap, small_string::SmallString},
 };
 

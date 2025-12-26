@@ -5,15 +5,16 @@ use crate::{
             types::Type,
         },
         codegen_java::{
-            function_generator::generate_function, representation::get_function_representation,
+            function_generator::generate_function,
+            representation::{
+                FieldDescriptor, MethodDescriptor, ReturnDescriptor, get_function_representation,
+            },
         },
     },
     java::{
         class::{self},
         constant_pool_builder::ConstantPoolBuilder,
-        function_assembler::{
-            FieldDescriptor, FunctionAssembler, Instruction, MethodDescriptor, ReturnDescriptor,
-        },
+        function_assembler::{FunctionAssembler, Instruction},
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };

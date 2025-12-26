@@ -1,10 +1,13 @@
 use std::fmt::Debug;
 
-use crate::java::{
-    class::VerificationTypeInfo,
-    constant_pool_builder::ConstantPoolBuilder,
-    function_assembler::{Instruction, ReturnDescriptor},
-    source_graph::{BasicBlock, BlockFinalizer},
+use crate::{
+    auryn::codegen_java::representation::ReturnDescriptor,
+    java::{
+        class::VerificationTypeInfo,
+        constant_pool_builder::ConstantPoolBuilder,
+        function_assembler::Instruction,
+        source_graph::{BasicBlock, BlockFinalizer},
+    },
 };
 
 /// Symbolic evaluator that keeps track of data relevant for stack map frames
