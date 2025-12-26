@@ -11,15 +11,15 @@ use crate::{
 
 /// The representation of a type in the jvm, can be converted into field descriptors and verification type info
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Primitive {
+pub enum Representation {
     Integer,
-    Array(Box<Primitive>),
+    Array(Box<Representation>),
     Object(SmallString),
 }
 
-impl Primitive {
+impl Representation {
     pub fn string() -> Self {
-        Primitive::Object("java/lang/String".into())
+        Representation::Object("java/lang/String".into())
     }
 
     pub fn to_primitive_type_or_object(
@@ -27,9 +27,9 @@ impl Primitive {
         pool: &mut ConstantPoolBuilder,
     ) -> Result<PrimitiveType, ConstantPoolIndex> {
         match self {
-            Primitive::Integer => Ok(PrimitiveType::Int),
-            Primitive::Object(descriptor) => Err(pool.add_class(descriptor)),
-            Primitive::Array(inner) => {
+            Representation::Integer => Ok(PrimitiveType::Int),
+            Representation::Object(descriptor) => Err(pool.add_class(descriptor)),
+            Representation::Array(inner) => {
                 Err(pool.add_class(inner.into_field_descriptor().to_string().into()))
             }
         }
@@ -37,9 +37,9 @@ impl Primitive {
 
     pub fn into_field_descriptor(self) -> FieldDescriptor {
         match self {
-            Primitive::Integer => FieldDescriptor::Integer,
-            Primitive::Object(r#type) => FieldDescriptor::Object(r#type),
-            Primitive::Array(element_type) => FieldDescriptor::Array {
+            Representation::Integer => FieldDescriptor::Integer,
+            Representation::Object(r#type) => FieldDescriptor::Object(r#type),
+            Representation::Array(element_type) => FieldDescriptor::Array {
                 dimension_count: 1,
                 descriptor: Box::new(element_type.into_field_descriptor()),
             },
@@ -48,11 +48,11 @@ impl Primitive {
 
     pub fn into_verification_type(self, pool: &mut ConstantPoolBuilder) -> VerificationTypeInfo {
         match self {
-            Primitive::Integer => VerificationTypeInfo::Integer,
-            Primitive::Array(inner) => VerificationTypeInfo::Object {
+            Representation::Integer => VerificationTypeInfo::Integer,
+            Representation::Array(inner) => VerificationTypeInfo::Object {
                 constant_pool_index: pool.add_array_class(inner.into_field_descriptor()),
             },
-            Primitive::Object(object) => VerificationTypeInfo::Object {
+            Representation::Object(object) => VerificationTypeInfo::Object {
                 constant_pool_index: pool.add_class(object),
             },
         }
@@ -60,7 +60,9 @@ impl Primitive {
 
     pub fn category(&self) -> TypeCategory {
         match self {
-            Primitive::Integer | Primitive::Array(_) | Primitive::Object(_) => TypeCategory::Normal,
+            Representation::Integer | Representation::Array(_) | Representation::Object(_) => {
+                TypeCategory::Normal
+            }
         }
     }
 
@@ -96,20 +98,20 @@ impl FieldDescriptor {
         FieldDescriptor::Object("java/io/PrintStream".into())
     }
 
-    pub fn into_primitive(self) -> Primitive {
+    pub fn into_primitive(self) -> Representation {
         match self {
             FieldDescriptor::Byte
             | FieldDescriptor::Char
             | FieldDescriptor::Integer
             | FieldDescriptor::Short
-            | FieldDescriptor::Boolean => Primitive::Integer,
-            FieldDescriptor::Object(name) => Primitive::Object(name),
+            | FieldDescriptor::Boolean => Representation::Integer,
+            FieldDescriptor::Object(name) => Representation::Object(name),
             FieldDescriptor::Array {
                 dimension_count,
                 descriptor,
             } => {
                 assert_eq!(dimension_count, 1, "Higher dimensions not implemented yet");
-                Primitive::Array(Box::new(descriptor.into_primitive()))
+                Representation::Array(Box::new(descriptor.into_primitive()))
             }
             other => todo!("No primitive for {other} yet"),
         }
@@ -150,7 +152,7 @@ pub enum ReturnDescriptor {
 }
 
 impl ReturnDescriptor {
-    pub fn into_primitive(self) -> Option<Primitive> {
+    pub fn into_primitive(self) -> Option<Representation> {
         match self {
             ReturnDescriptor::Value(value) => Some(value.into_primitive()),
             ReturnDescriptor::Void => None,
@@ -194,14 +196,14 @@ impl Display for MethodDescriptor {
 
 /// Returns the representation of an auryn type for the jvm.
 /// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
-pub fn get_representation(air_type: &Type) -> Option<Primitive> {
+pub fn get_representation(air_type: &Type) -> Option<Representation> {
     match air_type {
-        Type::Number => Some(Primitive::Integer),
-        Type::String => Some(Primitive::string()),
+        Type::Number => Some(Representation::Integer),
+        Type::String => Some(Representation::string()),
         Type::Array(content_type) => {
             let content_repr = get_representation(content_type);
             match content_repr {
-                Some(repr) => Some(Primitive::Array(Box::new(repr))),
+                Some(repr) => Some(Representation::Array(Box::new(repr))),
                 None => todo!("Add representation for array of zero-sized types"),
             }
         }

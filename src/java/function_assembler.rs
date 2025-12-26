@@ -1,5 +1,5 @@
 use crate::{
-    auryn::codegen_java::representation::{FieldDescriptor, MethodDescriptor, Primitive},
+    auryn::codegen_java::representation::{FieldDescriptor, MethodDescriptor, Representation},
     java::{
         class::{self, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
@@ -14,10 +14,10 @@ pub enum ConstantValue {
     Integer(i32),
 }
 impl ConstantValue {
-    pub fn to_primitive(&self) -> Primitive {
+    pub fn to_primitive(&self) -> Representation {
         match self {
-            ConstantValue::String(_) => Primitive::string(),
-            ConstantValue::Integer(_) => Primitive::Integer,
+            ConstantValue::String(_) => Representation::string(),
+            ConstantValue::Integer(_) => Representation::Integer,
         }
     }
     pub fn to_verification_type(
@@ -57,13 +57,13 @@ pub enum Instruction {
         value: ConstantValue,
     },
     /// Creates a new array of the given type
-    NewArray(Primitive),
+    NewArray(Representation),
     /// Stores a value into an array at a given index.
     /// Stack: ..., arrayref, index, value -> ...
-    ArrayStore(Primitive),
+    ArrayStore(Representation),
     /// Loads a value of the given type from an array
     /// Stack: ..., arrayref, index -> ..., value
-    ArrayLoad(Primitive),
+    ArrayLoad(Representation),
     /// Returns the length of the given array
     ArrayLength,
     IAdd,
@@ -81,7 +81,7 @@ pub enum Instruction {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VariableId {
     pub index: u16,
-    pub r#type: Primitive,
+    pub r#type: Representation,
 }
 
 #[derive(Debug)]
@@ -163,7 +163,7 @@ impl<'a> FunctionAssembler<'a> {
         self.blocks.add(instruction);
     }
 
-    pub fn alloc_variable(&mut self, r#type: Primitive) -> VariableId {
+    pub fn alloc_variable(&mut self, r#type: Representation) -> VariableId {
         let id = self.next_variable_index;
         self.next_variable_index += r#type.stack_size();
         VariableId { index: id, r#type }

@@ -11,7 +11,8 @@ use crate::{
         codegen_java::{
             class_generator::GeneratedMethodData,
             representation::{
-                FieldDescriptor, MethodDescriptor, Primitive, ReturnDescriptor, get_representation,
+                FieldDescriptor, MethodDescriptor, Representation, ReturnDescriptor,
+                get_representation,
             },
         },
         tokenizer::BinaryOperatorToken,
@@ -151,8 +152,8 @@ impl FunctionGenerator<'_> {
                 let finalizer = match result {
                     None => BlockFinalizer::ReturnNull,
                     Some(r#type) => match r#type {
-                        Primitive::Integer => BlockFinalizer::ReturnInteger,
-                        Primitive::Object { .. } | Primitive::Array(_) => {
+                        Representation::Integer => BlockFinalizer::ReturnInteger,
+                        Representation::Object { .. } | Representation::Array(_) => {
                             BlockFinalizer::ReturnObject
                         }
                     },
@@ -171,7 +172,7 @@ impl FunctionGenerator<'_> {
                 let pos_block_id = self.translate_block_id(*pos_block);
                 let neg_block_id = self.translate_block_id(*neg_block);
                 let result = self.generate_expression(value);
-                assert_eq!(result, Some(Primitive::Integer));
+                assert_eq!(result, Some(Representation::Integer));
                 self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
                     comparison: Comparison::NotEqual,
                     positive_block: pos_block_id,
@@ -216,7 +217,7 @@ impl FunctionGenerator<'_> {
     }
 
     /// The return value indicates the stack usage
-    fn generate_expression(&mut self, expression: &AirExpression) -> Option<Primitive> {
+    fn generate_expression(&mut self, expression: &AirExpression) -> Option<Representation> {
         match &expression.kind {
             AirExpressionKind::Constant(constant) => Some(self.generate_constant(constant)),
             AirExpressionKind::BinaryOperator(binary_operator) => {
@@ -231,7 +232,7 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_constant(&mut self, constant: &AirConstant) -> Primitive {
+    fn generate_constant(&mut self, constant: &AirConstant) -> Representation {
         match constant {
             AirConstant::Number(number) => {
                 let value = ConstantValue::Integer(*number);
@@ -248,11 +249,11 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> Primitive {
+    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> Representation {
         let lhs_type = self.generate_expression(&operation.lhs);
         let rhs_type = self.generate_expression(&operation.rhs);
         assert_eq!(lhs_type, rhs_type);
-        assert_eq!(lhs_type, Some(Primitive::Integer));
+        assert_eq!(lhs_type, Some(Representation::Integer));
 
         match operation.operator {
             BinaryOperatorToken::Plus => {
@@ -274,7 +275,7 @@ impl FunctionGenerator<'_> {
             BinaryOperatorToken::LessOrEqual => self.generate_comparison(Comparison::LessOrEqual),
         };
 
-        Primitive::Integer
+        Representation::Integer
     }
 
     fn generate_comparison(&mut self, comparison: Comparison) {
@@ -302,14 +303,14 @@ impl FunctionGenerator<'_> {
         self.assembler.set_current_block_id(next_block_id);
     }
 
-    fn generate_variable(&mut self, variable: &AirValueId) -> Primitive {
+    fn generate_variable(&mut self, variable: &AirValueId) -> Representation {
         let variable_id = self.variable_map[variable].clone();
         let primitive = variable_id.r#type.clone();
         self.assembler.add(Instruction::Load(variable_id));
         primitive
     }
 
-    fn generate_call(&mut self, call: &Call) -> Option<Primitive> {
+    fn generate_call(&mut self, call: &Call) -> Option<Representation> {
         for argument in &call.arguments {
             self.generate_expression(argument);
         }
@@ -330,7 +331,7 @@ impl FunctionGenerator<'_> {
         &mut self,
         r#type: &Type,
         intrinsic: &IntrinsicCall,
-    ) -> Option<Primitive> {
+    ) -> Option<Representation> {
         match intrinsic.intrinsic {
             Intrinsic::Print => self.generate_intrinsic_print(&intrinsic.arguments),
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, &intrinsic.arguments),
@@ -340,7 +341,7 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
+    fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) -> Option<Representation> {
         self.assembler.add(Instruction::GetStatic {
             class_name: "java/lang/System".into(),
             name: "out".into(),
@@ -378,7 +379,7 @@ impl FunctionGenerator<'_> {
         &mut self,
         r#type: &Type,
         arguments: &[AirExpression],
-    ) -> Option<Primitive> {
+    ) -> Option<Representation> {
         let Type::Array(element_type) = r#type else {
             unreachable!("Return type should be an array type");
         };
@@ -402,7 +403,7 @@ impl FunctionGenerator<'_> {
                         .add(Instruction::ArrayStore(primitive.clone()));
                 }
 
-                Some(Primitive::Array(Box::new(primitive)))
+                Some(Representation::Array(Box::new(primitive)))
             }
             None => unimplemented!(
                 "Decide how to represent arrays of zero sized types. Maybe just use an int?"
@@ -410,7 +411,10 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_intrinsic_array_get(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
+    fn generate_intrinsic_array_get(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<Representation> {
         let [array, index] = arguments else {
             unreachable!("Should be valid call");
         };
@@ -429,7 +433,10 @@ impl FunctionGenerator<'_> {
         Some(primitive)
     }
 
-    fn generate_intrinsic_array_set(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
+    fn generate_intrinsic_array_set(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<Representation> {
         let [array, index, value] = arguments else {
             unreachable!("Should be valid call");
         };
@@ -448,7 +455,10 @@ impl FunctionGenerator<'_> {
         None
     }
 
-    fn generate_intrinsic_array_len(&mut self, arguments: &[AirExpression]) -> Option<Primitive> {
+    fn generate_intrinsic_array_len(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<Representation> {
         let [array] = arguments else {
             unreachable!("Should be a valid call");
         };
@@ -456,6 +466,6 @@ impl FunctionGenerator<'_> {
         self.generate_expression(array);
         self.assembler.add(Instruction::ArrayLength);
 
-        Some(Primitive::Integer)
+        Some(Representation::Integer)
     }
 }
