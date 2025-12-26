@@ -24,6 +24,7 @@ pub enum DiagnosticError {
     UnknownIntrinsic { ident: SmallString },
     // Generated during typechecking
     TypeMismatch { expected: Type, got: AirType },
+    ExpectedArray { got: AirType },
     MismatchedParameterCount { expected: usize, got: usize },
 }
 

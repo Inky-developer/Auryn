@@ -323,6 +323,8 @@ impl Typechecker {
         match intrinsic.intrinsic {
             Intrinsic::Print => self.typecheck_intrinsic_print(id, &intrinsic.arguments),
             Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, &intrinsic.arguments),
+            Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, &intrinsic.arguments),
+            Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, &intrinsic.arguments),
         }
     }
 
@@ -359,5 +361,59 @@ impl Typechecker {
         }
 
         Type::Array(Box::new(element_type))
+    }
+
+    fn typecheck_intrinsic_array_get(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
+        let [array, index] = arguments else {
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: 2,
+                    got: arguments.len(),
+                },
+            );
+            return Type::Error;
+        };
+
+        let Type::Array(element_type) = array.r#type.computed() else {
+            self.add_error(
+                array.id,
+                DiagnosticError::ExpectedArray {
+                    got: array.r#type.clone(),
+                },
+            );
+            return Type::Error;
+        };
+
+        self.expect_type(index, Type::Number);
+
+        element_type.as_ref().clone()
+    }
+
+    fn typecheck_intrinsic_array_set(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
+        let [array, index, value] = arguments else {
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: 3,
+                    got: arguments.len(),
+                },
+            );
+            return Type::Error;
+        };
+
+        let Type::Array(element_type) = array.r#type.computed() else {
+            self.add_error(
+                array.id,
+                DiagnosticError::ExpectedArray {
+                    got: array.r#type.clone(),
+                },
+            );
+            return Type::Error;
+        };
+        self.expect_type(index, Type::Number);
+        self.expect_type(value, element_type.as_ref().clone());
+
+        Type::Null
     }
 }

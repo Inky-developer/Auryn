@@ -331,6 +331,8 @@ impl FunctionGenerator<'_> {
         match intrinsic.intrinsic {
             Intrinsic::Print => self.generate_intrinsic_print(&intrinsic.arguments),
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, &intrinsic.arguments),
+            Intrinsic::ArrayGet => self.generate_intrinsic_array_get(&intrinsic.arguments),
+            Intrinsic::ArraySet => self.generate_intrinsic_array_set(&intrinsic.arguments),
         }
     }
 
@@ -413,5 +415,48 @@ impl FunctionGenerator<'_> {
                 "Decide how to represent arrays of zero sized types. Maybe just use an int?"
             ),
         }
+    }
+
+    fn generate_intrinsic_array_get(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<VerificationTypeInfo> {
+        let [array, index] = arguments else {
+            unreachable!("Should be valid call");
+        };
+
+        let Type::Array(element_type) = array.r#type.computed() else {
+            unreachable!("Should be an array");
+        };
+        let primitive = get_representation(self.assembler.constant_pool, element_type)
+            .expect("Zero sized element types not supported");
+
+        self.generate_expression(array);
+        self.generate_expression(index);
+        self.assembler.add(Instruction::ArrayLoad(primitive));
+
+        Some(primitive.to_verification_type())
+    }
+
+    fn generate_intrinsic_array_set(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<VerificationTypeInfo> {
+        let [array, index, value] = arguments else {
+            unreachable!("Should be valid call");
+        };
+
+        let Type::Array(element_type) = array.r#type.computed() else {
+            unreachable!("Should be an array");
+        };
+        let primitive = get_representation(self.assembler.constant_pool, element_type)
+            .expect("Zero sized element types not supported");
+
+        self.generate_expression(array);
+        self.generate_expression(index);
+        self.generate_expression(value);
+        self.assembler.add(Instruction::ArrayStore(primitive));
+
+        None
     }
 }

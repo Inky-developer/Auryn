@@ -196,6 +196,8 @@ pub struct IntrinsicCall {
 pub enum Intrinsic {
     Print,
     ArrayOf,
+    ArrayGet,
+    ArraySet,
 }
 
 impl FromStr for Intrinsic {
@@ -205,6 +207,8 @@ impl FromStr for Intrinsic {
         Ok(match s {
             "print" => Intrinsic::Print,
             "arrayOf" => Intrinsic::ArrayOf,
+            "arrayGet" => Intrinsic::ArrayGet,
+            "arraySet" => Intrinsic::ArraySet,
             _ => return Err(()),
         })
     }
