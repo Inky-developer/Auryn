@@ -335,6 +335,7 @@ impl FunctionGenerator<'_> {
         match intrinsic.intrinsic {
             Intrinsic::Print => self.generate_intrinsic_print(&intrinsic.arguments),
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, &intrinsic.arguments),
+            Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(&intrinsic.arguments),
             Intrinsic::ArrayGet => self.generate_intrinsic_array_get(&intrinsic.arguments),
             Intrinsic::ArraySet => self.generate_intrinsic_array_set(&intrinsic.arguments),
             Intrinsic::ArrayLen => self.generate_intrinsic_array_len(&intrinsic.arguments),
@@ -409,6 +410,23 @@ impl FunctionGenerator<'_> {
                 "Decide how to represent arrays of zero sized types. Maybe just use an int?"
             ),
         }
+    }
+
+    fn generate_intrinsic_array_of_zeros(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<Representation> {
+        let [count] = arguments else {
+            unreachable!("Should be a valid call");
+        };
+
+        let count = self.generate_expression(count);
+        assert_eq!(count, Some(Representation::Integer));
+
+        self.assembler
+            .add(Instruction::NewArray(Representation::Integer));
+
+        Some(Representation::Array(Box::new(Representation::Integer)))
     }
 
     fn generate_intrinsic_array_get(

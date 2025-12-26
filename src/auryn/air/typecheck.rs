@@ -323,6 +323,9 @@ impl Typechecker {
         match intrinsic.intrinsic {
             Intrinsic::Print => self.typecheck_intrinsic_print(id, &intrinsic.arguments),
             Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, &intrinsic.arguments),
+            Intrinsic::ArrayOfZeros => {
+                self.typecheck_intrinsic_array_of_zeros(id, &intrinsic.arguments)
+            }
             Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, &intrinsic.arguments),
             Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, &intrinsic.arguments),
             Intrinsic::ArrayLen => self.typecheck_intrinsic_array_len(id, &intrinsic.arguments),
@@ -362,6 +365,28 @@ impl Typechecker {
         }
 
         Type::Array(Box::new(element_type))
+    }
+
+    fn typecheck_intrinsic_array_of_zeros(
+        &mut self,
+        id: SyntaxId,
+        arguments: &[AirExpression],
+    ) -> Type {
+        let return_type = Type::Array(Box::new(Type::Number));
+        let [count] = arguments else {
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: 1,
+                    got: arguments.len(),
+                },
+            );
+            return return_type;
+        };
+
+        self.expect_type(count, Type::Number);
+
+        return_type
     }
 
     fn typecheck_intrinsic_array_get(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
