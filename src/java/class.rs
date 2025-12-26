@@ -158,6 +158,27 @@ pub enum Instruction {
     /// Returns Int, short, char, byte or boolean
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ireturn
     IReturn,
+    /// Create a new array of references, initialize to nulls
+    /// Argument must be a reference to a class, array or function
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.anewarray
+    ANewArray(ConstantPoolIndex),
+    /// Creates a new array of the given type, initialized to zeros of that type
+    NewArray(PrimitiveType),
+    /// Returns the length of an array
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.arraylength
+    ArrayLength,
+    /// Returns an object from an array of references
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aaload
+    AALoad,
+    /// Stores an object into an array of references
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aastore
+    AAStore,
+    /// Loads an int from an int array
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iaload
+    IALoad,
+    /// Stores an int into an int array
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iastore
+    IAStore,
     // Load a reference
     // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aload
     ALoad(u16),
@@ -192,6 +213,12 @@ pub enum Instruction {
     Pop,
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop2
     Pop2,
+    /// Duplicates the top stack value (of category 1)
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.dup
+    Dup,
+    /// Duplicates the top stack value of category 2, or the top 2 stack values of category 1
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.dup2
+    Dup2,
 }
 
 impl Instruction {
@@ -222,6 +249,20 @@ impl Instruction {
             Instruction::IReturn => {
                 buf.write_all(&[0xac])?;
             }
+            Instruction::ANewArray(index) => {
+                buf.write_all(&[0xbd])?;
+                index.serialize(buf)?;
+            }
+            Instruction::NewArray(r#type) => {
+                buf.write_all(&[0xbc, r#type as u8])?;
+            }
+            Instruction::ArrayLength => {
+                buf.write_all(&[0xbe])?;
+            }
+            Instruction::AALoad => buf.write_all(&[0x32])?,
+            Instruction::AAStore => buf.write_all(&[0x53])?,
+            Instruction::IALoad => buf.write_all(&[0x2e])?,
+            Instruction::IAStore => buf.write_all(&[0x4f])?,
             Instruction::Ldc(index) => {
                 buf.write_all(&[0x12, index])?;
             }
@@ -288,6 +329,8 @@ impl Instruction {
             Instruction::Pop2 => {
                 buf.write_all(&[0x58])?;
             }
+            Instruction::Dup => buf.write_all(&[0x59])?,
+            Instruction::Dup2 => buf.write_all(&[0x5c])?,
         }
 
         Ok(())
@@ -353,6 +396,20 @@ impl TypeCategory {
             Self::Big => 2,
         }
     }
+}
+
+/// Used as argument ot the [`Instruction::NewArray`]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub enum PrimitiveType {
+    Boolean = 4,
+    Char,
+    Float,
+    Double,
+    Byte,
+    Short,
+    Int,
+    Long,
 }
 
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4

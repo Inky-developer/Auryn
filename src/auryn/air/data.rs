@@ -195,14 +195,7 @@ pub struct IntrinsicCall {
 #[derive(Debug)]
 pub enum Intrinsic {
     Print,
-}
-
-impl Intrinsic {
-    pub fn signature(&self) -> (&'static [Type], Type) {
-        match self {
-            Intrinsic::Print => (&[Type::Top], Type::Null),
-        }
-    }
+    ArrayOf,
 }
 
 impl FromStr for Intrinsic {
@@ -211,6 +204,7 @@ impl FromStr for Intrinsic {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "print" => Intrinsic::Print,
+            "arrayOf" => Intrinsic::ArrayOf,
             _ => return Err(()),
         })
     }

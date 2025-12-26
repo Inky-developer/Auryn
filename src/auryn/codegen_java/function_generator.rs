@@ -220,7 +220,9 @@ impl FunctionGenerator<'_> {
             }
             AirExpressionKind::Variable(variable) => Some(self.generate_variable(variable)),
             AirExpressionKind::Call(call) => self.generate_call(call),
-            AirExpressionKind::IntrinsicCall(intrinsic) => self.generate_intrinsic_call(intrinsic),
+            AirExpressionKind::IntrinsicCall(intrinsic) => {
+                self.generate_intrinsic_call(expression.r#type.computed(), intrinsic)
+            }
             AirExpressionKind::Error => unreachable!("Codegen was started with invalid air"),
         }
     }
@@ -323,38 +325,93 @@ impl FunctionGenerator<'_> {
 
     fn generate_intrinsic_call(
         &mut self,
+        r#type: &Type,
         intrinsic: &IntrinsicCall,
     ) -> Option<VerificationTypeInfo> {
         match intrinsic.intrinsic {
-            Intrinsic::Print => {
-                self.assembler.add(Instruction::GetStatic {
-                    class_name: "java/lang/System".into(),
-                    name: "out".into(),
-                    field_descriptor: FieldDescriptor::print_stream(),
-                });
-                self.generate_expression(&intrinsic.arguments[0]);
-                let field_descriptor = match intrinsic.arguments[0].r#type.computed() {
-                    Type::Number => FieldDescriptor::Integer,
-                    Type::String => FieldDescriptor::string(),
-                    ty => {
-                        self.assembler.add(Instruction::LoadConstant {
-                            value: ConstantValue::String(ty.to_string().into()),
-                        });
-                        FieldDescriptor::string()
-                    }
-                };
-                self.assembler.add(Instruction::InvokeVirtual {
-                    class_name: "java/io/PrintStream".into(),
-                    name: "println".into(),
-                    // method_type: MethodDescriptor("(I)V".to_string()),
-                    method_descriptor: MethodDescriptor {
-                        parameters: vec![field_descriptor],
-                        return_type: ReturnDescriptor::Void,
-                    },
-                });
+            Intrinsic::Print => self.generate_intrinsic_print(&intrinsic.arguments),
+            Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, &intrinsic.arguments),
+        }
+    }
 
-                None
+    fn generate_intrinsic_print(
+        &mut self,
+        arguments: &[AirExpression],
+    ) -> Option<VerificationTypeInfo> {
+        self.assembler.add(Instruction::GetStatic {
+            class_name: "java/lang/System".into(),
+            name: "out".into(),
+            field_descriptor: FieldDescriptor::print_stream(),
+        });
+        self.generate_expression(&arguments[0]);
+        let field_descriptor = match arguments[0].r#type.computed() {
+            Type::Number => FieldDescriptor::Integer,
+            Type::String => FieldDescriptor::string(),
+            ty => {
+                // Arrays are not zero sized but unfortunately also cannot be printed, so their value must be popped
+                if let Type::Array(_) = ty {
+                    self.assembler
+                        .add(Instruction::Pop(class::TypeCategory::Normal));
+                }
+                self.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::String(ty.to_string().into()),
+                });
+                FieldDescriptor::string()
             }
+        };
+        self.assembler.add(Instruction::InvokeVirtual {
+            class_name: "java/io/PrintStream".into(),
+            name: "println".into(),
+            // method_type: MethodDescriptor("(I)V".to_string()),
+            method_descriptor: MethodDescriptor {
+                parameters: vec![field_descriptor],
+                return_type: ReturnDescriptor::Void,
+            },
+        });
+        None
+    }
+
+    fn generate_intrinsic_array_of(
+        &mut self,
+        r#type: &Type,
+        arguments: &[AirExpression],
+    ) -> Option<VerificationTypeInfo> {
+        let Type::Array(element_type) = r#type else {
+            unreachable!("Return type should be an array type");
+        };
+        let repr = get_representation(self.assembler.constant_pool, element_type);
+
+        match repr {
+            Some(primitive) => {
+                self.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Integer(arguments.len().try_into().unwrap()),
+                });
+                self.assembler.add(Instruction::NewArray(primitive));
+
+                let verification_type = primitive.to_verification_type();
+                for (index, argument) in arguments.iter().enumerate() {
+                    self.assembler
+                        .add(Instruction::Dup(verification_type.category()));
+                    self.assembler.add(Instruction::LoadConstant {
+                        value: ConstantValue::Integer(index.try_into().unwrap()),
+                    });
+                    let actual_repr = self.generate_expression(argument);
+                    assert_eq!(actual_repr.as_ref(), Some(&verification_type));
+                    self.assembler.add(Instruction::ArrayStore(primitive));
+                }
+
+                let field_descriptor = primitive.to_field_descriptor(self.assembler.constant_pool);
+                let constant_pool_index = self
+                    .assembler
+                    .constant_pool
+                    .add_array_class(field_descriptor);
+                Some(VerificationTypeInfo::Object {
+                    constant_pool_index,
+                })
+            }
+            None => unimplemented!(
+                "Decide how to represent arrays of zero sized types. Maybe just use an int?"
+            ),
         }
     }
 }

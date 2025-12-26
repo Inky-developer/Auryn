@@ -2,7 +2,10 @@ use std::fmt::Display;
 
 use crate::{
     java::{
-        class::{self, ConstantPoolEntry, ConstantPoolIndex, TypeCategory, VerificationTypeInfo},
+        class::{
+            self, ConstantPoolEntry, ConstantPoolIndex, PrimitiveType, TypeCategory,
+            VerificationTypeInfo,
+        },
         constant_pool_builder::ConstantPoolBuilder,
         source_graph::{BasicBlock, BasicBlockId, SourceGraph},
     },
@@ -197,6 +200,13 @@ impl Primitive {
         }
     }
 
+    pub fn to_primitive_type(&self) -> Result<PrimitiveType, ConstantPoolIndex> {
+        match self {
+            Primitive::Integer => Ok(PrimitiveType::Int),
+            Primitive::Object(index) => Err(*index),
+        }
+    }
+
     pub fn stack_size(&self) -> u16 {
         self.to_verification_type().category().stack_size()
     }
@@ -225,6 +235,14 @@ pub enum Instruction {
     LoadConstant {
         value: ConstantValue,
     },
+    /// Creates a new array of the given type
+    NewArray(Primitive),
+    /// Stores a value into an array at a given index.
+    /// Stack: ..., arrayref, index, value -> ...
+    ArrayStore(Primitive),
+    /// Loads a value of the given type from an array
+    /// Stack: ..., arrayref, index -> ..., value
+    ArrayLoad(Primitive),
     IAdd,
     ISub,
     IMul,
@@ -233,6 +251,8 @@ pub enum Instruction {
     Nop,
     /// Pops a single value of the given category from the stack
     Pop(TypeCategory),
+    /// Duplicates the topmost stack entry
+    Dup(TypeCategory),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

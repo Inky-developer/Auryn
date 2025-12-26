@@ -3,7 +3,8 @@ use std::io::Write;
 use crate::{
     java::{
         class::{
-            self, Comparison, JumpPoint, StackMapTableAttribute, TypeCategory, VerificationTypeInfo,
+            self, Comparison, JumpPoint, PrimitiveType, StackMapTableAttribute, TypeCategory,
+            VerificationTypeInfo,
         },
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{ConstantValue, Instruction, Primitive},
@@ -283,6 +284,26 @@ impl AssemblyContext<'_> {
                 );
                 on_instruction(class::Instruction::InvokeStatic(method_ref_index))
             }
+            Instruction::NewArray(element_type) => {
+                on_instruction(match element_type.to_primitive_type() {
+                    Ok(primitive) => class::Instruction::NewArray(primitive),
+                    Err(index) => class::Instruction::ANewArray(index),
+                })
+            }
+            Instruction::ArrayStore(element_type) => {
+                on_instruction(match element_type.to_primitive_type() {
+                    Ok(PrimitiveType::Int) => class::Instruction::IAStore,
+                    Ok(other) => todo!("Add instruction for stroring into {other:?} arrays"),
+                    Err(_) => class::Instruction::AAStore,
+                })
+            }
+            Instruction::ArrayLoad(element_type) => {
+                on_instruction(match element_type.to_primitive_type() {
+                    Ok(PrimitiveType::Int) => class::Instruction::IALoad,
+                    Ok(other) => todo!("Add instruction for loading from {other:?} arrays"),
+                    Err(_) => class::Instruction::AALoad,
+                })
+            }
             Instruction::LoadConstant { value } => {
                 let constant_index = match value {
                     ConstantValue::String(string) => self.0.add_string(string.clone()),
@@ -311,6 +332,10 @@ impl AssemblyContext<'_> {
                 TypeCategory::Normal => on_instruction(class::Instruction::Pop),
                 TypeCategory::Big => on_instruction(class::Instruction::Pop2),
             },
+            Instruction::Dup(category) => on_instruction(match category {
+                TypeCategory::Normal => class::Instruction::Dup,
+                TypeCategory::Big => class::Instruction::Dup2,
+            }),
         }
     }
 

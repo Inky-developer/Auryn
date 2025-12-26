@@ -114,6 +114,54 @@ impl SymbolicEvaluator {
                 let value = self.stack.pop();
                 assert_eq!(value.map(|it| it.category()), Some(*category))
             }
+            Instruction::NewArray(primitive) => {
+                let len_val = self.stack.pop();
+                assert_eq!(len_val, Some(VerificationTypeInfo::Integer));
+
+                let element_type = primitive.to_field_descriptor(pool);
+                let array_type = pool.add_array_class(element_type);
+                self.stack.push(VerificationTypeInfo::Object {
+                    constant_pool_index: array_type,
+                });
+            }
+            Instruction::ArrayStore(primitive) => {
+                let value = self.stack.pop();
+                assert_eq!(value, Some(primitive.to_verification_type()));
+
+                let index = self.stack.pop();
+                assert_eq!(index, Some(VerificationTypeInfo::Integer));
+
+                let element_type = primitive.to_field_descriptor(pool);
+                let array_type = pool.add_array_class(element_type);
+                let array = self.stack.pop();
+                assert_eq!(
+                    array,
+                    Some(VerificationTypeInfo::Object {
+                        constant_pool_index: array_type
+                    })
+                )
+            }
+            Instruction::ArrayLoad(primitive) => {
+                let index = self.stack.pop();
+                assert_eq!(index, Some(VerificationTypeInfo::Integer));
+
+                let element_type = primitive.to_field_descriptor(pool);
+                let array_type = pool.add_array_class(element_type);
+                let array = self.stack.pop();
+                assert_eq!(
+                    array,
+                    Some(VerificationTypeInfo::Object {
+                        constant_pool_index: array_type
+                    })
+                );
+
+                self.stack.push(primitive.to_verification_type());
+            }
+            Instruction::Dup(type_category) => {
+                let info = self.stack.last().unwrap();
+                assert_eq!(info.category(), *type_category);
+                self.stack.push(*info);
+            }
         }
     }
 }

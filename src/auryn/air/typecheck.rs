@@ -6,8 +6,8 @@ use crate::{
             data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-                AirValueId, Assignment, BinaryOperation, Call, IntrinsicCall, ReturnValue,
-                UnresolvedType,
+                AirValueId, Assignment, BinaryOperation, Call, Intrinsic, IntrinsicCall,
+                ReturnValue, UnresolvedType,
             },
             types::{FunctionType, Type},
         },
@@ -320,21 +320,44 @@ impl Typechecker {
             self.typecheck_expression(argument);
         }
 
-        let signature = intrinsic.intrinsic.signature();
-        if signature.0.len() != intrinsic.arguments.len() {
+        match intrinsic.intrinsic {
+            Intrinsic::Print => self.typecheck_intrinsic_print(id, &intrinsic.arguments),
+            Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, &intrinsic.arguments),
+        }
+    }
+
+    fn typecheck_intrinsic_print(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
+        if arguments.len() != 1 {
             self.add_error(
                 id,
                 DiagnosticError::MismatchedParameterCount {
-                    expected: signature.0.len(),
-                    got: intrinsic.arguments.len(),
+                    expected: 1,
+                    got: arguments.len(),
                 },
             );
         }
+        Type::Null
+    }
 
-        for (expected, actual) in signature.0.iter().zip(intrinsic.arguments.iter()) {
-            self.expect_assignable(actual, expected.clone());
+    fn typecheck_intrinsic_array_of(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
+        // Currently an array needs at least one element or we cannot compute its type
+        let [first, ..] = arguments else {
+            self.add_error(
+                id,
+                DiagnosticError::MismatchedParameterCount {
+                    expected: 1,
+                    got: 0,
+                },
+            );
+            return Type::Error;
+        };
+
+        let element_type = first.r#type.computed().clone();
+
+        for argument in arguments {
+            self.expect_type(argument, element_type.clone());
         }
 
-        Type::Null
+        Type::Array(Box::new(element_type))
     }
 }
