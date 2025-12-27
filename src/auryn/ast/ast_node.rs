@@ -15,21 +15,21 @@ pub struct AstError;
 pub type AstResult<T> = Result<T, AstError>;
 
 impl<'a> Node<'a> {
-    fn nodes(&self) -> impl Iterator<Item = &'a SyntaxNode> {
+    fn nodes(self) -> impl Iterator<Item = &'a SyntaxNode> {
         self.syntax_node
             .children
             .iter()
             .filter_map(|item| item.as_node())
     }
 
-    fn tokens(&self) -> impl Iterator<Item = &'a SyntaxToken> {
+    fn tokens(self) -> impl Iterator<Item = &'a SyntaxToken> {
         self.syntax_node
             .children
             .iter()
             .filter_map(|item| item.as_token())
     }
 
-    fn get_token_by_kind(&self, kind: TokenKind) -> Option<&'a SyntaxToken> {
+    fn get_token_by_kind(self, kind: TokenKind) -> Option<&'a SyntaxToken> {
         self.tokens().find(|token| token.kind == kind)
     }
 }
@@ -89,7 +89,7 @@ macro_rules! ast_node {
 
 macro_rules! gen_ast_node_inner {
     (impl token $ident:ident: $kind:path, $($rest:tt)*) => {
-        pub fn $ident(&self) -> AstResult<&SyntaxToken> {
+        pub fn $ident(self) -> AstResult<&'a SyntaxToken> {
             self.0.get_token_by_kind($kind).ok_or(AstError)
         }
 
@@ -97,7 +97,7 @@ macro_rules! gen_ast_node_inner {
     };
 
     (impl $ident:ident: $kind:tt, $($rest:tt)*) => {
-        pub fn $ident(&self) -> AstResult<$kind<'a>> {
+        pub fn $ident(self) -> AstResult<$kind<'a>> {
             self.0.nodes().find_map(<$kind>::new).ok_or(AstError)
         }
 
@@ -107,7 +107,7 @@ macro_rules! gen_ast_node_inner {
     (impl) => {};
 
     (impl ...$children_name:ident: $children_type:tt ) => {
-        pub fn $children_name(&self) -> impl Iterator<Item = $children_type<'a>> {
+        pub fn $children_name(self) -> impl Iterator<Item = $children_type<'a>> {
             self.0.nodes().filter_map(<$children_type>::new)
         }
     };
@@ -118,7 +118,34 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct File = SyntaxNodeKind::File as { ...functions: FunctionDefinition }
+    pub struct File = SyntaxNodeKind::File as { ...items: Item }
+}
+
+ast_node! {
+    pub enum Item = SyntaxNodeKind::Item as
+        | SyntaxNodeKind::ExternBlock as ExternBlock
+        | SyntaxNodeKind::FunctionDefinition as FunctionDefinition
+}
+
+ast_node! {
+    pub struct ExternBlock = SyntaxNodeKind::ExternBlock as { token extern_target: TokenKind::StringLiteral, ...items: ExternBlockItem }
+}
+
+ast_node! {
+    pub struct ExternBlockItem = SyntaxNodeKind::ExternBlockItem as { metadata: ExternBlockItemMetadata, kind: ExternBlockItemKind, }
+}
+
+ast_node! {
+    pub struct ExternBlockItemMetadata = SyntaxNodeKind::ItemMetadata as { token value: TokenKind::StringLiteral, }
+}
+
+ast_node! {
+    pub enum ExternBlockItemKind = SyntaxNodeKind::ExternBlockItemKind as
+        | SyntaxNodeKind::ExternType as ExternType
+}
+
+ast_node! {
+    pub struct ExternType = SyntaxNodeKind::ExternType as { token ident: TokenKind::Identifier, }
 }
 
 ast_node! {
@@ -210,11 +237,11 @@ impl<'a> BinaryOperation<'a> {
             .ok_or(AstError)
     }
 
-    pub fn lhs(&self) -> AstResult<Expression<'a>> {
+    pub fn lhs(&'a self) -> AstResult<Expression<'a>> {
         self.expressions().nth(0).ok_or(AstError)
     }
 
-    pub fn rhs(&self) -> AstResult<Expression<'a>> {
+    pub fn rhs(&'a self) -> AstResult<Expression<'a>> {
         self.expressions().nth(1).ok_or(AstError)
     }
 }

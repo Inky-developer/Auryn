@@ -258,6 +258,25 @@ impl<'a> Parser<'a> {
         parent.children.push(SyntaxItem::Node(node));
         self.consume_whitespace();
     }
+
+    fn parse_newline_separated(
+        &mut self,
+        end_set: impl Fn(TokenKind) -> bool,
+        parse: impl Fn(&mut Self) -> ParseResult,
+    ) -> ParseResult {
+        loop {
+            self.consume_whitespace_and_newlines();
+            if end_set(self.peek().kind) {
+                break;
+            }
+            parse(self)?;
+            if !self.consume_statement_separator() && !end_set(self.peek().kind) {
+                self.push_error(DiagnosticError::ExpectedNewline);
+            }
+        }
+
+        Ok(())
+    }
 }
 
 /// Parsing methods
@@ -265,15 +284,87 @@ impl Parser<'_> {
     fn parse_file(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        loop {
-            self.consume_whitespace_and_newlines();
-            if self.peek().kind == TokenKind::EndOfInput {
-                break;
-            }
-            self.parse_function_definition()?;
-        }
+        self.parse_newline_separated(|kind| kind == TokenKind::EndOfInput, Self::parse_item)?;
 
         self.finish_node(watcher, SyntaxNodeKind::File);
+        Ok(())
+    }
+
+    fn parse_item(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        match self.multipeek() {
+            [TokenKind::KeywordFn, _] => self.parse_function_definition()?,
+            [TokenKind::KeywordUnsafe, TokenKind::KeywordExtern] => self.parse_extern_block()?,
+            [other, _] => {
+                self.push_error(DiagnosticError::ExpectedItem { got: other });
+                return Err(());
+            }
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::Item);
+        Ok(())
+    }
+
+    fn parse_extern_block(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordUnsafe)?;
+        self.expect(TokenKind::KeywordExtern)?;
+        self.expect(TokenKind::StringLiteral)?;
+
+        self.expect(TokenKind::BraceOpen)?;
+        self.parse_newline_separated(
+            |kind| kind == TokenKind::BraceClose,
+            Self::parse_extern_item,
+        )?;
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternBlock);
+        Ok(())
+    }
+
+    fn parse_extern_item(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_item_metadata()?;
+            self.consume_whitespace_and_newlines();
+        }
+
+        let inner = self.push_node();
+        match self.peek().kind {
+            TokenKind::KeywordType => self.parse_extern_type()?,
+            other => {
+                self.push_error(DiagnosticError::ExpectedExternItem { got: other });
+                return Err(());
+            }
+        }
+        self.finish_node(inner, SyntaxNodeKind::ExternBlockItemKind);
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternBlockItem);
+
+        Ok(())
+    }
+
+    fn parse_extern_type(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordType)?;
+        self.expect(TokenKind::Identifier)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternType);
+        Ok(())
+    }
+
+    fn parse_item_metadata(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::BracketOpen)?;
+        self.expect(TokenKind::StringLiteral)?;
+        self.expect(TokenKind::BracketClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ItemMetadata);
         Ok(())
     }
 
@@ -365,16 +456,7 @@ impl Parser<'_> {
     fn parse_block(&mut self, end_set: impl Fn(TokenKind) -> bool) -> ParseResult {
         let watcher = self.push_node();
 
-        loop {
-            self.consume_whitespace_and_newlines();
-            if end_set(self.peek().kind) {
-                break;
-            }
-            self.parse_statement()?;
-            if !self.consume_statement_separator() && !end_set(self.peek().kind) {
-                self.push_error(DiagnosticError::ExpectedNewline);
-            }
-        }
+        self.parse_newline_separated(end_set, Self::parse_statement)?;
 
         self.finish_node(watcher, SyntaxNodeKind::Block);
         Ok(())
@@ -763,6 +845,13 @@ mod tests {
     #[test]
     fn test_multiple_statements() {
         insta::assert_debug_snapshot!(verify_block("let a = 1\nlet b = 2"))
+    }
+
+    #[test]
+    fn test_extern_items() {
+        insta::assert_debug_snapshot!(verify(
+            "unsafe extern \"java\" {\n[\"java/lang/Foo\"]\ntype Foo\n}"
+        ));
     }
 
     #[test]

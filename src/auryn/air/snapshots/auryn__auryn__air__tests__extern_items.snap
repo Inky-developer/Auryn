@@ -1,0 +1,24 @@
+---
+source: src/auryn/air/mod.rs
+expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type Foo }\")"
+---
+AirOutput {
+    air: Air {
+        functions: {},
+        types: {
+            AirTypedefId(
+                SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        239253730204059,
+                    ),
+                },
+            ): Extern(
+                "java/lang/Foo",
+            ),
+        },
+    },
+    diagnostics: [],
+}

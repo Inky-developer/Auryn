@@ -11,7 +11,7 @@ AirOutput {
                         0,
                     ),
                     number: Some(
-                        3,
+                        4,
                     ),
                 },
             ): AirFunction {
@@ -39,7 +39,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        211106232532994,
+                                        211106232532995,
                                     ),
                                 },
                                 kind: Expression(
@@ -49,7 +49,7 @@ AirOutput {
                                                 0,
                                             ),
                                             number: Some(
-                                                211106232532994,
+                                                211106232532995,
                                             ),
                                         },
                                         type: Computed(
@@ -65,7 +65,7 @@ AirOutput {
                                                                 0,
                                                             ),
                                                             number: Some(
-                                                                233096465088514,
+                                                                233096465088515,
                                                             ),
                                                         },
                                                         type: Computed(
@@ -91,7 +91,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        211106232532990,
+                                        211106232532991,
                                     ),
                                 },
                             ),
@@ -100,6 +100,7 @@ AirOutput {
                 },
             },
         },
+        types: {},
     },
     diagnostics: [],
 }

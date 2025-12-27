@@ -1,6 +1,8 @@
 use core::fmt;
 use std::str::FromStr;
 
+use crate::utils::small_string::SmallString;
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Type {
     Top,
@@ -9,6 +11,7 @@ pub enum Type {
     Null,
     Function(Box<FunctionType>),
     Array(Box<Type>),
+    Extern(SmallString),
     Error,
 }
 
@@ -47,6 +50,11 @@ impl fmt::Display for Type {
             Type::Array(content_type) => {
                 f.write_str("[]")?;
                 content_type.fmt(f)
+            }
+            Type::Extern(ident) => {
+                f.write_str("extern('")?;
+                f.write_str(ident)?;
+                f.write_str("')")
             }
             Type::Error => f.write_str("<<Error>>"),
         }

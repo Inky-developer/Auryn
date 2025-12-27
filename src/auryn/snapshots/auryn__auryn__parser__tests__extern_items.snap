@@ -1,0 +1,35 @@
+---
+source: src/auryn/parser.rs
+expression: "verify(\"unsafe extern \\\"java\\\" {\\n[\\\"java/lang/Foo\\\"]\\ntype Foo\\n}\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..51 Root
+        |0..51 File
+        ||0..51 Item
+        |||0..51 ExternBlock
+        ||||KeywordUnsafe `unsafe`
+        ||||Whitespace ` `
+        ||||KeywordExtern `extern`
+        ||||Whitespace ` `
+        ||||StringLiteral `\"java\"`
+        ||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Newline `\n`
+        ||||23..49 ExternBlockItem
+        |||||23..40 ItemMetadata
+        ||||||BracketOpen `[`
+        ||||||StringLiteral `\"java/lang/Foo\"`
+        ||||||BracketClose `]`
+        |||||Newline `\n`
+        |||||41..49 ExternBlockItemKind
+        ||||||41..49 ExternType
+        |||||||KeywordType `type`
+        |||||||Whitespace ` `
+        |||||||Identifier `Foo`
+        ||||Newline `\n`
+        ||||BraceClose `}`
+        ,
+    ),
+    diagnostics: [],
+}

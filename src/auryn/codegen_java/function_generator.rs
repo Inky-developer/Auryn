@@ -343,21 +343,27 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) -> Option<Representation> {
+        fn is_printable(repr: &Representation) -> bool {
+            match repr {
+                Representation::Integer => true,
+                Representation::Object(path) if path.as_ref() == "java/lang/String" => true,
+                _ => false,
+            }
+        }
+
         self.assembler.add(Instruction::GetStatic {
             class_name: "java/lang/System".into(),
             name: "out".into(),
             field_descriptor: FieldDescriptor::print_stream(),
         });
-        self.generate_expression(&arguments[0]);
-        let field_descriptor = match arguments[0].r#type.computed() {
-            Type::Number => FieldDescriptor::Integer,
-            Type::String => FieldDescriptor::string(),
-            ty => {
-                // Arrays are not zero sized but unfortunately also cannot be printed, so their value must be popped
-                if let Type::Array(_) = ty {
-                    self.assembler
-                        .add(Instruction::Pop(class::TypeCategory::Normal));
+        let repr = self.generate_expression(&arguments[0]);
+        let field_descriptor = match repr {
+            Some(repr) if is_printable(&repr) => repr.into_field_descriptor(),
+            other => {
+                if let Some(other) = other {
+                    self.assembler.add(Instruction::Pop(other.category()));
                 }
+                let ty = arguments[0].r#type.computed();
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::String(ty.to_string().into()),
                 });

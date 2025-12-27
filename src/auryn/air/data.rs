@@ -9,9 +9,10 @@ use crate::{
     utils::{fast_map::FastMap, small_string::SmallString},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Air {
     pub functions: FastMap<AirFunctionId, AirFunction>,
+    pub types: FastMap<AirTypedefId, Type>,
 }
 
 impl Air {
@@ -103,11 +104,19 @@ pub struct Assignment {
     pub expression: Box<AirExpression>,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct AirTypedefId(pub(super) SyntaxId);
+
 /// Represents a type that was written by the user but not resolved yet.
 #[derive(Debug, Clone)]
 pub enum UnresolvedType {
+    /// A type that was defined by the user, identified by its [`AirTypedefId`]
+    DefinedType(SyntaxId, AirTypedefId),
+    /// A type not defined by the user (so probably built-in, like `String`)
     Ident(SyntaxId, SmallString),
+    /// An array type
     Array(SyntaxId, Box<UnresolvedType>),
+    /// A function type
     Function {
         parameters: Vec<UnresolvedType>,
         return_type: Option<Box<UnresolvedType>>,

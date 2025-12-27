@@ -6,59 +6,60 @@ AnnotatedParserOutput {
     ast: Some(
         0..52 Root
         |0..52 File
-        ||0..52 FunctionDefinition
-        |||KeywordFn `fn`
-        |||Whitespace ` `
-        |||Identifier `foo`
-        |||6..29 ParameterList
-        ||||ParensOpen `(`
-        ||||7..13 ParameterDefinition
-        |||||Identifier `a`
-        |||||Colon `:`
-        |||||Whitespace ` `
-        |||||10..13 Type
-        ||||||10..13 Ident
-        |||||||Identifier `Int`
-        ||||Comma `,`
+        ||0..52 Item
+        |||0..52 FunctionDefinition
+        ||||KeywordFn `fn`
         ||||Whitespace ` `
-        ||||15..26 ParameterDefinition
-        |||||Identifier `b`
-        |||||Colon `:`
-        |||||Whitespace ` `
-        |||||18..26 Type
-        ||||||18..26 ArrayType
-        |||||||BracketOpen `[`
-        |||||||BracketClose `]`
-        |||||||20..26 Type
-        ||||||||20..26 Ident
-        |||||||||Identifier `String`
-        ||||Comma `,`
-        ||||ParensClose `)`
-        ||||Whitespace ` `
-        |||29..37 ReturnType
-        ||||Arrow `->`
-        ||||Whitespace ` `
-        ||||32..37 Type
-        |||||32..37 Ident
-        ||||||Identifier `Null`
+        ||||Identifier `foo`
+        ||||6..29 ParameterList
+        |||||ParensOpen `(`
+        |||||7..13 ParameterDefinition
+        ||||||Identifier `a`
+        ||||||Colon `:`
         ||||||Whitespace ` `
-        |||BraceOpen `{`
-        |||Whitespace ` `
-        |||39..51 Block
-        ||||39..51 Statement
-        |||||39..51 Expression
-        ||||||39..51 Value
-        |||||||39..51 FunctionCall
-        ||||||||Identifier `print`
-        ||||||||44..51 ArgumentList
-        |||||||||ParensOpen `(`
-        |||||||||45..49 Expression
-        ||||||||||45..49 Value
-        |||||||||||45..49 NumberLiteral
-        ||||||||||||NumberLiteral `9000`
-        |||||||||ParensClose `)`
-        |||||||||Whitespace ` `
-        |||BraceClose `}`
+        ||||||10..13 Type
+        |||||||10..13 Ident
+        ||||||||Identifier `Int`
+        |||||Comma `,`
+        |||||Whitespace ` `
+        |||||15..26 ParameterDefinition
+        ||||||Identifier `b`
+        ||||||Colon `:`
+        ||||||Whitespace ` `
+        ||||||18..26 Type
+        |||||||18..26 ArrayType
+        ||||||||BracketOpen `[`
+        ||||||||BracketClose `]`
+        ||||||||20..26 Type
+        |||||||||20..26 Ident
+        ||||||||||Identifier `String`
+        |||||Comma `,`
+        |||||ParensClose `)`
+        |||||Whitespace ` `
+        ||||29..37 ReturnType
+        |||||Arrow `->`
+        |||||Whitespace ` `
+        |||||32..37 Type
+        ||||||32..37 Ident
+        |||||||Identifier `Null`
+        |||||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Whitespace ` `
+        ||||39..51 Block
+        |||||39..51 Statement
+        ||||||39..51 Expression
+        |||||||39..51 Value
+        ||||||||39..51 FunctionCall
+        |||||||||Identifier `print`
+        |||||||||44..51 ArgumentList
+        ||||||||||ParensOpen `(`
+        ||||||||||45..49 Expression
+        |||||||||||45..49 Value
+        ||||||||||||45..49 NumberLiteral
+        |||||||||||||NumberLiteral `9000`
+        ||||||||||ParensClose `)`
+        ||||||||||Whitespace ` `
+        ||||BraceClose `}`
         ,
     ),
     diagnostics: [],

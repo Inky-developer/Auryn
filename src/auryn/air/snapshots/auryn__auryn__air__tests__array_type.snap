@@ -11,7 +11,7 @@ AirOutput {
                         0,
                     ),
                     number: Some(
-                        187649984473771,
+                        187649984473772,
                     ),
                 },
             ): AirFunction {
@@ -37,7 +37,7 @@ AirOutput {
                                     0,
                                 ),
                                 number: Some(
-                                    223920293972752,
+                                    223920293972753,
                                 ),
                             },
                             Ident(
@@ -46,7 +46,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        223920293972753,
+                                        223920293972754,
                                     ),
                                 },
                                 "Number",
@@ -60,7 +60,7 @@ AirOutput {
                                     0,
                                 ),
                                 number: Some(
-                                    238616646923434,
+                                    238616646923435,
                                 ),
                             },
                             Ident(
@@ -69,7 +69,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        238616646923435,
+                                        238616646923436,
                                     ),
                                 },
                                 "Number",
@@ -91,7 +91,7 @@ AirOutput {
                                             0,
                                         ),
                                         number: Some(
-                                            267574977860747,
+                                            267574977860748,
                                         ),
                                     },
                                     type: Computed(
@@ -119,7 +119,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        260624978435789,
+                                        260624978435790,
                                     ),
                                 },
                             ),
@@ -133,7 +133,7 @@ AirOutput {
                         0,
                     ),
                     number: Some(
-                        3,
+                        4,
                     ),
                 },
             ): AirFunction {
@@ -162,7 +162,7 @@ AirOutput {
                                         0,
                                     ),
                                     number: Some(
-                                        67017851597774,
+                                        67017851597775,
                                     ),
                                 },
                             ),
@@ -171,6 +171,7 @@ AirOutput {
                 },
             },
         },
+        types: {},
     },
     diagnostics: [],
 }

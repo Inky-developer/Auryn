@@ -12,12 +12,16 @@ pub enum DiagnosticError {
     // Generate by the parser
     ExpectedNumber { got: TokenKind },
     ExpectedType { got: TokenKind },
+    ExpectedItem { got: TokenKind },
+    ExpectedExternItem { got: TokenKind },
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
     InvalidNumber,
     ExpectedValue { got: TokenKind },
     ExpectedNewline,
     // Generated during air
+    UnexpectedExternTarget,
+    ExternTypeRequiresMetadata,
     RedefinedVariable { ident: SmallString },
     BreakOutsideLoop,
     UndefinedVariable { ident: SmallString },

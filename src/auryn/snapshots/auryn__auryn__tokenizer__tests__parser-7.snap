@@ -1,0 +1,34 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\"unsafe extern type Foo\")"
+---
+[
+    Token {
+        kind: KeywordUnsafe,
+        text: "unsafe",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordExtern,
+        text: "extern",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordType,
+        text: "type",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "Foo",
+    },
+]

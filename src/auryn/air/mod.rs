@@ -71,6 +71,13 @@ mod tests {
     }
 
     #[test]
+    fn test_extern_items() {
+        insta::assert_debug_snapshot!(compile(
+            "unsafe extern \"java\" { [\"java/lang/Foo\"] type Foo }"
+        ));
+    }
+
+    #[test]
     fn invalid_assignment() {
         insta::assert_debug_snapshot!(compile_wrapped("let a = print(1)\nprint(a + 1)"));
     }

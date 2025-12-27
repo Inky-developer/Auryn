@@ -55,6 +55,9 @@ pub enum TokenKind {
     KeywordIf,
     KeywordFn,
     KeywordReturn,
+    KeywordUnsafe,
+    KeywordExtern,
+    KeywordType,
     Whitespace,
     Newline,
     Error,
@@ -246,6 +249,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("break"),
                 });
             }
+            'e' if self.starts_with_keyword("extern") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordExtern,
+                    text: self.consume_text("extern"),
+                });
+            }
             'f' if self.starts_with_keyword("fn") => {
                 return Some(Token {
                     kind: TokenKind::KeywordFn,
@@ -262,6 +271,18 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(Token {
                     kind: TokenKind::KeywordReturn,
                     text: self.consume_text("return"),
+                });
+            }
+            't' if self.starts_with_keyword("type") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordType,
+                    text: self.consume_text("type"),
+                });
+            }
+            'u' if self.starts_with_keyword("unsafe") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordUnsafe,
+                    text: self.consume_text("unsafe"),
                 });
             }
             '"' => return Some(self.consume_string_literal()),
@@ -301,5 +322,6 @@ mod tests {
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a"
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
+        insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo"));
     }
 }

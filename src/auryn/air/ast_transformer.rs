@@ -1,14 +1,18 @@
 use crate::{
     auryn::{
-        air::data::{
-            self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-            AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-            AirValueId, Call, IntrinsicCall, ReturnValue, UnresolvedType,
+        air::{
+            self,
+            data::{
+                self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
+                AirTypedefId, AirValueId, Call, IntrinsicCall, ReturnValue, UnresolvedType,
+            },
         },
         ast::ast_node::{
-            Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, FunctionCall,
-            FunctionDefinition, Ident, IfStatement, LoopStatement, NumberLiteral, Parenthesis,
-            ReturnStatement, Root, Statement, StringLiteral, Type, Value, VariableUpdate,
+            Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, ExternBlock,
+            ExternBlockItem, ExternBlockItemKind, FunctionCall, FunctionDefinition, Ident,
+            IfStatement, Item, LoopStatement, NumberLiteral, Parenthesis, ReturnStatement, Root,
+            Statement, StringLiteral, Type, Value, VariableUpdate,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -26,17 +30,17 @@ pub struct AirOutput {
 pub fn transform_ast(ast: Root) -> AirOutput {
     let mut transformer = AstTransformer::default();
     transformer.transform_root(ast);
-    let functions = transformer.functions;
     AirOutput {
-        air: Air { functions },
+        air: transformer.air,
         diagnostics: transformer.diagnostics,
     }
 }
 
 #[derive(Debug, Default)]
 struct AstTransformer {
-    functions: FastMap<AirFunctionId, AirFunction>,
-    namespace: FastMap<SmallString, AirFunctionId>,
+    air: Air,
+    functions: FastMap<SmallString, AirFunctionId>,
+    types: FastMap<SmallString, AirTypedefId>,
     diagnostics: Vec<Diagnostic>,
 }
 
@@ -46,12 +50,12 @@ impl AstTransformer {
             return;
         };
 
-        for function in file.functions() {
-            self.register_function(function);
+        for item in file.items() {
+            self.register_item(item);
         }
 
-        for function in file.functions() {
-            self.transform_function(function);
+        for item in file.items() {
+            self.transform_item(item);
         }
     }
 
@@ -66,7 +70,19 @@ impl AstTransformer {
             },
             Type::Ident(ident) => ident
                 .ident()
-                .map(|token| UnresolvedType::Ident(token.id, token.text.clone())),
+                .map(|token| match self.types.get(&token.text) {
+                    Some(def_id) => UnresolvedType::DefinedType(token.id, *def_id),
+                    None => UnresolvedType::Ident(token.id, token.text.clone()),
+                }),
+        }
+    }
+
+    fn register_item(&mut self, item: Item) {
+        match item {
+            Item::FunctionDefinition(function_definition) => {
+                self.register_function(function_definition)
+            }
+            Item::ExternBlock(block) => self.register_extern_block(block),
         }
     }
 
@@ -75,8 +91,78 @@ impl AstTransformer {
             return;
         };
 
-        self.namespace
+        self.functions
             .insert(ident.text.clone(), AirFunctionId(function_definition.id()));
+    }
+
+    fn register_extern_block(&mut self, block: ExternBlock) {
+        for item in block.items() {
+            self.register_extern_block_item(item);
+        }
+    }
+
+    fn register_extern_block_item(&mut self, item: ExternBlockItem) {
+        let Ok(kind) = item.kind() else {
+            return;
+        };
+
+        match kind {
+            ExternBlockItemKind::ExternType(extern_type) => {
+                let Ok(ident) = extern_type.ident() else {
+                    return;
+                };
+                let id = AirTypedefId(extern_type.id());
+                self.types.insert(ident.text.clone(), id);
+            }
+        }
+    }
+
+    fn transform_item(&mut self, item: Item) {
+        match item {
+            Item::FunctionDefinition(function_definition) => {
+                self.transform_function(function_definition)
+            }
+            Item::ExternBlock(block) => self.transform_extern_block(block),
+        }
+    }
+
+    fn transform_extern_block(&mut self, block: ExternBlock) {
+        if let Ok(target) = block.extern_target()
+            && parse_string_literal_text(&target.text).as_ref() != "java"
+        {
+            self.diagnostics.push(Diagnostic::new(
+                target.id,
+                DiagnosticError::UnexpectedExternTarget,
+            ));
+        }
+        for item in block.items() {
+            self.transform_extern_block_item(item);
+        }
+    }
+
+    fn transform_extern_block_item(&mut self, item: ExternBlockItem) {
+        let Ok(kind) = item.kind() else {
+            return;
+        };
+        match kind {
+            ExternBlockItemKind::ExternType(extern_type) => {
+                let Ok(ident) = extern_type.ident() else {
+                    return;
+                };
+                let extern_path = item.metadata().and_then(|metadata| metadata.value());
+                let Ok(extern_path) = extern_path else {
+                    self.diagnostics.push(Diagnostic::new(
+                        item.id(),
+                        DiagnosticError::ExternTypeRequiresMetadata,
+                    ));
+                    return;
+                };
+                let extern_path = parse_string_literal_text(&extern_path.text);
+                let id = &self.types[&ident.text];
+                let r#type = air::types::Type::Extern(extern_path);
+                self.air.types.insert(*id, r#type);
+            }
+        }
     }
 
     fn transform_function(&mut self, function_definition: FunctionDefinition) {
@@ -113,10 +199,10 @@ impl AstTransformer {
             .collect::<Vec<_>>();
 
         let mut function_transformer =
-            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
+            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.functions);
         function_transformer.transform_function_body(block);
 
-        let function_id = self.namespace[&ident];
+        let function_id = self.functions[&ident];
         let function = AirFunction {
             r#type: AirType::Inferred,
             unresolved_type: UnresolvedType::Function {
@@ -127,7 +213,7 @@ impl AstTransformer {
             blocks: function_transformer.finished_blocks,
         };
 
-        self.functions.insert(function_id, function);
+        self.air.functions.insert(function_id, function);
     }
 }
 
@@ -458,10 +544,10 @@ impl FunctionTransformer<'_> {
             return AirExpression::error(string.id());
         };
 
-        let text = token.text.trim_start_matches("\"").trim_end_matches("\"");
+        let text = parse_string_literal_text(&token.text);
         AirExpression::new(
             token.id,
-            AirExpressionKind::Constant(AirConstant::String(text.into())),
+            AirExpressionKind::Constant(AirConstant::String(text)),
         )
     }
 
@@ -530,4 +616,12 @@ impl FunctionTransformer<'_> {
         };
         self.transform_expression(expression)
     }
+}
+
+/// Returns the text content of a string literal.
+/// For example, `"hello, \\\n world"` is converted into `hello, \n world`
+fn parse_string_literal_text(literal: &str) -> SmallString {
+    // TODO: Unescape the string
+    let result = literal.trim_start_matches("\"").trim_end_matches("\"");
+    result.into()
 }

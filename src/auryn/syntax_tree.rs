@@ -17,6 +17,12 @@ use crate::{
 pub enum SyntaxNodeKind {
     Root,
     File,
+    Item,
+    ExternBlock,
+    ExternBlockItem,
+    ExternBlockItemKind,
+    ExternType,
+    ItemMetadata,
     FunctionDefinition,
     ParameterList,
     ParameterDefinition,

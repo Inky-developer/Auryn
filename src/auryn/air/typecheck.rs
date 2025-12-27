@@ -6,8 +6,8 @@ use crate::{
             data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-                AirValueId, Assignment, BinaryOperation, Call, Intrinsic, IntrinsicCall,
-                ReturnValue, UnresolvedType,
+                AirTypedefId, AirValueId, Assignment, BinaryOperation, Call, Intrinsic,
+                IntrinsicCall, ReturnValue, UnresolvedType,
             },
             types::{FunctionType, Type},
         },
@@ -50,12 +50,15 @@ impl FunctionContext {
 #[derive(Debug, Default)]
 pub struct Typechecker {
     functions: FastMap<AirFunctionId, FunctionType>,
+    defined_types: FastMap<AirTypedefId, Type>,
     function: FunctionContext,
     diagnostics: Vec<Diagnostic>,
 }
 
 impl Typechecker {
     pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
+        self.defined_types = air.types.clone();
+
         for (id, function) in &mut air.functions {
             self.typecheck_function_signature(*id, function);
         }
@@ -122,6 +125,7 @@ impl Typechecker {
 impl Typechecker {
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         match unresolved {
+            UnresolvedType::DefinedType(_id, def_id) => self.defined_types[def_id].clone(),
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
