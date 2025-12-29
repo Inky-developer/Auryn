@@ -12,7 +12,8 @@ use crate::{
 #[derive(Debug, Default)]
 pub struct Air {
     pub functions: FastMap<AirFunctionId, AirFunction>,
-    pub types: FastMap<AirTypedefId, Type>,
+    pub types: FastMap<AirTypedefId, AirType>,
+    pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
 
 impl Air {
@@ -28,6 +29,14 @@ impl Air {
         (*id, function)
     }
 }
+
+#[derive(Debug)]
+pub struct AirStaticValue {
+    pub parent: AirType,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct AirStaticValueId(pub SyntaxId);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct AirFunctionId(pub SyntaxId);
@@ -66,7 +75,7 @@ impl AirFunction {
             .0
             .iter()
             .enumerate()
-            .map(|(index, _)| AirValueId(index))
+            .map(|(index, _)| AirValueId::Local(AirLocalValueId(index)))
     }
 }
 
@@ -84,7 +93,13 @@ pub struct AirBlock {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct AirValueId(pub(super) usize);
+pub enum AirValueId {
+    Local(AirLocalValueId),
+    Global(AirStaticValueId),
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct AirLocalValueId(pub(super) usize);
 
 #[derive(Debug)]
 pub struct AirNode {
@@ -107,6 +122,12 @@ pub struct Assignment {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct AirTypedefId(pub(super) SyntaxId);
 
+#[derive(Debug, Clone)]
+pub struct UnresolvedExternMember {
+    pub extern_name: SmallString,
+    pub r#type: UnresolvedType,
+}
+
 /// Represents a type that was written by the user but not resolved yet.
 #[derive(Debug, Clone)]
 pub enum UnresolvedType {
@@ -120,6 +141,10 @@ pub enum UnresolvedType {
     Function {
         parameters: Vec<UnresolvedType>,
         return_type: Option<Box<UnresolvedType>>,
+    },
+    Extern {
+        extern_name: SmallString,
+        members: FastMap<SyntaxId, UnresolvedExternMember>,
     },
 }
 

@@ -145,7 +145,24 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct ExternType = SyntaxNodeKind::ExternType as { token ident: TokenKind::Identifier, }
+    pub struct ExternType = SyntaxNodeKind::ExternType as { token ident: TokenKind::Identifier, body: ExternTypeBody, }
+}
+
+ast_node! {
+    pub struct ExternTypeBody = SyntaxNodeKind::ExternTypeBody as { ...items: ExternTypeBodyItem }
+}
+
+ast_node! {
+    pub struct ExternTypeBodyItem = SyntaxNodeKind::ExternTypeBodyItem as { metadata: ExternBlockItemMetadata, kind: ExternTypeBodyItemKind, }
+}
+
+ast_node! {
+    pub enum ExternTypeBodyItemKind = SyntaxNodeKind::ExternTypeBodyItemKind as
+        | SyntaxNodeKind::ExternTypeStaticLet as ExternTypeStaticLet
+}
+
+ast_node! {
+    pub struct ExternTypeStaticLet = SyntaxNodeKind::ExternTypeStaticLet as { token ident: TokenKind::Identifier, r#type: Type, }
 }
 
 ast_node! {

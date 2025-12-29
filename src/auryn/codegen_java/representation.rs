@@ -207,7 +207,7 @@ pub fn get_representation(air_type: &Type) -> Option<Representation> {
                 None => todo!("Add representation for array of zero-sized types"),
             }
         }
-        Type::Extern(java_name) => Some(Representation::Object(java_name.clone())),
+        Type::Extern(extern_type) => Some(Representation::Object(extern_type.extern_name.clone())),
         Type::Null | Type::Function(_) => None,
         Type::Top => todo!("The top type cannot be represented yet"),
         Type::Error => unreachable!("Called with error type"),

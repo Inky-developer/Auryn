@@ -1,18 +1,20 @@
 use crate::{
     auryn::{
         air::{
-            self,
             data::{
                 self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-                AirTypedefId, AirValueId, Call, IntrinsicCall, ReturnValue, UnresolvedType,
+                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
+                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId,
+                Call, IntrinsicCall, ReturnValue, UnresolvedExternMember, UnresolvedType,
             },
+            namespace::{Namespace, TypeInfo},
         },
         ast::ast_node::{
             Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, ExternBlock,
-            ExternBlockItem, ExternBlockItemKind, FunctionCall, FunctionDefinition, Ident,
-            IfStatement, Item, LoopStatement, NumberLiteral, Parenthesis, ReturnStatement, Root,
-            Statement, StringLiteral, Type, Value, VariableUpdate,
+            ExternBlockItem, ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind,
+            FunctionCall, FunctionDefinition, Ident, IfStatement, Item, LoopStatement,
+            NumberLiteral, Parenthesis, ReturnStatement, Root, Statement, StringLiteral, Type,
+            Value, VariableUpdate,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -39,8 +41,7 @@ pub fn transform_ast(ast: Root) -> AirOutput {
 #[derive(Debug, Default)]
 struct AstTransformer {
     air: Air,
-    functions: FastMap<SmallString, AirFunctionId>,
-    types: FastMap<SmallString, AirTypedefId>,
+    namespace: Namespace,
     diagnostics: Vec<Diagnostic>,
 }
 
@@ -68,12 +69,14 @@ impl AstTransformer {
                 )),
                 Err(err) => Err(err),
             },
-            Type::Ident(ident) => ident
-                .ident()
-                .map(|token| match self.types.get(&token.text) {
-                    Some(def_id) => UnresolvedType::DefinedType(token.id, *def_id),
-                    None => UnresolvedType::Ident(token.id, token.text.clone()),
-                }),
+            Type::Ident(ident) => {
+                ident
+                    .ident()
+                    .map(|token| match self.namespace.types.get(&token.text) {
+                        Some(info) => UnresolvedType::DefinedType(token.id, info.def_id),
+                        None => UnresolvedType::Ident(token.id, token.text.clone()),
+                    })
+            }
         }
     }
 
@@ -91,7 +94,8 @@ impl AstTransformer {
             return;
         };
 
-        self.functions
+        self.namespace
+            .functions
             .insert(ident.text.clone(), AirFunctionId(function_definition.id()));
     }
 
@@ -112,7 +116,35 @@ impl AstTransformer {
                     return;
                 };
                 let id = AirTypedefId(extern_type.id());
-                self.types.insert(ident.text.clone(), id);
+
+                let mut members = Namespace::default();
+                if let Ok(body) = extern_type.body() {
+                    self.register_extern_type_members(&mut members, body);
+                }
+                let type_info = TypeInfo {
+                    def_id: id,
+                    members,
+                };
+                self.namespace.types.insert(ident.text.clone(), type_info);
+            }
+        }
+    }
+
+    fn register_extern_type_members(&mut self, namespace: &mut Namespace, body: ExternTypeBody) {
+        for item in body.items() {
+            let Ok(kind) = item.kind() else {
+                continue;
+            };
+
+            match kind {
+                ExternTypeBodyItemKind::ExternTypeStaticLet(extern_type_static_let) => {
+                    let Ok(ident) = extern_type_static_let.ident() else {
+                        continue;
+                    };
+                    namespace
+                        .statics
+                        .insert(ident.text.clone(), AirStaticValueId(ident.id));
+                }
             }
         }
     }
@@ -157,12 +189,78 @@ impl AstTransformer {
                     ));
                     return;
                 };
+                let Ok(extern_body) = extern_type.body() else {
+                    return;
+                };
+                let extern_members = self.collect_extern_type_members(extern_body, &ident.text);
+
                 let extern_path = parse_string_literal_text(&extern_path.text);
-                let id = &self.types[&ident.text];
-                let r#type = air::types::Type::Extern(extern_path);
-                self.air.types.insert(*id, r#type);
+                let info = &self.namespace.types[&ident.text];
+                let extern_type = AirType::Unresolved(UnresolvedType::Extern {
+                    extern_name: extern_path,
+                    members: extern_members.clone(),
+                });
+                for (id, _member) in extern_members {
+                    self.air.statics.insert(
+                        AirStaticValueId(id),
+                        AirStaticValue {
+                            parent: extern_type.clone(),
+                        },
+                    );
+                }
+                self.air.types.insert(info.def_id, extern_type);
             }
         }
+    }
+
+    fn collect_extern_type_members(
+        &mut self,
+        body: ExternTypeBody,
+        type_ident: &SmallString,
+    ) -> FastMap<SyntaxId, UnresolvedExternMember> {
+        let mut result = FastMap::default();
+        let info = &self.namespace.types[type_ident];
+
+        for item in body.items() {
+            let Ok(metadata) = item.metadata() else {
+                self.diagnostics.push(Diagnostic::new(
+                    item.id(),
+                    DiagnosticError::ExternTypeRequiresMetadata,
+                ));
+                continue;
+            };
+            let Ok(metadata_token) = metadata.value() else {
+                continue;
+            };
+            let extern_name = parse_string_literal_text(&metadata_token.text);
+
+            let Ok(kind) = item.kind() else {
+                continue;
+            };
+
+            match kind {
+                ExternTypeBodyItemKind::ExternTypeStaticLet(static_let) => {
+                    let Ok(ident) = static_let.ident() else {
+                        continue;
+                    };
+                    let Ok(r#type) = static_let.r#type() else {
+                        continue;
+                    };
+
+                    let id = info.members.statics[&ident.text];
+                    let Ok(unresolved) = self.transform_to_unresolved(r#type) else {
+                        continue;
+                    };
+                    let member = UnresolvedExternMember {
+                        extern_name,
+                        r#type: unresolved,
+                    };
+                    result.insert(id.0, member);
+                }
+            }
+        }
+
+        result
     }
 
     fn transform_function(&mut self, function_definition: FunctionDefinition) {
@@ -198,11 +296,14 @@ impl AstTransformer {
             .filter_map(|param| param.ident().ok().map(|ident| ident.text.clone()))
             .collect::<Vec<_>>();
 
-        let mut function_transformer =
-            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.functions);
+        let mut function_transformer = FunctionTransformer::new(
+            parameter_idents,
+            &mut self.diagnostics,
+            &self.namespace.functions,
+        );
         function_transformer.transform_function_body(block);
 
-        let function_id = self.functions[&ident];
+        let function_id = self.namespace.functions[&ident];
         let function = AirFunction {
             r#type: AirType::Inferred,
             unresolved_type: UnresolvedType::Function {
@@ -250,7 +351,7 @@ impl<'a> FunctionTransformer<'a> {
         let variables = parameter_idents
             .into_iter()
             .enumerate()
-            .map(|(index, ident)| (ident, AirValueId(index)))
+            .map(|(index, ident)| (ident, AirValueId::Local(AirLocalValueId(index))))
             .collect::<FastMap<_, _>>();
         Self {
             block_builders: FastMap::default(),
@@ -313,7 +414,7 @@ impl<'a> FunctionTransformer<'a> {
     }
 
     fn create_value(&mut self) -> AirValueId {
-        let id = AirValueId(self.next_value_id);
+        let id = AirValueId::Local(AirLocalValueId(self.next_value_id));
         self.next_value_id += 1;
         id
     }

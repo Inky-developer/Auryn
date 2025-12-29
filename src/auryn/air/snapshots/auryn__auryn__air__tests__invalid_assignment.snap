@@ -44,8 +44,10 @@ AirOutput {
                                 },
                                 kind: Assignment(
                                     Assignment {
-                                        target: AirValueId(
-                                            0,
+                                        target: Local(
+                                            AirLocalValueId(
+                                                0,
+                                            ),
                                         ),
                                         expression: AirExpression {
                                             id: SyntaxId {
@@ -141,8 +143,10 @@ AirOutput {
                                                                         Null,
                                                                     ),
                                                                     kind: Variable(
-                                                                        AirValueId(
-                                                                            0,
+                                                                        Local(
+                                                                            AirLocalValueId(
+                                                                                0,
+                                                                            ),
                                                                         ),
                                                                     ),
                                                                 },
@@ -192,6 +196,7 @@ AirOutput {
             },
         },
         types: {},
+        statics: {},
     },
     diagnostics: [
         Diagnostic {

@@ -14,6 +14,7 @@ pub enum DiagnosticError {
     ExpectedType { got: TokenKind },
     ExpectedItem { got: TokenKind },
     ExpectedExternItem { got: TokenKind },
+    ExpectedExternTypeBodyItem { got: TokenKind },
     UnexpectedToken { expected: TokenKind, got: TokenKind },
     ExpectedBinaryOperator { got: TokenKind },
     InvalidNumber,

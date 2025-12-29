@@ -101,6 +101,7 @@ AirOutput {
             },
         },
         types: {},
+        statics: {},
     },
     diagnostics: [],
 }

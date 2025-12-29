@@ -1,13 +1,13 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"unsafe extern \\\"java\\\" {\\n[\\\"java/lang/Foo\\\"]\\ntype Foo\\n}\")"
+expression: "verify(\"unsafe extern \\\"java\\\" {\\n[\\\"java/lang/Foo\\\"]\\ntype Foo { [\\\"bar\\\"] static let bar: Int }\\n}\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..51 Root
-        |0..51 File
-        ||0..51 Item
-        |||0..51 ExternBlock
+        0..83 Root
+        |0..83 File
+        ||0..83 Item
+        |||0..83 ExternBlock
         ||||KeywordUnsafe `unsafe`
         ||||Whitespace ` `
         ||||KeywordExtern `extern`
@@ -16,17 +16,41 @@ AnnotatedParserOutput {
         ||||Whitespace ` `
         ||||BraceOpen `{`
         ||||Newline `\n`
-        ||||23..49 ExternBlockItem
+        ||||23..81 ExternBlockItem
         |||||23..40 ItemMetadata
         ||||||BracketOpen `[`
         ||||||StringLiteral `\"java/lang/Foo\"`
         ||||||BracketClose `]`
         |||||Newline `\n`
-        |||||41..49 ExternBlockItemKind
-        ||||||41..49 ExternType
+        |||||41..81 ExternBlockItemKind
+        ||||||41..81 ExternType
         |||||||KeywordType `type`
         |||||||Whitespace ` `
         |||||||Identifier `Foo`
+        |||||||Whitespace ` `
+        |||||||50..81 ExternTypeBody
+        ||||||||BraceOpen `{`
+        ||||||||Whitespace ` `
+        ||||||||52..80 ExternTypeBodyItem
+        |||||||||52..60 ItemMetadata
+        ||||||||||BracketOpen `[`
+        ||||||||||StringLiteral `\"bar\"`
+        ||||||||||BracketClose `]`
+        ||||||||||Whitespace ` `
+        |||||||||60..80 ExternTypeBodyItemKind
+        ||||||||||60..80 ExternTypeStaticLet
+        |||||||||||KeywordStatic `static`
+        |||||||||||Whitespace ` `
+        |||||||||||KeywordLet `let`
+        |||||||||||Whitespace ` `
+        |||||||||||Identifier `bar`
+        |||||||||||Colon `:`
+        |||||||||||Whitespace ` `
+        |||||||||||76..80 Type
+        ||||||||||||76..80 Ident
+        |||||||||||||Identifier `Int`
+        |||||||||||||Whitespace ` `
+        ||||||||BraceClose `}`
         ||||Newline `\n`
         ||||BraceClose `}`
         ,

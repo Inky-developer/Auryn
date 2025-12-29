@@ -353,7 +353,58 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordType)?;
         self.expect(TokenKind::Identifier)?;
 
+        self.parse_extern_type_body()?;
+
         self.finish_node(watcher, SyntaxNodeKind::ExternType);
+        Ok(())
+    }
+
+    fn parse_extern_type_body(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::BraceOpen)?;
+        self.parse_newline_separated(
+            |kind| kind == TokenKind::BraceClose,
+            Self::parse_extern_type_body_item,
+        )?;
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternTypeBody);
+        Ok(())
+    }
+
+    fn parse_extern_type_body_item(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_item_metadata()?;
+            self.consume_whitespace_and_newlines();
+        }
+
+        let inner_watcher = self.push_node();
+        match self.peek().kind {
+            TokenKind::KeywordStatic => self.parse_extern_type_body_static_let()?,
+            other => {
+                self.push_error(DiagnosticError::ExpectedExternTypeBodyItem { got: other });
+                return Err(());
+            }
+        }
+        self.finish_node(inner_watcher, SyntaxNodeKind::ExternTypeBodyItemKind);
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternTypeBodyItem);
+        Ok(())
+    }
+
+    fn parse_extern_type_body_static_let(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordStatic)?;
+        self.expect(TokenKind::KeywordLet)?;
+        self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::Colon)?;
+        self.parse_type()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternTypeStaticLet);
         Ok(())
     }
 
@@ -850,7 +901,7 @@ mod tests {
     #[test]
     fn test_extern_items() {
         insta::assert_debug_snapshot!(verify(
-            "unsafe extern \"java\" {\n[\"java/lang/Foo\"]\ntype Foo\n}"
+            "unsafe extern \"java\" {\n[\"java/lang/Foo\"]\ntype Foo { [\"bar\"] static let bar: Int }\n}"
         ));
     }
 

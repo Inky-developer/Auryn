@@ -5,11 +5,11 @@ use crate::{
         air::{
             data::{
                 Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirType,
-                AirTypedefId, AirValueId, Assignment, BinaryOperation, Call, Intrinsic,
-                IntrinsicCall, ReturnValue, UnresolvedType,
+                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind,
+                AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId, Assignment,
+                BinaryOperation, Call, Intrinsic, IntrinsicCall, ReturnValue, UnresolvedType,
             },
-            types::{FunctionType, Type},
+            types::{ExternType, ExternTypeMember, FunctionType, Type},
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -57,7 +57,14 @@ pub struct Typechecker {
 
 impl Typechecker {
     pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
-        self.defined_types = air.types.clone();
+        self.compute_defined_types(&mut air.types);
+        self.defined_types = air
+            .types
+            .iter()
+            .map(|(k, v)| (*k, v.computed().clone()))
+            .collect();
+
+        self.compute_statics(&mut air.statics);
 
         for (id, function) in &mut air.functions {
             self.typecheck_function_signature(*id, function);
@@ -68,6 +75,18 @@ impl Typechecker {
         }
 
         self.diagnostics
+    }
+
+    fn compute_defined_types(&mut self, types: &mut FastMap<AirTypedefId, AirType>) {
+        for r#type in types.values_mut() {
+            self.resolve_if_unresolved(r#type);
+        }
+    }
+
+    fn compute_statics(&mut self, statics: &mut FastMap<AirStaticValueId, AirStaticValue>) {
+        for value in statics.values_mut() {
+            self.resolve_if_unresolved(&mut value.parent);
+        }
     }
 
     fn expect_type(&mut self, received: &AirExpression, expected: Type) {
@@ -123,6 +142,17 @@ impl Typechecker {
 }
 
 impl Typechecker {
+    fn resolve_if_unresolved(&mut self, air_type: &mut AirType) {
+        match air_type {
+            AirType::Inferred => unreachable!("Cannot infer type of a type definition"),
+            AirType::Unresolved(unresolved) => {
+                let resolved = self.resolve_type(unresolved);
+                *air_type = AirType::Computed(resolved);
+            }
+            AirType::Computed(_) => {}
+        };
+    }
+
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         match unresolved {
             UnresolvedType::DefinedType(_id, def_id) => self.defined_types[def_id].clone(),
@@ -155,6 +185,25 @@ impl Typechecker {
                 }))
             }
             UnresolvedType::Array(_, inner) => Type::Array(Box::new(self.resolve_type(inner))),
+            // TODO: Prevent infinite recursion and handle recursive definitions
+            UnresolvedType::Extern {
+                extern_name,
+                members,
+            } => Type::Extern(ExternType {
+                extern_name: extern_name.clone(),
+                members: members
+                    .iter()
+                    .map(|(id, member)| {
+                        (
+                            *id,
+                            ExternTypeMember {
+                                extern_name: member.extern_name.clone(),
+                                r#type: self.resolve_type(&member.r#type),
+                            },
+                        )
+                    })
+                    .collect(),
+            }),
         }
     }
 

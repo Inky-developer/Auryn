@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"unsafe extern type Foo\")"
+expression: "tokenize(\"unsafe extern type Foo { static let bar }\")"
 ---
 [
     Token {
@@ -30,5 +30,45 @@ expression: "tokenize(\"unsafe extern type Foo\")"
     Token {
         kind: Identifier,
         text: "Foo",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: BraceOpen,
+        text: "{",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordStatic,
+        text: "static",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordLet,
+        text: "let",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "bar",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: BraceClose,
+        text: "}",
     },
 ]

@@ -98,8 +98,10 @@ AirOutput {
                                                             Number,
                                                         ),
                                                         kind: Variable(
-                                                            AirValueId(
-                                                                0,
+                                                            Local(
+                                                                AirLocalValueId(
+                                                                    0,
+                                                                ),
                                                             ),
                                                         ),
                                                     },
@@ -230,6 +232,7 @@ AirOutput {
             },
         },
         types: {},
+        statics: {},
     },
     diagnostics: [
         Diagnostic {

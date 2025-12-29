@@ -57,6 +57,7 @@ pub enum TokenKind {
     KeywordReturn,
     KeywordUnsafe,
     KeywordExtern,
+    KeywordStatic,
     KeywordType,
     Whitespace,
     Newline,
@@ -273,6 +274,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("return"),
                 });
             }
+            's' if self.starts_with_keyword("static") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordStatic,
+                    text: self.consume_text("static"),
+                });
+            }
             't' if self.starts_with_keyword("type") => {
                 return Some(Token {
                     kind: TokenKind::KeywordType,
@@ -322,6 +329,6 @@ mod tests {
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a"
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
-        insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo"));
+        insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));
     }
 }

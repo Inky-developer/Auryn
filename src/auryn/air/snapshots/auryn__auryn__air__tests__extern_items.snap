@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type Foo }\")"
+expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type Foo { [\\\"foo\\\"] static let foo: Number } }\")"
 ---
 AirOutput {
     air: Air {
@@ -15,9 +15,59 @@ AirOutput {
                         239253730204059,
                     ),
                 },
-            ): Extern(
-                "java/lang/Foo",
+            ): Computed(
+                Extern(
+                    ExternType {
+                        extern_name: "java/lang/Foo",
+                        members: {
+                            SyntaxId {
+                                file_id: FileId(
+                                    0,
+                                ),
+                                number: Some(
+                                    252060841644392,
+                                ),
+                            }: ExternTypeMember {
+                                type: Number,
+                                extern_name: "foo",
+                            },
+                        },
+                    },
+                ),
             ),
+        },
+        statics: {
+            AirStaticValueId(
+                SyntaxId {
+                    file_id: FileId(
+                        0,
+                    ),
+                    number: Some(
+                        252060841644392,
+                    ),
+                },
+            ): AirStaticValue {
+                parent: Computed(
+                    Extern(
+                        ExternType {
+                            extern_name: "java/lang/Foo",
+                            members: {
+                                SyntaxId {
+                                    file_id: FileId(
+                                        0,
+                                    ),
+                                    number: Some(
+                                        252060841644392,
+                                    ),
+                                }: ExternTypeMember {
+                                    type: Number,
+                                    extern_name: "foo",
+                                },
+                            },
+                        },
+                    ),
+                ),
+            },
         },
     },
     diagnostics: [],

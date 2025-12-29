@@ -1,7 +1,10 @@
 use core::fmt;
 use std::str::FromStr;
 
-use crate::utils::small_string::SmallString;
+use crate::{
+    auryn::syntax_id::SyntaxId,
+    utils::{fast_map::FastMap, small_string::SmallString},
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Type {
@@ -11,7 +14,7 @@ pub enum Type {
     Null,
     Function(Box<FunctionType>),
     Array(Box<Type>),
-    Extern(SmallString),
+    Extern(ExternType),
     Error,
 }
 
@@ -19,6 +22,18 @@ pub enum Type {
 pub struct FunctionType {
     pub parameters: Vec<Type>,
     pub return_type: Type,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ExternType {
+    pub extern_name: SmallString,
+    pub members: FastMap<SyntaxId, ExternTypeMember>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ExternTypeMember {
+    pub r#type: Type,
+    pub extern_name: SmallString,
 }
 
 impl Type {
@@ -51,11 +66,7 @@ impl fmt::Display for Type {
                 f.write_str("[]")?;
                 content_type.fmt(f)
             }
-            Type::Extern(ident) => {
-                f.write_str("extern('")?;
-                f.write_str(ident)?;
-                f.write_str("')")
-            }
+            Type::Extern(extern_type) => extern_type.fmt(f),
             Type::Error => f.write_str("<<Error>>"),
         }
     }
@@ -74,5 +85,11 @@ impl fmt::Display for FunctionType {
         self.return_type.fmt(f)?;
 
         Ok(())
+    }
+}
+
+impl fmt::Display for ExternType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "extern(`{}``)", self.extern_name)
     }
 }

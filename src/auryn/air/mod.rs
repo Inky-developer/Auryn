@@ -8,6 +8,7 @@ use crate::auryn::{
 
 pub mod ast_transformer;
 pub mod data;
+pub mod namespace;
 pub mod typecheck;
 pub mod types;
 
@@ -73,7 +74,7 @@ mod tests {
     #[test]
     fn test_extern_items() {
         insta::assert_debug_snapshot!(compile(
-            "unsafe extern \"java\" { [\"java/lang/Foo\"] type Foo }"
+            "unsafe extern \"java\" { [\"java/lang/Foo\"] type Foo { [\"foo\"] static let foo: Number } }"
         ));
     }
 
