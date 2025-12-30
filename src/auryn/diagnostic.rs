@@ -10,6 +10,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum DiagnosticError {
     // Generate by the parser
+    ExpectedExpression { got: TokenKind },
     ExpectedNumber { got: TokenKind },
     ExpectedType { got: TokenKind },
     ExpectedItem { got: TokenKind },

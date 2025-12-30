@@ -606,7 +606,12 @@ impl Parser<'_> {
     }
 
     fn parse_expression(&mut self) -> ParseResult {
-        assert!(Self::is_expression_start(self.peek().kind));
+        if !Self::is_expression_start(self.peek().kind) {
+            self.push_error(DiagnosticError::ExpectedExpression {
+                got: self.peek().kind,
+            });
+            return Err(())
+        }
         self.parse_expression_pratt(0)
     }
 
