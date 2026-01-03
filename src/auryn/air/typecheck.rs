@@ -4,12 +4,16 @@ use crate::{
     auryn::{
         air::{
             data::{
-                Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind,
-                AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId, Assignment,
-                BinaryOperation, Call, Intrinsic, IntrinsicCall, ReturnValue, UnresolvedType,
+                Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
+                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId,
+                Assignment, BinaryOperation, Call, FunctionReference, Intrinsic, ReturnValue,
+                UnresolvedType,
             },
-            types::{ExternType, ExternTypeMember, FunctionType, Type},
+            type_context::{TypeContext, TypeId, TypeView},
+            types::{
+                ArrayType, ExternType, ExternTypeMember, FunctionParameters, FunctionType, Type,
+            },
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -23,7 +27,7 @@ pub fn typecheck_air(air: &mut Air) -> Vec<Diagnostic> {
 
 #[derive(Debug)]
 struct FunctionContext {
-    variables: FastMap<AirValueId, Type>,
+    variables: FastMap<AirLocalValueId, Type>,
     return_type: Type,
 }
 
@@ -49,22 +53,19 @@ impl FunctionContext {
 
 #[derive(Debug, Default)]
 pub struct Typechecker {
-    functions: FastMap<AirFunctionId, FunctionType>,
+    functions: FastMap<AirFunctionId, TypeId<FunctionType>>,
     defined_types: FastMap<AirTypedefId, Type>,
     function: FunctionContext,
+    statics: FastMap<AirStaticValueId, AirStaticValue>,
+    ty_ctx: TypeContext,
     diagnostics: Vec<Diagnostic>,
 }
 
 impl Typechecker {
     pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
         self.compute_defined_types(&mut air.types);
-        self.defined_types = air
-            .types
-            .iter()
-            .map(|(k, v)| (*k, v.computed().clone()))
-            .collect();
-
-        self.compute_statics(&mut air.statics);
+        self.defined_types = air.types.iter().map(|(k, v)| (*k, v.computed())).collect();
+        self.statics = air.statics.clone();
 
         for (id, function) in &mut air.functions {
             self.typecheck_function_signature(*id, function);
@@ -74,18 +75,14 @@ impl Typechecker {
             self.typecheck_function_body(function);
         }
 
+        air.ty_ctx = self.ty_ctx;
+
         self.diagnostics
     }
 
     fn compute_defined_types(&mut self, types: &mut FastMap<AirTypedefId, AirType>) {
         for r#type in types.values_mut() {
             self.resolve_if_unresolved(r#type);
-        }
-    }
-
-    fn compute_statics(&mut self, statics: &mut FastMap<AirStaticValueId, AirStaticValue>) {
-        for value in statics.values_mut() {
-            self.resolve_if_unresolved(&mut value.parent);
         }
     }
 
@@ -99,14 +96,14 @@ impl Typechecker {
         self.add_error(
             received.id,
             DiagnosticError::TypeMismatch {
-                expected: expected.clone(),
+                expected,
                 got: received.r#type.clone(),
             },
         )
     }
 
-    fn expect_type_at(&mut self, at: SyntaxId, received: &Type, expected: Type) {
-        if received == &expected {
+    fn expect_type_at(&mut self, at: SyntaxId, received: Type, expected: Type) {
+        if received == expected {
             return;
         }
 
@@ -114,7 +111,7 @@ impl Typechecker {
             at,
             DiagnosticError::TypeMismatch {
                 expected,
-                got: AirType::Computed(received.clone()),
+                got: AirType::Computed(received),
             },
         );
     }
@@ -129,7 +126,7 @@ impl Typechecker {
         self.add_error(
             received.id,
             DiagnosticError::TypeMismatch {
-                expected: expected.clone(),
+                expected,
                 got: received.r#type.clone(),
             },
         );
@@ -155,7 +152,7 @@ impl Typechecker {
 
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         match unresolved {
-            UnresolvedType::DefinedType(_id, def_id) => self.defined_types[def_id].clone(),
+            UnresolvedType::DefinedType(_id, def_id) => self.defined_types[def_id],
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
@@ -171,6 +168,7 @@ impl Typechecker {
             UnresolvedType::Function {
                 parameters,
                 return_type,
+                reference,
             } => {
                 let parameters = parameters
                     .iter()
@@ -179,52 +177,68 @@ impl Typechecker {
                 let return_type = return_type
                     .as_ref()
                     .map_or(Type::Null, |ty| self.resolve_type(ty));
-                Type::Function(Box::new(FunctionType {
-                    parameters,
-                    return_type,
-                }))
+                Type::Function(self.ty_ctx.add_function(
+                    reference.as_user_defined().0.0,
+                    FunctionType {
+                        parameters: FunctionParameters::Constrained(parameters),
+                        return_type,
+                        reference: *reference,
+                    },
+                ))
             }
-            UnresolvedType::Array(_, inner) => Type::Array(Box::new(self.resolve_type(inner))),
+            UnresolvedType::Array(id, inner) => {
+                let element_type = self.resolve_type(inner);
+                Type::Array(self.ty_ctx.add_array(*id, ArrayType { element_type }))
+            }
             // TODO: Prevent infinite recursion and handle recursive definitions
             UnresolvedType::Extern {
+                id,
                 extern_name,
                 members,
-            } => Type::Extern(ExternType {
-                extern_name: extern_name.clone(),
-                members: members
+            } => {
+                let members = members
                     .iter()
-                    .map(|(id, member)| {
+                    .map(|(ident, member)| {
                         (
-                            *id,
+                            ident.clone(),
                             ExternTypeMember {
                                 extern_name: member.extern_name.clone(),
                                 r#type: self.resolve_type(&member.r#type),
                             },
                         )
                     })
-                    .collect(),
-            }),
+                    .collect();
+                Type::Extern(self.ty_ctx.add_extern(
+                    *id,
+                    ExternType {
+                        extern_name: extern_name.clone(),
+                        members,
+                    },
+                ))
+            }
         }
     }
 
     fn typecheck_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
         let computed_ty = self.resolve_type(&function.unresolved_type);
-        let Type::Function(function_type) = &computed_ty else {
+        function.r#type = AirType::Computed(computed_ty);
+        let Type::Function(function_type) = computed_ty else {
             unreachable!("Should compute a function type for a function!");
         };
-        let function_type = function_type.as_ref().clone();
-        function.r#type = AirType::Computed(computed_ty);
         self.functions.insert(id, function_type);
     }
 
     fn typecheck_function_body(&mut self, function: &mut AirFunction) {
-        let Type::Function(function_type) = function.r#type.computed() else {
+        let TypeView::Function(function_type) = function.r#type.as_view(&self.ty_ctx) else {
             panic!("Invalid type for function: {:?}", function.r#type);
         };
 
-        self.function.clear(function_type.return_type.clone());
-        for (id, r#type) in function.argument_ids().zip(function_type.parameters.iter()) {
-            self.function.variables.insert(id, r#type.clone());
+        self.function.clear(function_type.value.return_type);
+        for (id, r#type) in function
+            .argument_ids()
+            .zip(function_type.value.constrained_parameters().iter())
+        {
+            self.function.variables.insert(id, *r#type);
         }
 
         let mut visited_blocks = FastSet::default();
@@ -261,10 +275,10 @@ impl Typechecker {
             AirBlockFinalizer::Return(expression) => match expression {
                 ReturnValue::Expression(expression) => {
                     self.typecheck_expression(expression);
-                    self.expect_type(expression, self.function.return_type.clone());
+                    self.expect_type(expression, self.function.return_type);
                 }
                 ReturnValue::Null(id) => {
-                    self.expect_type_at(*id, &Type::Null, self.function.return_type.clone());
+                    self.expect_type_at(*id, Type::Null, self.function.return_type);
                 }
             },
             AirBlockFinalizer::Goto(next_id) => on_next_id(*next_id),
@@ -291,12 +305,11 @@ impl Typechecker {
     fn typecheck_assignment(&mut self, assignment: &mut Assignment) {
         self.typecheck_expression(&mut assignment.expression);
         if let Some(expected_type) = self.function.variables.get(&assignment.target) {
-            self.expect_assignable(&assignment.expression, expected_type.clone());
+            self.expect_assignable(&assignment.expression, *expected_type);
         } else {
-            self.function.variables.insert(
-                assignment.target,
-                assignment.expression.r#type.computed().clone(),
-            );
+            self.function
+                .variables
+                .insert(assignment.target, assignment.expression.r#type.computed());
         }
     }
 
@@ -307,10 +320,8 @@ impl Typechecker {
                 self.typecheck_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(value) => self.typecheck_value(value),
+            AirExpressionKind::Accessor(accessor) => self.typecheck_accessor(accessor),
             AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call),
-            AirExpressionKind::IntrinsicCall(intrinsic) => {
-                self.typecheck_intrinsic(expression.id, intrinsic)
-            }
             AirExpressionKind::Error => Type::Error,
         };
 
@@ -334,54 +345,103 @@ impl Typechecker {
         Type::Number
     }
 
-    fn typecheck_value(&self, value: &AirValueId) -> Type {
-        let computed_type = self
-            .function
-            .variables
-            .get(value)
-            .expect("Should have type for value");
-        computed_type.clone()
+    fn typecheck_value(&mut self, value: &AirValueId) -> Type {
+        match value {
+            AirValueId::Local(local_value_id) => *self
+                .function
+                .variables
+                .get(local_value_id)
+                .expect("Should have type for value"),
+            AirValueId::Global(global_value_id) => {
+                let AirStaticValue::Function(function_id) = self
+                    .statics
+                    .get(global_value_id)
+                    .expect("Should have type for value");
+                let function = self.functions[function_id];
+                Type::Function(function)
+            }
+            AirValueId::Intrinsic(intrinsic) => intrinsic.r#type(),
+        }
+    }
+
+    fn typecheck_accessor(&mut self, accessor: &mut Accessor) -> Type {
+        self.typecheck_expression(&mut accessor.value);
+        let value_type_view = accessor.value.r#type.as_view(&self.ty_ctx);
+        match value_type_view.get_member(&accessor.ident) {
+            Some(member_type_view) => member_type_view.as_type(),
+            None => {
+                self.diagnostics.push(Diagnostic::new(
+                    accessor.ident_id,
+                    DiagnosticError::UndefinedProperty {
+                        r#type: value_type_view.as_type(),
+                        ident: accessor.ident.clone(),
+                    },
+                ));
+                Type::Error
+            }
+        }
     }
 
     fn typecheck_call(&mut self, id: SyntaxId, call: &mut Call) -> Type {
+        self.typecheck_expression(&mut call.function);
         for argument in &mut call.arguments {
             self.typecheck_expression(argument);
         }
 
-        let function_type = self.functions[&call.function].clone();
-        let parameters = function_type.parameters;
-
-        if parameters.len() != call.arguments.len() {
+        let TypeView::Function(function_type) = call.function.r#type.as_view(&self.ty_ctx) else {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
-                    expected: parameters.len(),
-                    got: call.arguments.len(),
+                DiagnosticError::ExpectedFunctionType {
+                    got: call.function.r#type.clone(),
                 },
             );
+            return Type::Error;
+        };
+        let return_type = function_type.value.return_type;
+
+        // Small hack while intrinsics are more powerful than user defined functions.
+        // E.g. `arrayOf` is variadic
+        if let FunctionReference::Intrinsic(intrinsic) = function_type.value.reference {
+            return self.typecheck_intrinsic(id, intrinsic, &mut call.arguments);
         }
 
-        for (expected, actual) in parameters.into_iter().zip(call.arguments.iter()) {
-            self.expect_assignable(actual, expected);
+        if let FunctionParameters::Constrained(parameters) = function_type.value.parameters.clone()
+        {
+            if parameters.len() != call.arguments.len() {
+                self.add_error(
+                    id,
+                    DiagnosticError::MismatchedParameterCount {
+                        expected: parameters.len(),
+                        got: call.arguments.len(),
+                    },
+                );
+            }
+
+            for (expected, actual) in parameters.into_iter().zip(call.arguments.iter()) {
+                self.expect_assignable(actual, expected);
+            }
         }
 
-        function_type.return_type
+        return_type
     }
 
-    fn typecheck_intrinsic(&mut self, id: SyntaxId, intrinsic: &mut IntrinsicCall) -> Type {
-        for argument in &mut intrinsic.arguments {
+    fn typecheck_intrinsic(
+        &mut self,
+        id: SyntaxId,
+        intrinsic: Intrinsic,
+        arguments: &mut [AirExpression],
+    ) -> Type {
+        for argument in &mut *arguments {
             self.typecheck_expression(argument);
         }
 
-        match intrinsic.intrinsic {
-            Intrinsic::Print => self.typecheck_intrinsic_print(id, &intrinsic.arguments),
-            Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, &intrinsic.arguments),
-            Intrinsic::ArrayOfZeros => {
-                self.typecheck_intrinsic_array_of_zeros(id, &intrinsic.arguments)
-            }
-            Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, &intrinsic.arguments),
-            Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, &intrinsic.arguments),
-            Intrinsic::ArrayLen => self.typecheck_intrinsic_array_len(id, &intrinsic.arguments),
+        match intrinsic {
+            Intrinsic::Print => self.typecheck_intrinsic_print(id, arguments),
+            Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, arguments),
+            Intrinsic::ArrayOfZeros => self.typecheck_intrinsic_array_of_zeros(id, arguments),
+            Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, arguments),
+            Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, arguments),
+            Intrinsic::ArrayLen => self.typecheck_intrinsic_array_len(id, arguments),
         }
     }
 
@@ -411,13 +471,13 @@ impl Typechecker {
             return Type::Error;
         };
 
-        let element_type = first.r#type.computed().clone();
+        let element_type = first.r#type.computed();
 
         for argument in arguments {
-            self.expect_type(argument, element_type.clone());
+            self.expect_type(argument, element_type);
         }
 
-        Type::Array(Box::new(element_type))
+        Type::Array(self.ty_ctx.add_array(id, ArrayType { element_type }))
     }
 
     fn typecheck_intrinsic_array_of_zeros(
@@ -425,7 +485,12 @@ impl Typechecker {
         id: SyntaxId,
         arguments: &[AirExpression],
     ) -> Type {
-        let return_type = Type::Array(Box::new(Type::Number));
+        let return_type = Type::Array(self.ty_ctx.add_array(
+            id,
+            ArrayType {
+                element_type: Type::Number,
+            },
+        ));
         let [count] = arguments else {
             self.add_error(
                 id,
@@ -454,7 +519,7 @@ impl Typechecker {
             return Type::Error;
         };
 
-        let Type::Array(element_type) = array.r#type.computed() else {
+        let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
             self.add_error(
                 array.id,
                 DiagnosticError::ExpectedArray {
@@ -463,10 +528,10 @@ impl Typechecker {
             );
             return Type::Error;
         };
+        let element_type = array_type.element_type;
 
         self.expect_type(index, Type::Number);
-
-        element_type.as_ref().clone()
+        element_type
     }
 
     fn typecheck_intrinsic_array_set(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
@@ -481,7 +546,7 @@ impl Typechecker {
             return Type::Error;
         };
 
-        let Type::Array(element_type) = array.r#type.computed() else {
+        let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
             self.add_error(
                 array.id,
                 DiagnosticError::ExpectedArray {
@@ -490,8 +555,9 @@ impl Typechecker {
             );
             return Type::Error;
         };
+        let element_type = array_type.element_type;
         self.expect_type(index, Type::Number);
-        self.expect_type(value, element_type.as_ref().clone());
+        self.expect_type(value, element_type);
 
         Type::Null
     }

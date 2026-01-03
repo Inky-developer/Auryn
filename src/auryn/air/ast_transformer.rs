@@ -3,18 +3,18 @@ use crate::{
         air::{
             data::{
                 self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId,
-                Call, IntrinsicCall, ReturnValue, UnresolvedExternMember, UnresolvedType,
+                AirExpressionKind, AirFunction, AirLocalValueId, AirNode, AirNodeKind,
+                AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId, Call,
+                FunctionReference, ReturnValue, UnresolvedExternMember, UnresolvedType,
             },
-            namespace::{Namespace, TypeInfo},
+            namespace::Namespace,
         },
         ast::ast_node::{
-            Assignment, AstError, BinaryOperation, Block, BreakStatement, Expression, ExternBlock,
-            ExternBlockItem, ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind,
-            FunctionCall, FunctionDefinition, Ident, IfStatement, Item, LoopStatement,
-            NumberLiteral, Parenthesis, ReturnStatement, Root, Statement, StringLiteral, Type,
-            Value, VariableUpdate,
+            Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BreakStatement,
+            Expression, ExternBlock, ExternBlockItem, ExternBlockItemKind, ExternTypeBody,
+            ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement, Item, LoopStatement,
+            NumberLiteral, Parenthesis, PostfixOperation, PostfixOperator, ReturnStatement, Root,
+            Statement, StringLiteral, Type, Value, ValueOrPostfix, VariableUpdate,
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
         syntax_id::SyntaxId,
@@ -73,7 +73,7 @@ impl AstTransformer {
                 ident
                     .ident()
                     .map(|token| match self.namespace.types.get(&token.text) {
-                        Some(info) => UnresolvedType::DefinedType(token.id, info.def_id),
+                        Some(def_id) => UnresolvedType::DefinedType(token.id, *def_id),
                         None => UnresolvedType::Ident(token.id, token.text.clone()),
                     })
             }
@@ -94,9 +94,10 @@ impl AstTransformer {
             return;
         };
 
-        self.namespace
-            .functions
-            .insert(ident.text.clone(), AirFunctionId(function_definition.id()));
+        self.namespace.statics.insert(
+            ident.text.clone(),
+            AirStaticValueId(function_definition.id()),
+        );
     }
 
     fn register_extern_block(&mut self, block: ExternBlock) {
@@ -121,11 +122,7 @@ impl AstTransformer {
                 if let Ok(body) = extern_type.body() {
                     self.register_extern_type_members(&mut members, body);
                 }
-                let type_info = TypeInfo {
-                    def_id: id,
-                    members,
-                };
-                self.namespace.types.insert(ident.text.clone(), type_info);
+                self.namespace.types.insert(ident.text.clone(), id);
             }
         }
     }
@@ -192,23 +189,16 @@ impl AstTransformer {
                 let Ok(extern_body) = extern_type.body() else {
                     return;
                 };
-                let extern_members = self.collect_extern_type_members(extern_body, &ident.text);
+                let extern_members = self.collect_extern_type_members(extern_body);
 
                 let extern_path = parse_string_literal_text(&extern_path.text);
-                let info = &self.namespace.types[&ident.text];
+                let def_id = self.namespace.types[&ident.text];
                 let extern_type = AirType::Unresolved(UnresolvedType::Extern {
+                    id: extern_type.id(),
                     extern_name: extern_path,
-                    members: extern_members.clone(),
+                    members: extern_members,
                 });
-                for (id, _member) in extern_members {
-                    self.air.statics.insert(
-                        AirStaticValueId(id),
-                        AirStaticValue {
-                            parent: extern_type.clone(),
-                        },
-                    );
-                }
-                self.air.types.insert(info.def_id, extern_type);
+                self.air.types.insert(def_id, extern_type);
             }
         }
     }
@@ -216,10 +206,8 @@ impl AstTransformer {
     fn collect_extern_type_members(
         &mut self,
         body: ExternTypeBody,
-        type_ident: &SmallString,
-    ) -> FastMap<SyntaxId, UnresolvedExternMember> {
+    ) -> FastMap<SmallString, UnresolvedExternMember> {
         let mut result = FastMap::default();
-        let info = &self.namespace.types[type_ident];
 
         for item in body.items() {
             let Ok(metadata) = item.metadata() else {
@@ -247,7 +235,6 @@ impl AstTransformer {
                         continue;
                     };
 
-                    let id = info.members.statics[&ident.text];
                     let Ok(unresolved) = self.transform_to_unresolved(r#type) else {
                         continue;
                     };
@@ -255,7 +242,7 @@ impl AstTransformer {
                         extern_name,
                         r#type: unresolved,
                     };
-                    result.insert(id.0, member);
+                    result.insert(ident.text.clone(), member);
                 }
             }
         }
@@ -296,25 +283,26 @@ impl AstTransformer {
             .filter_map(|param| param.ident().ok().map(|ident| ident.text.clone()))
             .collect::<Vec<_>>();
 
-        let mut function_transformer = FunctionTransformer::new(
-            parameter_idents,
-            &mut self.diagnostics,
-            &self.namespace.functions,
-        );
+        let mut function_transformer =
+            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
         function_transformer.transform_function_body(block);
 
-        let function_id = self.namespace.functions[&ident];
+        let function_id = self.namespace.unwrap_function(&ident);
         let function = AirFunction {
             r#type: AirType::Inferred,
             unresolved_type: UnresolvedType::Function {
                 parameters: declared_parameters,
                 return_type: declared_return_type,
+                reference: FunctionReference::UserDefined(function_id),
             },
             ident,
             blocks: function_transformer.finished_blocks,
         };
 
         self.air.functions.insert(function_id, function);
+        self.air
+            .statics
+            .insert(function_id.0, AirStaticValue::Function(function_id));
     }
 }
 
@@ -336,9 +324,9 @@ struct FunctionTransformer<'a> {
     current_builder: AirBlockId,
     finished_blocks: FastMap<AirBlockId, AirBlock>,
     next_value_id: usize,
-    variables: FastMap<SmallString, AirValueId>,
     diagnostics: &'a mut Vec<Diagnostic>,
-    namespace: &'a FastMap<SmallString, AirFunctionId>,
+    variables: FastMap<SmallString, AirLocalValueId>,
+    namespace: &'a Namespace,
     loops: Vec<LoopInfo>,
 }
 
@@ -346,12 +334,12 @@ impl<'a> FunctionTransformer<'a> {
     fn new(
         parameter_idents: Vec<SmallString>,
         diagnostics: &'a mut Vec<Diagnostic>,
-        namespace: &'a FastMap<SmallString, AirFunctionId>,
+        namespace: &'a Namespace,
     ) -> Self {
         let variables = parameter_idents
             .into_iter()
             .enumerate()
-            .map(|(index, ident)| (ident, AirValueId::Local(AirLocalValueId(index))))
+            .map(|(index, ident)| (ident, AirLocalValueId(index)))
             .collect::<FastMap<_, _>>();
         Self {
             block_builders: FastMap::default(),
@@ -401,7 +389,7 @@ impl<'a> FunctionTransformer<'a> {
             .push(Diagnostic::new(id, DiagnosticKind::Error(error)))
     }
 
-    fn create_variable(&mut self, token: &SyntaxToken, value_id: AirValueId) {
+    fn create_variable(&mut self, token: &SyntaxToken, value_id: AirLocalValueId) {
         if self.variables.contains_key(&token.text) {
             self.add_error(
                 token.id,
@@ -413,8 +401,8 @@ impl<'a> FunctionTransformer<'a> {
         self.variables.insert(token.text.clone(), value_id);
     }
 
-    fn create_value(&mut self) -> AirValueId {
-        let id = AirValueId::Local(AirLocalValueId(self.next_value_id));
+    fn create_value(&mut self) -> AirLocalValueId {
+        let id = AirLocalValueId(self.next_value_id);
         self.next_value_id += 1;
         id
     }
@@ -589,6 +577,9 @@ impl FunctionTransformer<'_> {
             Expression::BinaryOperation(binary_operation) => {
                 self.transform_binary_operation(binary_operation)
             }
+            Expression::PostfixOperation(postfix_operation) => {
+                self.transform_postfix_operation(postfix_operation)
+            }
             Expression::Value(value) => self.transform_value(value),
         }
     }
@@ -614,12 +605,72 @@ impl FunctionTransformer<'_> {
         }
     }
 
+    fn transform_postfix_operation(&mut self, postfix_op: PostfixOperation) -> AirExpression {
+        let (Ok(value), Ok(operator)) = (postfix_op.value(), postfix_op.operator()) else {
+            return AirExpression::error(postfix_op.id());
+        };
+
+        match operator {
+            PostfixOperator::ArgumentList(argument_list) => {
+                self.transform_postfix_call(value, argument_list)
+            }
+            PostfixOperator::Accessor(accessor) => self.transform_accessor(value, accessor),
+        }
+    }
+
+    fn transform_value_or_postfix_operation(
+        &mut self,
+        value_or_postfix: ValueOrPostfix,
+    ) -> AirExpression {
+        match value_or_postfix {
+            ValueOrPostfix::Value(value) => self.transform_value(value),
+            ValueOrPostfix::Postfix(postfix_operation) => {
+                self.transform_postfix_operation(postfix_operation)
+            }
+        }
+    }
+
+    fn transform_postfix_call(
+        &mut self,
+        value: ValueOrPostfix,
+        argument_list: ArgumentList,
+    ) -> AirExpression {
+        let function = Box::new(self.transform_value_or_postfix_operation(value));
+        let arguments = argument_list
+            .arguments()
+            .map(|arg| self.transform_expression(arg))
+            .collect();
+
+        AirExpression::new(
+            value.id(),
+            AirExpressionKind::Call(Call {
+                function,
+                arguments,
+            }),
+        )
+    }
+
+    fn transform_accessor(&mut self, value: ValueOrPostfix, accessor: Accessor) -> AirExpression {
+        let value = self.transform_value_or_postfix_operation(value);
+        let Ok(ident) = accessor.ident() else {
+            return AirExpression::error(value.id);
+        };
+
+        AirExpression::new(
+            value.id,
+            AirExpressionKind::Accessor(data::Accessor {
+                value: Box::new(value),
+                ident: ident.text.clone(),
+                ident_id: ident.id,
+            }),
+        )
+    }
+
     fn transform_value(&mut self, value: Value) -> AirExpression {
         match value {
             Value::NumberLiteral(number) => self.transform_number(number),
             Value::StringLiteral(string) => self.transform_string(string),
             Value::Ident(ident) => self.transform_ident(ident),
-            Value::FunctionCall(function_call) => self.transform_function_call(function_call),
             Value::Parenthesis(parenthesis) => self.transform_parenthesis(parenthesis),
         }
     }
@@ -657,58 +708,34 @@ impl FunctionTransformer<'_> {
             return AirExpression::error(ident.id());
         };
 
-        let Some(&variable_id) = self.variables.get(&ident.text) else {
-            self.add_error(
+        if let Some(&variable_id) = self.variables.get(&ident.text) {
+            return AirExpression::new(
                 ident.id,
-                DiagnosticError::UndefinedVariable {
-                    ident: ident.text.clone(),
-                },
+                AirExpressionKind::Variable(AirValueId::Local(variable_id)),
             );
-            return AirExpression::error(ident.id);
-        };
+        }
 
-        AirExpression::new(ident.id, AirExpressionKind::Variable(variable_id))
-    }
-
-    fn transform_function_call(&mut self, function_call: FunctionCall) -> AirExpression {
-        let Ok(ident) = function_call.ident() else {
-            return AirExpression::error(function_call.id());
-        };
-        let Ok(argument_list) = function_call.argument_list() else {
-            return AirExpression::error(function_call.id());
-        };
-
-        let arguments = argument_list
-            .arguments()
-            .map(|arg| self.transform_expression(arg))
-            .collect();
+        if let Some(variable_id) = self.namespace.get(&ident.text) {
+            return AirExpression::new(
+                ident.id,
+                AirExpressionKind::Variable(AirValueId::Global(variable_id)),
+            );
+        }
 
         if let Ok(intrinsic) = ident.text.parse() {
-            AirExpression::new(
-                function_call.id(),
-                AirExpressionKind::IntrinsicCall(IntrinsicCall {
-                    intrinsic,
-                    arguments,
-                }),
-            )
-        } else {
-            let Some(function) = self.namespace.get(&ident.text) else {
-                self.add_error(
-                    function_call.id(),
-                    DiagnosticError::UndefinedVariable {
-                        ident: ident.text.clone(),
-                    },
-                );
-                return AirExpression::error(function_call.id());
-            };
-            AirExpression::new(
-                function_call.id(),
-                AirExpressionKind::Call(Call {
-                    function: *function,
-                    arguments,
-                }),
-            )
-        }
+            return AirExpression::new(
+                ident.id,
+                AirExpressionKind::Variable(AirValueId::Intrinsic(intrinsic)),
+            );
+        };
+
+        self.add_error(
+            ident.id,
+            DiagnosticError::UndefinedVariable {
+                ident: ident.text.clone(),
+            },
+        );
+        AirExpression::error(ident.id)
     }
 
     fn transform_parenthesis(&mut self, parenthesis: Parenthesis) -> AirExpression {

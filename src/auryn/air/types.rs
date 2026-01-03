@@ -1,33 +1,49 @@
-use core::fmt;
 use std::str::FromStr;
 
 use crate::{
-    auryn::syntax_id::SyntaxId,
+    auryn::air::{
+        data::FunctionReference,
+        type_context::{TypeContext, TypeId, TypeView},
+    },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub enum Type {
     Top,
     Number,
     String,
     Null,
-    Function(Box<FunctionType>),
-    Array(Box<Type>),
-    Extern(ExternType),
+    Function(TypeId<FunctionType>),
+    Array(TypeId<ArrayType>),
+    Extern(TypeId<ExternType>),
     Error,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FunctionType {
-    pub parameters: Vec<Type>,
+    pub parameters: FunctionParameters,
     pub return_type: Type,
+    /// TODO: This should not be the function item type, so remove the reference and add a separate type for function items
+    pub reference: FunctionReference,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum FunctionParameters {
+    /// Hack to enable variadic parameters for builtin functions
+    Unconstrained,
+    Constrained(Vec<Type>),
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct ArrayType {
+    pub element_type: Type,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ExternType {
     pub extern_name: SmallString,
-    pub members: FastMap<SyntaxId, ExternTypeMember>,
+    pub members: FastMap<SmallString, ExternTypeMember>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -37,8 +53,29 @@ pub struct ExternTypeMember {
 }
 
 impl Type {
+    pub fn as_view<'a>(&self, ctx: &'a TypeContext) -> TypeView<'a> {
+        ctx.get_view(*self)
+    }
+
     pub fn is_subtype(&self, other: &Type) -> bool {
         self == other || matches!(other, Type::Top)
+    }
+}
+
+impl FunctionType {
+    pub fn constrained_parameters(&self) -> &[Type] {
+        match &self.parameters {
+            FunctionParameters::Unconstrained => {
+                panic!("function should have constrained parameters, but they are unconstrained")
+            }
+            FunctionParameters::Constrained(parameters) => parameters,
+        }
+    }
+}
+
+impl ExternType {
+    pub fn get_member(&self, member: &str) -> Option<Type> {
+        self.members.get(member).map(|it| it.r#type)
     }
 }
 
@@ -51,45 +88,5 @@ impl FromStr for Type {
             "String" => Type::String,
             _ => return Err(()),
         })
-    }
-}
-
-impl fmt::Display for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Type::Top => f.write_str("Top"),
-            Type::Number => f.write_str("Number"),
-            Type::String => f.write_str("String"),
-            Type::Null => f.write_str("Null"),
-            Type::Function(function_type) => function_type.fmt(f),
-            Type::Array(content_type) => {
-                f.write_str("[]")?;
-                content_type.fmt(f)
-            }
-            Type::Extern(extern_type) => extern_type.fmt(f),
-            Type::Error => f.write_str("<<Error>>"),
-        }
-    }
-}
-
-impl fmt::Display for FunctionType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("(")?;
-        for (index, parameter) in self.parameters.iter().enumerate() {
-            if index != 0 {
-                f.write_str(",")?;
-            }
-            parameter.fmt(f)?;
-        }
-        f.write_str(" -> ")?;
-        self.return_type.fmt(f)?;
-
-        Ok(())
-    }
-}
-
-impl fmt::Display for ExternType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "extern(`{}``)", self.extern_name)
     }
 }

@@ -1,7 +1,10 @@
 use std::fmt::Display;
 
 use crate::{
-    auryn::air::types::{FunctionType, Type},
+    auryn::air::{
+        type_context::{TypeView, TypeViewKind},
+        types::FunctionType,
+    },
     java::{
         class::{ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
@@ -196,39 +199,41 @@ impl Display for MethodDescriptor {
 
 /// Returns the representation of an auryn type for the jvm.
 /// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
-pub fn get_representation(air_type: &Type) -> Option<Representation> {
+pub fn get_representation(air_type: TypeView) -> Option<Representation> {
     match air_type {
-        Type::Number => Some(Representation::Integer),
-        Type::String => Some(Representation::string()),
-        Type::Array(content_type) => {
-            let content_repr = get_representation(content_type);
+        TypeView::Number => Some(Representation::Integer),
+        TypeView::String => Some(Representation::string()),
+        TypeView::Array(content_type) => {
+            let content_repr = get_representation(content_type.element());
             match content_repr {
                 Some(repr) => Some(Representation::Array(Box::new(repr))),
                 None => todo!("Add representation for array of zero-sized types"),
             }
         }
-        Type::Extern(extern_type) => Some(Representation::Object(extern_type.extern_name.clone())),
-        Type::Null | Type::Function(_) => None,
-        Type::Top => todo!("The top type cannot be represented yet"),
-        Type::Error => unreachable!("Called with error type"),
+        TypeView::Extern(extern_type) => {
+            Some(Representation::Object(extern_type.extern_name.clone()))
+        }
+        TypeView::Null | TypeView::Function(_) => None,
+        TypeView::Top => todo!("The top type cannot be represented yet"),
+        TypeView::Error => unreachable!("Called with error type"),
     }
 }
 
 /// Returns the representation of `air_type` as a jvm return [`ReturnDescriptor`]
-pub fn get_return_type_representation(air_type: &Type) -> ReturnDescriptor {
+pub fn get_return_type_representation(air_type: TypeView) -> ReturnDescriptor {
     get_representation(air_type)
         .map(|primitive| primitive.into_field_descriptor().into())
         .unwrap_or(ReturnDescriptor::Void)
 }
 
 /// Returns the representation of an auryn type for the jvm
-pub fn get_function_representation(ty: &FunctionType) -> MethodDescriptor {
+pub fn get_function_representation(ty: TypeViewKind<FunctionType>) -> MethodDescriptor {
     let parameters = ty
-        .parameters
+        .constrained_parameters()
         .iter()
-        .flat_map(|it| get_representation(it).map(|it| it.into_field_descriptor()))
+        .flat_map(|it| get_representation(it.as_view(ty.ctx)).map(|it| it.into_field_descriptor()))
         .collect();
-    let return_type = get_representation(&ty.return_type).map_or(ReturnDescriptor::Void, |it| {
+    let return_type = get_representation(ty.r#return()).map_or(ReturnDescriptor::Void, |it| {
         it.into_field_descriptor().into()
     });
     MethodDescriptor {

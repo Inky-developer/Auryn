@@ -127,7 +127,7 @@ impl<'a> Parser<'a> {
     fn push_error(&mut self, diagnostic: impl Into<DiagnosticKind>) {
         let node = self.node_stack.last_mut().expect("Should have a node");
         node.children.push(SyntaxItem::Error(Box::new(ErrorNode {
-            id: SyntaxId::new_unset(self.file_id),
+            id: SyntaxId::new_unset(Some(self.file_id)),
             text: "".into(),
             diagnostic: diagnostic.into(),
         })));
@@ -143,7 +143,7 @@ impl<'a> Parser<'a> {
         self.index = usize::min(self.input.len(), self.index + 1);
         let node = self.node_stack.last_mut().expect("Should have a node");
         node.children.push(SyntaxItem::Token(SyntaxToken {
-            id: SyntaxId::new_unset(self.file_id),
+            id: SyntaxId::new_unset(Some(self.file_id)),
             kind: token.kind,
             text: token.text.into(),
         }));
@@ -243,7 +243,7 @@ impl<'a> Parser<'a> {
         let len = children.iter().map(|child| child.len()).sum::<u32>();
 
         Some(SyntaxNode {
-            id: SyntaxId::new_unset(self.file_id),
+            id: SyntaxId::new_unset(Some(self.file_id)),
             len,
             kind,
             children: children.into_boxed_slice(),
@@ -586,7 +586,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordReturn)?;
-        if Self::is_expression_start(self.peek().kind) {
+        if is_expression_start(self.peek().kind) {
             self.parse_expression()?;
         }
 
@@ -606,11 +606,11 @@ impl Parser<'_> {
     }
 
     fn parse_expression(&mut self) -> ParseResult {
-        if !Self::is_expression_start(self.peek().kind) {
+        if !is_expression_start(self.peek().kind) {
             self.push_error(DiagnosticError::ExpectedExpression {
                 got: self.peek().kind,
             });
-            return Err(())
+            return Err(());
         }
         self.parse_expression_pratt(0)
     }
@@ -621,7 +621,7 @@ impl Parser<'_> {
             mut watcher: ParserFrameWatcher,
             min_binding_power: u32,
         ) -> ParseResult<ParserFrameWatcher> {
-            this.parse_value()?;
+            this.parse_value_or_postfix()?;
 
             loop {
                 let Some(operator) = this.peek().kind.to_binary_operator() else {
@@ -665,22 +665,11 @@ impl Parser<'_> {
         Ok(())
     }
 
-    /// Not nice, must be in sync with [`parse_value`].
-    fn is_expression_start(kind: TokenKind) -> bool {
-        matches!(
-            kind,
-            TokenKind::Identifier
-                | TokenKind::NumberLiteral
-                | TokenKind::StringLiteral
-                | TokenKind::ParensOpen
-        )
-    }
-
-    fn parse_value(&mut self) -> ParseResult {
-        let watcher = self.push_node();
+    fn parse_value_or_postfix(&mut self) -> ParseResult {
+        let mut watcher = self.push_node();
 
         match self.peek().kind {
-            TokenKind::Identifier => self.parse_identifier_or_function_call()?,
+            TokenKind::Identifier => self.parse_identifier()?,
             TokenKind::NumberLiteral => self.parse_number()?,
             TokenKind::StringLiteral => self.parse_string_literal()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
@@ -690,27 +679,51 @@ impl Parser<'_> {
             }
         };
 
-        self.finish_node(watcher, SyntaxNodeKind::Value);
+        if !is_postfix_start(self.peek().kind) {
+            self.finish_node(watcher, SyntaxNodeKind::Value);
+            return Ok(());
+        };
+
+        let mut current_node_kind = SyntaxNodeKind::Value;
+        while is_postfix_start(self.peek().kind) {
+            let postfix_node = self.pop_node(watcher, current_node_kind).unwrap();
+            watcher = self.push_node();
+            current_node_kind = SyntaxNodeKind::PostfixOperation;
+            self.node_stack
+                .last_mut()
+                .unwrap()
+                .children
+                .push(SyntaxItem::Node(postfix_node));
+            self.parse_postfix()?;
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::PostfixOperation);
+
         Ok(())
     }
 
-    fn parse_identifier_or_function_call(&mut self) -> ParseResult {
+    fn parse_postfix(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::Identifier)?;
-
         match self.peek().kind {
-            TokenKind::ParensOpen => {
-                if let Err(()) = self.parse_argument_list() {
-                    // self.recover(|k| matches!(k, TokenKind::ParensClose))?;
-                }
-
-                self.finish_node(watcher, SyntaxNodeKind::FunctionCall);
-            }
-            _ => {
-                self.finish_node(watcher, SyntaxNodeKind::Ident);
+            TokenKind::ParensOpen => self.parse_argument_list()?,
+            TokenKind::Dot => self.parse_accessor()?,
+            other => {
+                unreachable!("Cannot parse {other:?} as postfix");
             }
         }
+
+        self.finish_node(watcher, SyntaxNodeKind::PostfixOperator);
+        Ok(())
+    }
+
+    fn parse_accessor(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Dot)?;
+        self.expect(TokenKind::Identifier)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Accessor);
         Ok(())
     }
 
@@ -769,6 +782,22 @@ impl Parser<'_> {
         self.finish_node(watcher, SyntaxNodeKind::Parenthesis);
         Ok(())
     }
+}
+
+/// Not nice, must be in sync with [`Parser::parse_value`].
+fn is_expression_start(kind: TokenKind) -> bool {
+    matches!(
+        kind,
+        TokenKind::Identifier
+            | TokenKind::NumberLiteral
+            | TokenKind::StringLiteral
+            | TokenKind::ParensOpen
+    )
+}
+
+/// Must be in sync with [`Parser::parse_postfix_op`]
+fn is_postfix_start(kind: TokenKind) -> bool {
+    matches!(kind, TokenKind::ParensOpen | TokenKind::Dot)
 }
 
 #[cfg(test)]
@@ -831,6 +860,13 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("1 + 2 * 3"));
         insta::assert_debug_snapshot!(verify_block("1 * 2 + 3"));
         insta::assert_debug_snapshot!(verify_block("1 * \"test\""));
+    }
+
+    #[test]
+    fn test_parse_postfix_operator() {
+        insta::assert_debug_snapshot!(verify_block("a()"));
+        insta::assert_debug_snapshot!(verify_block("a.b"));
+        insta::assert_debug_snapshot!(verify_block("a.b()()"));
     }
 
     #[test]

@@ -2,7 +2,7 @@ use crate::{
     auryn::{
         air::{
             data::{Air, AirFunction, AirFunctionId},
-            types::Type,
+            type_context::TypeView,
         },
         codegen_java::{
             function_generator::generate_function,
@@ -20,9 +20,8 @@ use crate::{
 };
 
 pub fn generate_class(air: &Air) -> class::ClassData {
-    let mut generator = ClassGenerator::new("Main".into());
-    generator.generate_from_air(air);
-    generator.build()
+    let generator = ClassGenerator::new("Main".into(), air);
+    generator.generate_from_air()
 }
 
 #[derive(Debug, Clone)]
@@ -31,32 +30,32 @@ pub struct GeneratedMethodData {
     pub method_descriptor: MethodDescriptor,
 }
 
-pub struct ClassGenerator {
+pub struct ClassGenerator<'a> {
+    air: &'a Air,
     class_name: SmallString,
     methods: Vec<class::Method>,
     constant_pool: ConstantPoolBuilder,
     generated_methods: FastMap<AirFunctionId, GeneratedMethodData>,
 }
 
-impl ClassGenerator {
-    fn new(class_name: SmallString) -> Self {
+impl<'a> ClassGenerator<'a> {
+    fn new(class_name: SmallString, air: &'a Air) -> Self {
         Self {
+            air,
             class_name,
             methods: Vec::new(),
             constant_pool: ConstantPoolBuilder::default(),
             generated_methods: FastMap::default(),
         }
     }
-
-    fn build(self) -> class::ClassData {
-        class::ClassData::new(self.class_name, self.constant_pool, self.methods)
-    }
 }
 
-impl ClassGenerator {
-    fn generate_from_air(&mut self, air: &Air) {
-        for (function_id, function) in &air.functions {
-            let Type::Function(function_type) = function.r#type.computed() else {
+impl ClassGenerator<'_> {
+    fn generate_from_air(mut self) -> class::ClassData {
+        for (function_id, function) in &self.air.functions {
+            let TypeView::Function(function_type) =
+                function.r#type.computed().as_view(&self.air.ty_ctx)
+            else {
                 unreachable!("Function should have a function type");
             };
             let method_descriptor = get_function_representation(function_type);
@@ -72,18 +71,21 @@ impl ClassGenerator {
             );
         }
 
-        for (function_id, function) in &air.functions {
+        for (function_id, function) in &self.air.functions {
             self.generate_function(*function_id, function);
         }
 
-        let main_function_id = air.main_function().0;
+        let main_function_id = self.air.main_function().0;
         self.generate_main_function(main_function_id);
+
+        class::ClassData::new(self.class_name, self.constant_pool, self.methods)
     }
 
     fn generate_function(&mut self, id: AirFunctionId, function: &AirFunction) {
         let data = &self.generated_methods[&id];
         let method = generate_function(
             &mut self.constant_pool,
+            &self.air.ty_ctx,
             &self.generated_methods,
             &self.class_name,
             function,

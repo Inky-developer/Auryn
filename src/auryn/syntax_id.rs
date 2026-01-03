@@ -14,26 +14,32 @@ impl SyntaxId {
     pub const MAX_NUMBER: NonZeroU64 = NonZeroU64::new((1 << Self::NUMBER_BITS) - 1).unwrap();
     pub const NUMBER_RANGE: Range<NonZeroU64> = NonZeroU64::new(1).unwrap()..Self::MAX_NUMBER;
 
-    pub fn new(file_id: FileId, number: NonZeroU64) -> Self {
+    pub fn new(file_id: Option<FileId>, number: NonZeroU64) -> Self {
+        Self::new_internal(file_id, number.get())
+    }
+
+    fn new_internal(file_id: Option<FileId>, number: u64) -> Self {
         assert_eq!(
-            number.get() >> Self::NUMBER_BITS,
+            number >> Self::NUMBER_BITS,
             0,
             "number must use at most {} bits",
             Self::NUMBER_BITS
         );
         const _: () =
             const { assert!(std::mem::size_of::<FileId>() == 2, "FileID must be 16 bits") };
-        Self((u64::from(file_id.0) << Self::NUMBER_BITS) | number.get())
+        let file_number: u16 = file_id.map_or(0, |it| it.0.get());
+        Self((u64::from(file_number) << Self::NUMBER_BITS) | number)
     }
 
     /// Creates a new span which has no number assigned to it yet.
-    pub fn new_unset(file_id: FileId) -> Self {
-        Self(u64::from(file_id.0) << Self::NUMBER_BITS)
+    pub fn new_unset(file_id: Option<FileId>) -> Self {
+        Self::new_internal(file_id, 0)
     }
 
-    pub fn file_id(self) -> FileId {
+    pub fn file_id(self) -> Option<FileId> {
         let value = self.0 >> Self::NUMBER_BITS;
-        FileId(value.try_into().unwrap())
+        let value: u16 = value.try_into().unwrap();
+        value.try_into().ok().map(FileId)
     }
 
     pub fn number(self) -> Option<NonZeroU64> {
@@ -60,25 +66,34 @@ mod tests {
 
     #[test]
     fn test_roundtrip() {
-        let syntax_id = SyntaxId::new(FileId(42), 999.try_into().unwrap());
-        assert_eq!(syntax_id.file_id(), FileId(42));
+        let syntax_id = SyntaxId::new(
+            Some(FileId(42.try_into().unwrap())),
+            999.try_into().unwrap(),
+        );
+        assert_eq!(syntax_id.file_id(), Some(FileId(42.try_into().unwrap())));
         assert_eq!(syntax_id.number().unwrap().get(), 999);
 
-        let syntax_id = SyntaxId::new(FileId(0), ((1 << 48) - 1).try_into().unwrap());
-        assert_eq!(syntax_id.file_id(), FileId(0));
+        let syntax_id = SyntaxId::new(
+            Some(FileId(1.try_into().unwrap())),
+            ((1 << 48) - 1).try_into().unwrap(),
+        );
+        assert_eq!(syntax_id.file_id(), Some(FileId(1.try_into().unwrap())));
         assert_eq!(syntax_id.number().unwrap().get(), (1 << 48) - 1);
     }
 
     #[test]
     fn test_unset() {
-        let id = SyntaxId::new_unset(FileId(0));
-        assert_eq!(id.file_id(), FileId(0));
+        let id = SyntaxId::new_unset(None);
+        assert_eq!(id.file_id(), None);
         assert_eq!(id.number(), None)
     }
 
     #[test]
     #[should_panic]
     fn test_too_big_number() {
-        SyntaxId::new(FileId(42), (1 << 48).try_into().unwrap());
+        SyntaxId::new(
+            Some(FileId(42.try_into().unwrap())),
+            (1 << 48).try_into().unwrap(),
+        );
     }
 }

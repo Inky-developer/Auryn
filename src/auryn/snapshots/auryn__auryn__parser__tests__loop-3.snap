@@ -21,9 +21,11 @@ AnnotatedParserOutput {
         |||||Whitespace `\t`
         |||||13..22 Statement
         ||||||13..22 Expression
-        |||||||13..22 Value
-        ||||||||13..22 FunctionCall
-        |||||||||Identifier `print`
+        |||||||13..22 PostfixOperation
+        ||||||||13..18 Value
+        |||||||||13..18 Ident
+        ||||||||||Identifier `print`
+        ||||||||18..22 PostfixOperator
         |||||||||18..22 ArgumentList
         ||||||||||ParensOpen `(`
         ||||||||||19..20 Expression

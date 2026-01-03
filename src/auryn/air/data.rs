@@ -1,18 +1,22 @@
-use std::str::FromStr;
+use std::{fmt::Debug, num::NonZeroU64, str::FromStr};
 
 use crate::{
     auryn::{
-        air::types::{FunctionType, Type},
+        air::{
+            type_context::{TypeContext, TypeId, TypeView, TypeViewKind},
+            types::{FunctionParameters, FunctionType, Type},
+        },
         syntax_id::SyntaxId,
         tokenizer::BinaryOperatorToken,
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Air {
     pub functions: FastMap<AirFunctionId, AirFunction>,
     pub types: FastMap<AirTypedefId, AirType>,
+    pub ty_ctx: TypeContext,
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
 
@@ -30,16 +34,24 @@ impl Air {
     }
 }
 
-#[derive(Debug)]
-pub struct AirStaticValue {
-    pub parent: AirType,
+impl Debug for Air {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Air")
+            .field("functions", &self.functions)
+            .finish_non_exhaustive()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum AirStaticValue {
+    Function(AirFunctionId),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct AirStaticValueId(pub SyntaxId);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct AirFunctionId(pub SyntaxId);
+pub struct AirFunctionId(pub AirStaticValueId);
 
 #[derive(Debug)]
 pub struct AirFunction {
@@ -50,32 +62,39 @@ pub struct AirFunction {
 }
 
 impl AirFunction {
-    pub fn computed_type(&self) -> &FunctionType {
-        let AirType::Computed(Type::Function(function_type)) = &self.r#type else {
+    pub fn computed_type(&self) -> TypeId<FunctionType> {
+        let AirType::Computed(Type::Function(function_type)) = self.r#type else {
             unreachable!("Function type should be computed at this point");
         };
         function_type
     }
 
-    pub fn unresolved_type(&self) -> (&[UnresolvedType], Option<&UnresolvedType>) {
+    pub fn unresolved_type(
+        &self,
+    ) -> (
+        &[UnresolvedType],
+        Option<&UnresolvedType>,
+        FunctionReference,
+    ) {
         let UnresolvedType::Function {
             parameters,
             return_type,
+            reference,
         } = &self.unresolved_type
         else {
             unreachable!("Should be a function type");
         };
-        (parameters, return_type.as_deref())
+        (parameters, return_type.as_deref(), *reference)
     }
 
     /// Returns value ids for the arguments.
     /// The value ids increment for each argument.
-    pub fn argument_ids(&self) -> impl Iterator<Item = AirValueId> {
+    pub fn argument_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
         self.unresolved_type()
             .0
             .iter()
             .enumerate()
-            .map(|(index, _)| AirValueId::Local(AirLocalValueId(index)))
+            .map(|(index, _)| AirLocalValueId(index))
     }
 }
 
@@ -96,6 +115,7 @@ pub struct AirBlock {
 pub enum AirValueId {
     Local(AirLocalValueId),
     Global(AirStaticValueId),
+    Intrinsic(Intrinsic),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -115,7 +135,7 @@ pub enum AirNodeKind {
 
 #[derive(Debug)]
 pub struct Assignment {
-    pub target: AirValueId,
+    pub target: AirLocalValueId,
     pub expression: Box<AirExpression>,
 }
 
@@ -126,6 +146,21 @@ pub struct AirTypedefId(pub(super) SyntaxId);
 pub struct UnresolvedExternMember {
     pub extern_name: SmallString,
     pub r#type: UnresolvedType,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum FunctionReference {
+    Intrinsic(Intrinsic),
+    UserDefined(AirFunctionId),
+}
+
+impl FunctionReference {
+    pub fn as_user_defined(self) -> AirFunctionId {
+        match self {
+            FunctionReference::UserDefined(air_function_id) => air_function_id,
+            other => panic!("expected user defined function, got {other:?}"),
+        }
+    }
 }
 
 /// Represents a type that was written by the user but not resolved yet.
@@ -141,10 +176,12 @@ pub enum UnresolvedType {
     Function {
         parameters: Vec<UnresolvedType>,
         return_type: Option<Box<UnresolvedType>>,
+        reference: FunctionReference,
     },
     Extern {
+        id: SyntaxId,
         extern_name: SmallString,
-        members: FastMap<SyntaxId, UnresolvedExternMember>,
+        members: FastMap<SmallString, UnresolvedExternMember>,
     },
 }
 
@@ -156,9 +193,13 @@ pub enum AirType {
 }
 
 impl AirType {
-    pub fn computed(&self) -> &Type {
+    pub fn as_view<'a>(&self, ty_ctx: &'a TypeContext) -> TypeView<'a> {
+        self.computed().as_view(ty_ctx)
+    }
+
+    pub fn computed(&self) -> Type {
         match self {
-            AirType::Computed(inner) => inner,
+            AirType::Computed(inner) => *inner,
             _ => unreachable!("Type should be computed at this point"),
         }
     }
@@ -191,8 +232,8 @@ pub enum AirExpressionKind {
     Constant(AirConstant),
     BinaryOperator(BinaryOperation),
     Variable(AirValueId),
+    Accessor(Accessor),
     Call(Call),
-    IntrinsicCall(IntrinsicCall),
     Error,
 }
 
@@ -201,6 +242,13 @@ pub struct BinaryOperation {
     pub lhs: Box<AirExpression>,
     pub rhs: Box<AirExpression>,
     pub operator: BinaryOperatorToken,
+}
+
+#[derive(Debug)]
+pub struct Accessor {
+    pub value: Box<AirExpression>,
+    pub ident: SmallString,
+    pub ident_id: SyntaxId,
 }
 
 #[derive(Debug)]
@@ -216,17 +264,23 @@ pub enum AirConstant {
 
 #[derive(Debug)]
 pub struct Call {
-    pub function: AirFunctionId,
+    pub function: Box<AirExpression>,
     pub arguments: Vec<AirExpression>,
 }
 
-#[derive(Debug)]
-pub struct IntrinsicCall {
-    pub intrinsic: Intrinsic,
-    pub arguments: Vec<AirExpression>,
+impl Call {
+    /// Should be called from codegen
+    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> TypeViewKind<'a, FunctionType> {
+        let computed_type = self.function.r#type.computed().as_view(ty_ctx);
+        let TypeView::Function(function_type) = computed_type else {
+            unreachable!("Should generate call only with function type");
+        };
+        function_type
+    }
 }
 
-#[derive(Debug)]
+#[repr(u8)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Intrinsic {
     Print,
     ArrayOf,
@@ -234,6 +288,34 @@ pub enum Intrinsic {
     ArrayGet,
     ArraySet,
     ArrayLen,
+}
+
+impl Intrinsic {
+    pub const ALL: &[Self] = &[
+        Self::Print,
+        Self::ArrayOf,
+        Self::ArrayOfZeros,
+        Self::ArrayGet,
+        Self::ArraySet,
+        Self::ArrayLen,
+    ];
+
+    /// The id for an intrinsic is the syntax id without file.
+    pub fn syntax_id(&self) -> SyntaxId {
+        SyntaxId::new(None, NonZeroU64::new(*self as u64 + 1).unwrap())
+    }
+
+    pub fn r#type(&self) -> Type {
+        Type::Function(TypeId::new(self.syntax_id()))
+    }
+
+    pub fn function_type(&self) -> FunctionType {
+        FunctionType {
+            parameters: FunctionParameters::Unconstrained,
+            return_type: Type::Top,
+            reference: FunctionReference::Intrinsic(*self),
+        }
+    }
 }
 
 impl FromStr for Intrinsic {

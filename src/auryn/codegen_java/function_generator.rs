@@ -2,11 +2,12 @@ use crate::{
     auryn::{
         air::{
             data::{
-                AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirNode, AirNodeKind, AirValueId,
-                Assignment, BinaryOperation, Call, Intrinsic, IntrinsicCall,
+                Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
+                AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, FunctionReference,
+                Intrinsic,
             },
-            types::Type,
+            type_context::{TypeContext, TypeView},
         },
         codegen_java::{
             class_generator::GeneratedMethodData,
@@ -32,6 +33,7 @@ use indexmap::IndexSet;
 
 pub fn generate_function(
     pool: &mut ConstantPoolBuilder,
+    ty_ctx: &TypeContext,
     function_infos: &FastMap<AirFunctionId, GeneratedMethodData>,
     class_name: &SmallString,
     function: &AirFunction,
@@ -44,6 +46,7 @@ pub fn generate_function(
         method_descriptor,
         class_name,
         function_infos,
+        ty_ctx,
         pool,
     );
     generator.generate_from_function(function);
@@ -53,11 +56,12 @@ pub fn generate_function(
 
 struct FunctionGenerator<'a> {
     assembler: FunctionAssembler<'a>,
-    variable_map: FastMap<AirValueId, VariableId>,
+    variable_map: FastMap<AirLocalValueId, VariableId>,
     block_translation: FastMap<AirBlockId, BasicBlockId>,
     generated_blocks: FastSet<AirBlockId>,
     pending_blocks: IndexSet<AirBlockId>,
     function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
+    ty_ctx: &'a TypeContext,
     class_name: &'a SmallString,
 }
 
@@ -68,9 +72,10 @@ impl<'a> FunctionGenerator<'a> {
         method_descriptor: MethodDescriptor,
         class_name: &'a SmallString,
         function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
+        ty_ctx: &'a TypeContext,
         pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
-        let Type::Function(function_type) = function.r#type.computed() else {
+        let TypeView::Function(function_type) = function.r#type.computed().as_view(ty_ctx) else {
             panic!("Invalid function type");
         };
         let mut block_translation = FastMap::default();
@@ -79,9 +84,12 @@ impl<'a> FunctionGenerator<'a> {
         let mut variable_map = FastMap::default();
 
         let mut variable_index = 0;
-        for (parameter, argument_id) in function_type.parameters.iter().zip(function.argument_ids())
+        for (parameter, argument_id) in function_type
+            .constrained_parameters()
+            .iter()
+            .zip(function.argument_ids())
         {
-            if let Some(primitive) = get_representation(parameter) {
+            if let Some(primitive) = get_representation(parameter.as_view(ty_ctx)) {
                 let variable_id = VariableId {
                     index: variable_index,
                     r#type: primitive,
@@ -99,6 +107,7 @@ impl<'a> FunctionGenerator<'a> {
             assembler,
             block_translation,
             variable_map,
+            ty_ctx,
             generated_blocks: FastSet::default(),
             pending_blocks: IndexSet::default(),
         }
@@ -200,7 +209,7 @@ impl FunctionGenerator<'_> {
         let variable_id = if self.variable_map.contains_key(&assignment.target) {
             Some(self.variable_map[&assignment.target].clone())
         } else {
-            let air_type = assignment.expression.r#type.computed();
+            let air_type = assignment.expression.r#type.computed().as_view(self.ty_ctx);
             if let Some(primitive) = get_representation(air_type) {
                 let variable_id = self.assembler.alloc_variable(primitive);
                 self.variable_map
@@ -218,38 +227,37 @@ impl FunctionGenerator<'_> {
 
     /// The return value indicates the stack usage
     fn generate_expression(&mut self, expression: &AirExpression) -> Option<Representation> {
+        let repr = get_representation(expression.r#type.computed().as_view(self.ty_ctx));
+
         match &expression.kind {
-            AirExpressionKind::Constant(constant) => Some(self.generate_constant(constant)),
+            AirExpressionKind::Constant(constant) => self.generate_constant(constant),
             AirExpressionKind::BinaryOperator(binary_operator) => {
-                Some(self.generate_binary_operation(binary_operator))
+                self.generate_binary_operation(binary_operator)
             }
-            AirExpressionKind::Variable(variable) => Some(self.generate_variable(variable)),
-            AirExpressionKind::Call(call) => self.generate_call(call),
-            AirExpressionKind::IntrinsicCall(intrinsic) => {
-                self.generate_intrinsic_call(expression.r#type.computed(), intrinsic)
+            AirExpressionKind::Variable(variable) => self.generate_variable(variable),
+            AirExpressionKind::Accessor(accessor) => self.generate_accessor(accessor, repr.clone()),
+            AirExpressionKind::Call(call) => {
+                self.generate_call(call, expression.r#type.computed().as_view(self.ty_ctx))
             }
             AirExpressionKind::Error => unreachable!("Codegen was started with invalid air"),
-        }
+        };
+        repr
     }
 
-    fn generate_constant(&mut self, constant: &AirConstant) -> Representation {
+    fn generate_constant(&mut self, constant: &AirConstant) {
         match constant {
             AirConstant::Number(number) => {
                 let value = ConstantValue::Integer(*number);
-                let r#type = value.to_primitive();
                 self.assembler.add(Instruction::LoadConstant { value });
-                r#type
             }
             AirConstant::String(text) => {
                 let value = ConstantValue::String(text.clone());
-                let r#type = value.to_primitive();
                 self.assembler.add(Instruction::LoadConstant { value });
-                r#type
             }
         }
     }
 
-    fn generate_binary_operation(&mut self, operation: &BinaryOperation) -> Representation {
+    fn generate_binary_operation(&mut self, operation: &BinaryOperation) {
         let lhs_type = self.generate_expression(&operation.lhs);
         let rhs_type = self.generate_expression(&operation.rhs);
         assert_eq!(lhs_type, rhs_type);
@@ -274,8 +282,6 @@ impl FunctionGenerator<'_> {
             BinaryOperatorToken::Less => self.generate_comparison(Comparison::Less),
             BinaryOperatorToken::LessOrEqual => self.generate_comparison(Comparison::LessOrEqual),
         };
-
-        Representation::Integer
     }
 
     fn generate_comparison(&mut self, comparison: Comparison) {
@@ -303,46 +309,83 @@ impl FunctionGenerator<'_> {
         self.assembler.set_current_block_id(next_block_id);
     }
 
-    fn generate_variable(&mut self, variable: &AirValueId) -> Representation {
-        let variable_id = self.variable_map[variable].clone();
-        let primitive = variable_id.r#type.clone();
-        self.assembler.add(Instruction::Load(variable_id));
-        primitive
+    fn generate_variable(&mut self, variable: &AirValueId) {
+        match variable {
+            AirValueId::Local(local_variable_id) => {
+                let variable_id = self.variable_map[local_variable_id].clone();
+                self.assembler.add(Instruction::Load(variable_id));
+            }
+            AirValueId::Global(_static_value_id) => {
+                todo!()
+            }
+            AirValueId::Intrinsic(_) => {
+                // Intrinsic functions have no run time representation
+                // so nothing needs to be loaded
+            }
+        }
     }
 
-    fn generate_call(&mut self, call: &Call) -> Option<Representation> {
-        for argument in &call.arguments {
-            self.generate_expression(argument);
-        }
+    fn generate_accessor(&mut self, accessor: &Accessor, result_repr: Option<Representation>) {
+        let Some(result_repr) = result_repr else {
+            // If the result has no runtime representation, no instructions need to be emitted
+            return;
+        };
 
-        let GeneratedMethodData {
-            generated_name,
-            method_descriptor,
-        } = &self.function_infos[&call.function];
-        self.assembler.add(Instruction::InvokeStatic {
-            class_name: self.class_name.clone(),
-            name: generated_name.clone(),
-            method_descriptor: method_descriptor.clone(),
+        let repr = self
+            .generate_expression(&accessor.value)
+            .expect("Accessor should have a representation");
+        let Representation::Object(class_name) = repr else {
+            panic!("Cannot get a static value from non-object type {repr:?}");
+        };
+        let name = accessor.ident.clone();
+        let field_descriptor = result_repr.into_field_descriptor();
+        self.assembler.add(Instruction::GetStatic {
+            class_name,
+            name,
+            field_descriptor,
         });
-        method_descriptor.return_type.clone().into_primitive()
+    }
+
+    fn generate_call(&mut self, call: &Call, expression_type: TypeView) {
+        match call.function_type(self.ty_ctx).reference {
+            FunctionReference::Intrinsic(intrinsic) => {
+                self.generate_intrinsic_call(expression_type, intrinsic, &call.arguments)
+            }
+            FunctionReference::UserDefined(function_id) => {
+                for argument in &call.arguments {
+                    self.generate_expression(argument);
+                }
+
+                let GeneratedMethodData {
+                    generated_name,
+                    method_descriptor,
+                } = &self.function_infos[&function_id];
+                self.assembler.add(Instruction::InvokeStatic {
+                    class_name: self.class_name.clone(),
+                    name: generated_name.clone(),
+                    method_descriptor: method_descriptor.clone(),
+                });
+            }
+        }
     }
 
     fn generate_intrinsic_call(
         &mut self,
-        r#type: &Type,
-        intrinsic: &IntrinsicCall,
-    ) -> Option<Representation> {
-        match intrinsic.intrinsic {
-            Intrinsic::Print => self.generate_intrinsic_print(&intrinsic.arguments),
-            Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, &intrinsic.arguments),
-            Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(&intrinsic.arguments),
-            Intrinsic::ArrayGet => self.generate_intrinsic_array_get(&intrinsic.arguments),
-            Intrinsic::ArraySet => self.generate_intrinsic_array_set(&intrinsic.arguments),
-            Intrinsic::ArrayLen => self.generate_intrinsic_array_len(&intrinsic.arguments),
+        r#type: TypeView,
+        intrinsic: Intrinsic,
+        arguments: &[AirExpression],
+    ) {
+        match intrinsic {
+            Intrinsic::Print => self.generate_intrinsic_print(arguments),
+            Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, arguments),
+            Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(arguments),
+            Intrinsic::ArrayGet => self.generate_intrinsic_array_get(arguments),
+            Intrinsic::ArraySet => self.generate_intrinsic_array_set(arguments),
+            Intrinsic::ArrayLen => self.generate_intrinsic_array_len(arguments),
         }
     }
 
-    fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) -> Option<Representation> {
+    fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) {
         fn is_printable(repr: &Representation) -> bool {
             match repr {
                 Representation::Integer => true,
@@ -363,7 +406,7 @@ impl FunctionGenerator<'_> {
                 if let Some(other) = other {
                     self.assembler.add(Instruction::Pop(other.category()));
                 }
-                let ty = arguments[0].r#type.computed();
+                let ty = arguments[0].r#type.computed().as_view(self.ty_ctx);
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::String(ty.to_string().into()),
                 });
@@ -379,18 +422,13 @@ impl FunctionGenerator<'_> {
                 return_type: ReturnDescriptor::Void,
             },
         });
-        None
     }
 
-    fn generate_intrinsic_array_of(
-        &mut self,
-        r#type: &Type,
-        arguments: &[AirExpression],
-    ) -> Option<Representation> {
-        let Type::Array(element_type) = r#type else {
+    fn generate_intrinsic_array_of(&mut self, r#type: TypeView, arguments: &[AirExpression]) {
+        let TypeView::Array(array_type) = r#type else {
             unreachable!("Return type should be an array type");
         };
-        let repr = get_representation(element_type);
+        let repr = get_representation(array_type.element());
 
         match repr {
             Some(primitive) => {
@@ -409,8 +447,6 @@ impl FunctionGenerator<'_> {
                     self.assembler
                         .add(Instruction::ArrayStore(primitive.clone()));
                 }
-
-                Some(Representation::Array(Box::new(primitive)))
             }
             None => unimplemented!(
                 "Decide how to represent arrays of zero sized types. Maybe just use an int?"
@@ -418,10 +454,7 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_intrinsic_array_of_zeros(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<Representation> {
+    fn generate_intrinsic_array_of_zeros(&mut self, arguments: &[AirExpression]) {
         let [count] = arguments else {
             unreachable!("Should be a valid call");
         };
@@ -431,65 +464,48 @@ impl FunctionGenerator<'_> {
 
         self.assembler
             .add(Instruction::NewArray(Representation::Integer));
-
-        Some(Representation::Array(Box::new(Representation::Integer)))
     }
 
-    fn generate_intrinsic_array_get(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<Representation> {
+    fn generate_intrinsic_array_get(&mut self, arguments: &[AirExpression]) {
         let [array, index] = arguments else {
             unreachable!("Should be valid call");
         };
 
-        let Type::Array(element_type) = array.r#type.computed() else {
+        let TypeView::Array(array_type) = array.r#type.computed().as_view(self.ty_ctx) else {
             unreachable!("Should be an array");
         };
-        let primitive =
-            get_representation(element_type).expect("Zero sized element types not supported");
+        let primitive = get_representation(array_type.element())
+            .expect("Zero sized element types not supported");
 
         self.generate_expression(array);
         self.generate_expression(index);
         self.assembler
             .add(Instruction::ArrayLoad(primitive.clone()));
-
-        Some(primitive)
     }
 
-    fn generate_intrinsic_array_set(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<Representation> {
+    fn generate_intrinsic_array_set(&mut self, arguments: &[AirExpression]) {
         let [array, index, value] = arguments else {
             unreachable!("Should be valid call");
         };
 
-        let Type::Array(element_type) = array.r#type.computed() else {
+        let TypeView::Array(array_type) = array.r#type.computed().as_view(self.ty_ctx) else {
             unreachable!("Should be an array");
         };
-        let primitive =
-            get_representation(element_type).expect("Zero sized element types not supported");
+        let primitive = get_representation(array_type.element())
+            .expect("Zero sized element types not supported");
 
         self.generate_expression(array);
         self.generate_expression(index);
         self.generate_expression(value);
         self.assembler.add(Instruction::ArrayStore(primitive));
-
-        None
     }
 
-    fn generate_intrinsic_array_len(
-        &mut self,
-        arguments: &[AirExpression],
-    ) -> Option<Representation> {
+    fn generate_intrinsic_array_len(&mut self, arguments: &[AirExpression]) {
         let [array] = arguments else {
             unreachable!("Should be a valid call");
         };
 
         self.generate_expression(array);
         self.assembler.add(Instruction::ArrayLength);
-
-        Some(Representation::Integer)
     }
 }

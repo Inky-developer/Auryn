@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     fmt::{self, Formatter},
     hash::Hash,
     num::NonZeroU8,
@@ -52,6 +53,12 @@ impl AsRef<str> for SmallString {
             Self::Heap(s) => s.as_ref(),
             Self::Stack { data, len } => std::str::from_utf8(&data[..len.get() as usize]).unwrap(),
         }
+    }
+}
+
+impl Borrow<str> for SmallString {
+    fn borrow(&self) -> &str {
+        self.as_ref()
     }
 }
 

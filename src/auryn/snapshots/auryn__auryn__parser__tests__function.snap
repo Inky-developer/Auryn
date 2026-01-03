@@ -48,9 +48,11 @@ AnnotatedParserOutput {
         ||||39..51 Block
         |||||39..51 Statement
         ||||||39..51 Expression
-        |||||||39..51 Value
-        ||||||||39..51 FunctionCall
-        |||||||||Identifier `print`
+        |||||||39..51 PostfixOperation
+        ||||||||39..44 Value
+        |||||||||39..44 Ident
+        ||||||||||Identifier `print`
+        ||||||||44..51 PostfixOperator
         |||||||||44..51 ArgumentList
         ||||||||||ParensOpen `(`
         ||||||||||45..49 Expression

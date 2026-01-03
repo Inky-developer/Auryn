@@ -8,9 +8,11 @@ AnnotatedParserOutput {
         |0..8 Block
         ||0..8 Statement
         |||0..8 Expression
-        ||||0..8 Value
-        |||||0..8 FunctionCall
-        ||||||Identifier `print`
+        ||||0..8 PostfixOperation
+        |||||0..5 Value
+        ||||||0..5 Ident
+        |||||||Identifier `print`
+        |||||5..8 PostfixOperator
         ||||||5..8 ArgumentList
         |||||||ParensOpen `(`
         |||||||6..7 Expression

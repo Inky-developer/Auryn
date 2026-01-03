@@ -29,8 +29,10 @@ pub enum DiagnosticError {
     UndefinedVariable { ident: SmallString },
     UnknownIntrinsic { ident: SmallString },
     // Generated during typechecking
+    UndefinedProperty { r#type: Type, ident: SmallString },
     TypeMismatch { expected: Type, got: AirType },
     ExpectedArray { got: AirType },
+    ExpectedFunctionType { got: AirType },
     MismatchedParameterCount { expected: usize, got: usize },
 }
 

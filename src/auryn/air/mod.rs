@@ -9,6 +9,7 @@ use crate::auryn::{
 pub mod ast_transformer;
 pub mod data;
 pub mod namespace;
+pub mod type_context;
 pub mod typecheck;
 pub mod types;
 

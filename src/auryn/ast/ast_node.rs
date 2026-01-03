@@ -238,6 +238,7 @@ ast_node! {
 ast_node! {
     pub enum Expression = SyntaxNodeKind::Expression as
         | SyntaxNodeKind::Value as Value
+        | SyntaxNodeKind::PostfixOperation as PostfixOperation
         | SyntaxNodeKind::BinaryOperation as BinaryOperation
 }
 
@@ -264,11 +265,51 @@ impl<'a> BinaryOperation<'a> {
 }
 
 ast_node! {
+    pub struct PostfixOperation = SyntaxNodeKind::PostfixOperation as { value: ValueOrPostfix, operator: PostfixOperator, }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ValueOrPostfix<'a> {
+    Value(Value<'a>),
+    Postfix(PostfixOperation<'a>),
+}
+
+impl<'a> ValueOrPostfix<'a> {
+    pub fn new(node: &'a SyntaxNode) -> Option<Self> {
+        match node.kind {
+            SyntaxNodeKind::Value => Value::new(node).map(Self::Value),
+            SyntaxNodeKind::PostfixOperation => PostfixOperation::new(node).map(Self::Postfix),
+            _ => None,
+        }
+    }
+
+    pub fn id(&self) -> SyntaxId {
+        match self {
+            ValueOrPostfix::Value(value) => value.id(),
+            ValueOrPostfix::Postfix(postfix_operation) => postfix_operation.id(),
+        }
+    }
+}
+
+ast_node! {
+    pub enum PostfixOperator = SyntaxNodeKind::PostfixOperator as
+        | SyntaxNodeKind::ArgumentList as ArgumentList
+        | SyntaxNodeKind::Accessor as Accessor
+}
+
+ast_node! {
+    pub struct ArgumentList = SyntaxNodeKind::ArgumentList as { ...arguments: Expression }
+}
+
+ast_node! {
+    pub struct Accessor = SyntaxNodeKind::Accessor as { token ident: TokenKind::Identifier, }
+}
+
+ast_node! {
     pub enum Value = SyntaxNodeKind::Value as
         | SyntaxNodeKind::NumberLiteral as NumberLiteral
         | SyntaxNodeKind::StringLiteral as StringLiteral
         | SyntaxNodeKind::Ident as Ident
-        | SyntaxNodeKind::FunctionCall as FunctionCall
         | SyntaxNodeKind::Parenthesis as Parenthesis
 }
 
@@ -282,14 +323,6 @@ ast_node! {
 
 ast_node! {
     pub struct Ident = SyntaxNodeKind::Ident as { token ident: TokenKind::Identifier, }
-}
-
-ast_node! {
-    pub struct FunctionCall = SyntaxNodeKind::FunctionCall as { token ident: TokenKind::Identifier, argument_list: ArgumentList, }
-}
-
-ast_node! {
-    pub struct ArgumentList = SyntaxNodeKind::ArgumentList as { ...arguments: Expression }
 }
 
 ast_node! {

@@ -20,9 +20,11 @@ AnnotatedParserOutput {
         ||||7..17 Block
         |||||7..17 Statement
         ||||||7..17 Expression
-        |||||||7..17 Value
-        ||||||||7..17 FunctionCall
-        |||||||||Identifier `print`
+        |||||||7..17 PostfixOperation
+        ||||||||7..12 Value
+        |||||||||7..12 Ident
+        ||||||||||Identifier `print`
+        ||||||||12..17 PostfixOperator
         |||||||||12..17 ArgumentList
         ||||||||||ParensOpen `(`
         ||||||||||13..15 Expression
