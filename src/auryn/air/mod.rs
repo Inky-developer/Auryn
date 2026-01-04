@@ -23,7 +23,7 @@ pub fn query_air(ast: ast_node::Root) -> AirOutput {
 mod tests {
     use crate::auryn::{
         air::{ast_transformer::AirOutput, query_air},
-        ast::query_ast2,
+        ast::query_ast,
         file_id::FileId,
         parser::Parser,
     };
@@ -46,7 +46,7 @@ mod tests {
 
         let tree = output.syntax_tree.unwrap();
         println!("{}", tree.display(input));
-        let ast = query_ast2(&tree).unwrap();
+        let ast = query_ast(&tree).unwrap();
         query_air(ast)
     }
 

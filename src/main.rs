@@ -2,7 +2,7 @@ use std::{fs::OpenOptions, io::Write};
 
 use auryn::{
     auryn::{
-        air::query_air, ast::query_ast2, codegen_java::class_generator::generate_class,
+        air::query_air, ast::query_ast, codegen_java::class_generator::generate_class,
         diagnostic::ComputedDiagnostic, file_id::FileId, parser::Parser,
     },
     java::class::ClassData,
@@ -60,7 +60,7 @@ fn get_class(input: &str) -> ClassData {
 
     let syntax_tree = result.syntax_tree.unwrap();
 
-    let ast = query_ast2(&syntax_tree).unwrap();
+    let ast = query_ast(&syntax_tree).unwrap();
     let air = query_air(ast);
     diagnostics.extend(
         air.diagnostics

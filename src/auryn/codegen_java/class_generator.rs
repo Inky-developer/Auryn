@@ -125,7 +125,7 @@ impl ClassGenerator<'_> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        auryn::{air::query_air, ast::query_ast2, file_id::FileId, parser::Parser},
+        auryn::{air::query_air, ast::query_ast, file_id::FileId, parser::Parser},
         java::class::ClassData,
     };
 
@@ -136,7 +136,7 @@ mod tests {
 
     fn generate_class(input: &str) -> ClassData {
         let result = Parser::new(FileId::MAIN_FILE, input).parse();
-        let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
+        let ast = query_ast(result.syntax_tree.as_ref().unwrap());
         let air = query_air(ast.unwrap());
         assert!(air.diagnostics.take().is_empty());
 
