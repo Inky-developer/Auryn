@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::{
     auryn::air::{
         data::FunctionReference,
-        type_context::{TypeContext, TypeId, TypeView},
+        typecheck::type_context::{TypeContext, TypeId, TypeView},
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };

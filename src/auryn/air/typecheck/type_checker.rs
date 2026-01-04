@@ -10,9 +10,11 @@ use crate::{
                 Assignment, BinaryOperation, Call, FunctionReference, Intrinsic, ReturnValue,
                 UnresolvedType,
             },
-            type_context::{TypeContext, TypeId, TypeView},
-            types::{
-                ArrayType, ExternType, ExternTypeMember, FunctionParameters, FunctionType, Type,
+            typecheck::{
+                type_context::{TypeContext, TypeId, TypeView},
+                types::{
+                    ArrayType, ExternType, ExternTypeMember, FunctionParameters, FunctionType, Type,
+                },
             },
         },
         diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},

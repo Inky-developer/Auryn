@@ -2,7 +2,7 @@ use crate::{
     auryn::{
         air::{
             data::{Air, AirFunction, AirFunctionId},
-            type_context::TypeView,
+            typecheck::type_context::TypeView,
         },
         codegen_java::{
             function_generator::generate_function,

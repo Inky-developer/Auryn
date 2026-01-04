@@ -2,7 +2,7 @@ use std::{fmt::Debug, num::NonZeroU64, str::FromStr};
 
 use crate::{
     auryn::{
-        air::{
+        air::typecheck::{
             type_context::{TypeContext, TypeId, TypeView, TypeViewKind},
             types::{FunctionParameters, FunctionType, Type},
         },

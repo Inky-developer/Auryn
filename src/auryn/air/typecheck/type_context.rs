@@ -9,7 +9,7 @@ use crate::{
     auryn::{
         air::{
             data::Intrinsic,
-            types::{ArrayType, ExternType, FunctionParameters, FunctionType, Type},
+            typecheck::types::{ArrayType, ExternType, FunctionParameters, FunctionType, Type},
         },
         syntax_id::SyntaxId,
     },
@@ -118,7 +118,7 @@ impl Default for TypeContext {
 pub struct TypeId<T>(SyntaxId, PhantomData<T>);
 
 impl<T> TypeId<T> {
-    pub(super) fn new(syntax_id: SyntaxId) -> Self {
+    pub(in crate::auryn::air) fn new(syntax_id: SyntaxId) -> Self {
         Self(syntax_id, PhantomData)
     }
 }

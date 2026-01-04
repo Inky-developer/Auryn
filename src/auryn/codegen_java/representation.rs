@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    auryn::air::{
+    auryn::air::typecheck::{
         type_context::{TypeView, TypeViewKind},
         types::FunctionType,
     },

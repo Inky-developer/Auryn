@@ -1,7 +1,7 @@
 use crate::auryn::{
     air::{
         ast_transformer::{AirOutput, transform_ast},
-        typecheck::typecheck_air,
+        typecheck::type_checker::typecheck_air,
     },
     ast::ast_node,
 };
@@ -9,9 +9,7 @@ use crate::auryn::{
 pub mod ast_transformer;
 pub mod data;
 pub mod namespace;
-pub mod type_context;
 pub mod typecheck;
-pub mod types;
 
 pub fn query_air(ast: ast_node::Root) -> AirOutput {
     let mut output = transform_ast(ast);

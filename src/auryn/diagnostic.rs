@@ -1,6 +1,6 @@
 use crate::{
     auryn::{
-        air::{data::AirType, types::Type},
+        air::{data::AirType, typecheck::types::Type},
         syntax_id::SyntaxId,
         tokenizer::TokenKind,
     },
