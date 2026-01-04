@@ -138,7 +138,7 @@ mod tests {
         let result = Parser::new(FileId::MAIN_FILE, input).parse();
         let ast = query_ast2(result.syntax_tree.as_ref().unwrap());
         let air = query_air(ast.unwrap());
-        assert!(air.diagnostics.is_empty());
+        assert!(air.diagnostics.take().is_empty());
 
         super::generate_class(&air.air)
     }

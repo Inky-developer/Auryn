@@ -17,14 +17,17 @@ use crate::{
                 },
             },
         },
-        diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+        diagnostic::{DiagnosticError, DiagnosticKind, Diagnostics},
         syntax_id::SyntaxId,
     },
-    utils::fast_map::{FastMap, FastSet},
+    utils::{
+        default,
+        fast_map::{FastMap, FastSet},
+    },
 };
 
-pub fn typecheck_air(air: &mut Air) -> Vec<Diagnostic> {
-    Typechecker::default().typecheck(air)
+pub fn typecheck_air(air: &mut Air, diagnostics: Diagnostics) -> Diagnostics {
+    Typechecker::new(diagnostics).typecheck(air)
 }
 
 #[derive(Debug)]
@@ -60,11 +63,22 @@ pub struct Typechecker {
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
     ty_ctx: TypeContext,
-    diagnostics: Vec<Diagnostic>,
+    diagnostics: Diagnostics,
 }
 
 impl Typechecker {
-    pub fn typecheck(mut self, air: &mut Air) -> Vec<Diagnostic> {
+    pub fn new(diagnostics: Diagnostics) -> Self {
+        Self {
+            functions: default(),
+            defined_types: default(),
+            function: default(),
+            statics: default(),
+            ty_ctx: default(),
+            diagnostics,
+        }
+    }
+
+    pub fn typecheck(mut self, air: &mut Air) -> Diagnostics {
         self.compute_defined_types(&mut air.types);
         self.defined_types = air.types.iter().map(|(k, v)| (*k, v.computed())).collect();
         self.statics = air.statics.clone();
@@ -135,8 +149,7 @@ impl Typechecker {
     }
 
     fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
-        self.diagnostics
-            .push(Diagnostic::new(id, DiagnosticKind::Error(error)))
+        self.diagnostics.add(id, DiagnosticKind::Error(error))
     }
 }
 
@@ -372,13 +385,13 @@ impl Typechecker {
         match value_type_view.get_member(&accessor.ident) {
             Some(member_type_view) => member_type_view.as_type(),
             None => {
-                self.diagnostics.push(Diagnostic::new(
+                self.diagnostics.add(
                     accessor.ident_id,
                     DiagnosticError::UndefinedProperty {
                         r#type: value_type_view.as_type(),
                         ident: accessor.ident.clone(),
                     },
-                ));
+                );
                 Type::Error
             }
         }

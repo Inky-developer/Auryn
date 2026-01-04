@@ -7,5 +7,7 @@ AirOutput {
         functions: {},
         ..
     },
-    diagnostics: [],
+    diagnostics: Diagnostics {
+        diagnostics: [],
+    },
 }

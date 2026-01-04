@@ -62,10 +62,15 @@ fn get_class(input: &str) -> ClassData {
 
     let ast = query_ast2(&syntax_tree).unwrap();
     let air = query_air(ast);
-    diagnostics.extend(air.diagnostics.into_iter().map(|it| ComputedDiagnostic {
-        span: syntax_tree.get_span(it.syntax_id),
-        inner: it,
-    }));
+    diagnostics.extend(
+        air.diagnostics
+            .take()
+            .into_iter()
+            .map(|it| ComputedDiagnostic {
+                span: syntax_tree.get_span(it.syntax_id),
+                inner: it,
+            }),
+    );
     if !diagnostics.is_empty() {
         println!("Warn: {diagnostics:?}");
     }

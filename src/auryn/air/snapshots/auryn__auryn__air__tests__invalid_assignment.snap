@@ -300,46 +300,48 @@ AirOutput {
         },
         ..
     },
-    diagnostics: [
-        Diagnostic {
-            kind: Error(
-                TypeMismatch {
-                    expected: Number,
-                    got: Computed(
-                        Null,
+    diagnostics: Diagnostics {
+        diagnostics: [
+            Diagnostic {
+                kind: Error(
+                    TypeMismatch {
+                        expected: Number,
+                        got: Computed(
+                            Null,
+                        ),
+                    },
+                ),
+                syntax_id: SyntaxId {
+                    file_id: Some(
+                        FileId(
+                            1,
+                        ),
+                    ),
+                    number: Some(
+                        241892558110725,
                     ),
                 },
-            ),
-            syntax_id: SyntaxId {
-                file_id: Some(
-                    FileId(
-                        1,
-                    ),
-                ),
-                number: Some(
-                    241892558110725,
-                ),
             },
-        },
-        Diagnostic {
-            kind: Error(
-                TypeMismatch {
-                    expected: Number,
-                    got: Computed(
-                        Null,
+            Diagnostic {
+                kind: Error(
+                    TypeMismatch {
+                        expected: Number,
+                        got: Computed(
+                            Null,
+                        ),
+                    },
+                ),
+                syntax_id: SyntaxId {
+                    file_id: Some(
+                        FileId(
+                            1,
+                        ),
+                    ),
+                    number: Some(
+                        241892558110725,
                     ),
                 },
-            ),
-            syntax_id: SyntaxId {
-                file_id: Some(
-                    FileId(
-                        1,
-                    ),
-                ),
-                number: Some(
-                    241892558110725,
-                ),
             },
-        },
-    ],
+        ],
+    },
 }

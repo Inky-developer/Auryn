@@ -14,8 +14,7 @@ pub mod typecheck;
 pub fn query_air(ast: ast_node::Root) -> AirOutput {
     let mut output = transform_ast(ast);
 
-    let typecheck_diagnostics = typecheck_air(&mut output.air);
-    output.diagnostics.extend(typecheck_diagnostics);
+    output.diagnostics = typecheck_air(&mut output.air, output.diagnostics);
 
     output
 }

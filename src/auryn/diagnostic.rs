@@ -80,3 +80,18 @@ pub struct ComputedDiagnostic {
     pub inner: Diagnostic,
     pub span: ComputedSpan,
 }
+
+#[derive(Debug, Default)]
+pub struct Diagnostics {
+    diagnostics: Vec<Diagnostic>,
+}
+
+impl Diagnostics {
+    pub fn add(&mut self, syntax_id: SyntaxId, kind: impl Into<DiagnosticKind>) {
+        self.diagnostics.push(Diagnostic::new(syntax_id, kind))
+    }
+
+    pub fn take(self) -> Vec<Diagnostic> {
+        self.diagnostics
+    }
+}

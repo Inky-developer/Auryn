@@ -253,5 +253,7 @@ AirOutput {
         },
         ..
     },
-    diagnostics: [],
+    diagnostics: Diagnostics {
+        diagnostics: [],
+    },
 }

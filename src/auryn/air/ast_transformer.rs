@@ -16,7 +16,7 @@ use crate::{
             NumberLiteral, Parenthesis, PostfixOperation, PostfixOperator, ReturnStatement, Root,
             Statement, StringLiteral, Type, Value, ValueOrPostfix, VariableUpdate,
         },
-        diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+        diagnostic::{DiagnosticError, DiagnosticKind, Diagnostics},
         syntax_id::SyntaxId,
         syntax_tree::SyntaxToken,
     },
@@ -26,7 +26,7 @@ use crate::{
 #[derive(Debug)]
 pub struct AirOutput {
     pub air: Air,
-    pub diagnostics: Vec<Diagnostic>,
+    pub diagnostics: Diagnostics,
 }
 
 pub fn transform_ast(ast: Root) -> AirOutput {
@@ -42,7 +42,7 @@ pub fn transform_ast(ast: Root) -> AirOutput {
 struct AstTransformer {
     air: Air,
     namespace: Namespace,
-    diagnostics: Vec<Diagnostic>,
+    diagnostics: Diagnostics,
 }
 
 impl AstTransformer {
@@ -159,10 +159,8 @@ impl AstTransformer {
         if let Ok(target) = block.extern_target()
             && parse_string_literal_text(&target.text).as_ref() != "java"
         {
-            self.diagnostics.push(Diagnostic::new(
-                target.id,
-                DiagnosticError::UnexpectedExternTarget,
-            ));
+            self.diagnostics
+                .add(target.id, DiagnosticError::UnexpectedExternTarget);
         }
         for item in block.items() {
             self.transform_extern_block_item(item);
@@ -180,10 +178,8 @@ impl AstTransformer {
                 };
                 let extern_path = item.metadata().and_then(|metadata| metadata.value());
                 let Ok(extern_path) = extern_path else {
-                    self.diagnostics.push(Diagnostic::new(
-                        item.id(),
-                        DiagnosticError::ExternTypeRequiresMetadata,
-                    ));
+                    self.diagnostics
+                        .add(item.id(), DiagnosticError::ExternTypeRequiresMetadata);
                     return;
                 };
                 let Ok(extern_body) = extern_type.body() else {
@@ -211,10 +207,8 @@ impl AstTransformer {
 
         for item in body.items() {
             let Ok(metadata) = item.metadata() else {
-                self.diagnostics.push(Diagnostic::new(
-                    item.id(),
-                    DiagnosticError::ExternTypeRequiresMetadata,
-                ));
+                self.diagnostics
+                    .add(item.id(), DiagnosticError::ExternTypeRequiresMetadata);
                 continue;
             };
             let Ok(metadata_token) = metadata.value() else {
@@ -324,7 +318,7 @@ struct FunctionTransformer<'a> {
     current_builder: AirBlockId,
     finished_blocks: FastMap<AirBlockId, AirBlock>,
     next_value_id: usize,
-    diagnostics: &'a mut Vec<Diagnostic>,
+    diagnostics: &'a mut Diagnostics,
     variables: FastMap<SmallString, AirLocalValueId>,
     namespace: &'a Namespace,
     loops: Vec<LoopInfo>,
@@ -333,7 +327,7 @@ struct FunctionTransformer<'a> {
 impl<'a> FunctionTransformer<'a> {
     fn new(
         parameter_idents: Vec<SmallString>,
-        diagnostics: &'a mut Vec<Diagnostic>,
+        diagnostics: &'a mut Diagnostics,
         namespace: &'a Namespace,
     ) -> Self {
         let variables = parameter_idents
@@ -385,8 +379,7 @@ impl<'a> FunctionTransformer<'a> {
     }
 
     fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
-        self.diagnostics
-            .push(Diagnostic::new(id, DiagnosticKind::Error(error)))
+        self.diagnostics.add(id, DiagnosticKind::Error(error))
     }
 
     fn create_variable(&mut self, token: &SyntaxToken, value_id: AirLocalValueId) {
