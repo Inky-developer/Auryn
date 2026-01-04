@@ -4,10 +4,11 @@ use crate::{
             data::{
                 self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirLocalValueId, AirNode, AirNodeKind,
-                AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId, Call,
-                FunctionReference, ReturnValue, UnresolvedExternMember, UnresolvedType,
+                AirStaticValue, AirStaticValueId, AirType, AirValueId, Call, FunctionReference,
+                ReturnValue, UnresolvedExternMember, UnresolvedType,
             },
-            namespace::Namespace,
+            namespace::{Namespace, UserDefinedTypeId},
+            typecheck::type_context::TypeId,
         },
         ast::ast_node::{
             Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BreakStatement,
@@ -73,7 +74,7 @@ impl AstTransformer {
                 ident
                     .ident()
                     .map(|token| match self.namespace.types.get(&token.text) {
-                        Some(def_id) => UnresolvedType::DefinedType(token.id, *def_id),
+                        Some(def_id) => UnresolvedType::DefinedType(*def_id),
                         None => UnresolvedType::Ident(token.id, token.text.clone()),
                     })
             }
@@ -116,32 +117,11 @@ impl AstTransformer {
                 let Ok(ident) = extern_type.ident() else {
                     return;
                 };
-                let id = AirTypedefId(extern_type.id());
 
-                let mut members = Namespace::default();
-                if let Ok(body) = extern_type.body() {
-                    self.register_extern_type_members(&mut members, body);
-                }
-                self.namespace.types.insert(ident.text.clone(), id);
-            }
-        }
-    }
-
-    fn register_extern_type_members(&mut self, namespace: &mut Namespace, body: ExternTypeBody) {
-        for item in body.items() {
-            let Ok(kind) = item.kind() else {
-                continue;
-            };
-
-            match kind {
-                ExternTypeBodyItemKind::ExternTypeStaticLet(extern_type_static_let) => {
-                    let Ok(ident) = extern_type_static_let.ident() else {
-                        continue;
-                    };
-                    namespace
-                        .statics
-                        .insert(ident.text.clone(), AirStaticValueId(ident.id));
-                }
+                self.namespace.types.insert(
+                    ident.text.clone(),
+                    UserDefinedTypeId::Extern(TypeId::new(extern_type.id())),
+                );
             }
         }
     }
@@ -721,6 +701,10 @@ impl FunctionTransformer<'_> {
                 AirExpressionKind::Variable(AirValueId::Intrinsic(intrinsic)),
             );
         };
+
+        if let Some(type_id) = self.namespace.types.get(&ident.text) {
+            return AirExpression::new(ident.id, AirExpressionKind::Type(type_id.to_type()));
+        }
 
         self.add_error(
             ident.id,

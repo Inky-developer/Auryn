@@ -2,9 +2,12 @@ use std::{fmt::Debug, num::NonZeroU64, str::FromStr};
 
 use crate::{
     auryn::{
-        air::typecheck::{
-            type_context::{TypeContext, TypeId, TypeView, TypeViewKind},
-            types::{FunctionParameters, FunctionType, Type},
+        air::{
+            namespace::UserDefinedTypeId,
+            typecheck::{
+                type_context::{TypeContext, TypeId, TypeView, TypeViewKind},
+                types::{FunctionParameters, FunctionType, Type},
+            },
         },
         syntax_id::SyntaxId,
         tokenizer::BinaryOperatorToken,
@@ -15,7 +18,7 @@ use crate::{
 #[derive(Default)]
 pub struct Air {
     pub functions: FastMap<AirFunctionId, AirFunction>,
-    pub types: FastMap<AirTypedefId, AirType>,
+    pub types: FastMap<UserDefinedTypeId, AirType>,
     pub ty_ctx: TypeContext,
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
@@ -139,9 +142,6 @@ pub struct Assignment {
     pub expression: Box<AirExpression>,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct AirTypedefId(pub(super) SyntaxId);
-
 #[derive(Debug, Clone)]
 pub struct UnresolvedExternMember {
     pub extern_name: SmallString,
@@ -166,8 +166,8 @@ impl FunctionReference {
 /// Represents a type that was written by the user but not resolved yet.
 #[derive(Debug, Clone)]
 pub enum UnresolvedType {
-    /// A type that was defined by the user, identified by its [`AirTypedefId`]
-    DefinedType(SyntaxId, AirTypedefId),
+    /// A type that was defined by the user, identified by its `syntax_id`
+    DefinedType(UserDefinedTypeId),
     /// A type not defined by the user (so probably built-in, like `String`)
     Ident(SyntaxId, SmallString),
     /// An array type
@@ -232,6 +232,8 @@ pub enum AirExpressionKind {
     Constant(AirConstant),
     BinaryOperator(BinaryOperation),
     Variable(AirValueId),
+    /// Loads a type as a value
+    Type(Type),
     Accessor(Accessor),
     Call(Call),
     Error,

@@ -235,6 +235,9 @@ impl FunctionGenerator<'_> {
                 self.generate_binary_operation(binary_operator)
             }
             AirExpressionKind::Variable(variable) => self.generate_variable(variable),
+            AirExpressionKind::Type(_) => {
+                // Nothing needs to be done, since types are compile time constructs
+            }
             AirExpressionKind::Accessor(accessor) => self.generate_accessor(accessor, repr.clone()),
             AirExpressionKind::Call(call) => {
                 self.generate_call(call, expression.r#type.computed().as_view(self.ty_ctx))

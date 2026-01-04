@@ -179,6 +179,25 @@ mod tests {
     }
 
     #[test]
+    fn test_externs() {
+        insta::assert_debug_snapshot!(generate_class(
+            r#"
+            unsafe extern "java" {
+                ["java/io/PrintStream"]
+                type PrintStream {}
+
+                ["java/lang/System"]
+                type System {
+                    ["out"]
+                    static let out: PrintStream
+                }
+            }
+            fn main() { System.out }
+            "#
+        ));
+    }
+
+    #[test]
     #[should_panic]
     fn test_reject_invalid_variable() {
         insta::assert_debug_snapshot!(generate_class_wrapped("let a = a"));

@@ -6,10 +6,10 @@ use crate::{
             data::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirTypedefId, AirValueId,
-                Assignment, BinaryOperation, Call, FunctionReference, Intrinsic, ReturnValue,
-                UnresolvedType,
+                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment,
+                BinaryOperation, Call, FunctionReference, Intrinsic, ReturnValue, UnresolvedType,
             },
+            namespace::UserDefinedTypeId,
             typecheck::{
                 type_context::{TypeContext, TypeId, TypeView},
                 types::{
@@ -59,7 +59,6 @@ impl FunctionContext {
 #[derive(Debug, Default)]
 pub struct Typechecker {
     functions: FastMap<AirFunctionId, TypeId<FunctionType>>,
-    defined_types: FastMap<AirTypedefId, Type>,
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
     ty_ctx: TypeContext,
@@ -70,7 +69,6 @@ impl Typechecker {
     pub fn new(diagnostics: Diagnostics) -> Self {
         Self {
             functions: default(),
-            defined_types: default(),
             function: default(),
             statics: default(),
             ty_ctx: default(),
@@ -80,7 +78,6 @@ impl Typechecker {
 
     pub fn typecheck(mut self, air: &mut Air) -> Diagnostics {
         self.compute_defined_types(&mut air.types);
-        self.defined_types = air.types.iter().map(|(k, v)| (*k, v.computed())).collect();
         self.statics = air.statics.clone();
 
         for (id, function) in &mut air.functions {
@@ -96,7 +93,7 @@ impl Typechecker {
         self.diagnostics
     }
 
-    fn compute_defined_types(&mut self, types: &mut FastMap<AirTypedefId, AirType>) {
+    fn compute_defined_types(&mut self, types: &mut FastMap<UserDefinedTypeId, AirType>) {
         for r#type in types.values_mut() {
             self.resolve_if_unresolved(r#type);
         }
@@ -167,7 +164,7 @@ impl Typechecker {
 
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         match unresolved {
-            UnresolvedType::DefinedType(_id, def_id) => self.defined_types[def_id],
+            UnresolvedType::DefinedType(user_defined_type_id) => user_defined_type_id.to_type(),
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
@@ -335,6 +332,8 @@ impl Typechecker {
                 self.typecheck_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(value) => self.typecheck_value(value),
+            // Maybe we should correctly represent the type of a type, but for now lets just use itself as its type
+            AirExpressionKind::Type(r#type) => *r#type,
             AirExpressionKind::Accessor(accessor) => self.typecheck_accessor(accessor),
             AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call),
             AirExpressionKind::Error => Type::Error,

@@ -186,7 +186,7 @@ impl<'a> TypeView<'a> {
             TypeView::Function(type_view_kind) => Type::Function(type_view_kind.id),
             TypeView::Array(type_view_kind) => Type::Array(type_view_kind.id),
             TypeView::Extern(type_view_kind) => Type::Extern(type_view_kind.id),
-            TypeView::Error => todo!(),
+            TypeView::Error => Type::Error,
         }
     }
 }
