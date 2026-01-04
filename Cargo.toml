@@ -13,3 +13,4 @@ insta = "1.44.3"
 [lints.clippy]
 # This simplifies module management imho
 pub_use = "warn"
+dbg_macro = "warn"
