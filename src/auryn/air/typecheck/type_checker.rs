@@ -17,7 +17,7 @@ use crate::{
                 },
             },
         },
-        diagnostic::{DiagnosticError, DiagnosticKind, Diagnostics},
+        diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
     },
     utils::{
@@ -106,7 +106,7 @@ impl Typechecker {
             return;
         }
 
-        self.add_error(
+        self.diagnostics.add(
             received.id,
             DiagnosticError::TypeMismatch {
                 expected: expected.as_view(&self.ty_ctx).to_string(),
@@ -120,7 +120,7 @@ impl Typechecker {
             return;
         }
 
-        self.add_error(
+        self.diagnostics.add(
             at,
             DiagnosticError::TypeMismatch {
                 expected: expected.as_view(&self.ty_ctx).to_string(),
@@ -136,17 +136,13 @@ impl Typechecker {
             return;
         }
 
-        self.add_error(
+        self.diagnostics.add(
             received.id,
             DiagnosticError::TypeMismatch {
                 expected: expected.as_view(&self.ty_ctx).to_string(),
                 got: received.r#type.as_view(&self.ty_ctx).to_string(),
             },
         );
-    }
-
-    fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
-        self.diagnostics.add(id, DiagnosticKind::Error(error))
     }
 }
 
@@ -168,7 +164,7 @@ impl Typechecker {
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
-                    self.add_error(
+                    self.diagnostics.add(
                         *id,
                         DiagnosticError::UndefinedVariable {
                             ident: ident.clone(),
@@ -408,7 +404,7 @@ impl Typechecker {
         }
 
         let TypeView::Function(function_type) = call.function.r#type.as_view(&self.ty_ctx) else {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::TypeMismatch {
                     expected: "function".into(),
@@ -431,7 +427,7 @@ impl Typechecker {
         } = function_type.value.parameters.clone()
         {
             if parameters.len() != call.arguments.len() {
-                self.add_error(
+                self.diagnostics.add(
                     id,
                     DiagnosticError::MismatchedArgumentCount {
                         expected: parameters.len(),
@@ -467,7 +463,7 @@ impl Typechecker {
 
     fn typecheck_intrinsic_print(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
         if arguments.len() != 1 {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
@@ -482,7 +478,7 @@ impl Typechecker {
     fn typecheck_intrinsic_array_of(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
         // Currently an array needs at least one element or we cannot compute its type
         let [first, ..] = arguments else {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
@@ -514,7 +510,7 @@ impl Typechecker {
             },
         ));
         let [count] = arguments else {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
@@ -532,7 +528,7 @@ impl Typechecker {
 
     fn typecheck_intrinsic_array_get(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
         let [array, index] = arguments else {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
                     expected: 2,
@@ -544,7 +540,7 @@ impl Typechecker {
         };
 
         let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
-            self.add_error(
+            self.diagnostics.add(
                 array.id,
                 DiagnosticError::TypeMismatch {
                     expected: "array".into(),
@@ -561,7 +557,7 @@ impl Typechecker {
 
     fn typecheck_intrinsic_array_set(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
         let [array, index, value] = arguments else {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
                     expected: 3,
@@ -573,7 +569,7 @@ impl Typechecker {
         };
 
         let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
-            self.add_error(
+            self.diagnostics.add(
                 array.id,
                 DiagnosticError::TypeMismatch {
                     expected: "array".into(),
@@ -591,7 +587,7 @@ impl Typechecker {
 
     fn typecheck_intrinsic_array_len(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
         let [array] = arguments else {
-            self.add_error(
+            self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
@@ -603,7 +599,7 @@ impl Typechecker {
         };
 
         if !matches!(array.r#type.computed(), Type::Array(_)) {
-            self.add_error(
+            self.diagnostics.add(
                 array.id,
                 DiagnosticError::TypeMismatch {
                     expected: "array".into(),

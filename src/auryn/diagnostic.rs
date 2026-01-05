@@ -1,3 +1,6 @@
+#[cfg(debug_assertions)]
+use std::panic::Location;
+
 use crate::{
     auryn::{
         diagnostic_display::{
@@ -92,13 +95,18 @@ impl From<DiagnosticError> for DiagnosticKind {
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub syntax_id: SyntaxId,
+    #[cfg(debug_assertions)]
+    pub location: &'static Location<'static>,
 }
 
 impl Diagnostic {
+    #[track_caller]
     pub fn new(syntax_id: SyntaxId, kind: impl Into<DiagnosticKind>) -> Self {
         Diagnostic {
             kind: kind.into(),
             syntax_id,
+            #[cfg(debug_assertions)]
+            location: Location::caller(),
         }
     }
 }
@@ -109,6 +117,7 @@ pub struct Diagnostics {
 }
 
 impl Diagnostics {
+    #[track_caller]
     pub fn add(&mut self, syntax_id: SyntaxId, kind: impl Into<DiagnosticKind>) {
         self.diagnostics.push(Diagnostic::new(syntax_id, kind))
     }
@@ -173,6 +182,10 @@ impl Diagnostic {
     fn display(&self) -> DiagnosticDisplay {
         let mut builder = DiagnosticDisplay::new(self.level(), self.syntax_id);
         self.build_report(&mut builder);
+
+        #[cfg(debug_assertions)]
+        builder.with_info(format!("This diagnostic was emmited at {}", self.location));
+
         builder
     }
 

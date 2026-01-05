@@ -17,8 +17,7 @@ use crate::{
             NumberLiteral, Parenthesis, PostfixOperation, PostfixOperator, ReturnStatement, Root,
             Statement, StringLiteral, Type, Value, ValueOrPostfix, VariableUpdate,
         },
-        diagnostic::{DiagnosticError, DiagnosticKind, Diagnostics},
-        syntax_id::SyntaxId,
+        diagnostic::{DiagnosticError, Diagnostics},
         syntax_tree::SyntaxToken,
     },
     utils::{fast_map::FastMap, small_string::SmallString},
@@ -359,13 +358,9 @@ impl<'a> FunctionTransformer<'a> {
             .push(node);
     }
 
-    fn add_error(&mut self, id: SyntaxId, error: DiagnosticError) {
-        self.diagnostics.add(id, DiagnosticKind::Error(error))
-    }
-
     fn create_variable(&mut self, token: &SyntaxToken, value_id: AirLocalValueId) {
         if self.variables.contains_key(&token.text) {
-            self.add_error(
+            self.diagnostics.add(
                 token.id,
                 DiagnosticError::RedefinedVariable {
                     ident: token.text.clone(),
@@ -492,7 +487,8 @@ impl FunctionTransformer<'_> {
 
     fn transform_break_statement(&mut self, r#break: BreakStatement) {
         let Some(loop_info) = self.loops.last() else {
-            self.add_error(r#break.id(), DiagnosticError::BreakOutsideLoop);
+            self.diagnostics
+                .add(r#break.id(), DiagnosticError::BreakOutsideLoop);
             return;
         };
         let break_target = loop_info.break_target;
@@ -528,7 +524,7 @@ impl FunctionTransformer<'_> {
             return;
         };
         let Some(&variable_id) = self.variables.get(&ident.text) else {
-            self.add_error(
+            self.diagnostics.add(
                 ident.id,
                 DiagnosticError::UndefinedVariable {
                     ident: ident.text.clone(),
@@ -655,7 +651,8 @@ impl FunctionTransformer<'_> {
         };
 
         let Ok(value) = token.text.as_ref().parse() else {
-            self.add_error(number.id(), DiagnosticError::InvalidNumber);
+            self.diagnostics
+                .add(number.id(), DiagnosticError::InvalidNumber);
             return AirExpression::error(number.id());
         };
 
@@ -707,7 +704,7 @@ impl FunctionTransformer<'_> {
             return AirExpression::new(ident.id, AirExpressionKind::Type(type_id.to_type()));
         }
 
-        self.add_error(
+        self.diagnostics.add(
             ident.id,
             DiagnosticError::UndefinedVariable {
                 ident: ident.text.clone(),
