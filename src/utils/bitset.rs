@@ -160,6 +160,8 @@ macro_rules! bitset_item {
 }
 
 /// Creates a bitset with the given elements at compile time
+///
+/// Due to rust const limitations, the element type may need to be specified explicitly.
 #[macro_export]
 macro_rules! bitset [
     ($($items:expr),*) => {
