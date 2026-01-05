@@ -187,33 +187,33 @@ impl Diagnostic {
             DiagnosticKind::Error(error) => match error {
                 DiagnosticError::ExpectedExpression { got } => builder
                     .with_code("Expected expression")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::ExpectedNumber { got } => builder
                     .with_code("Expected number")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::ExpectedType { got } => builder
                     .with_code("Expected type")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::ExpectedItem { got } => builder
                     .with_code("Expected item")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::ExpectedExternItem { got } => builder
                     .with_code("Expected extern item")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::ExpectedExternTypeBodyItem { got } => builder
                     .with_code("Expected extern type body item")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::UnexpectedToken { expected, got } => builder
                     .with_code("Unexpected token")
-                    .with_message(format!("got `{got}`"))
+                    .with_message(format!("got {got:?}"))
                     .with_info(format!("Expected `{expected}`")),
                 DiagnosticError::ExpectedBinaryOperator { got } => builder
                     .with_code("Expected binary operator")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::InvalidNumber => builder.with_code("Not a valid number"),
                 DiagnosticError::ExpectedValue { got } => builder
                     .with_code("Expected value")
-                    .with_message(format!("got {got}")),
+                    .with_message(format!("got {got:?}")),
                 DiagnosticError::ExpectedNewline => builder.with_code("Expected newline"),
                 DiagnosticError::UnexpectedExternTarget => {
                     builder.with_code("Unknown extern target")
