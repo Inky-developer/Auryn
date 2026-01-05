@@ -49,109 +49,79 @@ AnnotatedParserOutput {
         ,
     ),
     diagnostics: [
-        ComputedDiagnostic {
-            inner: Diagnostic {
-                kind: Error(
-                    ExpectedNewline,
+        Diagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            syntax_id: SyntaxId {
+                file_id: Some(
+                    FileId(
+                        1,
+                    ),
                 ),
-                syntax_id: SyntaxId {
-                    file_id: Some(
-                        FileId(
-                            1,
-                        ),
-                    ),
-                    number: Some(
-                        25588634246425,
-                    ),
-                },
-            },
-            span: ComputedSpan {
-                offset: 2,
-                len: 0,
+                number: Some(
+                    25588634246425,
+                ),
             },
         },
-        ComputedDiagnostic {
-            inner: Diagnostic {
-                kind: Error(
-                    ExpectedNewline,
+        Diagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            syntax_id: SyntaxId {
+                file_id: Some(
+                    FileId(
+                        1,
+                    ),
                 ),
-                syntax_id: SyntaxId {
-                    file_id: Some(
-                        FileId(
-                            1,
-                        ),
-                    ),
-                    number: Some(
-                        76765902739269,
-                    ),
-                },
-            },
-            span: ComputedSpan {
-                offset: 4,
-                len: 0,
+                number: Some(
+                    76765902739269,
+                ),
             },
         },
-        ComputedDiagnostic {
-            inner: Diagnostic {
-                kind: Error(
-                    ExpectedNewline,
+        Diagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            syntax_id: SyntaxId {
+                file_id: Some(
+                    FileId(
+                        1,
+                    ),
                 ),
-                syntax_id: SyntaxId {
-                    file_id: Some(
-                        FileId(
-                            1,
-                        ),
-                    ),
-                    number: Some(
-                        127943171232113,
-                    ),
-                },
-            },
-            span: ComputedSpan {
-                offset: 6,
-                len: 0,
+                number: Some(
+                    127943171232113,
+                ),
             },
         },
-        ComputedDiagnostic {
-            inner: Diagnostic {
-                kind: Error(
-                    ExpectedNewline,
+        Diagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            syntax_id: SyntaxId {
+                file_id: Some(
+                    FileId(
+                        1,
+                    ),
                 ),
-                syntax_id: SyntaxId {
-                    file_id: Some(
-                        FileId(
-                            1,
-                        ),
-                    ),
-                    number: Some(
-                        179120439724957,
-                    ),
-                },
-            },
-            span: ComputedSpan {
-                offset: 8,
-                len: 0,
+                number: Some(
+                    179120439724957,
+                ),
             },
         },
-        ComputedDiagnostic {
-            inner: Diagnostic {
-                kind: Error(
-                    ExpectedNewline,
+        Diagnostic {
+            kind: Error(
+                ExpectedNewline,
+            ),
+            syntax_id: SyntaxId {
+                file_id: Some(
+                    FileId(
+                        1,
+                    ),
                 ),
-                syntax_id: SyntaxId {
-                    file_id: Some(
-                        FileId(
-                            1,
-                        ),
-                    ),
-                    number: Some(
-                        230297708217801,
-                    ),
-                },
-            },
-            span: ComputedSpan {
-                offset: 11,
-                len: 0,
+                number: Some(
+                    230297708217801,
+                ),
             },
         },
     ],

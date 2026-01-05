@@ -201,10 +201,10 @@ impl<'a> Parser<'a> {
         match self.consume_if(|token| (token.kind == expected).then_some(token)) {
             Ok(token) => Ok(token.text),
             Err(token) => {
-                let kind = token.kind;
+                let got = token.text.into();
                 self.push_error(DiagnosticError::UnexpectedToken {
-                    expected,
-                    got: kind,
+                    expected: expected.as_str(),
+                    got,
                 });
                 Err(())
             }
@@ -215,9 +215,10 @@ impl<'a> Parser<'a> {
         let token = self.peek();
         let kind = token.kind;
         if kind != expected {
+            let got = token.text.into();
             self.push_error(DiagnosticError::UnexpectedToken {
-                expected,
-                got: kind,
+                expected: expected.as_str(),
+                got,
             });
             return Err(());
         }
@@ -296,8 +297,9 @@ impl Parser<'_> {
         match self.multipeek() {
             [TokenKind::KeywordFn, _] => self.parse_function_definition()?,
             [TokenKind::KeywordUnsafe, TokenKind::KeywordExtern] => self.parse_extern_block()?,
-            [other, _] => {
-                self.push_error(DiagnosticError::ExpectedItem { got: other });
+            [_, _] => {
+                let got = self.peek().text.into();
+                self.push_error(DiagnosticError::ExpectedItem { got });
                 return Err(());
             }
         }
@@ -335,8 +337,9 @@ impl Parser<'_> {
         let inner = self.push_node();
         match self.peek().kind {
             TokenKind::KeywordType => self.parse_extern_type()?,
-            other => {
-                self.push_error(DiagnosticError::ExpectedExternItem { got: other });
+            _ => {
+                let got = self.peek().text.into();
+                self.push_error(DiagnosticError::ExpectedExternItem { got });
                 return Err(());
             }
         }
@@ -384,8 +387,10 @@ impl Parser<'_> {
         let inner_watcher = self.push_node();
         match self.peek().kind {
             TokenKind::KeywordStatic => self.parse_extern_type_body_static_let()?,
-            other => {
-                self.push_error(DiagnosticError::ExpectedExternTypeBodyItem { got: other });
+            _ => {
+                self.push_error(DiagnosticError::ExpectedExternTypeBodyItem {
+                    got: self.peek().text.into(),
+                });
                 return Err(());
             }
         }
@@ -483,8 +488,10 @@ impl Parser<'_> {
         match self.peek().kind {
             TokenKind::BracketOpen => self.parse_array_type()?,
             TokenKind::Identifier => self.parse_identifier()?,
-            got => {
-                self.push_error(DiagnosticError::ExpectedType { got });
+            _ => {
+                self.push_error(DiagnosticError::ExpectedType {
+                    got: self.peek().text.into(),
+                });
                 return Err(());
             }
         }
@@ -608,7 +615,7 @@ impl Parser<'_> {
     fn parse_expression(&mut self) -> ParseResult {
         if !is_expression_start(self.peek().kind) {
             self.push_error(DiagnosticError::ExpectedExpression {
-                got: self.peek().kind,
+                got: self.peek().text.into(),
             });
             return Err(());
         }
@@ -673,8 +680,10 @@ impl Parser<'_> {
             TokenKind::NumberLiteral => self.parse_number()?,
             TokenKind::StringLiteral => self.parse_string_literal()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
-            other => {
-                self.push_error(DiagnosticError::ExpectedValue { got: other });
+            _ => {
+                self.push_error(DiagnosticError::ExpectedValue {
+                    got: self.peek().text.into(),
+                });
                 return Err(());
             }
         };
@@ -805,14 +814,14 @@ mod tests {
     use std::fmt::Debug;
 
     use crate::auryn::{
-        diagnostic::ComputedDiagnostic,
+        diagnostic::Diagnostic,
         file_id::FileId,
         parser::{Parser, ParserOutput},
     };
 
     struct AnnotatedParserOutput<'a> {
         output: ParserOutput,
-        diagnostics: Vec<ComputedDiagnostic>,
+        diagnostics: Vec<Diagnostic>,
         input: &'a str,
     }
 

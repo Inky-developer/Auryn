@@ -37,6 +37,16 @@ AirOutput {
                     ),
                 ),
                 unresolved_type: Function {
+                    parameters_reference: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            105553116266498,
+                        ),
+                    },
                     parameters: [],
                     return_type: None,
                     reference: UserDefined(
@@ -305,30 +315,8 @@ AirOutput {
             Diagnostic {
                 kind: Error(
                     TypeMismatch {
-                        expected: Number,
-                        got: Computed(
-                            Null,
-                        ),
-                    },
-                ),
-                syntax_id: SyntaxId {
-                    file_id: Some(
-                        FileId(
-                            1,
-                        ),
-                    ),
-                    number: Some(
-                        241892558110725,
-                    ),
-                },
-            },
-            Diagnostic {
-                kind: Error(
-                    TypeMismatch {
-                        expected: Number,
-                        got: Computed(
-                            Null,
-                        ),
+                        expected: "Number",
+                        got: "Null",
                     },
                 ),
                 syntax_id: SyntaxId {

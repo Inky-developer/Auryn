@@ -37,6 +37,16 @@ AirOutput {
                     ),
                 ),
                 unresolved_type: Function {
+                    parameters_reference: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            105553116266498,
+                        ),
+                    },
                     parameters: [],
                     return_type: None,
                     reference: UserDefined(

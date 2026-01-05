@@ -244,7 +244,7 @@ impl<'a> Display for TypeViewKind<'a, FunctionType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;
         match &self.value.parameters {
-            FunctionParameters::Constrained(parameters) => {
+            FunctionParameters::Constrained { parameters, .. } => {
                 for (index, parameter) in parameters.iter().enumerate() {
                     if index != 0 {
                         f.write_str(",")?;

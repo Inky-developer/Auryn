@@ -1,0 +1,10 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\"\\u{a0}\")"
+---
+[
+    Token {
+        kind: Error,
+        text: "\u{a0}",
+    },
+]

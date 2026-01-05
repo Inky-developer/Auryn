@@ -2,8 +2,12 @@ use std::{fs::OpenOptions, io::Write};
 
 use auryn::{
     auryn::{
-        air::query_air, ast::query_ast, codegen_java::class_generator::generate_class,
-        diagnostic::ComputedDiagnostic, file_id::FileId, parser::Parser,
+        air::query_air,
+        ast::query_ast,
+        codegen_java::class_generator::generate_class,
+        diagnostic::{Diagnostics, InputFile, InputFiles},
+        file_id::FileId,
+        parser::Parser,
     },
     java::class::ClassData,
 };
@@ -62,17 +66,19 @@ fn get_class(input: &str) -> ClassData {
 
     let ast = query_ast(&syntax_tree).unwrap();
     let air = query_air(ast);
-    diagnostics.extend(
-        air.diagnostics
-            .take()
-            .into_iter()
-            .map(|it| ComputedDiagnostic {
-                span: syntax_tree.get_span(it.syntax_id),
-                inner: it,
-            }),
-    );
+    diagnostics.extend(air.diagnostics.take());
     if !diagnostics.is_empty() {
-        println!("Warn: {diagnostics:?}");
+        let mut input_files = InputFiles::default();
+        input_files.add(
+            FileId::MAIN_FILE,
+            InputFile {
+                name: "main".into(),
+                source: input.into(),
+                syntax_tree,
+            },
+        );
+        let diagnostics: Diagnostics = diagnostics.into_iter().collect();
+        diagnostics.display(&input_files).eprint();
     }
     generate_class(&air.air)
 }

@@ -2,6 +2,7 @@ pub mod air;
 pub mod ast;
 pub mod codegen_java;
 pub mod diagnostic;
+pub mod diagnostic_display;
 pub mod file_id;
 pub mod parser;
 pub mod syntax_id;

@@ -6,7 +6,8 @@ use std::{
 
 use crate::{
     auryn::{
-        diagnostic::{ComputedDiagnostic, ComputedSpan, Diagnostic, DiagnosticKind},
+        diagnostic::{Diagnostic, DiagnosticKind},
+        diagnostic_display::ComputedSpan,
         syntax_id::SyntaxId,
         tokenizer::TokenKind,
     },
@@ -74,10 +75,9 @@ impl SyntaxNode {
         self.children.iter().filter_map(SyntaxItem::as_node)
     }
 
-    pub fn collect_diagnostics(&self, mut offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
+    pub fn collect_diagnostics(&self, buf: &mut Vec<Diagnostic>) {
         for child in &self.children {
-            child.collect_diagnostics(offset, buf);
-            offset += child.len();
+            child.collect_diagnostics(buf);
         }
     }
 
@@ -110,6 +110,10 @@ impl SyntaxNode {
     pub fn get_span(&self, syntax_id: SyntaxId, mut offset: u32) -> ComputedSpan {
         if syntax_id == self.id {
             return ComputedSpan {
+                file_id: self
+                    .id
+                    .file_id()
+                    .expect("Should only create diagnostics that belong to a file"),
                 offset,
                 len: self.len,
             };
@@ -149,14 +153,8 @@ pub struct ErrorNode {
 }
 
 impl ErrorNode {
-    pub fn collect_diagnostics(&self, offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
-        buf.push(ComputedDiagnostic {
-            inner: Diagnostic::new(self.id, self.diagnostic.clone()),
-            span: ComputedSpan {
-                offset,
-                len: self.text.len().try_into().unwrap(),
-            },
-        });
+    pub fn collect_diagnostics(&self, buf: &mut Vec<Diagnostic>) {
+        buf.push(Diagnostic::new(self.id, self.diagnostic.clone()));
     }
 }
 
@@ -202,11 +200,11 @@ impl SyntaxItem {
         }
     }
 
-    pub fn collect_diagnostics(&self, offset: u32, buf: &mut Vec<ComputedDiagnostic>) {
+    pub fn collect_diagnostics(&self, buf: &mut Vec<Diagnostic>) {
         match self {
-            SyntaxItem::Node(node) => node.collect_diagnostics(offset, buf),
+            SyntaxItem::Node(node) => node.collect_diagnostics(buf),
             SyntaxItem::Token(_) => {}
-            SyntaxItem::Error(error) => error.collect_diagnostics(offset, buf),
+            SyntaxItem::Error(error) => error.collect_diagnostics(buf),
         }
     }
 
@@ -228,6 +226,7 @@ impl SyntaxItem {
             SyntaxItem::Token(syntax_token) => {
                 assert!(syntax_id == syntax_token.id);
                 ComputedSpan {
+                    file_id: syntax_token.id.file_id().unwrap(),
                     offset,
                     len: syntax_token.text.len().try_into().unwrap(),
                 }
@@ -235,6 +234,7 @@ impl SyntaxItem {
             SyntaxItem::Error(error_node) => {
                 assert!(syntax_id == error_node.id);
                 ComputedSpan {
+                    file_id: error_node.id.file_id().unwrap(),
                     offset,
                     len: error_node.text.len().try_into().unwrap(),
                 }
@@ -258,9 +258,9 @@ impl SyntaxTree {
         }
     }
 
-    pub fn collect_diagnostics(&self) -> Vec<ComputedDiagnostic> {
+    pub fn collect_diagnostics(&self) -> Vec<Diagnostic> {
         let mut buf = Vec::new();
-        self.root_node.collect_diagnostics(0, &mut buf);
+        self.root_node.collect_diagnostics(&mut buf);
         buf
     }
 

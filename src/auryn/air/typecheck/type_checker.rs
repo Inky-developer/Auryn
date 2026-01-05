@@ -109,8 +109,8 @@ impl Typechecker {
         self.add_error(
             received.id,
             DiagnosticError::TypeMismatch {
-                expected,
-                got: received.r#type.clone(),
+                expected: expected.as_view(&self.ty_ctx).to_string(),
+                got: received.r#type.as_view(&self.ty_ctx).to_string(),
             },
         )
     }
@@ -123,8 +123,8 @@ impl Typechecker {
         self.add_error(
             at,
             DiagnosticError::TypeMismatch {
-                expected,
-                got: AirType::Computed(received),
+                expected: expected.as_view(&self.ty_ctx).to_string(),
+                got: received.as_view(&self.ty_ctx).to_string(),
             },
         );
     }
@@ -139,8 +139,8 @@ impl Typechecker {
         self.add_error(
             received.id,
             DiagnosticError::TypeMismatch {
-                expected,
-                got: received.r#type.clone(),
+                expected: expected.as_view(&self.ty_ctx).to_string(),
+                got: received.r#type.as_view(&self.ty_ctx).to_string(),
             },
         );
     }
@@ -178,6 +178,7 @@ impl Typechecker {
                 }
             },
             UnresolvedType::Function {
+                parameters_reference,
                 parameters,
                 return_type,
                 reference,
@@ -192,7 +193,10 @@ impl Typechecker {
                 Type::Function(self.ty_ctx.add_function(
                     reference.as_user_defined().0.0,
                     FunctionType {
-                        parameters: FunctionParameters::Constrained(parameters),
+                        parameters: FunctionParameters::Constrained {
+                            parameters,
+                            parameters_reference: *parameters_reference,
+                        },
                         return_type,
                         reference: *reference,
                     },
@@ -387,7 +391,8 @@ impl Typechecker {
                 self.diagnostics.add(
                     accessor.ident_id,
                     DiagnosticError::UndefinedProperty {
-                        r#type: value_type_view.as_type(),
+                        value_id: accessor.value.id,
+                        r#type: value_type_view.to_string(),
                         ident: accessor.ident.clone(),
                     },
                 );
@@ -405,8 +410,9 @@ impl Typechecker {
         let TypeView::Function(function_type) = call.function.r#type.as_view(&self.ty_ctx) else {
             self.add_error(
                 id,
-                DiagnosticError::ExpectedFunctionType {
-                    got: call.function.r#type.clone(),
+                DiagnosticError::TypeMismatch {
+                    expected: "function".into(),
+                    got: call.function.r#type.as_view(&self.ty_ctx).to_string(),
                 },
             );
             return Type::Error;
@@ -419,14 +425,18 @@ impl Typechecker {
             return self.typecheck_intrinsic(id, intrinsic, &mut call.arguments);
         }
 
-        if let FunctionParameters::Constrained(parameters) = function_type.value.parameters.clone()
+        if let FunctionParameters::Constrained {
+            parameters,
+            parameters_reference,
+        } = function_type.value.parameters.clone()
         {
             if parameters.len() != call.arguments.len() {
                 self.add_error(
                     id,
-                    DiagnosticError::MismatchedParameterCount {
+                    DiagnosticError::MismatchedArgumentCount {
                         expected: parameters.len(),
                         got: call.arguments.len(),
+                        parameter_def: Some(parameters_reference),
                     },
                 );
             }
@@ -445,10 +455,6 @@ impl Typechecker {
         intrinsic: Intrinsic,
         arguments: &mut [AirExpression],
     ) -> Type {
-        for argument in &mut *arguments {
-            self.typecheck_expression(argument);
-        }
-
         match intrinsic {
             Intrinsic::Print => self.typecheck_intrinsic_print(id, arguments),
             Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, arguments),
@@ -463,9 +469,10 @@ impl Typechecker {
         if arguments.len() != 1 {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
+                DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
+                    parameter_def: None,
                 },
             );
         }
@@ -477,9 +484,10 @@ impl Typechecker {
         let [first, ..] = arguments else {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
+                DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
                     got: 0,
+                    parameter_def: None,
                 },
             );
             return Type::Error;
@@ -508,9 +516,10 @@ impl Typechecker {
         let [count] = arguments else {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
+                DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
+                    parameter_def: None,
                 },
             );
             return return_type;
@@ -525,9 +534,10 @@ impl Typechecker {
         let [array, index] = arguments else {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
+                DiagnosticError::MismatchedArgumentCount {
                     expected: 2,
                     got: arguments.len(),
+                    parameter_def: None,
                 },
             );
             return Type::Error;
@@ -536,8 +546,9 @@ impl Typechecker {
         let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
             self.add_error(
                 array.id,
-                DiagnosticError::ExpectedArray {
-                    got: array.r#type.clone(),
+                DiagnosticError::TypeMismatch {
+                    expected: "array".into(),
+                    got: array.r#type.as_view(&self.ty_ctx).to_string(),
                 },
             );
             return Type::Error;
@@ -552,9 +563,10 @@ impl Typechecker {
         let [array, index, value] = arguments else {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
+                DiagnosticError::MismatchedArgumentCount {
                     expected: 3,
                     got: arguments.len(),
+                    parameter_def: None,
                 },
             );
             return Type::Error;
@@ -563,8 +575,9 @@ impl Typechecker {
         let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
             self.add_error(
                 array.id,
-                DiagnosticError::ExpectedArray {
-                    got: array.r#type.clone(),
+                DiagnosticError::TypeMismatch {
+                    expected: "array".into(),
+                    got: array.r#type.as_view(&self.ty_ctx).to_string(),
                 },
             );
             return Type::Error;
@@ -580,9 +593,10 @@ impl Typechecker {
         let [array] = arguments else {
             self.add_error(
                 id,
-                DiagnosticError::MismatchedParameterCount {
+                DiagnosticError::MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
+                    parameter_def: None,
                 },
             );
             return Type::Number;
@@ -591,8 +605,9 @@ impl Typechecker {
         if !matches!(array.r#type.computed(), Type::Array(_)) {
             self.add_error(
                 array.id,
-                DiagnosticError::ExpectedArray {
-                    got: array.r#type.clone(),
+                DiagnosticError::TypeMismatch {
+                    expected: "array".into(),
+                    got: array.r#type.as_view(&self.ty_ctx).to_string(),
                 },
             );
             return Type::Number;

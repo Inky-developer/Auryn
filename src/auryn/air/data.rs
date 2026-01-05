@@ -75,11 +75,13 @@ impl AirFunction {
     pub fn unresolved_type(
         &self,
     ) -> (
+        SyntaxId,
         &[UnresolvedType],
         Option<&UnresolvedType>,
         FunctionReference,
     ) {
         let UnresolvedType::Function {
+            parameters_reference,
             parameters,
             return_type,
             reference,
@@ -87,14 +89,19 @@ impl AirFunction {
         else {
             unreachable!("Should be a function type");
         };
-        (parameters, return_type.as_deref(), *reference)
+        (
+            *parameters_reference,
+            parameters,
+            return_type.as_deref(),
+            *reference,
+        )
     }
 
     /// Returns value ids for the arguments.
     /// The value ids increment for each argument.
     pub fn argument_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
         self.unresolved_type()
-            .0
+            .1
             .iter()
             .enumerate()
             .map(|(index, _)| AirLocalValueId(index))
@@ -174,6 +181,7 @@ pub enum UnresolvedType {
     Array(SyntaxId, Box<UnresolvedType>),
     /// A function type
     Function {
+        parameters_reference: SyntaxId,
         parameters: Vec<UnresolvedType>,
         return_type: Option<Box<UnresolvedType>>,
         reference: FunctionReference,

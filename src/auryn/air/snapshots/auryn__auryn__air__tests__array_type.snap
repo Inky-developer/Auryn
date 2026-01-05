@@ -37,6 +37,16 @@ AirOutput {
                     ),
                 ),
                 unresolved_type: Function {
+                    parameters_reference: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            218924981886066,
+                        ),
+                    },
                     parameters: [
                         Array(
                             SyntaxId {
@@ -208,6 +218,16 @@ AirOutput {
                     ),
                 ),
                 unresolved_type: Function {
+                    parameters_reference: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            40210710958667,
+                        ),
+                    },
                     parameters: [],
                     return_type: None,
                     reference: UserDefined(

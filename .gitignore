@@ -4,3 +4,4 @@
 *.class
 # Code snippets for testing
 /snippets
+/proptest-regressions

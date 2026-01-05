@@ -1,0 +1,10 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\"\\\"\")"
+---
+[
+    Token {
+        kind: StringLiteral,
+        text: "\"",
+    },
+]

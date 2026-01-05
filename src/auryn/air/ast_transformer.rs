@@ -265,6 +265,7 @@ impl AstTransformer {
         let function = AirFunction {
             r#type: AirType::Inferred,
             unresolved_type: UnresolvedType::Function {
+                parameters_reference: parameters.id(),
                 parameters: declared_parameters,
                 return_type: declared_return_type,
                 reference: FunctionReference::UserDefined(function_id),

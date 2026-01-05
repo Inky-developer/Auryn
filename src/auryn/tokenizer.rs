@@ -1,3 +1,5 @@
+use core::fmt;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperatorToken {
     Plus,
@@ -84,6 +86,54 @@ impl TokenKind {
             _ => None,
         }
     }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            TokenKind::NumberLiteral => "<number literal>",
+            TokenKind::StringLiteral => "<string literal>",
+            TokenKind::Identifier => "<identifier>",
+            TokenKind::Plus => "+",
+            TokenKind::Minus => "-",
+            TokenKind::Times => "*",
+            TokenKind::Equal => "=",
+            TokenKind::DoubleEqual => "==",
+            TokenKind::NotEqual => "!=",
+            TokenKind::Greater => ">",
+            TokenKind::GreaterOrEqual => ">=",
+            TokenKind::Less => "<",
+            TokenKind::LessOrEqual => "<=",
+            TokenKind::ParensOpen => "(",
+            TokenKind::ParensClose => ")",
+            TokenKind::BraceOpen => "{",
+            TokenKind::BraceClose => "}",
+            TokenKind::BracketOpen => "[",
+            TokenKind::BracketClose => "]",
+            TokenKind::KeywordLet => "let",
+            TokenKind::KeywordLoop => "loop",
+            TokenKind::KeywordBreak => "break",
+            TokenKind::KeywordIf => "if",
+            TokenKind::KeywordFn => "fn",
+            TokenKind::KeywordReturn => "return",
+            TokenKind::KeywordUnsafe => "unsafe",
+            TokenKind::KeywordExtern => "extern",
+            TokenKind::KeywordStatic => "static",
+            TokenKind::KeywordType => "type",
+            TokenKind::Whitespace => "<whitespace>",
+            TokenKind::Newline => "<newline>",
+            TokenKind::Error => "<error>",
+            TokenKind::EndOfInput => "<end of input>",
+            TokenKind::Comma => ",",
+            TokenKind::Colon => ":",
+            TokenKind::Arrow => "->",
+            TokenKind::Dot => ".",
+        }
+    }
+}
+
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -144,7 +194,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn consume_string_literal(&mut self) -> Token<'a> {
-        let mut len = 0;
+        let mut len = 1;
         let mut found_end = false;
         for (size, char) in self.input.char_indices().skip(1) {
             len = size;
@@ -160,6 +210,7 @@ impl<'a> Tokenizer<'a> {
         if found_end {
             len = self.input.len();
         }
+
         let (fit, rest) = self.input.split_at(len);
         self.input = rest;
         Token {
@@ -296,7 +347,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             }
             '"' => return Some(self.consume_string_literal()),
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
-            char if char.is_whitespace() => return self.consume_whitespace(),
+            char if char.is_ascii_whitespace() => return self.consume_whitespace(),
             char if char.is_ascii_digit() => return self.consume_number(),
             _ => TokenKind::Error,
         };
@@ -313,6 +364,8 @@ impl<'a> Iterator for Tokenizer<'a> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::{prop_assert, prop_assert_eq, proptest};
+
     use super::{Token, Tokenizer};
 
     fn tokenize(input: &str) -> Vec<Token<'_>> {
@@ -332,5 +385,30 @@ mod tests {
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
         insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));
+    }
+
+    #[test]
+    fn handles_invalid_string_literal() {
+        insta::assert_debug_snapshot!(tokenize("\""));
+    }
+
+    #[test]
+    fn rejects_unicode_whitespace() {
+        // non breaking space
+        insta::assert_debug_snapshot!(tokenize("\u{a0}"));
+    }
+
+    proptest! {
+        #[test]
+        fn as_str_equivalent(s in "[[:ascii:]]*") {
+            let tokens = Tokenizer::new(&s);
+            for token in tokens {
+                prop_assert!(!token.text.is_empty());
+                let str = token.kind.as_str();
+                if !str.starts_with("<") {
+                    prop_assert_eq!(token.text, str);
+                }
+            }
+        }
     }
 }

@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
 use crate::{
-    auryn::air::{
-        data::FunctionReference,
-        typecheck::type_context::{TypeContext, TypeId, TypeView},
+    auryn::{
+        air::{
+            data::FunctionReference,
+            typecheck::type_context::{TypeContext, TypeId, TypeView},
+        },
+        syntax_id::SyntaxId,
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
@@ -32,7 +35,10 @@ pub struct FunctionType {
 pub enum FunctionParameters {
     /// Hack to enable variadic parameters for builtin functions
     Unconstrained,
-    Constrained(Vec<Type>),
+    Constrained {
+        parameters: Vec<Type>,
+        parameters_reference: SyntaxId,
+    },
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -68,7 +74,7 @@ impl FunctionType {
             FunctionParameters::Unconstrained => {
                 panic!("function should have constrained parameters, but they are unconstrained")
             }
-            FunctionParameters::Constrained(parameters) => parameters,
+            FunctionParameters::Constrained { parameters, .. } => parameters,
         }
     }
 }
