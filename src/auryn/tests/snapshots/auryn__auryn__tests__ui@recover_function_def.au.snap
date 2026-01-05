@@ -1,0 +1,14 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main( {\n    print(\"Hi\")\n}\n"
+input_file: src/auryn/tests/inputs/ui/recover_function_def.au
+---
+Error: Unexpected token
+   ╭─[ main:1:10 ]
+   │
+ 1 │ fn main( {
+   │          │ 
+   │          ╰─ got "{"
+   │ 
+   │ Note: Expected `<identifier>`
+───╯

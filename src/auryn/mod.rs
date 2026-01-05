@@ -8,3 +8,4 @@ pub mod parser;
 pub mod syntax_id;
 pub mod syntax_tree;
 pub mod tokenizer;
+mod tests;

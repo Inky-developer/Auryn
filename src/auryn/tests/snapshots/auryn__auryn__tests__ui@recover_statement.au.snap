@@ -1,0 +1,14 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n\tprint(a., 3)\n}\n"
+input_file: src/auryn/tests/inputs/ui/recover_statement.au
+---
+Error: Unexpected token
+   ╭─[ main:2:10 ]
+   │
+ 2 │     print(a., 3)
+   │             │ 
+   │             ╰─ got ","
+   │ 
+   │ Note: Expected `<identifier>`
+───╯

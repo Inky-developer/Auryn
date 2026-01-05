@@ -1,0 +1,18 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n    bar()\n}\n\nfn bar(value: Number) {}"
+input_file: src/auryn/tests/inputs/ui/argument_count_mismatch_under.au
+---
+Error: Mismatched argument count
+   ╭─[ main:2:5 ]
+   │
+ 5 │ fn bar(value: Number) {}
+   │       ────────┬───────  
+   │               ╰───────── Due to the definition here
+   │
+   ├─[ main:2:5 ]
+   │
+ 2 │     bar()
+   │     ─┬─  
+   │      ╰─── Expected 1 argument, but got 0
+───╯

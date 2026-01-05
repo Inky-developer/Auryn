@@ -9,6 +9,7 @@ use crate::{
         tokenizer::{Token, TokenKind, TokenSet, Tokenizer},
     },
     bitset,
+    utils::default,
 };
 
 #[derive(Debug)]
@@ -33,6 +34,7 @@ pub struct Parser<'a> {
     file_id: FileId,
     index: usize,
     node_stack: Vec<ParserStackNode>,
+    recovery_stack: Vec<TokenSet>,
 }
 
 type ParseResult<T = ()> = Result<T, ()>;
@@ -43,7 +45,8 @@ impl<'a> Parser<'a> {
             input: Tokenizer::new(input).collect(),
             file_id,
             index: 0,
-            node_stack: Vec::new(),
+            node_stack: default(),
+            recovery_stack: default(),
         }
     }
 
@@ -60,8 +63,8 @@ impl<'a> Parser<'a> {
 
         self.consume_whitespace();
         // Nothing left to recover if there is an error
-        let _ = parse(&mut self);
-        let _ = self.peek_expect(TokenKind::EndOfInput);
+        self.parse_recoverable(bitset![TokenKind::EndOfInput], parse)
+            .expect("Should always recover at the top level");
         let Some(mut root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
             return ParserOutput { syntax_tree: None };
         };
@@ -181,24 +184,10 @@ impl<'a> Parser<'a> {
                     expected: expected.as_str(),
                     got,
                 });
-                Err(())
+                self.recover_to(self.current_stack_level(), expected.into())?;
+                Ok(self.consume().text)
             }
         }
-    }
-
-    #[track_caller]
-    fn peek_expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
-        let token = self.peek();
-        let kind = token.kind;
-        if kind != expected {
-            let got = token.text.into();
-            self.push_error(DiagnosticError::UnexpectedToken {
-                expected: expected.as_str(),
-                got,
-            });
-            return Err(());
-        }
-        Ok(token.text)
     }
 
     #[must_use]
@@ -235,6 +224,63 @@ impl<'a> Parser<'a> {
         let parent = self.node_stack.last_mut().expect("Parent should exist");
         parent.children.push(SyntaxItem::Node(node));
         self.consume_whitespace();
+    }
+
+    /// Restores the node stack to the expected depth, closing all unclosed nodes as errors
+    fn pop_to_level(&mut self, watcher: ParserFrameWatcher) {
+        while self.node_stack.len() > watcher.stack_level + 1 {
+            let watcher = ParserFrameWatcher {
+                stack_level: self.node_stack.len() - 1,
+            };
+            self.finish_node(watcher, SyntaxNodeKind::Error);
+        }
+    }
+
+    /// Tries to advance the parser to a set of known good tokens, emitting each unexpected token in the process.
+    /// If a good token is found, it is not consumed.
+    /// If a good token is found, the stack is also adjusted to match the level of the passed watcher.
+    /// Returns [`Err`] if a bad token is found.
+    fn recover_to(&mut self, watcher: ParserFrameWatcher, good_tokens: TokenSet) -> ParseResult {
+        let bad_tokens = self.recovery_stack.last().copied().unwrap_or_default();
+        loop {
+            let kind = self.peek().kind;
+            if good_tokens.contains(kind) {
+                self.pop_to_level(watcher);
+                return Ok(());
+            }
+            if bad_tokens.contains(kind) {
+                return Err(());
+            }
+
+            self.consume_single();
+        }
+    }
+
+    fn current_stack_level(&self) -> ParserFrameWatcher {
+        ParserFrameWatcher {
+            stack_level: self.node_stack.len().strict_sub(1),
+        }
+    }
+
+    /// Executes the parse function and tries to recover to the current stack level if an error occured.
+    /// Returns [`Err`] if `parse_fn` returned an error and recovery was not possible
+    fn parse_recoverable(
+        &mut self,
+        recoverable_tokens: TokenSet,
+        parse_fn: impl FnOnce(&mut Self) -> ParseResult,
+    ) -> ParseResult {
+        let stack_level = self.current_stack_level();
+        let parent_set = self.recovery_stack.last().copied().unwrap_or_default();
+        self.recovery_stack
+            .push(parent_set.union(&recoverable_tokens));
+        let result = parse_fn(self);
+        self.recovery_stack.pop().unwrap();
+
+        if let Err(()) = result {
+            return self.recover_to(stack_level, recoverable_tokens);
+        }
+
+        Ok(())
     }
 
     fn parse_newline_separated(
@@ -293,7 +339,10 @@ impl Parser<'_> {
         self.expect(TokenKind::StringLiteral)?;
 
         self.expect(TokenKind::BraceOpen)?;
-        self.parse_newline_separated(bitset![TokenKind::BraceClose], Self::parse_extern_item)?;
+        let end_tokens = bitset![TokenKind::BraceClose];
+        self.parse_recoverable(end_tokens, |parser| {
+            parser.parse_newline_separated(end_tokens, Self::parse_extern_item)
+        })?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ExternBlock);
@@ -403,7 +452,10 @@ impl Parser<'_> {
 
         self.expect(TokenKind::KeywordFn)?;
         self.expect(TokenKind::Identifier)?;
-        self.parse_parameter_list()?;
+        self.parse_recoverable(
+            bitset![TokenKind::Arrow, TokenKind::BraceOpen],
+            Self::parse_parameter_list,
+        )?;
         if self.peek().kind == TokenKind::Arrow {
             self.parse_return_type()?;
         }
@@ -419,16 +471,19 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::ParensOpen)?;
-        loop {
-            if self.peek().kind == TokenKind::ParensClose {
-                break;
+        self.parse_recoverable(bitset![TokenKind::ParensClose], |parser| {
+            loop {
+                if parser.peek().kind == TokenKind::ParensClose {
+                    break;
+                }
+                parser.parse_parameter_definition()?;
+                if parser.peek().kind != TokenKind::Comma {
+                    break;
+                }
+                parser.expect(TokenKind::Comma)?;
             }
-            self.parse_parameter_definition()?;
-            if self.peek().kind != TokenKind::Comma {
-                break;
-            }
-            self.expect(TokenKind::Comma)?;
-        }
+            Ok(())
+        })?;
         self.expect(TokenKind::ParensClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ParameterList);
@@ -488,7 +543,9 @@ impl Parser<'_> {
     fn parse_block(&mut self, end_set: TokenSet) -> ParseResult {
         let watcher = self.push_node();
 
-        self.parse_newline_separated(end_set, Self::parse_statement)?;
+        self.parse_recoverable(end_set, |parser| {
+            parser.parse_newline_separated(end_set, Self::parse_statement)
+        })?;
 
         self.finish_node(watcher, SyntaxNodeKind::Block);
         Ok(())
@@ -737,7 +794,10 @@ impl Parser<'_> {
             if self.peek().kind == TokenKind::ParensClose {
                 break;
             }
-            self.parse_expression()?;
+            self.parse_recoverable(
+                bitset![TokenKind::Comma, TokenKind::ParensClose],
+                Self::parse_expression,
+            )?;
             if self.peek().kind != TokenKind::Comma {
                 break;
             }

@@ -7,6 +7,17 @@ pub trait BitsetItem {
     fn from_index(index: u8) -> Self;
 }
 
+/// Should be an implementation for u7 technically, but whatever
+impl BitsetItem for u8 {
+    fn index(self) -> u8 {
+        self
+    }
+
+    fn from_index(index: u8) -> Self {
+        index
+    }
+}
+
 pub struct Bitset<T> {
     set: u128,
     _items: PhantomData<[T]>,
@@ -36,6 +47,25 @@ impl<T> Bitset<T> {
 
     pub const fn len(&self) -> u8 {
         self.set.count_ones() as u8
+    }
+
+    /// Returns the union of both sets
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use auryn::bitset;
+    /// # use auryn::utils::bitset::Bitset;
+    ///
+    /// let a: Bitset<u8> = bitset![1, 3, 6];
+    /// let b: Bitset<u8> = bitset![2, 4, 8];
+    /// assert_eq!(a.union(&b), bitset![1, 2, 3, 4, 6, 8]);
+    /// ```
+    pub const fn union(&self, other: &Self) -> Self {
+        Self {
+            set: self.set | other.set,
+            _items: PhantomData,
+        }
     }
 }
 
@@ -83,6 +113,26 @@ where
     }
 }
 
+impl<T> FromIterator<T> for Bitset<T>
+where
+    T: BitsetItem,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut this = Self::new();
+        this.extend(iter);
+        this
+    }
+}
+
+impl<T> From<T> for Bitset<T>
+where
+    T: BitsetItem,
+{
+    fn from(value: T) -> Self {
+        [value].into_iter().collect()
+    }
+}
+
 impl<T> Default for Bitset<T> {
     fn default() -> Self {
         Self::new()
@@ -105,6 +155,14 @@ where
         f.debug_set().entries(*self).finish()
     }
 }
+
+impl<T> PartialEq for Bitset<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.set == other.set
+    }
+}
+
+impl<T> Eq for Bitset<T> {}
 
 pub struct BitsetIter<T> {
     set: Bitset<T>,

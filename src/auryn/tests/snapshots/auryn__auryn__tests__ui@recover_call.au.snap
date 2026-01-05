@@ -1,0 +1,28 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n    let a = 1\n    bar(a., 2)\n}\n\nfn bar(a: Number, b: Number) {\n    print(a)\n    print(b)\n}"
+input_file: src/auryn/tests/inputs/ui/recover_call.au
+---
+Error: Unexpected token
+   ╭─[ main:3:11 ]
+   │
+ 3 │     bar(a., 2)
+   │           │ 
+   │           ╰─ got ","
+   │ 
+   │ Note: Expected `<identifier>`
+───╯
+
+Error: Mismatched argument count
+   ╭─[ main:3:5 ]
+   │
+ 6 │ fn bar(a: Number, b: Number) {
+   │       ───────────┬───────────  
+   │                  ╰───────────── Due to the definition here
+   │
+   ├─[ main:3:5 ]
+   │
+ 3 │     bar(a., 2)
+   │     ─┬─  
+   │      ╰─── Expected 2 arguments, but got 1
+───╯

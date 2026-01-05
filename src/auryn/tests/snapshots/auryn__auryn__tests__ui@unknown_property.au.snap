@@ -1,0 +1,14 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n    \"foo\".bar\n}"
+input_file: src/auryn/tests/inputs/ui/unknown_property.au
+---
+Error: Undefined property
+   ╭─[ main:2:11 ]
+   │
+ 2 │     "foo".bar
+   │     ──┬── ─┬─  
+   │       │    ╰─── Unknown property `bar`
+   │       │        
+   │       ╰──────── Value has type `String`
+───╯

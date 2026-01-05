@@ -1,0 +1,5 @@
+fn main() {
+    bar(1, 2)
+}
+
+fn bar(value: Number) {}

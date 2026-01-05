@@ -1,0 +1,12 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n    bar(\"not a number\")\n}\n\nfn bar(value: Number) {}"
+input_file: src/auryn/tests/inputs/ui/type_mismatch_call.au
+---
+Error: Type mismatch
+   ╭─[ main:2:9 ]
+   │
+ 2 │     bar("not a number")
+   │         ───────┬──────  
+   │                ╰──────── Expected `Number`, but got `String`
+───╯

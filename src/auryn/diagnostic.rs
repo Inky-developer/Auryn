@@ -193,7 +193,7 @@ impl Diagnostic {
         let mut builder = DiagnosticDisplay::new(self.level(), self.syntax_id);
         self.build_report(&mut builder);
 
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, not(test)))]
         builder.with_info(format!("This diagnostic was emmited at {}", self.location));
 
         builder

@@ -126,11 +126,11 @@ impl<'a> DiagnosticCollectionDisplay<'a> {
     }
 
     pub fn eprint(&self) {
-        self.write(std::io::stderr()).unwrap();
+        self.write(std::io::stderr(), true).unwrap();
     }
 
-    pub fn write(&self, writer: impl Write) -> std::io::Result<()> {
-        implementation::write(self, writer)
+    pub fn write(&self, writer: impl Write, enable_color: bool) -> std::io::Result<()> {
+        implementation::write(self, writer, enable_color)
     }
 
     fn compute_span(&self, syntax_id: SyntaxId) -> ComputedSpan {
@@ -147,7 +147,7 @@ impl Extend<DiagnosticDisplay> for DiagnosticCollectionDisplay<'_> {
 mod implementation {
     use std::{fmt::Debug, io::Write};
 
-    use ariadne::{Cache, Color, Report, ReportKind, Source};
+    use ariadne::{Cache, Color, IndexType, Report, ReportKind, Source};
 
     use crate::{
         auryn::{
@@ -164,12 +164,21 @@ mod implementation {
     // TODO: some syntax highlighting would be nice.
     // A quick & dirty solution would be to just run the tokenizer on the relevant lines and
     // assign a syntax highlighting color to each token, which we can tell ariadne by creating a label without message
-    pub fn write(ctx: &DiagnosticCollectionDisplay, mut w: impl Write) -> std::io::Result<()> {
+    pub fn write(
+        ctx: &DiagnosticCollectionDisplay,
+        mut w: impl Write,
+        enable_color: bool,
+    ) -> std::io::Result<()> {
+        let config = ariadne::Config::new()
+            .with_color(enable_color)
+            .with_index_type(IndexType::Byte);
+
         for (index, display) in ctx.displays.iter().enumerate() {
             let report = Report::build(
                 get_kind(display.level),
                 ctx.compute_span(display.main_label.id),
-            );
+            )
+            .with_config(config);
             assert!(!display.code.is_empty(), "{display:?} should have a code");
             let report = report.with_message(display.code);
 

@@ -9,7 +9,7 @@ indexmap = "2.12.1"
 rustc-hash = "2.1.1"
 
 [dev-dependencies]
-insta = "1.44.3"
+insta = { version = "1.44.3", features = ["glob"] }
 proptest = "1.9.0"
 
 [lints.clippy]
