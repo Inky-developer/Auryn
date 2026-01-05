@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 #[cfg(debug_assertions)]
 use std::panic::Location;
 
@@ -91,7 +92,7 @@ impl From<DiagnosticError> for DiagnosticKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub syntax_id: SyntaxId,
@@ -108,6 +109,15 @@ impl Diagnostic {
             #[cfg(debug_assertions)]
             location: Location::caller(),
         }
+    }
+}
+
+impl Debug for Diagnostic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Diagnostic")
+            .field("syntax_id", &self.syntax_id)
+            .field("kind", &self.kind)
+            .finish_non_exhaustive()
     }
 }
 

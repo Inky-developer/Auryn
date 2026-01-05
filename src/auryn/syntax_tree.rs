@@ -6,9 +6,7 @@ use std::{
 
 use crate::{
     auryn::{
-        diagnostic::{Diagnostic, DiagnosticKind},
-        diagnostic_display::ComputedSpan,
-        syntax_id::SyntaxId,
+        diagnostic::Diagnostic, diagnostic_display::ComputedSpan, syntax_id::SyntaxId,
         tokenizer::TokenKind,
     },
     utils::small_string::SmallString,
@@ -149,12 +147,15 @@ impl SyntaxToken {}
 pub struct ErrorNode {
     pub id: SyntaxId,
     pub text: SmallString,
-    pub diagnostic: DiagnosticKind,
+    pub diagnostic: Diagnostic,
 }
 
 impl ErrorNode {
     pub fn collect_diagnostics(&self, buf: &mut Vec<Diagnostic>) {
-        buf.push(Diagnostic::new(self.id, self.diagnostic.clone()));
+        buf.push(Diagnostic {
+            syntax_id: self.id,
+            ..self.diagnostic.clone()
+        });
     }
 }
 
@@ -258,6 +259,8 @@ impl SyntaxTree {
         }
     }
 
+    /// Collects all diagnostics of the error nodes in this tree
+    /// and associates them with the correct syntax ids
     pub fn collect_diagnostics(&self) -> Vec<Diagnostic> {
         let mut buf = Vec::new();
         self.root_node.collect_diagnostics(&mut buf);
@@ -317,7 +320,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
                         for _ in 0..(depth + 1) {
                             write!(f, "|")?;
                         }
-                        writeln!(f, "{:?}", error.diagnostic)?;
+                        writeln!(f, "{:?}", error.diagnostic.kind)?;
                     }
                 }
                 offset += child.len();

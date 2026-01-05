@@ -396,12 +396,6 @@ AirOutput {
     diagnostics: Diagnostics {
         diagnostics: [
             Diagnostic {
-                kind: Error(
-                    TypeMismatch {
-                        expected: "Number",
-                        got: "Null",
-                    },
-                ),
                 syntax_id: SyntaxId {
                     file_id: Some(
                         FileId(
@@ -412,6 +406,13 @@ AirOutput {
                         260624978435790,
                     ),
                 },
+                kind: Error(
+                    TypeMismatch {
+                        expected: "Number",
+                        got: "Null",
+                    },
+                ),
+                ..
             },
         ],
     },

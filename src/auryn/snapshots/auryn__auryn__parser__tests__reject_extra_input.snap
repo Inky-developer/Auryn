@@ -50,9 +50,6 @@ AnnotatedParserOutput {
     ),
     diagnostics: [
         Diagnostic {
-            kind: Error(
-                ExpectedNewline,
-            ),
             syntax_id: SyntaxId {
                 file_id: Some(
                     FileId(
@@ -63,11 +60,12 @@ AnnotatedParserOutput {
                     25588634246425,
                 ),
             },
-        },
-        Diagnostic {
             kind: Error(
                 ExpectedNewline,
             ),
+            ..
+        },
+        Diagnostic {
             syntax_id: SyntaxId {
                 file_id: Some(
                     FileId(
@@ -78,11 +76,12 @@ AnnotatedParserOutput {
                     76765902739269,
                 ),
             },
-        },
-        Diagnostic {
             kind: Error(
                 ExpectedNewline,
             ),
+            ..
+        },
+        Diagnostic {
             syntax_id: SyntaxId {
                 file_id: Some(
                     FileId(
@@ -93,11 +92,12 @@ AnnotatedParserOutput {
                     127943171232113,
                 ),
             },
-        },
-        Diagnostic {
             kind: Error(
                 ExpectedNewline,
             ),
+            ..
+        },
+        Diagnostic {
             syntax_id: SyntaxId {
                 file_id: Some(
                     FileId(
@@ -108,11 +108,12 @@ AnnotatedParserOutput {
                     179120439724957,
                 ),
             },
-        },
-        Diagnostic {
             kind: Error(
                 ExpectedNewline,
             ),
+            ..
+        },
+        Diagnostic {
             syntax_id: SyntaxId {
                 file_id: Some(
                     FileId(
@@ -123,6 +124,10 @@ AnnotatedParserOutput {
                     230297708217801,
                 ),
             },
+            kind: Error(
+                ExpectedNewline,
+            ),
+            ..
         },
     ],
 }

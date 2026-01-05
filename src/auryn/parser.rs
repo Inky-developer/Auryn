@@ -1,7 +1,7 @@
 use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
 
 use crate::auryn::{
-    diagnostic::{DiagnosticError, DiagnosticKind},
+    diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
     file_id::FileId,
     syntax_id::SyntaxId,
     syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
@@ -124,12 +124,14 @@ impl<'a> Parser<'a> {
         })
     }
 
+    #[track_caller]
     fn push_error(&mut self, diagnostic: impl Into<DiagnosticKind>) {
         let node = self.node_stack.last_mut().expect("Should have a node");
+        let id = SyntaxId::new_unset(Some(self.file_id));
         node.children.push(SyntaxItem::Error(Box::new(ErrorNode {
-            id: SyntaxId::new_unset(Some(self.file_id)),
+            id,
             text: "".into(),
-            diagnostic: diagnostic.into(),
+            diagnostic: Diagnostic::new(id, diagnostic),
         })));
     }
 
@@ -197,6 +199,7 @@ impl<'a> Parser<'a> {
         consumed || self.peek().kind == TokenKind::EndOfInput
     }
 
+    #[track_caller]
     fn expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
         match self.consume_if(|token| (token.kind == expected).then_some(token)) {
             Ok(token) => Ok(token.text),
@@ -211,6 +214,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    #[track_caller]
     fn peek_expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
         let token = self.peek();
         let kind = token.kind;
