@@ -5,7 +5,7 @@ use auryn::{
         air::query_air,
         ast::query_ast,
         codegen_java::class_generator::generate_class,
-        diagnostic::{Diagnostics, InputFile, InputFiles},
+        diagnostic::{DiagnosticKind, Diagnostics, InputFile, InputFiles},
         file_id::FileId,
         parser::Parser,
     },
@@ -17,8 +17,9 @@ fn main() -> std::io::Result<()> {
     args.next().unwrap();
     if let Some(filename) = args.next() {
         let input = std::fs::read_to_string(filename)?;
-        let class = get_class(&input);
-        run(class);
+        if let Some(class) = get_class(&input) {
+            run(class);
+        }
     } else {
         repl();
     }
@@ -32,9 +33,9 @@ fn repl() {
         input.clear();
         read_user_input(&mut input);
         let input = format!("fn main() {{ {input} }}");
-        let class = get_class(&input);
-
-        run(class);
+        if let Some(class) = get_class(&input) {
+            run(class);
+        }
     }
 }
 
@@ -54,7 +55,7 @@ fn run(class: ClassData) {
     handle.wait().unwrap();
 }
 
-fn get_class(input: &str) -> ClassData {
+fn get_class(input: &str) -> Option<ClassData> {
     let result = Parser::new(FileId::MAIN_FILE, input).parse();
     let mut diagnostics = result
         .syntax_tree
@@ -68,6 +69,9 @@ fn get_class(input: &str) -> ClassData {
     let air = query_air(ast);
     diagnostics.extend(air.diagnostics.take());
     if !diagnostics.is_empty() {
+        let should_abort = diagnostics
+            .iter()
+            .any(|it| matches!(it.kind, DiagnosticKind::Error(_)));
         let mut input_files = InputFiles::default();
         input_files.add(
             FileId::MAIN_FILE,
@@ -79,8 +83,12 @@ fn get_class(input: &str) -> ClassData {
         );
         let diagnostics: Diagnostics = diagnostics.into_iter().collect();
         diagnostics.display(&input_files).eprint();
+
+        if should_abort {
+            return None;
+        }
     }
-    generate_class(&air.air)
+    Some(generate_class(&air.air))
 }
 
 fn read_user_input(buf: &mut String) {
