@@ -161,6 +161,9 @@ mod implementation {
         utils::{fast_map::FastMap, small_string::SmallString},
     };
 
+    // TODO: some syntax highlighting would be nice.
+    // A quick & dirty solution would be to just run the tokenizer on the relevant lines and
+    // assign a syntax highlighting color to each token, which we can tell ariadne by creating a label without message
     pub fn write(ctx: &DiagnosticCollectionDisplay, mut w: impl Write) -> std::io::Result<()> {
         for (index, display) in ctx.displays.iter().enumerate() {
             let report = Report::build(
