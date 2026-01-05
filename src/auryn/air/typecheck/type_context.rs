@@ -272,6 +272,6 @@ impl<'a> Display for TypeViewKind<'a, ArrayType> {
 
 impl<'a> Display for TypeViewKind<'a, ExternType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "extern(`{}``)", self.value.extern_name)
+        write!(f, "extern('{}')", self.value.extern_name)
     }
 }
