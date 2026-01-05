@@ -203,9 +203,12 @@ mod implementation {
         ctx: &DiagnosticCollectionDisplay,
         label: &super::Label,
     ) -> ariadne::Label<ComputedSpan> {
-        ariadne::Label::new(ctx.compute_span(label.id))
+        let span = ctx.compute_span(label.id);
+        let prio = span.offset;
+        ariadne::Label::new(span)
             .with_message(&label.message)
             .with_color(get_color(label.kind))
+            .with_order(-prio.try_into().unwrap_or(i32::MAX))
     }
 
     fn get_color(kind: LabelKind) -> Color {
