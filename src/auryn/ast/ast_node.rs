@@ -159,10 +159,15 @@ ast_node! {
 ast_node! {
     pub enum ExternTypeBodyItemKind = SyntaxNodeKind::ExternTypeBodyItemKind as
         | SyntaxNodeKind::ExternTypeStaticLet as ExternTypeStaticLet
+        | SyntaxNodeKind::ExternTypeFunction as ExternTypeFunction
 }
 
 ast_node! {
     pub struct ExternTypeStaticLet = SyntaxNodeKind::ExternTypeStaticLet as { token ident: TokenKind::Identifier, r#type: Type, }
+}
+
+ast_node! {
+    pub struct ExternTypeFunction = SyntaxNodeKind::ExternTypeFunction as { token ident: TokenKind::Identifier, parameters: ParameterList, return_type: ReturnType, }
 }
 
 ast_node! {

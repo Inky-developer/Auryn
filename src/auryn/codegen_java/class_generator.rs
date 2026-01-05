@@ -206,6 +206,28 @@ mod tests {
             fn main() { System.out }
             "#
         ));
+
+        insta::assert_debug_snapshot!(generate_class(
+            r#"
+            unsafe extern "java" {
+            	["java/io/PrintStream"]
+            	type PrintStream {
+            		["println"]
+            		fn printString(string: String)
+            	}
+
+            	["java/lang/System"]
+            	type System {
+            		["out"]
+            		static let out: PrintStream
+            	}
+            }
+
+            fn main() {
+            	System.out.printString("Hello world!")
+            }
+            "#
+        ))
     }
 
     #[test]

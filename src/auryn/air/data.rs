@@ -78,7 +78,7 @@ impl AirFunction {
         SyntaxId,
         &[UnresolvedType],
         Option<&UnresolvedType>,
-        FunctionReference,
+        &FunctionReference,
     ) {
         let UnresolvedType::Function {
             parameters_reference,
@@ -93,7 +93,7 @@ impl AirFunction {
             *parameters_reference,
             parameters,
             return_type.as_deref(),
-            *reference,
+            reference,
         )
     }
 
@@ -150,22 +150,35 @@ pub struct Assignment {
 }
 
 #[derive(Debug, Clone)]
-pub struct UnresolvedExternMember {
-    pub extern_name: SmallString,
-    pub r#type: UnresolvedType,
+pub enum UnresolvedExternMember {
+    StaticLet {
+        r#type: UnresolvedType,
+        extern_name: SmallString,
+    },
+    Function {
+        unresolved_type: UnresolvedType,
+        ident: SmallString,
+        extern_name: SmallString,
+    },
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum FunctionReference {
     Intrinsic(Intrinsic),
     UserDefined(AirFunctionId),
+    Extern {
+        parent: Type,
+        extern_name: SmallString,
+        syntax_id: SyntaxId,
+    },
 }
 
 impl FunctionReference {
-    pub fn as_user_defined(self) -> AirFunctionId {
+    pub fn syntax_id(&self) -> SyntaxId {
         match self {
-            FunctionReference::UserDefined(air_function_id) => air_function_id,
-            other => panic!("expected user defined function, got {other:?}"),
+            FunctionReference::UserDefined(air_function_id) => air_function_id.0.0,
+            FunctionReference::Extern { syntax_id, .. } => *syntax_id,
+            other => panic!("{other:?} has no syntax id"),
         }
     }
 }

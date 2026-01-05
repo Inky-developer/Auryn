@@ -68,6 +68,7 @@ fn get_class(input: &str) -> Option<ClassData> {
 
     let ast = query_ast(&syntax_tree).unwrap();
     let air = query_air(ast);
+    // dbg!(&air);
     diagnostics.extend(air.diagnostics.take());
     if !diagnostics.is_empty() {
         let should_abort = diagnostics

@@ -1,13 +1,15 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"unsafe extern \\\"java\\\" {\\n[\\\"java/lang/Foo\\\"]\\ntype Foo { [\\\"bar\\\"] static let bar: Int }\\n}\")"
+expression: "verify(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/Foo\"]\n                type Foo {\n                    [\"bar\"] static let bar: Int\n\n                    [\"baz\"] fn baz(value: Int) -> String\n                }\n            }\n            \"#)"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..83 Root
-        |0..83 File
-        ||0..83 Item
-        |||0..83 ExternBlock
+        0..247 Root
+        |0..247 File
+        ||Newline `\n`
+        ||Whitespace `            `
+        ||13..234 Item
+        |||13..234 ExternBlock
         ||||KeywordUnsafe `unsafe`
         ||||Whitespace ` `
         ||||KeywordExtern `extern`
@@ -16,29 +18,32 @@ AnnotatedParserOutput {
         ||||Whitespace ` `
         ||||BraceOpen `{`
         ||||Newline `\n`
-        ||||23..81 ExternBlockItem
-        |||||23..40 ItemMetadata
+        ||||Whitespace `                `
+        ||||52..220 ExternBlockItem
+        |||||52..69 ItemMetadata
         ||||||BracketOpen `[`
         ||||||StringLiteral `\"java/lang/Foo\"`
         ||||||BracketClose `]`
         |||||Newline `\n`
-        |||||41..81 ExternBlockItemKind
-        ||||||41..81 ExternType
+        |||||Whitespace `                `
+        |||||86..220 ExternBlockItemKind
+        ||||||86..220 ExternType
         |||||||KeywordType `type`
         |||||||Whitespace ` `
         |||||||Identifier `Foo`
         |||||||Whitespace ` `
-        |||||||50..81 ExternTypeBody
+        |||||||95..220 ExternTypeBody
         ||||||||BraceOpen `{`
-        ||||||||Whitespace ` `
-        ||||||||52..80 ExternTypeBodyItem
-        |||||||||52..60 ItemMetadata
+        ||||||||Newline `\n`
+        ||||||||Whitespace `                    `
+        ||||||||117..144 ExternTypeBodyItem
+        |||||||||117..125 ItemMetadata
         ||||||||||BracketOpen `[`
         ||||||||||StringLiteral `\"bar\"`
         ||||||||||BracketClose `]`
         ||||||||||Whitespace ` `
-        |||||||||60..80 ExternTypeBodyItemKind
-        ||||||||||60..80 ExternTypeStaticLet
+        |||||||||125..144 ExternTypeBodyItemKind
+        ||||||||||125..144 ExternTypeStaticLet
         |||||||||||KeywordStatic `static`
         |||||||||||Whitespace ` `
         |||||||||||KeywordLet `let`
@@ -46,13 +51,48 @@ AnnotatedParserOutput {
         |||||||||||Identifier `bar`
         |||||||||||Colon `:`
         |||||||||||Whitespace ` `
-        |||||||||||76..80 Type
-        ||||||||||||76..80 Ident
+        |||||||||||141..144 Type
+        ||||||||||||141..144 Ident
         |||||||||||||Identifier `Int`
+        ||||||||Newline `\n`
+        ||||||||Newline `\n`
+        ||||||||Whitespace `                    `
+        ||||||||166..202 ExternTypeBodyItem
+        |||||||||166..174 ItemMetadata
+        ||||||||||BracketOpen `[`
+        ||||||||||StringLiteral `\"baz\"`
+        ||||||||||BracketClose `]`
+        ||||||||||Whitespace ` `
+        |||||||||174..202 ExternTypeBodyItemKind
+        ||||||||||174..202 ExternTypeFunction
+        |||||||||||KeywordFn `fn`
+        |||||||||||Whitespace ` `
+        |||||||||||Identifier `baz`
+        |||||||||||180..193 ParameterList
+        ||||||||||||ParensOpen `(`
+        ||||||||||||181..191 ParameterDefinition
+        |||||||||||||Identifier `value`
+        |||||||||||||Colon `:`
         |||||||||||||Whitespace ` `
+        |||||||||||||188..191 Type
+        ||||||||||||||188..191 Ident
+        |||||||||||||||Identifier `Int`
+        ||||||||||||ParensClose `)`
+        ||||||||||||Whitespace ` `
+        |||||||||||193..202 ReturnType
+        ||||||||||||Arrow `->`
+        ||||||||||||Whitespace ` `
+        ||||||||||||196..202 Type
+        |||||||||||||196..202 Ident
+        ||||||||||||||Identifier `String`
+        ||||||||Newline `\n`
+        ||||||||Whitespace `                `
         ||||||||BraceClose `}`
         ||||Newline `\n`
+        ||||Whitespace `            `
         ||||BraceClose `}`
+        ||Newline `\n`
+        ||Whitespace `            `
         ,
     ),
     diagnostics: [],

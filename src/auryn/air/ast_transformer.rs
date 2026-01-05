@@ -18,6 +18,7 @@ use crate::{
             Statement, StringLiteral, Type, Value, ValueOrPostfix, VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
+        syntax_id::SyntaxId,
         syntax_tree::SyntaxToken,
     },
     utils::{fast_map::FastMap, small_string::SmallString},
@@ -164,10 +165,10 @@ impl AstTransformer {
                 let Ok(extern_body) = extern_type.body() else {
                     return;
                 };
-                let extern_members = self.collect_extern_type_members(extern_body);
+                let def_id = self.namespace.types[&ident.text];
+                let extern_members = self.collect_extern_type_members(def_id, extern_body);
 
                 let extern_path = parse_string_literal_text(&extern_path.text);
-                let def_id = self.namespace.types[&ident.text];
                 let extern_type = AirType::Unresolved(UnresolvedType::Extern {
                     id: extern_type.id(),
                     extern_name: extern_path,
@@ -180,6 +181,7 @@ impl AstTransformer {
 
     fn collect_extern_type_members(
         &mut self,
+        def_id: UserDefinedTypeId,
         body: ExternTypeBody,
     ) -> FastMap<SmallString, UnresolvedExternMember> {
         let mut result = FastMap::default();
@@ -211,11 +213,54 @@ impl AstTransformer {
                     let Ok(unresolved) = self.transform_to_unresolved(r#type) else {
                         continue;
                     };
-                    let member = UnresolvedExternMember {
-                        extern_name,
+                    let member = UnresolvedExternMember::StaticLet {
                         r#type: unresolved,
+                        extern_name,
                     };
                     result.insert(ident.text.clone(), member);
+                }
+                ExternTypeBodyItemKind::ExternTypeFunction(function) => {
+                    let Ok(ident) = function.ident() else {
+                        continue;
+                    };
+                    let Ok(parameters) = function.parameters() else {
+                        continue;
+                    };
+
+                    let syntax_id = ident.id;
+                    let ident = ident.text.clone();
+                    let declared_parameters = parameters
+                        .parameters()
+                        .filter_map(|param| {
+                            param
+                                .r#type()
+                                .ok()
+                                .and_then(|ty| self.transform_to_unresolved(ty).ok())
+                        })
+                        .collect();
+                    let declared_return_type = function
+                        .return_type()
+                        .ok()
+                        .and_then(|ty| ty.r#type().ok())
+                        .and_then(|ty| self.transform_to_unresolved(ty).ok())
+                        .map(Box::new);
+
+                    let member = UnresolvedExternMember::Function {
+                        unresolved_type: UnresolvedType::Function {
+                            parameters_reference: parameters.id(),
+                            parameters: declared_parameters,
+                            return_type: declared_return_type,
+                            reference: FunctionReference::Extern {
+                                extern_name: extern_name.clone(),
+                                parent: def_id.to_type(),
+                                syntax_id,
+                            },
+                        },
+                        ident: ident.clone(),
+                        extern_name,
+                    };
+
+                    result.insert(ident, member);
                 }
             }
         }
@@ -584,7 +629,9 @@ impl FunctionTransformer<'_> {
             PostfixOperator::ArgumentList(argument_list) => {
                 self.transform_postfix_call(value, argument_list)
             }
-            PostfixOperator::Accessor(accessor) => self.transform_accessor(value, accessor),
+            PostfixOperator::Accessor(accessor) => {
+                self.transform_accessor(postfix_op.id(), value, accessor)
+            }
         }
     }
 
@@ -620,14 +667,19 @@ impl FunctionTransformer<'_> {
         )
     }
 
-    fn transform_accessor(&mut self, value: ValueOrPostfix, accessor: Accessor) -> AirExpression {
+    fn transform_accessor(
+        &mut self,
+        id: SyntaxId,
+        value: ValueOrPostfix,
+        accessor: Accessor,
+    ) -> AirExpression {
         let value = self.transform_value_or_postfix_operation(value);
         let Ok(ident) = accessor.ident() else {
             return AirExpression::error(value.id);
         };
 
         AirExpression::new(
-            value.id,
+            id,
             AirExpressionKind::Accessor(data::Accessor {
                 value: Box::new(value),
                 ident: ident.text.clone(),

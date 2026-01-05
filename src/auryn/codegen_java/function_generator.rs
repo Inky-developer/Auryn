@@ -13,7 +13,7 @@ use crate::{
             class_generator::GeneratedMethodData,
             representation::{
                 FieldDescriptor, MethodDescriptor, Representation, ReturnDescriptor,
-                get_representation,
+                get_function_representation, get_representation,
             },
         },
         tokenizer::BinaryOperatorToken,
@@ -318,19 +318,18 @@ impl FunctionGenerator<'_> {
                 let variable_id = self.variable_map[local_variable_id].clone();
                 self.assembler.add(Instruction::Load(variable_id));
             }
-            AirValueId::Global(_static_value_id) => {
-                todo!()
-            }
-            AirValueId::Intrinsic(_) => {
-                // Intrinsic functions have no run time representation
+            AirValueId::Intrinsic(_) | AirValueId::Global(_) => {
+                // Intrinsic functions and globals have no run time representation
                 // so nothing needs to be loaded
             }
         }
     }
 
     fn generate_accessor(&mut self, accessor: &Accessor, result_repr: Option<Representation>) {
+        self.generate_expression(&accessor.value);
+
         let Some(result_repr) = result_repr else {
-            // If the result has no runtime representation, no instructions need to be emitted
+            // If the result has no runtime representation, no further instructions need to be emitted
             return;
         };
 
@@ -350,9 +349,12 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_call(&mut self, call: &Call, expression_type: TypeView) {
-        match call.function_type(self.ty_ctx).reference {
+        self.generate_expression(&call.function);
+
+        let function_type = call.function_type(self.ty_ctx);
+        match &function_type.reference {
             FunctionReference::Intrinsic(intrinsic) => {
-                self.generate_intrinsic_call(expression_type, intrinsic, &call.arguments)
+                self.generate_intrinsic_call(expression_type, *intrinsic, &call.arguments)
             }
             FunctionReference::UserDefined(function_id) => {
                 for argument in &call.arguments {
@@ -362,11 +364,32 @@ impl FunctionGenerator<'_> {
                 let GeneratedMethodData {
                     generated_name,
                     method_descriptor,
-                } = &self.function_infos[&function_id];
+                } = &self.function_infos[function_id];
                 self.assembler.add(Instruction::InvokeStatic {
                     class_name: self.class_name.clone(),
                     name: generated_name.clone(),
                     method_descriptor: method_descriptor.clone(),
+                });
+            }
+            FunctionReference::Extern {
+                parent,
+                extern_name,
+                ..
+            } => {
+                for argument in &call.arguments {
+                    self.generate_expression(argument);
+                }
+
+                let method_descriptor = get_function_representation(function_type);
+                let Some(Representation::Object(class_name)) =
+                    get_representation(parent.as_view(self.ty_ctx))
+                else {
+                    panic!("Extern function should be member of an object");
+                };
+                self.assembler.add(Instruction::InvokeVirtual {
+                    class_name,
+                    name: extern_name.clone(),
+                    method_descriptor,
                 });
             }
         }

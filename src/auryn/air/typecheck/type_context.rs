@@ -74,13 +74,13 @@ impl TypeContext {
         }
     }
 
-    fn get_function(&self, id: TypeId<FunctionType>) -> &FunctionType {
+    pub fn get_function(&self, id: TypeId<FunctionType>) -> &FunctionType {
         &self.functions[&id]
     }
-    fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
+    pub fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
         &self.externs[&id]
     }
-    fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
+    pub fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
         self.arrays.get_by_key(&id).unwrap()
     }
 }

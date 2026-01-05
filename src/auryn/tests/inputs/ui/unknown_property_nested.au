@@ -1,0 +1,17 @@
+unsafe extern "java" {
+	["foo"]
+	type Foo {
+		["bar"]
+		static let bar: Bar
+	}
+
+	["bar"]
+	type Bar {
+		["baz"]
+		static let baz: String
+	}
+}
+
+fn main() {
+	print(Foo.bar.oops)
+}

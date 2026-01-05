@@ -410,6 +410,7 @@ impl Parser<'_> {
         let inner_watcher = self.push_node();
         match self.peek().kind {
             TokenKind::KeywordStatic => self.parse_extern_type_body_static_let()?,
+            TokenKind::KeywordFn => self.parse_extern_type_body_function()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedExternTypeBodyItem {
                     got: self.peek().text.into(),
@@ -433,6 +434,20 @@ impl Parser<'_> {
         self.parse_type()?;
 
         self.finish_node(watcher, SyntaxNodeKind::ExternTypeStaticLet);
+        Ok(())
+    }
+
+    fn parse_extern_type_body_function(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordFn)?;
+        self.expect(TokenKind::Identifier)?;
+        self.parse_parameter_list()?;
+        if self.peek().kind == TokenKind::Arrow {
+            self.parse_return_type()?;
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::ExternTypeFunction);
         Ok(())
     }
 
@@ -979,7 +994,16 @@ mod tests {
     #[test]
     fn test_extern_items() {
         insta::assert_debug_snapshot!(verify(
-            "unsafe extern \"java\" {\n[\"java/lang/Foo\"]\ntype Foo { [\"bar\"] static let bar: Int }\n}"
+            r#"
+            unsafe extern "java" {
+                ["java/lang/Foo"]
+                type Foo {
+                    ["bar"] static let bar: Int
+
+                    ["baz"] fn baz(value: Int) -> String
+                }
+            }
+            "#
         ));
     }
 

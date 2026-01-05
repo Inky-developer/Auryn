@@ -25,6 +25,7 @@ pub enum SyntaxNodeKind {
     ExternTypeBodyItem,
     ExternTypeBodyItemKind,
     ExternTypeStaticLet,
+    ExternTypeFunction,
     ItemMetadata,
     FunctionDefinition,
     ParameterList,

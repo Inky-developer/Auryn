@@ -7,7 +7,8 @@ use crate::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
                 AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment,
-                BinaryOperation, Call, FunctionReference, Intrinsic, ReturnValue, UnresolvedType,
+                BinaryOperation, Call, FunctionReference, Intrinsic, ReturnValue,
+                UnresolvedExternMember, UnresolvedType,
             },
             namespace::UserDefinedTypeId,
             typecheck::{
@@ -187,14 +188,14 @@ impl Typechecker {
                     .as_ref()
                     .map_or(Type::Null, |ty| self.resolve_type(ty));
                 Type::Function(self.ty_ctx.add_function(
-                    reference.as_user_defined().0.0,
+                    reference.syntax_id(),
                     FunctionType {
                         parameters: FunctionParameters::Constrained {
                             parameters,
                             parameters_reference: *parameters_reference,
                         },
                         return_type,
-                        reference: *reference,
+                        reference: reference.clone(),
                     },
                 ))
             }
@@ -211,13 +212,25 @@ impl Typechecker {
                 let members = members
                     .iter()
                     .map(|(ident, member)| {
-                        (
-                            ident.clone(),
-                            ExternTypeMember {
-                                extern_name: member.extern_name.clone(),
-                                r#type: self.resolve_type(&member.r#type),
+                        let member = match member {
+                            UnresolvedExternMember::StaticLet {
+                                r#type,
+                                extern_name,
+                                ..
+                            } => ExternTypeMember {
+                                extern_name: extern_name.clone(),
+                                r#type: self.resolve_type(r#type),
                             },
-                        )
+                            UnresolvedExternMember::Function {
+                                unresolved_type,
+                                extern_name,
+                                ..
+                            } => ExternTypeMember {
+                                r#type: self.resolve_type(unresolved_type),
+                                extern_name: extern_name.clone(),
+                            },
+                        };
+                        (ident.clone(), member)
                     })
                     .collect();
                 Type::Extern(self.ty_ctx.add_extern(
