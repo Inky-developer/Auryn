@@ -156,8 +156,7 @@ impl<'a> Tokenizer<'a> {
             && self.input[keyword.len()..]
                 .chars()
                 .next()
-                .unwrap_or('\0')
-                .is_ascii_whitespace()
+                .is_none_or(|char| char.is_ascii_whitespace())
     }
 
     fn consume_while<F: FnMut(char) -> bool>(&mut self, mut predicate: F) -> &'a str {
@@ -364,7 +363,8 @@ impl<'a> Iterator for Tokenizer<'a> {
 
 #[cfg(test)]
 mod tests {
-    use proptest::{prop_assert, prop_assert_eq, proptest};
+
+    use crate::auryn::tokenizer::TokenKind;
 
     use super::{Token, Tokenizer};
 
@@ -398,16 +398,15 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize("\u{a0}"));
     }
 
-    proptest! {
-        #[test]
-        fn as_str_equivalent(s in "[[:ascii:]]*") {
-            let tokens = Tokenizer::new(&s);
-            for token in tokens {
-                prop_assert!(!token.text.is_empty());
-                let str = token.kind.as_str();
-                if !str.starts_with("<") {
-                    prop_assert_eq!(token.text, str);
-                }
+    #[test]
+    fn test_as_str_conversion() {
+        for kind in TokenKind::VARIANTS {
+            let str = kind.as_str();
+            if !str.starts_with("<") {
+                assert_eq!(
+                    Tokenizer::new(str).map(|it| it.kind).collect::<Vec<_>>(),
+                    vec![*kind]
+                );
             }
         }
     }

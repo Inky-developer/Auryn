@@ -10,7 +10,6 @@ rustc-hash = "2.1.1"
 
 [dev-dependencies]
 insta = { version = "1.44.3", features = ["glob"] }
-proptest = "1.9.0"
 
 [lints.clippy]
 # This simplifies module management imho
