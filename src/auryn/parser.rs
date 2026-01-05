@@ -1,11 +1,14 @@
-use std::{cell::Cell, fmt::Debug, ops::Deref, rc::Rc};
+use std::fmt::Debug;
 
-use crate::auryn::{
-    diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
-    file_id::FileId,
-    syntax_id::SyntaxId,
-    syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
-    tokenizer::{Token, TokenKind, Tokenizer},
+use crate::{
+    auryn::{
+        diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+        file_id::FileId,
+        syntax_id::SyntaxId,
+        syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
+        tokenizer::{Token, TokenKind, TokenSet, Tokenizer},
+    },
+    bitset,
 };
 
 #[derive(Debug)]
@@ -18,40 +21,11 @@ struct ParserStackNode {
     children: Vec<SyntaxItem>,
 }
 
-#[derive(Debug, Clone)]
-struct ParserSkippedFrames(Rc<Cell<u32>>);
-
-impl ParserSkippedFrames {
-    fn get_watcher(&self) -> ParserFrameWatcher {
-        ParserFrameWatcher(self.clone())
-    }
-}
-
-impl Deref for ParserSkippedFrames {
-    type Target = Cell<u32>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 /// Type to keep track of current frames in the parser that automatically marks them as exited with error, in case
 /// an error happened.
 #[derive(Debug)]
-struct ParserFrameWatcher(ParserSkippedFrames);
-
-impl ParserFrameWatcher {
-    fn finish_successfully(self) {
-        let Self(_) = self;
-    }
-}
-
-/// When this is dropped, it means that the current frame was not finished without error.
-/// In this case, mark the latest frame as error.
-impl Drop for ParserFrameWatcher {
-    fn drop(&mut self) {
-        self.0.update(|dropped_frames| dropped_frames + 1);
-    }
+struct ParserFrameWatcher {
+    stack_level: usize,
 }
 
 pub struct Parser<'a> {
@@ -59,7 +33,6 @@ pub struct Parser<'a> {
     file_id: FileId,
     index: usize,
     node_stack: Vec<ParserStackNode>,
-    skipped_frames: ParserSkippedFrames,
 }
 
 type ParseResult<T = ()> = Result<T, ()>;
@@ -71,7 +44,6 @@ impl<'a> Parser<'a> {
             file_id,
             index: 0,
             node_stack: Vec::new(),
-            skipped_frames: ParserSkippedFrames(Rc::new(Cell::new(0))),
         }
     }
 
@@ -80,7 +52,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_statements(self) -> ParserOutput {
-        self.parse_with(|this| this.parse_block(|it| it == TokenKind::EndOfInput))
+        self.parse_with(|this| this.parse_block(bitset![TokenKind::EndOfInput]))
     }
 
     fn parse_with(mut self, parse: impl FnOnce(&mut Self) -> ParseResult) -> ParserOutput {
@@ -231,10 +203,11 @@ impl<'a> Parser<'a> {
 
     #[must_use]
     fn push_node(&mut self) -> ParserFrameWatcher {
+        let stack_level = self.node_stack.len();
         self.node_stack.push(ParserStackNode {
             children: Vec::new(),
         });
-        self.skipped_frames.get_watcher()
+        ParserFrameWatcher { stack_level }
     }
 
     #[must_use]
@@ -243,8 +216,8 @@ impl<'a> Parser<'a> {
         watcher: ParserFrameWatcher,
         kind: SyntaxNodeKind,
     ) -> Option<SyntaxNode> {
-        watcher.finish_successfully();
         let ParserStackNode { children } = self.node_stack.pop()?;
+        debug_assert_eq!(self.node_stack.len(), watcher.stack_level);
         let len = children.iter().map(|child| child.len()).sum::<u32>();
 
         Some(SyntaxNode {
@@ -266,16 +239,16 @@ impl<'a> Parser<'a> {
 
     fn parse_newline_separated(
         &mut self,
-        end_set: impl Fn(TokenKind) -> bool,
+        end_set: TokenSet,
         parse: impl Fn(&mut Self) -> ParseResult,
     ) -> ParseResult {
         loop {
             self.consume_whitespace_and_newlines();
-            if end_set(self.peek().kind) {
+            if end_set.contains(self.peek().kind) {
                 break;
             }
             parse(self)?;
-            if !self.consume_statement_separator() && !end_set(self.peek().kind) {
+            if !self.consume_statement_separator() && !end_set.contains(self.peek().kind) {
                 self.push_error(DiagnosticError::ExpectedNewline);
             }
         }
@@ -289,7 +262,7 @@ impl Parser<'_> {
     fn parse_file(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.parse_newline_separated(|kind| kind == TokenKind::EndOfInput, Self::parse_item)?;
+        self.parse_newline_separated(bitset![TokenKind::EndOfInput], Self::parse_item)?;
 
         self.finish_node(watcher, SyntaxNodeKind::File);
         Ok(())
@@ -320,10 +293,7 @@ impl Parser<'_> {
         self.expect(TokenKind::StringLiteral)?;
 
         self.expect(TokenKind::BraceOpen)?;
-        self.parse_newline_separated(
-            |kind| kind == TokenKind::BraceClose,
-            Self::parse_extern_item,
-        )?;
+        self.parse_newline_separated(bitset![TokenKind::BraceClose], Self::parse_extern_item)?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ExternBlock);
@@ -371,7 +341,7 @@ impl Parser<'_> {
 
         self.expect(TokenKind::BraceOpen)?;
         self.parse_newline_separated(
-            |kind| kind == TokenKind::BraceClose,
+            bitset![TokenKind::BraceClose],
             Self::parse_extern_type_body_item,
         )?;
         self.expect(TokenKind::BraceClose)?;
@@ -438,7 +408,7 @@ impl Parser<'_> {
             self.parse_return_type()?;
         }
         self.expect(TokenKind::BraceOpen)?;
-        self.parse_block(|it| it == TokenKind::BraceClose)?;
+        self.parse_block(bitset![TokenKind::BraceClose])?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::FunctionDefinition);
@@ -515,7 +485,7 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_block(&mut self, end_set: impl Fn(TokenKind) -> bool) -> ParseResult {
+    fn parse_block(&mut self, end_set: TokenSet) -> ParseResult {
         let watcher = self.push_node();
 
         self.parse_newline_separated(end_set, Self::parse_statement)?;
@@ -564,7 +534,7 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordIf)?;
         self.parse_expression()?;
         self.expect(TokenKind::BraceOpen)?;
-        self.parse_block(|kind| kind == TokenKind::BraceClose)?;
+        self.parse_block(bitset![TokenKind::BraceClose])?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::IfStatement);
@@ -577,7 +547,7 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordLoop)?;
         self.expect(TokenKind::BraceOpen)?;
         self.consume_whitespace();
-        self.parse_block(|kind| kind == TokenKind::BraceClose)?;
+        self.parse_block(bitset![TokenKind::BraceClose])?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::Loop);
@@ -597,7 +567,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordReturn)?;
-        if is_expression_start(self.peek().kind) {
+        if Self::EXPRESSION_START.contains(self.peek().kind) {
             self.parse_expression()?;
         }
 
@@ -617,7 +587,7 @@ impl Parser<'_> {
     }
 
     fn parse_expression(&mut self) -> ParseResult {
-        if !is_expression_start(self.peek().kind) {
+        if !Self::EXPRESSION_START.contains(self.peek().kind) {
             self.push_error(DiagnosticError::ExpectedExpression {
                 got: self.peek().text.into(),
             });
@@ -676,6 +646,13 @@ impl Parser<'_> {
         Ok(())
     }
 
+    // must be in sync with `parse_value_or_postfix`
+    const EXPRESSION_START: TokenSet = bitset![
+        TokenKind::Identifier,
+        TokenKind::NumberLiteral,
+        TokenKind::StringLiteral,
+        TokenKind::ParensOpen
+    ];
     fn parse_value_or_postfix(&mut self) -> ParseResult {
         let mut watcher = self.push_node();
 
@@ -692,13 +669,13 @@ impl Parser<'_> {
             }
         };
 
-        if !is_postfix_start(self.peek().kind) {
+        if !Self::POSTFIX_START.contains(self.peek().kind) {
             self.finish_node(watcher, SyntaxNodeKind::Value);
             return Ok(());
         };
 
         let mut current_node_kind = SyntaxNodeKind::Value;
-        while is_postfix_start(self.peek().kind) {
+        while Self::POSTFIX_START.contains(self.peek().kind) {
             let postfix_node = self.pop_node(watcher, current_node_kind).unwrap();
             watcher = self.push_node();
             current_node_kind = SyntaxNodeKind::PostfixOperation;
@@ -715,9 +692,12 @@ impl Parser<'_> {
         Ok(())
     }
 
+    // must be kept in sync with `parse_postfix`
+    const POSTFIX_START: TokenSet = bitset![TokenKind::ParensOpen, TokenKind::Dot];
     fn parse_postfix(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
+        assert!(Self::POSTFIX_START.contains(self.peek().kind));
         match self.peek().kind {
             TokenKind::ParensOpen => self.parse_argument_list()?,
             TokenKind::Dot => self.parse_accessor()?,
@@ -795,22 +775,6 @@ impl Parser<'_> {
         self.finish_node(watcher, SyntaxNodeKind::Parenthesis);
         Ok(())
     }
-}
-
-/// Not nice, must be in sync with [`Parser::parse_value`].
-fn is_expression_start(kind: TokenKind) -> bool {
-    matches!(
-        kind,
-        TokenKind::Identifier
-            | TokenKind::NumberLiteral
-            | TokenKind::StringLiteral
-            | TokenKind::ParensOpen
-    )
-}
-
-/// Must be in sync with [`Parser::parse_postfix_op`]
-fn is_postfix_start(kind: TokenKind) -> bool {
-    matches!(kind, TokenKind::ParensOpen | TokenKind::Dot)
 }
 
 #[cfg(test)]

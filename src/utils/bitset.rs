@@ -56,7 +56,7 @@ where
     pub fn contains(&self, item: T) -> bool {
         let index = item.index();
         assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
-        self.set & !(1 << index) != 0
+        self.set & (1 << index) != 0
     }
 }
 
@@ -190,11 +190,14 @@ mod tests {
         assert!(bitset.is_empty());
         assert_eq!(bitset.len(), 0);
         assert_eq!(bitset.into_iter().next(), None);
+        assert!(!bitset.contains(MyEnum::A));
 
         bitset.add(MyEnum::B);
         assert!(!bitset.is_empty());
         assert_eq!(bitset.len(), 1);
         insta::assert_compact_debug_snapshot!(bitset, @"{B}");
+        assert!(!bitset.contains(MyEnum::A));
+        assert!(bitset.contains(MyEnum::B));
 
         bitset.add(MyEnum::C);
         assert!(!bitset.is_empty());
