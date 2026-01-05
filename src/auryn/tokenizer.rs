@@ -1,5 +1,7 @@
 use core::fmt;
 
+use crate::{bitset_item, utils::bitset::Bitset};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperatorToken {
     Plus,
@@ -24,51 +26,49 @@ impl BinaryOperatorToken {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum TokenKind {
-    NumberLiteral,
-    StringLiteral,
-    Identifier,
-    Plus,
-    Minus,
-    Times,
-    Equal,
-    DoubleEqual,
-    NotEqual,
-    Greater,
-    GreaterOrEqual,
-    Less,
-    LessOrEqual,
-    /// (
-    ParensOpen,
-    /// )
-    ParensClose,
-    /// {
-    BraceOpen,
-    /// }
-    BraceClose,
-    /// [
-    BracketOpen,
-    /// ]
-    BracketClose,
-    KeywordLet,
-    KeywordLoop,
-    KeywordBreak,
-    KeywordIf,
-    KeywordFn,
-    KeywordReturn,
-    KeywordUnsafe,
-    KeywordExtern,
-    KeywordStatic,
-    KeywordType,
-    Whitespace,
-    Newline,
-    Error,
-    EndOfInput,
-    Comma,
-    Colon,
-    Arrow,
-    Dot,
+pub type TokenSet = Bitset<TokenKind>;
+
+bitset_item! {
+    #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+    pub enum TokenKind {
+        NumberLiteral,
+        StringLiteral,
+        Identifier,
+        Plus,
+        Minus,
+        Times,
+        Equal,
+        DoubleEqual,
+        NotEqual,
+        Greater,
+        GreaterOrEqual,
+        Less,
+        LessOrEqual,
+        ParensOpen,
+        ParensClose,
+        BraceOpen,
+        BraceClose,
+        BracketOpen,
+        BracketClose,
+        KeywordLet,
+        KeywordLoop,
+        KeywordBreak,
+        KeywordIf,
+        KeywordFn,
+        KeywordReturn,
+        KeywordUnsafe,
+        KeywordExtern,
+        KeywordStatic,
+        KeywordType,
+        Whitespace,
+        Newline,
+        Error,
+        EndOfInput,
+        Comma,
+        Colon,
+        Arrow,
+        Dot,
+    }
 }
 
 impl TokenKind {
