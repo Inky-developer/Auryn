@@ -12,34 +12,51 @@ pub struct Bitset<T> {
     _items: PhantomData<[T]>,
 }
 
+impl<T> Bitset<T> {
+    pub const fn new() -> Self {
+        Self {
+            set: 0,
+            _items: PhantomData,
+        }
+    }
+
+    pub const fn add_raw(&mut self, index: u8) {
+        assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
+        self.set |= 1 << index;
+    }
+
+    pub const fn remove_raw(&mut self, index: u8) {
+        assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
+        self.set &= !(1 << index);
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.set == 0
+    }
+
+    pub const fn len(&self) -> u8 {
+        self.set.count_ones() as u8
+    }
+}
+
 impl<T> Bitset<T>
 where
     T: BitsetItem,
 {
     pub fn add(&mut self, item: T) {
         let index = item.index();
-        assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
-        self.set |= 1 << index;
+        self.add_raw(index);
     }
 
     pub fn remove(&mut self, item: T) {
         let index = item.index();
-        assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
-        self.set &= !(1 << index);
+        self.remove_raw(index);
     }
 
     pub fn contains(&self, item: T) -> bool {
         let index = item.index();
         assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
         self.set & !(1 << index) != 0
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.set == 0
-    }
-
-    pub fn len(&self) -> u8 {
-        self.set.count_ones().try_into().unwrap()
     }
 }
 
@@ -68,10 +85,7 @@ where
 
 impl<T> Default for Bitset<T> {
     fn default() -> Self {
-        Self {
-            set: 0,
-            _items: PhantomData,
-        }
+        Self::new()
     }
 }
 
@@ -116,6 +130,7 @@ where
     }
 }
 
+/// Creates an enum with unitary variants that implements the [`BitsetItem`] trait
 #[macro_export]
 macro_rules! bitset_item {
     ($(#[$meta:meta])* $vis:vis enum $name:ident { $($variants:ident),* $(,)? }) => {
@@ -144,12 +159,13 @@ macro_rules! bitset_item {
     };
 }
 
+/// Creates a bitset with the given elements at compile time
 #[macro_export]
 macro_rules! bitset [
     ($($items:expr),*) => {
-        {
-            let mut set = $crate::utils::bitset::Bitset::default();
-            $(set.add($items);)*
+        const {
+            let mut set = $crate::utils::bitset::Bitset::new();
+            $(set.add_raw(($items) as u8);)*
             set
         }
     }
@@ -164,7 +180,7 @@ mod tests {
         pub enum MyEnum {
             A,
             B,
-             C
+            C
         }
     }
 
@@ -196,7 +212,7 @@ mod tests {
 
     #[test]
     fn test_macro() {
-        let my_set = bitset![MyEnum::A, MyEnum::C];
+        let my_set: Bitset<MyEnum> = bitset![MyEnum::A, MyEnum::C];
         insta::assert_compact_debug_snapshot!(my_set, @"{A, C}");
     }
 }
