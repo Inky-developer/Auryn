@@ -1,4 +1,4 @@
-use std::{fmt::Debug, marker::PhantomData};
+use std::{fmt::Debug, marker::PhantomData, ops::Add};
 
 pub trait BitsetItem {
     fn index(self) -> u8;
@@ -31,7 +31,7 @@ impl<T> Bitset<T> {
         }
     }
 
-    pub const fn add_raw(&mut self, index: u8) {
+    pub const fn insert_raw(&mut self, index: u8) {
         assert!(index < 128, "Bitset can only hold indexes of 127 and lower");
         self.set |= 1 << index;
     }
@@ -73,9 +73,9 @@ impl<T> Bitset<T>
 where
     T: BitsetItem,
 {
-    pub fn add(&mut self, item: T) {
+    pub fn insert(&mut self, item: T) {
         let index = item.index();
-        self.add_raw(index);
+        self.insert_raw(index);
     }
 
     pub fn remove(&mut self, item: T) {
@@ -90,13 +90,26 @@ where
     }
 }
 
+impl<T> Add<T> for Bitset<T>
+where
+    T: BitsetItem,
+{
+    type Output = Self;
+
+    fn add(self, rhs: T) -> Self::Output {
+        let mut output = self;
+        output.insert(rhs);
+        output
+    }
+}
+
 impl<T> Extend<T> for Bitset<T>
 where
     T: BitsetItem,
 {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for item in iter {
-            self.add(item);
+            self.insert(item);
         }
     }
 }
@@ -225,7 +238,7 @@ macro_rules! bitset [
     ($($items:expr),*) => {
         const {
             let mut set = $crate::utils::bitset::Bitset::new();
-            $(set.add_raw(($items) as u8);)*
+            $(set.insert_raw(($items) as u8);)*
             set
         }
     }
@@ -252,19 +265,19 @@ mod tests {
         assert_eq!(bitset.into_iter().next(), None);
         assert!(!bitset.contains(MyEnum::A));
 
-        bitset.add(MyEnum::B);
+        bitset.insert(MyEnum::B);
         assert!(!bitset.is_empty());
         assert_eq!(bitset.len(), 1);
         insta::assert_compact_debug_snapshot!(bitset, @"{B}");
         assert!(!bitset.contains(MyEnum::A));
         assert!(bitset.contains(MyEnum::B));
 
-        bitset.add(MyEnum::C);
+        bitset.insert(MyEnum::C);
         assert!(!bitset.is_empty());
         assert_eq!(bitset.len(), 2);
         insta::assert_compact_debug_snapshot!(bitset, @"{B, C}");
 
-        bitset.add(MyEnum::A);
+        bitset.insert(MyEnum::A);
         assert!(!bitset.is_empty());
         assert_eq!(bitset.len(), 3);
         insta::assert_compact_debug_snapshot!(bitset, @"{A, B, C}");

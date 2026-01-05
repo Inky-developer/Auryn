@@ -1,0 +1,11 @@
+unsafe extern "java" {
+	["foo"]
+	type Foo {
+		["bar"]
+		invalid item
+	}
+}
+
+fn main() {
+	print(Foo)
+}

@@ -293,7 +293,7 @@ impl<'a> Parser<'a> {
             if end_set.contains(self.peek().kind) {
                 break;
             }
-            parse(self)?;
+            self.parse_recoverable(end_set + TokenKind::Newline, &parse)?;
             if !self.consume_statement_separator() && !end_set.contains(self.peek().kind) {
                 self.push_error(DiagnosticError::ExpectedNewline);
             }

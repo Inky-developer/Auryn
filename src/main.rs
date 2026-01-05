@@ -64,6 +64,7 @@ fn get_class(input: &str) -> Option<ClassData> {
         .unwrap_or_default();
 
     let syntax_tree = result.syntax_tree.unwrap();
+    // println!("{}", syntax_tree.display(input));
 
     let ast = query_ast(&syntax_tree).unwrap();
     let air = query_air(ast);
