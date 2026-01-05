@@ -103,13 +103,24 @@ impl ClassGenerator<'_> {
             }],
             return_type: ReturnDescriptor::Void,
         };
-        let mut assembler =
-            FunctionAssembler::new("main".into(), main_descriptor, &mut self.constant_pool);
 
         let GeneratedMethodData {
             generated_name: name,
             method_descriptor,
         } = self.generated_methods[&id].clone();
+
+        // if the auryn main function is already defined like the java main function, we don't need generate a wrapper
+        if method_descriptor == main_descriptor {
+            return;
+        }
+
+        assert!(
+            method_descriptor.parameters.is_empty(),
+            "Main function should not take arguments"
+        );
+
+        let mut assembler =
+            FunctionAssembler::new("main".into(), main_descriptor, &mut self.constant_pool);
 
         assembler.add(Instruction::InvokeStatic {
             class_name: self.class_name.clone(),

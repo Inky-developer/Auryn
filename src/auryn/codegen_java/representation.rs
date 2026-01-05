@@ -6,7 +6,7 @@ use crate::{
         types::FunctionType,
     },
     java::{
-        class::{ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
+        class::{PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
     },
     utils::small_string::SmallString,
@@ -25,15 +25,12 @@ impl Representation {
         Representation::Object("java/lang/String".into())
     }
 
-    pub fn to_primitive_type_or_object(
-        self,
-        pool: &mut ConstantPoolBuilder,
-    ) -> Result<PrimitiveType, ConstantPoolIndex> {
+    pub fn to_primitive_type_or_object(self) -> PrimitiveOrObject {
         match self {
-            Representation::Integer => Ok(PrimitiveType::Int),
-            Representation::Object(descriptor) => Err(pool.add_class(descriptor)),
+            Representation::Integer => PrimitiveOrObject::Primitive(PrimitiveType::Int),
+            Representation::Object(descriptor) => PrimitiveOrObject::Object(descriptor),
             Representation::Array(inner) => {
-                Err(pool.add_class(inner.into_field_descriptor().to_string().into()))
+                PrimitiveOrObject::Object(inner.into_field_descriptor().to_string().into())
             }
         }
     }
@@ -74,8 +71,14 @@ impl Representation {
     }
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType
 #[derive(Debug, Clone)]
+pub enum PrimitiveOrObject {
+    Primitive(PrimitiveType),
+    Object(SmallString),
+}
+
+/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FieldDescriptor {
     Byte,
     Char,
@@ -148,7 +151,7 @@ impl Display for FieldDescriptor {
 }
 
 /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-ReturnDescriptor
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReturnDescriptor {
     Value(FieldDescriptor),
     Void,
@@ -178,7 +181,7 @@ impl From<FieldDescriptor> for ReturnDescriptor {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MethodDescriptor {
     pub parameters: Vec<FieldDescriptor>,
     pub return_type: ReturnDescriptor,
