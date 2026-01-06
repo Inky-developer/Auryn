@@ -14,7 +14,8 @@ use crate::{
             typecheck::{
                 type_context::{TypeContext, TypeId, TypeView},
                 types::{
-                    ArrayType, ExternType, ExternTypeMember, FunctionParameters, FunctionType, Type,
+                    ArrayType, ExternType, ExternTypeMember, FunctionItemType, FunctionParameters,
+                    Type,
                 },
             },
         },
@@ -59,7 +60,7 @@ impl FunctionContext {
 
 #[derive(Debug, Default)]
 pub struct Typechecker {
-    functions: FastMap<AirFunctionId, TypeId<FunctionType>>,
+    functions: FastMap<AirFunctionId, TypeId<FunctionItemType>>,
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
     ty_ctx: TypeContext,
@@ -187,9 +188,9 @@ impl Typechecker {
                 let return_type = return_type
                     .as_ref()
                     .map_or(Type::Null, |ty| self.resolve_type(ty));
-                Type::Function(self.ty_ctx.add_function(
+                Type::FunctionItem(self.ty_ctx.add_function(
                     reference.syntax_id(),
-                    FunctionType {
+                    FunctionItemType {
                         parameters: FunctionParameters::Constrained {
                             parameters,
                             parameters_reference: *parameters_reference,
@@ -247,14 +248,14 @@ impl Typechecker {
     fn typecheck_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
         let computed_ty = self.resolve_type(&function.unresolved_type);
         function.r#type = AirType::Computed(computed_ty);
-        let Type::Function(function_type) = computed_ty else {
+        let Type::FunctionItem(function_type) = computed_ty else {
             unreachable!("Should compute a function type for a function!");
         };
         self.functions.insert(id, function_type);
     }
 
     fn typecheck_function_body(&mut self, function: &mut AirFunction) {
-        let TypeView::Function(function_type) = function.r#type.as_view(&self.ty_ctx) else {
+        let TypeView::FunctionItem(function_type) = function.r#type.as_view(&self.ty_ctx) else {
             panic!("Invalid type for function: {:?}", function.r#type);
         };
 
@@ -385,7 +386,7 @@ impl Typechecker {
                     .get(global_value_id)
                     .expect("Should have type for value");
                 let function = self.functions[function_id];
-                Type::Function(function)
+                Type::FunctionItem(function)
             }
             AirValueId::Intrinsic(intrinsic) => intrinsic.r#type(),
         }
@@ -416,7 +417,8 @@ impl Typechecker {
             self.typecheck_expression(argument);
         }
 
-        let TypeView::Function(function_type) = call.function.r#type.as_view(&self.ty_ctx) else {
+        let TypeView::FunctionItem(function_type) = call.function.r#type.as_view(&self.ty_ctx)
+        else {
             self.diagnostics.add(
                 id,
                 DiagnosticError::TypeMismatch {

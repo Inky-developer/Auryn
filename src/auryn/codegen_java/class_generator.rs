@@ -53,7 +53,7 @@ impl<'a> ClassGenerator<'a> {
 impl ClassGenerator<'_> {
     fn generate_from_air(mut self) -> class::ClassData {
         for (function_id, function) in &self.air.functions {
-            let TypeView::Function(function_type) =
+            let TypeView::FunctionItem(function_type) =
                 function.r#type.computed().as_view(&self.air.ty_ctx)
             else {
                 unreachable!("Function should have a function type");

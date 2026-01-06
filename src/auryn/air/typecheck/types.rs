@@ -17,17 +17,16 @@ pub enum Type {
     Number,
     String,
     Null,
-    Function(TypeId<FunctionType>),
+    FunctionItem(TypeId<FunctionItemType>),
     Array(TypeId<ArrayType>),
     Extern(TypeId<ExternType>),
     Error,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct FunctionType {
+pub struct FunctionItemType {
     pub parameters: FunctionParameters,
     pub return_type: Type,
-    /// TODO: This should not be the function item type, so remove the reference and add a separate type for function items
     pub reference: FunctionReference,
 }
 
@@ -68,7 +67,7 @@ impl Type {
     }
 }
 
-impl FunctionType {
+impl FunctionItemType {
     pub fn constrained_parameters(&self) -> &[Type] {
         match &self.parameters {
             FunctionParameters::Unconstrained => {

@@ -9,7 +9,7 @@ use crate::{
     auryn::{
         air::{
             data::Intrinsic,
-            typecheck::types::{ArrayType, ExternType, FunctionParameters, FunctionType, Type},
+            typecheck::types::{ArrayType, ExternType, FunctionItemType, FunctionParameters, Type},
         },
         syntax_id::SyntaxId,
     },
@@ -23,15 +23,15 @@ pub type BidirectionalTypeMap<T> = BidirectionalMap<TypeId<T>, T>;
 pub struct TypeContext {
     arrays: BidirectionalTypeMap<ArrayType>,
     externs: TypeMap<ExternType>,
-    functions: TypeMap<FunctionType>,
+    functions: TypeMap<FunctionItemType>,
 }
 
 impl TypeContext {
     pub fn add_function(
         &mut self,
         syntax_id: SyntaxId,
-        function: FunctionType,
-    ) -> TypeId<FunctionType> {
+        function: FunctionItemType,
+    ) -> TypeId<FunctionItemType> {
         let id = TypeId::new(syntax_id);
         let prev = self.functions.insert(id, function);
         assert!(prev.is_none());
@@ -55,9 +55,9 @@ impl TypeContext {
             Type::Number => TypeView::Number,
             Type::String => TypeView::String,
             Type::Null => TypeView::Null,
-            Type::Function(type_id) => TypeView::Function(TypeViewKind {
+            Type::FunctionItem(type_id) => TypeView::FunctionItem(TypeViewKind {
                 id: type_id,
-                value: self.get_function(type_id),
+                value: self.get_function_item(type_id),
                 ctx: self,
             }),
             Type::Array(type_id) => TypeView::Array(TypeViewKind {
@@ -74,7 +74,7 @@ impl TypeContext {
         }
     }
 
-    pub fn get_function(&self, id: TypeId<FunctionType>) -> &FunctionType {
+    pub fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
         &self.functions[&id]
     }
     pub fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
@@ -160,7 +160,7 @@ pub enum TypeView<'a> {
     Number,
     String,
     Null,
-    Function(TypeViewKind<'a, FunctionType>),
+    FunctionItem(TypeViewKind<'a, FunctionItemType>),
     Array(TypeViewKind<'a, ArrayType>),
     Extern(TypeViewKind<'a, ExternType>),
     Error,
@@ -183,7 +183,7 @@ impl<'a> TypeView<'a> {
             TypeView::Number => Type::Number,
             TypeView::String => Type::String,
             TypeView::Null => Type::Null,
-            TypeView::Function(type_view_kind) => Type::Function(type_view_kind.id),
+            TypeView::FunctionItem(type_view_kind) => Type::FunctionItem(type_view_kind.id),
             TypeView::Array(type_view_kind) => Type::Array(type_view_kind.id),
             TypeView::Extern(type_view_kind) => Type::Extern(type_view_kind.id),
             TypeView::Error => Type::Error,
@@ -198,7 +198,7 @@ impl Display for TypeView<'_> {
             TypeView::Number => f.write_str("Number"),
             TypeView::String => f.write_str("String"),
             TypeView::Null => f.write_str("Null"),
-            TypeView::Function(function_type) => function_type.fmt(f),
+            TypeView::FunctionItem(function_type) => function_type.fmt(f),
             TypeView::Array(array_type) => array_type.fmt(f),
             TypeView::Extern(extern_type) => extern_type.fmt(f),
             TypeView::Error => f.write_str("<<Error>>"),
@@ -218,7 +218,7 @@ impl<'a> TypeViewKind<'a, ArrayType> {
     }
 }
 
-impl<'a> TypeViewKind<'a, FunctionType> {
+impl<'a> TypeViewKind<'a, FunctionItemType> {
     pub fn r#return(self) -> TypeView<'a> {
         self.return_type.as_view(self.ctx)
     }
@@ -240,7 +240,7 @@ impl<'a, T> Deref for TypeViewKind<'a, T> {
     }
 }
 
-impl<'a> Display for TypeViewKind<'a, FunctionType> {
+impl<'a> Display for TypeViewKind<'a, FunctionItemType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;
         match &self.value.parameters {

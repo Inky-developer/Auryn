@@ -3,7 +3,7 @@ use crate::{
         data::{AirFunctionId, AirStaticValueId},
         typecheck::{
             type_context::TypeId,
-            types::{ExternType, FunctionType, Type},
+            types::{ExternType, FunctionItemType, Type},
         },
     },
     utils::{fast_map::FastMap, small_string::SmallString},
@@ -16,14 +16,14 @@ use crate::{
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),
-    Function(TypeId<FunctionType>),
+    Function(TypeId<FunctionItemType>),
 }
 
 impl UserDefinedTypeId {
     pub fn to_type(self) -> Type {
         match self {
             UserDefinedTypeId::Extern(type_id) => Type::Extern(type_id),
-            UserDefinedTypeId::Function(type_id) => Type::Function(type_id),
+            UserDefinedTypeId::Function(type_id) => Type::FunctionItem(type_id),
         }
     }
 }

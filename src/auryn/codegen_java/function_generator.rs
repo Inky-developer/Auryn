@@ -75,7 +75,7 @@ impl<'a> FunctionGenerator<'a> {
         ty_ctx: &'a TypeContext,
         pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
-        let TypeView::Function(function_type) = function.r#type.computed().as_view(ty_ctx) else {
+        let TypeView::FunctionItem(function_type) = function.r#type.computed().as_view(ty_ctx) else {
             panic!("Invalid function type");
         };
         let mut block_translation = FastMap::default();

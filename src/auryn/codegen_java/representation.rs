@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::{
     auryn::air::typecheck::{
         type_context::{TypeView, TypeViewKind},
-        types::FunctionType,
+        types::FunctionItemType,
     },
     java::{
         class::{PrimitiveType, TypeCategory, VerificationTypeInfo},
@@ -216,7 +216,7 @@ pub fn get_representation(air_type: TypeView) -> Option<Representation> {
         TypeView::Extern(extern_type) => {
             Some(Representation::Object(extern_type.extern_name.clone()))
         }
-        TypeView::Null | TypeView::Function(_) => None,
+        TypeView::Null | TypeView::FunctionItem(_) => None,
         TypeView::Top => todo!("The top type cannot be represented yet"),
         TypeView::Error => unreachable!("Called with error type"),
     }
@@ -230,7 +230,7 @@ pub fn get_return_type_representation(air_type: TypeView) -> ReturnDescriptor {
 }
 
 /// Returns the representation of an auryn type for the jvm
-pub fn get_function_representation(ty: TypeViewKind<FunctionType>) -> MethodDescriptor {
+pub fn get_function_representation(ty: TypeViewKind<FunctionItemType>) -> MethodDescriptor {
     let parameters = ty
         .constrained_parameters()
         .iter()

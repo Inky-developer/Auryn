@@ -6,7 +6,7 @@ use crate::{
             namespace::UserDefinedTypeId,
             typecheck::{
                 type_context::{TypeContext, TypeId, TypeView, TypeViewKind},
-                types::{FunctionParameters, FunctionType, Type},
+                types::{FunctionItemType, FunctionParameters, Type},
             },
         },
         syntax_id::SyntaxId,
@@ -65,8 +65,8 @@ pub struct AirFunction {
 }
 
 impl AirFunction {
-    pub fn computed_type(&self) -> TypeId<FunctionType> {
-        let AirType::Computed(Type::Function(function_type)) = self.r#type else {
+    pub fn computed_type(&self) -> TypeId<FunctionItemType> {
+        let AirType::Computed(Type::FunctionItem(function_type)) = self.r#type else {
             unreachable!("Function type should be computed at this point");
         };
         function_type
@@ -293,9 +293,9 @@ pub struct Call {
 
 impl Call {
     /// Should be called from codegen
-    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> TypeViewKind<'a, FunctionType> {
+    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> TypeViewKind<'a, FunctionItemType> {
         let computed_type = self.function.r#type.computed().as_view(ty_ctx);
-        let TypeView::Function(function_type) = computed_type else {
+        let TypeView::FunctionItem(function_type) = computed_type else {
             unreachable!("Should generate call only with function type");
         };
         function_type
@@ -329,11 +329,11 @@ impl Intrinsic {
     }
 
     pub fn r#type(&self) -> Type {
-        Type::Function(TypeId::new(self.syntax_id()))
+        Type::FunctionItem(TypeId::new(self.syntax_id()))
     }
 
-    pub fn function_type(&self) -> FunctionType {
-        FunctionType {
+    pub fn function_type(&self) -> FunctionItemType {
+        FunctionItemType {
             parameters: FunctionParameters::Unconstrained,
             return_type: Type::Top,
             reference: FunctionReference::Intrinsic(*self),

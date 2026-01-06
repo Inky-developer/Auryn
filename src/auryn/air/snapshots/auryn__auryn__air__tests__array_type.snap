@@ -20,7 +20,7 @@ AirOutput {
                 ),
             ): AirFunction {
                 type: Computed(
-                    Function(
+                    FunctionItem(
                         TypeId {
                             id: SyntaxId {
                                 file_id: Some(
@@ -32,7 +32,7 @@ AirOutput {
                                     187649984473772,
                                 ),
                             },
-                            kind: "auryn::auryn::air::typecheck::types::FunctionType",
+                            kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                         },
                     ),
                 ),
@@ -201,7 +201,7 @@ AirOutput {
                 ),
             ): AirFunction {
                 type: Computed(
-                    Function(
+                    FunctionItem(
                         TypeId {
                             id: SyntaxId {
                                 file_id: Some(
@@ -213,7 +213,7 @@ AirOutput {
                                     4,
                                 ),
                             },
-                            kind: "auryn::auryn::air::typecheck::types::FunctionType",
+                            kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                         },
                     ),
                 ),
