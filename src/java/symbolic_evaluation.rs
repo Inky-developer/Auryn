@@ -125,6 +125,15 @@ impl SymbolicEvaluator {
                 self.stack
                     .push(id.r#type.clone().into_verification_type(pool));
             }
+            Instruction::Transmute(to) => {
+                assert!(matches!(
+                    self.stack.pop(),
+                    Some(VerificationTypeInfo::Object { .. })
+                ));
+                self.stack.push(VerificationTypeInfo::Object {
+                    constant_pool_index: pool.add_class(to.clone()),
+                });
+            }
             Instruction::Nop => {}
             Instruction::Pop(category) => {
                 let value = self.stack.pop();

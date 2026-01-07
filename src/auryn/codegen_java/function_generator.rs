@@ -334,9 +334,11 @@ impl FunctionGenerator<'_> {
             return;
         };
 
-        let repr = self
-            .generate_expression(&accessor.value)
-            .expect("Accessor should have a representation");
+        self.generate_expression(&accessor.value);
+        let TypeView::Meta(meta) = accessor.value.r#type.as_view(self.ty_ctx) else {
+            todo!("Implement support for getting non-static values");
+        };
+        let repr = get_representation(meta.inner()).expect("Type should be representable");
         let Representation::Object(class_name) = repr else {
             panic!("Cannot get a static value from non-object type {repr:?}");
         };
@@ -415,6 +417,9 @@ impl FunctionGenerator<'_> {
     ) {
         match intrinsic {
             Intrinsic::Print => self.generate_intrinsic_print(arguments),
+            Intrinsic::UnsafeTransmute => {
+                self.generate_intrinsic_unsafe_transmute(r#type, arguments)
+            }
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, arguments),
             Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(arguments, r#type),
             Intrinsic::ArrayGet => self.generate_intrinsic_array_get(arguments),
@@ -460,6 +465,28 @@ impl FunctionGenerator<'_> {
                 return_type: ReturnDescriptor::Void,
             },
         });
+    }
+
+    fn generate_intrinsic_unsafe_transmute(
+        &mut self,
+        target_type: TypeView,
+        arguments: &[AirExpression],
+    ) {
+        let [r#type, expression] = arguments else {
+            panic!("Invalid transmute call");
+        };
+        self.generate_expression(r#type);
+        let repr = self.generate_expression(expression);
+
+        if let Some(Representation::Object(_)) = repr
+            && let Some(Representation::Object(to)) = get_representation(target_type)
+        {
+            self.assembler.add(Instruction::Transmute(to));
+        } else {
+            panic!(
+                "Transmute can never succeed: Tried to transmute from {repr:?} to {target_type}",
+            );
+        };
     }
 
     fn generate_intrinsic_array_of(&mut self, r#type: TypeView, arguments: &[AirExpression]) {

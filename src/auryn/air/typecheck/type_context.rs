@@ -8,7 +8,7 @@ use std::{
 use crate::{
     auryn::{
         air::{
-            data::Intrinsic,
+            data::{ExternFunctionKind, FunctionReference, Intrinsic},
             typecheck::types::{
                 ArrayType, ExternType, FunctionItemType, FunctionParameters, MetaType, Type,
             },
@@ -32,6 +32,10 @@ pub struct TypeContext {
 impl TypeContext {
     pub fn array_of(&mut self, syntax_id: SyntaxId, element_type: Type) -> Type {
         Type::Array(self.add_array(syntax_id, ArrayType { element_type }))
+    }
+
+    pub fn meta_of(&mut self, syntax_id: SyntaxId, inner: Type) -> Type {
+        Type::Meta(self.add_meta(syntax_id, MetaType { inner }))
     }
 
     pub fn add_array(&mut self, syntax_id: SyntaxId, array: ArrayType) -> TypeId<ArrayType> {
@@ -193,8 +197,32 @@ impl<'a> TypeView<'a> {
             TypeView::Extern(extern_type) => extern_type
                 .value
                 .get_member(ident)
-                .map(|it| it.as_view(extern_type.ctx)),
+                .map(|it| it.as_view(extern_type.ctx))
+                .take_if(|it| !it.is_static_extern_member()),
+            TypeView::Meta(meta_type) => match meta_type.inner() {
+                TypeView::Extern(extern_type) => extern_type
+                    .value
+                    .get_member(ident)
+                    .map(|it| it.as_view(extern_type.ctx))
+                    .take_if(|it| it.is_static_extern_member()),
+                _ => None,
+            },
             _ => None,
+        }
+    }
+
+    /// Returns whether a type is a static extern member.
+    /// Right now, every type is considered static except for methods which don't have the static kind
+    fn is_static_extern_member(self) -> bool {
+        match self {
+            TypeView::FunctionItem(function_item) => matches!(
+                function_item.reference,
+                FunctionReference::Extern {
+                    kind: ExternFunctionKind::Static,
+                    ..
+                }
+            ),
+            _ => true,
         }
     }
 
@@ -238,6 +266,12 @@ pub struct TypeViewKind<'a, T> {
 impl<'a> TypeViewKind<'a, ArrayType> {
     pub fn element(self) -> TypeView<'a> {
         self.element_type.as_view(self.ctx)
+    }
+}
+
+impl<'a> TypeViewKind<'a, MetaType> {
+    pub fn inner(self) -> TypeView<'a> {
+        self.inner.as_view(self.ctx)
     }
 }
 
@@ -301,6 +335,6 @@ impl<'a> Display for TypeViewKind<'a, ExternType> {
 
 impl<'a> Display for TypeViewKind<'a, MetaType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "type[{}]", self.value.inner.as_view(self.ctx))
+        write!(f, "Type[{}]", self.value.inner.as_view(self.ctx))
     }
 }

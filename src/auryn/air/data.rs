@@ -313,6 +313,7 @@ impl Call {
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum Intrinsic {
     Print,
+    UnsafeTransmute,
     ArrayOf,
     ArrayOfZeros,
     ArrayGet,
@@ -323,6 +324,7 @@ pub enum Intrinsic {
 impl Intrinsic {
     pub const ALL: &[Self] = &[
         Self::Print,
+        Self::UnsafeTransmute,
         Self::ArrayOf,
         Self::ArrayOfZeros,
         Self::ArrayGet,
@@ -354,6 +356,7 @@ impl FromStr for Intrinsic {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "print" => Intrinsic::Print,
+            "unsafeTransmute" => Intrinsic::UnsafeTransmute,
             "arrayOf" => Intrinsic::ArrayOf,
             "arrayOfZeros" => Intrinsic::ArrayOfZeros,
             "arrayGet" => Intrinsic::ArrayGet,

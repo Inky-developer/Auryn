@@ -351,6 +351,7 @@ impl AssemblyContext<'_> {
                     PrimitiveOrObject::Object(_) => class::Instruction::ALoad(id.index),
                 })
             }
+            Instruction::Transmute(_) => {}
             Instruction::Nop => on_instruction(class::Instruction::Nop),
             Instruction::Pop(category) => match category {
                 TypeCategory::Normal => on_instruction(class::Instruction::Pop),

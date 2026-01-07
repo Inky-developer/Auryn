@@ -72,6 +72,9 @@ pub enum Instruction {
     Store(VariableId),
     Load(VariableId),
     Nop,
+    /// Does not correspond to any jvm instruction.
+    /// Assumes that the top most stack value is now an object of the given type
+    Transmute(SmallString),
     /// Pops a single value of the given category from the stack
     Pop(TypeCategory),
     /// Duplicates the topmost stack entry

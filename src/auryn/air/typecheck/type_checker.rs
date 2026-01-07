@@ -346,8 +346,7 @@ impl Typechecker {
                 self.typecheck_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(value) => self.typecheck_value(value),
-            // Maybe we should correctly represent the type of a type, but for now lets just use itself as its type
-            AirExpressionKind::Type(r#type) => *r#type,
+            AirExpressionKind::Type(r#type) => self.ty_ctx.meta_of(expression.id, *r#type),
             AirExpressionKind::Accessor(accessor) => self.typecheck_accessor(accessor),
             AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call),
             AirExpressionKind::Error => Type::Error,
@@ -468,6 +467,7 @@ impl Typechecker {
     ) -> Type {
         match intrinsic {
             Intrinsic::Print => self.typecheck_intrinsic_print(id, arguments),
+            Intrinsic::UnsafeTransmute => self.typecheck_intrinsic_unsafe_transmute(id, arguments),
             Intrinsic::ArrayOf => self.typecheck_intrinsic_array_of(id, arguments),
             Intrinsic::ArrayOfZeros => self.typecheck_intrinsic_array_of_zeros(id, arguments),
             Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, arguments),
@@ -488,6 +488,37 @@ impl Typechecker {
             );
         }
         Type::Null
+    }
+
+    fn typecheck_intrinsic_unsafe_transmute(
+        &mut self,
+        id: SyntaxId,
+        arguments: &[AirExpression],
+    ) -> Type {
+        let [first, _value] = arguments else {
+            self.diagnostics.add(
+                id,
+                DiagnosticError::MismatchedArgumentCount {
+                    expected: 2,
+                    got: arguments.len(),
+                    parameter_def: None,
+                },
+            );
+            return Type::Error;
+        };
+
+        let TypeView::Meta(meta_type) = first.r#type.computed().as_view(&self.ty_ctx) else {
+            self.diagnostics.add(
+                first.id,
+                DiagnosticError::TypeMismatch {
+                    expected: "Type".to_string(),
+                    got: first.r#type.computed().as_view(&self.ty_ctx).to_string(),
+                },
+            );
+            return Type::Error;
+        };
+
+        meta_type.inner
     }
 
     fn typecheck_intrinsic_array_of(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
@@ -530,12 +561,22 @@ impl Typechecker {
             return self.ty_ctx.array_of(id, Type::Error);
         };
 
-        let element_type = r#type.r#type.computed();
-
         self.expect_type(count, Type::Number);
-        // TODO; Verify that type is a meta type
 
-        self.ty_ctx.array_of(id, element_type)
+        let element_type = r#type.r#type.computed();
+        let TypeView::Meta(inner) = element_type.as_view(&self.ty_ctx) else {
+            self.diagnostics.add(
+                r#type.id,
+                DiagnosticError::TypeMismatch {
+                    expected: "Type".to_string(),
+                    got: element_type.as_view(&self.ty_ctx).to_string(),
+                },
+            );
+
+            return self.ty_ctx.array_of(id, Type::Error);
+        };
+
+        self.ty_ctx.array_of(id, inner.inner)
     }
 
     fn typecheck_intrinsic_array_get(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {
