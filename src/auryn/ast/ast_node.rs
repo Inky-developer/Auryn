@@ -322,6 +322,7 @@ ast_node! {
     pub enum Value = SyntaxNodeKind::Value as
         | SyntaxNodeKind::NumberLiteral as NumberLiteral
         | SyntaxNodeKind::StringLiteral as StringLiteral
+        | SyntaxNodeKind::BooleanLiteral as BooleanLiteral
         | SyntaxNodeKind::Ident as Ident
         | SyntaxNodeKind::Parenthesis as Parenthesis
 }
@@ -332,6 +333,16 @@ ast_node! {
 
 ast_node! {
     pub struct StringLiteral = SyntaxNodeKind::StringLiteral as { token value: TokenKind::StringLiteral, }
+}
+
+ast_node! {
+    pub struct BooleanLiteral = SyntaxNodeKind::BooleanLiteral as { }
+}
+
+impl BooleanLiteral<'_> {
+    pub fn value(self) -> bool {
+        self.0.tokens().any(|it| it.kind == TokenKind::KeywordTrue)
+    }
 }
 
 ast_node! {

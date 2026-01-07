@@ -10,8 +10,9 @@ use crate::{
         file_id::FileId,
         syntax_id::SyntaxId,
         syntax_tree::SyntaxTree,
+        tokenizer::{TokenKind, TokenSet},
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    utils::{bitset::Bitset, fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Debug, Clone)]
@@ -19,6 +20,7 @@ pub enum DiagnosticError {
     // Generate by the parser
     ExpectedExpression {
         got: SmallString,
+        valid_tokens: TokenSet,
     },
     ExpectedNumber {
         got: SmallString,
@@ -36,7 +38,7 @@ pub enum DiagnosticError {
         got: SmallString,
     },
     UnexpectedToken {
-        expected: &'static str,
+        expected: TokenSet,
         got: SmallString,
     },
     ExpectedBinaryOperator {
@@ -208,9 +210,13 @@ impl Diagnostic {
     fn build_report(&self, builder: &mut DiagnosticDisplay) {
         match &self.kind {
             DiagnosticKind::Error(error) => match error {
-                DiagnosticError::ExpectedExpression { got } => builder
+                DiagnosticError::ExpectedExpression { got, valid_tokens } => builder
                     .with_code("Expected expression")
-                    .with_message(format!("got {got:?}")),
+                    .with_message(format!("got {got:?}"))
+                    .with_info(format!(
+                        "Valid tokens: {}",
+                        fmt_expected_tokens(*valid_tokens)
+                    )),
                 DiagnosticError::ExpectedNumber { got } => builder
                     .with_code("Expected number")
                     .with_message(format!("got {got:?}")),
@@ -229,7 +235,7 @@ impl Diagnostic {
                 DiagnosticError::UnexpectedToken { expected, got } => builder
                     .with_code("Unexpected token")
                     .with_message(format!("got {got:?}"))
-                    .with_info(format!("Expected `{expected}`")),
+                    .with_info(format!("Expected {}", fmt_expected_tokens(*expected))),
                 DiagnosticError::ExpectedBinaryOperator { got } => builder
                     .with_code("Expected binary operator")
                     .with_message(format!("got {got:?}")),
@@ -289,5 +295,29 @@ impl Diagnostic {
                 }
             },
         };
+    }
+}
+
+fn fmt_expected_tokens(values: Bitset<TokenKind>) -> String {
+    match values.len() {
+        0 => "nothing".to_string(),
+        1 => format!("`{}`", values.into_iter().next().unwrap().as_str()),
+        len => {
+            let mut result = String::new();
+
+            for (index, option) in values.into_iter().enumerate() {
+                if index != 0 && index + 1 < len as usize {
+                    result.push_str(", ");
+                } else if index + 1 == len as usize {
+                    result.push_str(" or ");
+                }
+
+                result.push('`');
+                result.push_str(option.as_str());
+                result.push('`');
+            }
+
+            result
+        }
     }
 }

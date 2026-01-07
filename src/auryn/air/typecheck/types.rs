@@ -15,6 +15,7 @@ use crate::{
 pub enum Type {
     Top,
     Number,
+    Bool,
     String,
     Null,
     FunctionItem(TypeId<FunctionItemType>),
@@ -97,6 +98,7 @@ impl FromStr for Type {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "Number" => Type::Number,
+            "Bool" => Type::Bool,
             "String" => Type::String,
             _ => return Err(()),
         })

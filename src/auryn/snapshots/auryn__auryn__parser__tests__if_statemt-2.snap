@@ -1,0 +1,40 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"if true { print(false) }\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..24 Root
+        |0..24 Block
+        ||0..24 Statement
+        |||0..24 IfStatement
+        ||||KeywordIf `if`
+        ||||Whitespace ` `
+        ||||3..8 Expression
+        |||||3..8 Value
+        ||||||3..8 BooleanLiteral
+        |||||||KeywordTrue `true`
+        |||||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Whitespace ` `
+        ||||10..23 Block
+        |||||10..23 Statement
+        ||||||10..23 Expression
+        |||||||10..23 PostfixOperation
+        ||||||||10..15 Value
+        |||||||||10..15 Ident
+        ||||||||||Identifier `print`
+        ||||||||15..23 PostfixOperator
+        |||||||||15..23 ArgumentList
+        ||||||||||ParensOpen `(`
+        ||||||||||16..21 Expression
+        |||||||||||16..21 Value
+        ||||||||||||16..21 Ident
+        |||||||||||||Identifier `false`
+        ||||||||||ParensClose `)`
+        ||||||||||Whitespace ` `
+        ||||BraceClose `}`
+        ,
+    ),
+    diagnostics: [],
+}

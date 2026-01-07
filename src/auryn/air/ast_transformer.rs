@@ -13,11 +13,12 @@ use crate::{
             typecheck::{type_context::TypeId, types},
         },
         ast::ast_node::{
-            Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BreakStatement,
-            Expression, ExternBlock, ExternBlockItem, ExternBlockItemKind, ExternTypeBody,
-            ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement, Item, LoopStatement,
-            NumberLiteral, Parenthesis, PostfixOperation, PostfixOperator, ReturnStatement, Root,
-            Statement, StringLiteral, Type, Value, ValueOrPostfix, VariableUpdate,
+            Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
+            BreakStatement, Expression, ExternBlock, ExternBlockItem, ExternBlockItemKind,
+            ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement, Item,
+            LoopStatement, NumberLiteral, Parenthesis, PostfixOperation, PostfixOperator,
+            ReturnStatement, Root, Statement, StringLiteral, Type, Value, ValueOrPostfix,
+            VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -700,6 +701,7 @@ impl FunctionTransformer<'_> {
         match value {
             Value::NumberLiteral(number) => self.transform_number(number),
             Value::StringLiteral(string) => self.transform_string(string),
+            Value::BooleanLiteral(boolean) => self.transform_boolean(boolean),
             Value::Ident(ident) => self.transform_ident(ident),
             Value::Parenthesis(parenthesis) => self.transform_parenthesis(parenthesis),
         }
@@ -731,6 +733,13 @@ impl FunctionTransformer<'_> {
         AirExpression::new(
             token.id,
             AirExpressionKind::Constant(AirConstant::String(text)),
+        )
+    }
+
+    fn transform_boolean(&mut self, boolean: BooleanLiteral) -> AirExpression {
+        AirExpression::new(
+            boolean.id(),
+            AirExpressionKind::Constant(AirConstant::Boolean(boolean.value())),
         )
     }
 

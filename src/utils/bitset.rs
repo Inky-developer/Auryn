@@ -235,7 +235,7 @@ macro_rules! bitset_item {
 /// Due to rust const limitations, the element type may need to be specified explicitly.
 #[macro_export]
 macro_rules! bitset [
-    ($($items:expr),*) => {
+    ($($items:expr),+ $(,)?) => {
         const {
             let mut set = $crate::utils::bitset::Bitset::new();
             $(set.insert_raw(($items) as u8);)*

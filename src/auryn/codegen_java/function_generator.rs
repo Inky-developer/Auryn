@@ -163,6 +163,7 @@ impl FunctionGenerator<'_> {
                     None => BlockFinalizer::ReturnNull,
                     Some(r#type) => match r#type {
                         Representation::Integer => BlockFinalizer::ReturnInteger,
+                        Representation::Boolean => BlockFinalizer::ReturnBoolean,
                         Representation::Object { .. } | Representation::Array(_) => {
                             BlockFinalizer::ReturnObject
                         }
@@ -182,7 +183,7 @@ impl FunctionGenerator<'_> {
                 let pos_block_id = self.translate_block_id(*pos_block);
                 let neg_block_id = self.translate_block_id(*neg_block);
                 let result = self.generate_expression(value);
-                assert_eq!(result, Some(Representation::Integer));
+                assert_eq!(result, Some(Representation::Boolean));
                 self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
                     comparison: Comparison::NotEqual,
                     positive_block: pos_block_id,
@@ -254,6 +255,11 @@ impl FunctionGenerator<'_> {
                 let value = ConstantValue::Integer(*number);
                 self.assembler.add(Instruction::LoadConstant { value });
             }
+            AirConstant::Boolean(boolean) => {
+                self.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Boolean(*boolean),
+                });
+            }
             AirConstant::String(text) => {
                 let value = ConstantValue::String(text.clone());
                 self.assembler.add(Instruction::LoadConstant { value });
@@ -300,13 +306,13 @@ impl FunctionGenerator<'_> {
 
         self.assembler.set_current_block_id(pos_block_id);
         self.assembler.add(Instruction::LoadConstant {
-            value: ConstantValue::Integer(1),
+            value: ConstantValue::Boolean(true),
         });
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
 
         self.assembler.set_current_block_id(neg_block_id);
         self.assembler.add(Instruction::LoadConstant {
-            value: ConstantValue::Integer(0),
+            value: ConstantValue::Boolean(false),
         });
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
 

@@ -21,6 +21,7 @@ use crate::{
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
+        tokenizer::BinaryOperatorToken,
     },
     utils::{
         default,
@@ -101,6 +102,7 @@ impl Typechecker {
         }
     }
 
+    #[track_caller]
     fn expect_type(&mut self, received: &AirExpression, expected: Type) {
         if let AirType::Computed(got) = &received.r#type
             && got == &expected
@@ -117,6 +119,7 @@ impl Typechecker {
         )
     }
 
+    #[track_caller]
     fn expect_type_at(&mut self, at: SyntaxId, received: Type, expected: Type) {
         if received == expected {
             return;
@@ -131,6 +134,7 @@ impl Typechecker {
         );
     }
 
+    #[track_caller]
     fn expect_assignable(&mut self, received: &AirExpression, expected: Type) {
         if let AirType::Computed(got) = &received.r#type
             && got.is_subtype(&expected)
@@ -314,7 +318,7 @@ impl Typechecker {
                 neg_block,
             } => {
                 self.typecheck_expression(value);
-                self.expect_type(value, Type::Number);
+                self.expect_type(value, Type::Bool);
                 on_next_id(*pos_block);
                 on_next_id(*neg_block);
             }
@@ -358,6 +362,7 @@ impl Typechecker {
     fn typecheck_constant(&self, constant: &AirConstant) -> Type {
         match constant {
             AirConstant::Number(_) => Type::Number,
+            AirConstant::Boolean(_) => Type::Bool,
             AirConstant::String(_) => Type::String,
         }
     }
@@ -369,7 +374,17 @@ impl Typechecker {
         self.expect_type(&binary_operator.lhs, Type::Number);
         self.expect_type(&binary_operator.rhs, Type::Number);
 
-        Type::Number
+        match binary_operator.operator {
+            BinaryOperatorToken::Plus | BinaryOperatorToken::Minus | BinaryOperatorToken::Times => {
+                Type::Number
+            }
+            BinaryOperatorToken::Equal
+            | BinaryOperatorToken::NotEqual
+            | BinaryOperatorToken::Greater
+            | BinaryOperatorToken::GreaterOrEqual
+            | BinaryOperatorToken::Less
+            | BinaryOperatorToken::LessOrEqual => Type::Bool,
+        }
     }
 
     fn typecheck_value(&mut self, value: &AirValueId) -> Type {

@@ -148,7 +148,7 @@ pub enum Instruction {
     InvokeVirtual(ConstantPoolIndex),
     /// Loads a constant from the constant pool
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc
-    Ldc(u8),
+    Ldc(ConstantPoolIndex),
     /// Returns void
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.return
     Return,
@@ -264,6 +264,7 @@ impl Instruction {
             Instruction::IALoad => buf.write_all(&[0x2e])?,
             Instruction::IAStore => buf.write_all(&[0x4f])?,
             Instruction::Ldc(index) => {
+                let index: u8 = index.0.get().try_into().expect("TODO: implement wide load");
                 buf.write_all(&[0x12, index])?;
             }
             Instruction::IAdd => {

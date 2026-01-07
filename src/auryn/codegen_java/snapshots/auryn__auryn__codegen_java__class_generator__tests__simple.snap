@@ -1,6 +1,6 @@
 ---
 source: src/auryn/codegen_java/class_generator.rs
-expression: "generate_class(\"1 + 2 * 3\")"
+expression: "generate_class_wrapped(\"1 + 2 * 3\")"
 ---
 ClassData {
     constant_pool: [
@@ -94,13 +94,19 @@ ClassData {
                             max_locals: 1,
                             code: [
                                 Ldc(
-                                    1,
+                                    ConstantPoolIndex(
+                                        1,
+                                    ),
                                 ),
                                 Ldc(
-                                    2,
+                                    ConstantPoolIndex(
+                                        2,
+                                    ),
                                 ),
                                 Ldc(
-                                    3,
+                                    ConstantPoolIndex(
+                                        3,
+                                    ),
                                 ),
                                 IMul,
                                 IAdd,

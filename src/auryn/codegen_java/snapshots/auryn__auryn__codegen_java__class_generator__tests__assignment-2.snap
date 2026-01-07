@@ -1,6 +1,6 @@
 ---
 source: src/auryn/codegen_java/class_generator.rs
-expression: "generate_class(\"let a = 1\\nprint(a)\")"
+expression: "generate_class_wrapped(\"let a = 1\\nprint(a)\")"
 ---
 ClassData {
     constant_pool: [
@@ -148,7 +148,9 @@ ClassData {
                             max_locals: 2,
                             code: [
                                 Ldc(
-                                    3,
+                                    ConstantPoolIndex(
+                                        3,
+                                    ),
                                 ),
                                 IStore(
                                     0,

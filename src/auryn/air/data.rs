@@ -289,6 +289,7 @@ pub struct LoadConstant {
 #[derive(Debug)]
 pub enum AirConstant {
     Number(i32),
+    Boolean(bool),
     String(SmallString),
 }
 

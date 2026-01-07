@@ -1,6 +1,6 @@
 ---
 source: src/auryn/codegen_java/class_generator.rs
-expression: "generate_class(\"print(2 * 3)\")"
+expression: "generate_class_wrapped(\"print(2 * 3)\")"
 ---
 ClassData {
     constant_pool: [
@@ -156,10 +156,14 @@ ClassData {
                                     ),
                                 ),
                                 Ldc(
-                                    9,
+                                    ConstantPoolIndex(
+                                        9,
+                                    ),
                                 ),
                                 Ldc(
-                                    10,
+                                    ConstantPoolIndex(
+                                        10,
+                                    ),
                                 ),
                                 IMul,
                                 InvokeVirtual(

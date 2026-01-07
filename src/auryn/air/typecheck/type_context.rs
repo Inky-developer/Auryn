@@ -68,6 +68,7 @@ impl TypeContext {
         match r#type {
             Type::Top => TypeView::Top,
             Type::Number => TypeView::Number,
+            Type::Bool => TypeView::Bool,
             Type::String => TypeView::String,
             Type::Null => TypeView::Null,
             Type::FunctionItem(type_id) => TypeView::FunctionItem(TypeViewKind {
@@ -182,6 +183,7 @@ impl<T> Hash for TypeId<T> {
 pub enum TypeView<'a> {
     Top,
     Number,
+    Bool,
     String,
     Null,
     FunctionItem(TypeViewKind<'a, FunctionItemType>),
@@ -230,6 +232,7 @@ impl<'a> TypeView<'a> {
         match self {
             TypeView::Top => Type::Top,
             TypeView::Number => Type::Number,
+            TypeView::Bool => Type::Bool,
             TypeView::String => Type::String,
             TypeView::Null => Type::Null,
             TypeView::FunctionItem(type_view_kind) => Type::FunctionItem(type_view_kind.id),
@@ -246,6 +249,7 @@ impl Display for TypeView<'_> {
         match self {
             TypeView::Top => f.write_str("Top"),
             TypeView::Number => f.write_str("Number"),
+            TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),
             TypeView::Null => f.write_str("Null"),
             TypeView::FunctionItem(function_type) => function_type.fmt(f),

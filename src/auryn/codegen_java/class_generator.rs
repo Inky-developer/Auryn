@@ -149,7 +149,10 @@ mod tests {
         let result = Parser::new(FileId::MAIN_FILE, input).parse();
         let ast = query_ast(result.syntax_tree.as_ref().unwrap());
         let air = query_air(ast.unwrap());
-        assert!(air.diagnostics.take().is_empty());
+        let mut diagnostics = Vec::new();
+        diagnostics.extend(result.syntax_tree.unwrap().collect_diagnostics());
+        diagnostics.extend(air.diagnostics.take());
+        assert!(diagnostics.is_empty(), "Got diagnostics: {diagnostics:?}");
 
         super::generate_class(&air.air)
     }
@@ -180,7 +183,7 @@ mod tests {
     #[test]
     fn test_stack_map_table_generation() {
         insta::assert_debug_snapshot!(generate_class_wrapped(
-            "loop {\nif 1 {\nprint(42)\n}\nprint(100)\n}"
+            "loop {\nif true {\nprint(42)\n}\nprint(100)\n}"
         ));
     }
 

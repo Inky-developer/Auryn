@@ -39,6 +39,7 @@ pub enum SyntaxNodeKind {
     Value,
     NumberLiteral,
     StringLiteral,
+    BooleanLiteral,
     BinaryOperation,
     /// Constains value and the postfix operator
     PostfixOperation,

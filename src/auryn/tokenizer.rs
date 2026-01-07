@@ -60,6 +60,8 @@ bitset_item! {
         KeywordExtern,
         KeywordStatic,
         KeywordType,
+        KeywordTrue,
+        KeywordFalse,
         Whitespace,
         Newline,
         Error,
@@ -89,8 +91,8 @@ impl TokenKind {
 
     pub fn as_str(self) -> &'static str {
         match self {
-            TokenKind::NumberLiteral => "<number literal>",
-            TokenKind::StringLiteral => "<string literal>",
+            TokenKind::NumberLiteral => "<number>",
+            TokenKind::StringLiteral => "<string>",
             TokenKind::Identifier => "<identifier>",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
@@ -118,6 +120,8 @@ impl TokenKind {
             TokenKind::KeywordExtern => "extern",
             TokenKind::KeywordStatic => "static",
             TokenKind::KeywordType => "type",
+            TokenKind::KeywordTrue => "true",
+            TokenKind::KeywordFalse => "false",
             TokenKind::Whitespace => "<whitespace>",
             TokenKind::Newline => "<newline>",
             TokenKind::Error => "<error>",
@@ -314,6 +318,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("fn"),
                 });
             }
+            'f' if self.starts_with_keyword("false") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordFalse,
+                    text: self.consume_text("false"),
+                });
+            }
             'i' if self.starts_with_keyword("if") => {
                 return Some(Token {
                     kind: TokenKind::KeywordIf,
@@ -336,6 +346,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(Token {
                     kind: TokenKind::KeywordType,
                     text: self.consume_text("type"),
+                });
+            }
+            't' if self.starts_with_keyword("true") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordTrue,
+                    text: self.consume_text("true"),
                 });
             }
             'u' if self.starts_with_keyword("unsafe") => {
@@ -378,7 +394,7 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 1 -2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
         insta::assert_debug_snapshot!(tokenize(
-            "loop let some_text = if true { 2 } else { break return } fn [foo.bar]"
+            "loop let some_text = if true { false } else { break return } fn [foo.bar]"
         ));
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a"

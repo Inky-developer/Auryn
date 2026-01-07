@@ -175,16 +175,14 @@ impl<'a> Parser<'a> {
     }
 
     #[track_caller]
-    fn expect(&mut self, expected: TokenKind) -> ParseResult<&'a str> {
-        match self.consume_if(|token| (token.kind == expected).then_some(token)) {
+    fn expect(&mut self, expected: impl Into<TokenSet>) -> ParseResult<&'a str> {
+        let expected = expected.into();
+        match self.consume_if(|token| expected.contains(token.kind).then_some(token)) {
             Ok(token) => Ok(token.text),
             Err(token) => {
                 let got = token.text.into();
-                self.push_error(DiagnosticError::UnexpectedToken {
-                    expected: expected.as_str(),
-                    got,
-                });
-                self.recover_to(self.current_stack_level(), expected.into())?;
+                self.push_error(DiagnosticError::UnexpectedToken { expected, got });
+                self.recover_to(self.current_stack_level(), expected)?;
                 Ok(self.consume().text)
             }
         }
@@ -670,6 +668,7 @@ impl Parser<'_> {
         if !Self::EXPRESSION_START.contains(self.peek().kind) {
             self.push_error(DiagnosticError::ExpectedExpression {
                 got: self.peek().text.into(),
+                valid_tokens: Self::EXPRESSION_START,
             });
             return Err(());
         }
@@ -731,7 +730,9 @@ impl Parser<'_> {
         TokenKind::Identifier,
         TokenKind::NumberLiteral,
         TokenKind::StringLiteral,
-        TokenKind::ParensOpen
+        TokenKind::ParensOpen,
+        TokenKind::KeywordTrue,
+        TokenKind::KeywordFalse,
     ];
     fn parse_value_or_postfix(&mut self) -> ParseResult {
         let mut watcher = self.push_node();
@@ -741,6 +742,7 @@ impl Parser<'_> {
             TokenKind::NumberLiteral => self.parse_number()?,
             TokenKind::StringLiteral => self.parse_string_literal()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
+            TokenKind::KeywordTrue | TokenKind::KeywordFalse => self.parse_boolean_literal()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedValue {
                     got: self.peek().text.into(),
@@ -847,6 +849,15 @@ impl Parser<'_> {
         self.expect(TokenKind::StringLiteral)?;
 
         self.finish_node(watcher, SyntaxNodeKind::StringLiteral);
+        Ok(())
+    }
+
+    fn parse_boolean_literal(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(bitset![TokenKind::KeywordTrue, TokenKind::KeywordFalse])?;
+
+        self.finish_node(watcher, SyntaxNodeKind::BooleanLiteral);
         Ok(())
     }
 
@@ -972,6 +983,7 @@ mod tests {
     #[test]
     fn test_if_statemt() {
         insta::assert_debug_snapshot!(verify_block("if 1 { print(42) }"));
+        insta::assert_debug_snapshot!(verify_block("if true { print(false) }"));
     }
 
     #[test]

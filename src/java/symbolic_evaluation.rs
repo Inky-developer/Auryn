@@ -58,7 +58,7 @@ impl SymbolicEvaluator {
                     Some(VerificationTypeInfo::Object { .. })
                 ));
             }
-            BlockFinalizer::ReturnInteger => {
+            BlockFinalizer::ReturnInteger | BlockFinalizer::ReturnBoolean => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
             }
         }

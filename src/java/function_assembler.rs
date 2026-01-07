@@ -12,12 +12,14 @@ use crate::{
 pub enum ConstantValue {
     String(SmallString),
     Integer(i32),
+    Boolean(bool),
 }
 impl ConstantValue {
     pub fn to_primitive(&self) -> Representation {
         match self {
             ConstantValue::String(_) => Representation::string(),
             ConstantValue::Integer(_) => Representation::Integer,
+            ConstantValue::Boolean(_) => Representation::Boolean,
         }
     }
     pub fn to_verification_type(
@@ -28,7 +30,7 @@ impl ConstantValue {
             ConstantValue::String(_) => VerificationTypeInfo::Object {
                 constant_pool_index: constant_pool_builder.get_string_index(),
             },
-            ConstantValue::Integer(_) => VerificationTypeInfo::Integer,
+            ConstantValue::Integer(_) | ConstantValue::Boolean(_) => VerificationTypeInfo::Integer,
         }
     }
 }

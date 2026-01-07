@@ -4,8 +4,8 @@ use crate::{
     auryn::codegen_java::representation::PrimitiveOrObject,
     java::{
         class::{
-            self, Comparison, JumpPoint, PrimitiveType, StackMapTableAttribute, TypeCategory,
-            VerificationTypeInfo,
+            self, Comparison, ConstantPoolIndex, JumpPoint, PrimitiveType, StackMapTableAttribute,
+            TypeCategory, VerificationTypeInfo,
         },
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{ConstantValue, Instruction},
@@ -36,6 +36,7 @@ pub enum BlockFinalizer {
     ReturnNull,
     ReturnObject,
     ReturnInteger,
+    ReturnBoolean,
 }
 
 impl BlockFinalizer {
@@ -54,7 +55,8 @@ impl BlockFinalizer {
             } => [Some(*positive_block), Some(*negative_block)],
             BlockFinalizer::ReturnNull
             | BlockFinalizer::ReturnObject
-            | BlockFinalizer::ReturnInteger => [None, None],
+            | BlockFinalizer::ReturnInteger
+            | BlockFinalizer::ReturnBoolean => [None, None],
         };
 
         targets.into_iter().flatten()
@@ -315,16 +317,17 @@ impl AssemblyContext<'_> {
             }
             Instruction::ArrayLength => on_instruction(class::Instruction::ArrayLength),
             Instruction::LoadConstant { value } => {
-                let constant_index = match value {
-                    ConstantValue::String(string) => self.0.add_string(string.clone()),
-                    ConstantValue::Integer(integer) => self.0.add_integer(*integer),
-                };
-                let constant_index = constant_index
-                    .0
-                    .get()
-                    .try_into()
-                    .expect("TODO: Implement support for higher indexes");
-                on_instruction(class::Instruction::Ldc(constant_index))
+                let mut load_constant =
+                    |idx: ConstantPoolIndex| on_instruction(class::Instruction::Ldc(idx));
+                match value {
+                    ConstantValue::String(string) => {
+                        load_constant(self.0.add_string(string.clone()))
+                    }
+                    ConstantValue::Integer(integer) => load_constant(self.0.add_integer(*integer)),
+                    ConstantValue::Boolean(boolean) => {
+                        on_instruction(class::Instruction::Iconst(*boolean as i8))
+                    }
+                }
             }
             Instruction::IAdd => on_instruction(class::Instruction::IAdd),
             Instruction::ISub => on_instruction(class::Instruction::ISub),
@@ -380,7 +383,9 @@ impl AssemblyContext<'_> {
             }
             BlockFinalizer::ReturnNull => Some(class::Instruction::Return),
             BlockFinalizer::ReturnObject => Some(class::Instruction::AReturn),
-            BlockFinalizer::ReturnInteger => Some(class::Instruction::IReturn),
+            BlockFinalizer::ReturnInteger | BlockFinalizer::ReturnBoolean => {
+                Some(class::Instruction::IReturn)
+            }
             BlockFinalizer::BranchIntegerCmp {
                 comparison,
                 positive_block,

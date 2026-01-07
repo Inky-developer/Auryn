@@ -172,7 +172,9 @@ ClassData {
                                     ),
                                 ),
                                 Ldc(
-                                    9,
+                                    ConstantPoolIndex(
+                                        9,
+                                    ),
                                 ),
                                 InvokeVirtual(
                                     ConstantPoolIndex(
