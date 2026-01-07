@@ -408,9 +408,13 @@ impl Parser<'_> {
         }
 
         let inner_watcher = self.push_node();
-        match self.peek().kind {
-            TokenKind::KeywordStatic => self.parse_extern_type_body_static_let()?,
-            TokenKind::KeywordFn => self.parse_extern_type_body_function()?,
+        match self.multipeek() {
+            [TokenKind::KeywordStatic, TokenKind::KeywordLet] => {
+                self.parse_extern_type_body_static_let()?
+            }
+            [TokenKind::KeywordFn, ..] | [TokenKind::KeywordStatic, TokenKind::KeywordFn] => {
+                self.parse_extern_type_body_function()?
+            }
             _ => {
                 self.push_error(DiagnosticError::ExpectedExternTypeBodyItem {
                     got: self.peek().text.into(),
@@ -439,6 +443,10 @@ impl Parser<'_> {
 
     fn parse_extern_type_body_function(&mut self) -> ParseResult {
         let watcher = self.push_node();
+
+        if self.peek().kind == TokenKind::KeywordStatic {
+            self.consume();
+        }
 
         self.expect(TokenKind::KeywordFn)?;
         self.expect(TokenKind::Identifier)?;
@@ -1001,6 +1009,8 @@ mod tests {
                     ["bar"] static let bar: Int
 
                     ["baz"] fn baz(value: Int) -> String
+
+                    ["static"] static fn slkfdj()
                 }
             }
             "#

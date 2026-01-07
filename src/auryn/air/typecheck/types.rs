@@ -20,6 +20,8 @@ pub enum Type {
     FunctionItem(TypeId<FunctionItemType>),
     Array(TypeId<ArrayType>),
     Extern(TypeId<ExternType>),
+    /// Represents the type of a type
+    Meta(TypeId<MetaType>),
     Error,
 }
 
@@ -55,6 +57,11 @@ pub struct ExternType {
 pub struct ExternTypeMember {
     pub r#type: Type,
     pub extern_name: SmallString,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct MetaType {
+    pub inner: Type,
 }
 
 impl Type {

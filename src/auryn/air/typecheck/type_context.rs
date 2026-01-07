@@ -9,11 +9,13 @@ use crate::{
     auryn::{
         air::{
             data::Intrinsic,
-            typecheck::types::{ArrayType, ExternType, FunctionItemType, FunctionParameters, Type},
+            typecheck::types::{
+                ArrayType, ExternType, FunctionItemType, FunctionParameters, MetaType, Type,
+            },
         },
         syntax_id::SyntaxId,
     },
-    utils::{bidirectional_map::BidirectionalMap, fast_map::FastMap},
+    utils::{bidirectional_map::BidirectionalMap, default, fast_map::FastMap},
 };
 
 pub type TypeMap<T> = FastMap<TypeId<T>, T>;
@@ -22,24 +24,33 @@ pub type BidirectionalTypeMap<T> = BidirectionalMap<TypeId<T>, T>;
 #[derive(Debug)]
 pub struct TypeContext {
     arrays: BidirectionalTypeMap<ArrayType>,
+    metas: BidirectionalTypeMap<MetaType>,
     externs: TypeMap<ExternType>,
-    functions: TypeMap<FunctionItemType>,
+    function_items: TypeMap<FunctionItemType>,
 }
 
 impl TypeContext {
-    pub fn add_function(
+    pub fn array_of(&mut self, syntax_id: SyntaxId, element_type: Type) -> Type {
+        Type::Array(self.add_array(syntax_id, ArrayType { element_type }))
+    }
+
+    pub fn add_array(&mut self, syntax_id: SyntaxId, array: ArrayType) -> TypeId<ArrayType> {
+        add_non_unique_type(syntax_id, array, &mut self.arrays)
+    }
+
+    pub fn add_meta(&mut self, syntax_id: SyntaxId, meta: MetaType) -> TypeId<MetaType> {
+        add_non_unique_type(syntax_id, meta, &mut self.metas)
+    }
+
+    pub fn add_function_item(
         &mut self,
         syntax_id: SyntaxId,
         function: FunctionItemType,
     ) -> TypeId<FunctionItemType> {
         let id = TypeId::new(syntax_id);
-        let prev = self.functions.insert(id, function);
+        let prev = self.function_items.insert(id, function);
         assert!(prev.is_none());
         id
-    }
-
-    pub fn add_array(&mut self, syntax_id: SyntaxId, array: ArrayType) -> TypeId<ArrayType> {
-        add_non_unique_type(syntax_id, array, &mut self.arrays)
     }
 
     pub fn add_extern(&mut self, syntax_id: SyntaxId, r#extern: ExternType) -> TypeId<ExternType> {
@@ -70,18 +81,26 @@ impl TypeContext {
                 value: self.get_extern(type_id),
                 ctx: self,
             }),
+            Type::Meta(type_id) => TypeView::Meta(TypeViewKind {
+                id: type_id,
+                value: self.get_meta(type_id),
+                ctx: self,
+            }),
             Type::Error => TypeView::Error,
         }
     }
 
     pub fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
-        &self.functions[&id]
+        &self.function_items[&id]
     }
     pub fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
         &self.externs[&id]
     }
     pub fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
         self.arrays.get_by_key(&id).unwrap()
+    }
+    pub fn get_meta(&self, id: TypeId<MetaType>) -> &MetaType {
+        self.metas.get_by_key(&id).unwrap()
     }
 }
 
@@ -102,13 +121,14 @@ fn add_non_unique_type<T: Eq + Hash + Clone>(
 impl Default for TypeContext {
     fn default() -> Self {
         let mut this = Self {
-            arrays: Default::default(),
-            externs: Default::default(),
-            functions: Default::default(),
+            arrays: default(),
+            metas: default(),
+            externs: default(),
+            function_items: default(),
         };
 
         for intrinsic in Intrinsic::ALL {
-            this.add_function(intrinsic.syntax_id(), intrinsic.function_type());
+            this.add_function_item(intrinsic.syntax_id(), intrinsic.function_type());
         }
 
         this
@@ -163,6 +183,7 @@ pub enum TypeView<'a> {
     FunctionItem(TypeViewKind<'a, FunctionItemType>),
     Array(TypeViewKind<'a, ArrayType>),
     Extern(TypeViewKind<'a, ExternType>),
+    Meta(TypeViewKind<'a, MetaType>),
     Error,
 }
 
@@ -186,6 +207,7 @@ impl<'a> TypeView<'a> {
             TypeView::FunctionItem(type_view_kind) => Type::FunctionItem(type_view_kind.id),
             TypeView::Array(type_view_kind) => Type::Array(type_view_kind.id),
             TypeView::Extern(type_view_kind) => Type::Extern(type_view_kind.id),
+            TypeView::Meta(meta_view_kind) => Type::Meta(meta_view_kind.id),
             TypeView::Error => Type::Error,
         }
     }
@@ -201,6 +223,7 @@ impl Display for TypeView<'_> {
             TypeView::FunctionItem(function_type) => function_type.fmt(f),
             TypeView::Array(array_type) => array_type.fmt(f),
             TypeView::Extern(extern_type) => extern_type.fmt(f),
+            TypeView::Meta(meta_type) => meta_type.fmt(f),
             TypeView::Error => f.write_str("<<Error>>"),
         }
     }
@@ -273,5 +296,11 @@ impl<'a> Display for TypeViewKind<'a, ArrayType> {
 impl<'a> Display for TypeViewKind<'a, ExternType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "extern('{}')", self.value.extern_name)
+    }
+}
+
+impl<'a> Display for TypeViewKind<'a, MetaType> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "type[{}]", self.value.inner.as_view(self.ctx))
     }
 }

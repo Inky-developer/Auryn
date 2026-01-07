@@ -168,6 +168,7 @@ pub enum FunctionReference {
     UserDefined(AirFunctionId),
     Extern {
         parent: Type,
+        kind: ExternFunctionKind,
         extern_name: SmallString,
         syntax_id: SyntaxId,
     },
@@ -181,6 +182,12 @@ impl FunctionReference {
             other => panic!("{other:?} has no syntax id"),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ExternFunctionKind {
+    Static,
+    Method,
 }
 
 /// Represents a type that was written by the user but not resolved yet.

@@ -188,7 +188,7 @@ impl Typechecker {
                 let return_type = return_type
                     .as_ref()
                     .map_or(Type::Null, |ty| self.resolve_type(ty));
-                Type::FunctionItem(self.ty_ctx.add_function(
+                Type::FunctionItem(self.ty_ctx.add_function_item(
                     reference.syntax_id(),
                     FunctionItemType {
                         parameters: FunctionParameters::Constrained {
@@ -518,27 +518,24 @@ impl Typechecker {
         id: SyntaxId,
         arguments: &[AirExpression],
     ) -> Type {
-        let return_type = Type::Array(self.ty_ctx.add_array(
-            id,
-            ArrayType {
-                element_type: Type::Number,
-            },
-        ));
-        let [count] = arguments else {
+        let [r#type, count] = arguments else {
             self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
-                    expected: 1,
+                    expected: 2,
                     got: arguments.len(),
                     parameter_def: None,
                 },
             );
-            return return_type;
+            return self.ty_ctx.array_of(id, Type::Error);
         };
 
-        self.expect_type(count, Type::Number);
+        let element_type = r#type.r#type.computed();
 
-        return_type
+        self.expect_type(count, Type::Number);
+        // TODO; Verify that type is a meta type
+
+        self.ty_ctx.array_of(id, element_type)
     }
 
     fn typecheck_intrinsic_array_get(&mut self, id: SyntaxId, arguments: &[AirExpression]) -> Type {

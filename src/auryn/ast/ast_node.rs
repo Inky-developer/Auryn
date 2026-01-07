@@ -170,6 +170,14 @@ ast_node! {
     pub struct ExternTypeFunction = SyntaxNodeKind::ExternTypeFunction as { token ident: TokenKind::Identifier, parameters: ParameterList, return_type: ReturnType, }
 }
 
+impl ExternTypeFunction<'_> {
+    pub fn is_static(&self) -> bool {
+        self.0
+            .tokens()
+            .any(|it| it.kind == TokenKind::KeywordStatic)
+    }
+}
+
 ast_node! {
     pub struct FunctionDefinition = SyntaxNodeKind::FunctionDefinition as {
         token ident: TokenKind::Identifier,

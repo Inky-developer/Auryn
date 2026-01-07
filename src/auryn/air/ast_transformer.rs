@@ -1,14 +1,16 @@
+use std::str::FromStr;
+
 use crate::{
     auryn::{
         air::{
             data::{
                 self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirLocalValueId, AirNode, AirNodeKind,
-                AirStaticValue, AirStaticValueId, AirType, AirValueId, Call, FunctionReference,
-                ReturnValue, UnresolvedExternMember, UnresolvedType,
+                AirStaticValue, AirStaticValueId, AirType, AirValueId, Call, ExternFunctionKind,
+                FunctionReference, ReturnValue, UnresolvedExternMember, UnresolvedType,
             },
             namespace::{Namespace, UserDefinedTypeId},
-            typecheck::type_context::TypeId,
+            typecheck::{type_context::TypeId, types},
         },
         ast::ast_node::{
             Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BreakStatement,
@@ -244,6 +246,11 @@ impl AstTransformer {
                         .and_then(|ty| ty.r#type().ok())
                         .and_then(|ty| self.transform_to_unresolved(ty).ok())
                         .map(Box::new);
+                    let kind = if function.is_static() {
+                        ExternFunctionKind::Static
+                    } else {
+                        ExternFunctionKind::Method
+                    };
 
                     let member = UnresolvedExternMember::Function {
                         unresolved_type: UnresolvedType::Function {
@@ -252,6 +259,7 @@ impl AstTransformer {
                             return_type: declared_return_type,
                             reference: FunctionReference::Extern {
                                 extern_name: extern_name.clone(),
+                                kind,
                                 parent: def_id.to_type(),
                                 syntax_id,
                             },
@@ -754,6 +762,10 @@ impl FunctionTransformer<'_> {
 
         if let Some(type_id) = self.namespace.types.get(&ident.text) {
             return AirExpression::new(ident.id, AirExpressionKind::Type(type_id.to_type()));
+        }
+
+        if let Ok(intrinsic_type) = types::Type::from_str(&ident.text) {
+            return AirExpression::new(ident.id, AirExpressionKind::Type(intrinsic_type));
         }
 
         self.diagnostics.add(

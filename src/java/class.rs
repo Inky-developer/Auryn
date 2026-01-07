@@ -139,7 +139,7 @@ impl Comparison {
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
     /// Static must be a FieldRef
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
+    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.getstatic
     GetStatic(ConstantPoolIndex),
     /// Static must be a MethodRef
     /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokestatic

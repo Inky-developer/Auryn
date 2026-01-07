@@ -4,8 +4,8 @@ use crate::{
             data::{
                 Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, FunctionReference,
-                Intrinsic,
+                AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, ExternFunctionKind,
+                FunctionReference, Intrinsic,
             },
             typecheck::type_context::{TypeContext, TypeView},
         },
@@ -75,7 +75,8 @@ impl<'a> FunctionGenerator<'a> {
         ty_ctx: &'a TypeContext,
         pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
-        let TypeView::FunctionItem(function_type) = function.r#type.computed().as_view(ty_ctx) else {
+        let TypeView::FunctionItem(function_type) = function.r#type.computed().as_view(ty_ctx)
+        else {
             panic!("Invalid function type");
         };
         let mut block_translation = FastMap::default();
@@ -374,6 +375,7 @@ impl FunctionGenerator<'_> {
             FunctionReference::Extern {
                 parent,
                 extern_name,
+                kind,
                 ..
             } => {
                 for argument in &call.arguments {
@@ -386,11 +388,21 @@ impl FunctionGenerator<'_> {
                 else {
                     panic!("Extern function should be member of an object");
                 };
-                self.assembler.add(Instruction::InvokeVirtual {
-                    class_name,
-                    name: extern_name.clone(),
-                    method_descriptor,
-                });
+
+                match kind {
+                    ExternFunctionKind::Method => {
+                        self.assembler.add(Instruction::InvokeVirtual {
+                            class_name,
+                            name: extern_name.clone(),
+                            method_descriptor,
+                        });
+                    }
+                    ExternFunctionKind::Static => self.assembler.add(Instruction::InvokeStatic {
+                        class_name,
+                        name: extern_name.clone(),
+                        method_descriptor,
+                    }),
+                }
             }
         }
     }
@@ -404,7 +416,7 @@ impl FunctionGenerator<'_> {
         match intrinsic {
             Intrinsic::Print => self.generate_intrinsic_print(arguments),
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, arguments),
-            Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(arguments),
+            Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(arguments, r#type),
             Intrinsic::ArrayGet => self.generate_intrinsic_array_get(arguments),
             Intrinsic::ArraySet => self.generate_intrinsic_array_set(arguments),
             Intrinsic::ArrayLen => self.generate_intrinsic_array_len(arguments),
@@ -480,16 +492,24 @@ impl FunctionGenerator<'_> {
         }
     }
 
-    fn generate_intrinsic_array_of_zeros(&mut self, arguments: &[AirExpression]) {
-        let [count] = arguments else {
+    fn generate_intrinsic_array_of_zeros(
+        &mut self,
+        arguments: &[AirExpression],
+        result_type: TypeView,
+    ) {
+        let [_element_type, count] = arguments else {
             unreachable!("Should be a valid call");
         };
 
         let count = self.generate_expression(count);
         assert_eq!(count, Some(Representation::Integer));
 
-        self.assembler
-            .add(Instruction::NewArray(Representation::Integer));
+        let TypeView::Array(element_type) = result_type else {
+            panic!("arrayOf should return an array");
+        };
+        let element_repr = get_representation(element_type.element())
+            .expect("Cannot represent arrays of zero sized types yet");
+        self.assembler.add(Instruction::NewArray(element_repr));
     }
 
     fn generate_intrinsic_array_get(&mut self, arguments: &[AirExpression]) {

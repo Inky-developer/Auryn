@@ -1,15 +1,15 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/Foo\"]\n                type Foo {\n                    [\"bar\"] static let bar: Int\n\n                    [\"baz\"] fn baz(value: Int) -> String\n                }\n            }\n            \"#)"
+expression: "verify(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/Foo\"]\n                type Foo {\n                    [\"bar\"] static let bar: Int\n\n                    [\"baz\"] fn baz(value: Int) -> String\n\n                    [\"static\"] static fn slkfdj()\n                }\n            }\n            \"#)"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..247 Root
-        |0..247 File
+        0..298 Root
+        |0..298 File
         ||Newline `\n`
         ||Whitespace `            `
-        ||13..234 Item
-        |||13..234 ExternBlock
+        ||13..285 Item
+        |||13..285 ExternBlock
         ||||KeywordUnsafe `unsafe`
         ||||Whitespace ` `
         ||||KeywordExtern `extern`
@@ -19,20 +19,20 @@ AnnotatedParserOutput {
         ||||BraceOpen `{`
         ||||Newline `\n`
         ||||Whitespace `                `
-        ||||52..220 ExternBlockItem
+        ||||52..271 ExternBlockItem
         |||||52..69 ItemMetadata
         ||||||BracketOpen `[`
         ||||||StringLiteral `\"java/lang/Foo\"`
         ||||||BracketClose `]`
         |||||Newline `\n`
         |||||Whitespace `                `
-        |||||86..220 ExternBlockItemKind
-        ||||||86..220 ExternType
+        |||||86..271 ExternBlockItemKind
+        ||||||86..271 ExternType
         |||||||KeywordType `type`
         |||||||Whitespace ` `
         |||||||Identifier `Foo`
         |||||||Whitespace ` `
-        |||||||95..220 ExternTypeBody
+        |||||||95..271 ExternTypeBody
         ||||||||BraceOpen `{`
         ||||||||Newline `\n`
         ||||||||Whitespace `                    `
@@ -85,6 +85,25 @@ AnnotatedParserOutput {
         ||||||||||||196..202 Type
         |||||||||||||196..202 Ident
         ||||||||||||||Identifier `String`
+        ||||||||Newline `\n`
+        ||||||||Newline `\n`
+        ||||||||Whitespace `                    `
+        ||||||||224..253 ExternTypeBodyItem
+        |||||||||224..235 ItemMetadata
+        ||||||||||BracketOpen `[`
+        ||||||||||StringLiteral `\"static\"`
+        ||||||||||BracketClose `]`
+        ||||||||||Whitespace ` `
+        |||||||||235..253 ExternTypeBodyItemKind
+        ||||||||||235..253 ExternTypeFunction
+        |||||||||||KeywordStatic `static`
+        |||||||||||Whitespace ` `
+        |||||||||||KeywordFn `fn`
+        |||||||||||Whitespace ` `
+        |||||||||||Identifier `slkfdj`
+        |||||||||||251..253 ParameterList
+        ||||||||||||ParensOpen `(`
+        ||||||||||||ParensClose `)`
         ||||||||Newline `\n`
         ||||||||Whitespace `                `
         ||||||||BraceClose `}`
