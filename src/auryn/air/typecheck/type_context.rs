@@ -61,16 +61,16 @@ impl TypeContext {
         T::from_context(id, self)
     }
 
-    pub fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
+    pub(super) fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
         &self.function_items[&id]
     }
-    pub fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
+    pub(super) fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
         &self.externs[&id]
     }
-    pub fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
+    pub(super) fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
         self.arrays.get_by_key(&id).unwrap()
     }
-    pub fn get_meta(&self, id: TypeId<MetaType>) -> &MetaType {
+    pub(super) fn get_meta(&self, id: TypeId<MetaType>) -> &MetaType {
         self.metas.get_by_key(&id).unwrap()
     }
 }
