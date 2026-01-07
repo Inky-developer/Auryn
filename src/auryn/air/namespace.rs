@@ -12,7 +12,7 @@ use crate::{
 /// Represents a type that was defined by the user that later gets registered in the type context, for which we already now the id.
 /// The point of this type is to enable recursive type definitions:
 /// If an extern type `Foo` is defined, we can already construct a type for it without registering
-/// it in the [`TypeContext`] first, by using [`UserDefinedTypeId::to_type`].
+/// it in the [`super::typecheck::type_context::TypeContext`] first, by using [`UserDefinedTypeId::to_type`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),

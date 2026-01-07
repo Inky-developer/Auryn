@@ -82,7 +82,7 @@ pub enum PrimitiveOrObject {
     Object(SmallString),
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-FieldType>
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FieldDescriptor {
     Byte,
@@ -155,7 +155,7 @@ impl Display for FieldDescriptor {
     }
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-ReturnDescriptor
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-ReturnDescriptor>
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReturnDescriptor {
     Value(FieldDescriptor),

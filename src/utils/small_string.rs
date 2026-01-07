@@ -26,7 +26,7 @@ impl SmallString {
     /// Returns an empty [`SmallString`].
     ///
     /// This could be a constant in theory, but is not supported by std right now:
-    /// https://internals.rust-lang.org/t/const-box-str-new/20085
+    /// <https://internals.rust-lang.org/t/const-box-str-new/20085>
     /// Though it should optimize anyways.
     pub fn empty() -> Self {
         Self::Heap("".into())

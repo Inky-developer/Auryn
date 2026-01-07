@@ -112,7 +112,7 @@ impl ConstantPoolEntry {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JumpPoint(pub u16);
 
-/// Must be ordered as in https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_cond
+/// Must be ordered as in <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_cond>
 #[derive(Debug, Clone, Copy)]
 pub enum Comparison {
     Equal,
@@ -139,45 +139,45 @@ impl Comparison {
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
     /// Static must be a FieldRef
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.getstatic
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.getstatic>
     GetStatic(ConstantPoolIndex),
     /// Static must be a MethodRef
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokestatic
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokestatic>
     InvokeStatic(ConstantPoolIndex),
     /// Index must be a MethodRef
     InvokeVirtual(ConstantPoolIndex),
     /// Loads a constant from the constant pool
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc>
     Ldc(ConstantPoolIndex),
     /// Returns void
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.return
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.return>
     Return,
     /// Returns a reference type
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.areturn
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.areturn>
     AReturn,
     /// Returns Int, short, char, byte or boolean
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ireturn
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ireturn>
     IReturn,
     /// Create a new array of references, initialize to nulls
     /// Argument must be a reference to a class, array or function
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.anewarray
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.anewarray>
     ANewArray(ConstantPoolIndex),
     /// Creates a new array of the given type, initialized to zeros of that type
     NewArray(PrimitiveType),
     /// Returns the length of an array
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.arraylength
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.arraylength>
     ArrayLength,
     /// Returns an object from an array of references
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aaload
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aaload>
     AALoad,
     /// Stores an object into an array of references
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aastore
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aastore>
     AAStore,
     /// Loads an int from an int array
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iaload
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iaload>
     IALoad,
     /// Stores an int into an int array
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iastore
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iastore>
     IAStore,
     // Load a reference
     // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aload
@@ -186,38 +186,38 @@ pub enum Instruction {
     // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.astore
     AStore(u16),
     /// Must be -1 <= value <= 8
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i>
     Iconst(i8),
     IAdd,
     /// Subtract two integers
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.isub
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.isub>
     ISub,
     IMul,
     IStore(u16),
     ILoad(u16),
     /// Compares the two topmost stack entries according to the given `comparison`
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond>
     IfICmp {
         comparison: Comparison,
         jump_point: JumpPoint,
     },
     /// Compares the topmost stack entry with 0 according to the given `comparison`
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_cond
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_cond>
     IfI {
         comparison: Comparison,
         jump_point: JumpPoint,
     },
     Goto(JumpPoint),
     Nop,
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop>
     Pop,
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop2
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop2>
     Pop2,
     /// Duplicates the top stack value (of category 1)
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.dup
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.dup>
     Dup,
     /// Duplicates the top stack value of category 2, or the top 2 stack values of category 1
-    /// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.dup2
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.dup2>
     Dup2,
 }
 
@@ -383,7 +383,7 @@ impl CodeAttribute {
     }
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-2.html#jvms-2.11.1-320
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-2.html#jvms-2.11.1-320>
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TypeCategory {
     Normal,
@@ -413,7 +413,7 @@ pub enum PrimitiveType {
     Long,
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4>
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum VerificationTypeInfo {
     // Supertype of everything
@@ -471,7 +471,7 @@ impl VerificationTypeInfo {
     }
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4>
 #[derive(Debug)]
 pub enum StackMapFrame {
     Same {
@@ -522,7 +522,7 @@ impl StackMapFrame {
     }
 }
 
-/// https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4>
 #[derive(Debug)]
 pub struct StackMapTableAttribute {
     pub entries: Vec<StackMapFrame>,

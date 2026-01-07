@@ -2,7 +2,7 @@ use std::{fmt::Debug, num::NonZeroU64, ops::Range};
 
 use crate::auryn::file_id::FileId;
 
-/// Consists of a 16 bit file id and an 48 bit id that uniquely represents a [`SyntaxItem`].
+/// Consists of a 16 bit file id and an 48 bit id that uniquely represents a [`super::syntax_tree::SyntaxItem`].
 /// Tries to be somewhat stable after file modifications to increase the amount of cached data
 /// that can be reused.
 /// Heavily inspired by typst's `Span` type.
