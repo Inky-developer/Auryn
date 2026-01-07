@@ -195,8 +195,11 @@ impl Diagnostic {
         let mut builder = DiagnosticDisplay::new(self.level(), self.syntax_id);
         self.build_report(&mut builder);
 
-        #[cfg(all(debug_assertions, not(test)))]
-        builder.with_info(format!("This diagnostic was emmited at {}", self.location));
+        // We also don't really want this info in the test output, because the location is very unstable,
+        // which would cause lots of snapshot tests to update when there isn't really any change
+        if const { cfg!(debug_assertions) && !cfg!(test) } {
+            builder.with_info(format!("This diagnostic was emmited at {}", self.location));
+        }
 
         builder
     }
