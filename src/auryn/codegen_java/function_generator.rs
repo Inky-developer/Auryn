@@ -7,7 +7,7 @@ use crate::{
                 AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, ExternFunctionKind,
                 FunctionReference, Intrinsic,
             },
-            typecheck::type_context::{TypeContext, TypeView},
+            typecheck::{type_context::TypeContext, types::TypeView},
         },
         codegen_java::{
             class_generator::GeneratedMethodData,

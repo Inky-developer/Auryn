@@ -1,17 +1,10 @@
-use std::{
-    fmt::{Debug, Display},
-    hash::Hash,
-    marker::PhantomData,
-    ops::Deref,
-};
+use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
 use crate::{
     auryn::{
         air::{
-            data::{ExternFunctionKind, FunctionReference, Intrinsic},
-            typecheck::types::{
-                ArrayType, ExternType, FunctionItemType, FunctionParameters, MetaType, Type,
-            },
+            data::Intrinsic,
+            typecheck::types::{ArrayType, ExternType, FunctionItemType, MetaType, Type, TypeData},
         },
         syntax_id::SyntaxId,
     },
@@ -64,35 +57,8 @@ impl TypeContext {
         id
     }
 
-    pub fn get_view(&self, r#type: Type) -> TypeView<'_> {
-        match r#type {
-            Type::Top => TypeView::Top,
-            Type::Number => TypeView::Number,
-            Type::Bool => TypeView::Bool,
-            Type::String => TypeView::String,
-            Type::Null => TypeView::Null,
-            Type::FunctionItem(type_id) => TypeView::FunctionItem(TypeViewKind {
-                id: type_id,
-                value: self.get_function_item(type_id),
-                ctx: self,
-            }),
-            Type::Array(type_id) => TypeView::Array(TypeViewKind {
-                id: type_id,
-                value: self.get_array(type_id),
-                ctx: self,
-            }),
-            Type::Extern(type_id) => TypeView::Extern(TypeViewKind {
-                id: type_id,
-                value: self.get_extern(type_id),
-                ctx: self,
-            }),
-            Type::Meta(type_id) => TypeView::Meta(TypeViewKind {
-                id: type_id,
-                value: self.get_meta(type_id),
-                ctx: self,
-            }),
-            Type::Error => TypeView::Error,
-        }
+    pub fn get<T: TypeData>(&self, id: TypeId<T>) -> &T {
+        T::from_context(id, self)
     }
 
     pub fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
@@ -176,169 +142,5 @@ impl<T> Eq for TypeId<T> {}
 impl<T> Hash for TypeId<T> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.hash(state);
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum TypeView<'a> {
-    Top,
-    Number,
-    Bool,
-    String,
-    Null,
-    FunctionItem(TypeViewKind<'a, FunctionItemType>),
-    Array(TypeViewKind<'a, ArrayType>),
-    Extern(TypeViewKind<'a, ExternType>),
-    Meta(TypeViewKind<'a, MetaType>),
-    Error,
-}
-
-impl<'a> TypeView<'a> {
-    pub fn get_member(self, ident: &str) -> Option<TypeView<'a>> {
-        match self {
-            TypeView::Extern(extern_type) => extern_type
-                .value
-                .get_member(ident)
-                .map(|it| it.as_view(extern_type.ctx))
-                .take_if(|it| !it.is_static_extern_member()),
-            TypeView::Meta(meta_type) => match meta_type.inner() {
-                TypeView::Extern(extern_type) => extern_type
-                    .value
-                    .get_member(ident)
-                    .map(|it| it.as_view(extern_type.ctx))
-                    .take_if(|it| it.is_static_extern_member()),
-                _ => None,
-            },
-            _ => None,
-        }
-    }
-
-    /// Returns whether a type is a static extern member.
-    /// Right now, every type is considered static except for methods which don't have the static kind
-    fn is_static_extern_member(self) -> bool {
-        match self {
-            TypeView::FunctionItem(function_item) => matches!(
-                function_item.reference,
-                FunctionReference::Extern {
-                    kind: ExternFunctionKind::Static,
-                    ..
-                }
-            ),
-            _ => true,
-        }
-    }
-
-    pub fn as_type(self) -> Type {
-        match self {
-            TypeView::Top => Type::Top,
-            TypeView::Number => Type::Number,
-            TypeView::Bool => Type::Bool,
-            TypeView::String => Type::String,
-            TypeView::Null => Type::Null,
-            TypeView::FunctionItem(type_view_kind) => Type::FunctionItem(type_view_kind.id),
-            TypeView::Array(type_view_kind) => Type::Array(type_view_kind.id),
-            TypeView::Extern(type_view_kind) => Type::Extern(type_view_kind.id),
-            TypeView::Meta(meta_view_kind) => Type::Meta(meta_view_kind.id),
-            TypeView::Error => Type::Error,
-        }
-    }
-}
-
-impl Display for TypeView<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TypeView::Top => f.write_str("Top"),
-            TypeView::Number => f.write_str("Number"),
-            TypeView::Bool => f.write_str("Bool"),
-            TypeView::String => f.write_str("String"),
-            TypeView::Null => f.write_str("Null"),
-            TypeView::FunctionItem(function_type) => function_type.fmt(f),
-            TypeView::Array(array_type) => array_type.fmt(f),
-            TypeView::Extern(extern_type) => extern_type.fmt(f),
-            TypeView::Meta(meta_type) => meta_type.fmt(f),
-            TypeView::Error => f.write_str("<<Error>>"),
-        }
-    }
-}
-
-pub struct TypeViewKind<'a, T> {
-    pub id: TypeId<T>,
-    pub value: &'a T,
-    pub ctx: &'a TypeContext,
-}
-
-impl<'a> TypeViewKind<'a, ArrayType> {
-    pub fn element(self) -> TypeView<'a> {
-        self.element_type.as_view(self.ctx)
-    }
-}
-
-impl<'a> TypeViewKind<'a, MetaType> {
-    pub fn inner(self) -> TypeView<'a> {
-        self.inner.as_view(self.ctx)
-    }
-}
-
-impl<'a> TypeViewKind<'a, FunctionItemType> {
-    pub fn r#return(self) -> TypeView<'a> {
-        self.return_type.as_view(self.ctx)
-    }
-}
-
-impl<'a, T> Clone for TypeViewKind<'a, T> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<'a, T> Copy for TypeViewKind<'a, T> {}
-
-impl<'a, T> Deref for TypeViewKind<'a, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.value
-    }
-}
-
-impl<'a> Display for TypeViewKind<'a, FunctionItemType> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("(")?;
-        match &self.value.parameters {
-            FunctionParameters::Constrained { parameters, .. } => {
-                for (index, parameter) in parameters.iter().enumerate() {
-                    if index != 0 {
-                        f.write_str(",")?;
-                    }
-                    Display::fmt(&parameter.as_view(self.ctx), f)?;
-                }
-            }
-            FunctionParameters::Unconstrained => {
-                f.write_str("...")?;
-            }
-        }
-
-        f.write_str(" -> ")?;
-        Display::fmt(&self.value.return_type.as_view(self.ctx), f)?;
-
-        Ok(())
-    }
-}
-
-impl<'a> Display for TypeViewKind<'a, ArrayType> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[]{}", self.value.element_type.as_view(self.ctx))
-    }
-}
-
-impl<'a> Display for TypeViewKind<'a, ExternType> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "extern('{}')", self.value.extern_name)
-    }
-}
-
-impl<'a> Display for TypeViewKind<'a, MetaType> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Type[{}]", self.value.inner.as_view(self.ctx))
     }
 }

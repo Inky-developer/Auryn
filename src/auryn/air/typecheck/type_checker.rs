@@ -12,10 +12,10 @@ use crate::{
             },
             namespace::UserDefinedTypeId,
             typecheck::{
-                type_context::{TypeContext, TypeId, TypeView},
+                type_context::{TypeContext, TypeId},
                 types::{
                     ArrayType, ExternType, ExternTypeMember, FunctionItemType, FunctionParameters,
-                    Type,
+                    Type, TypeView,
                 },
             },
         },

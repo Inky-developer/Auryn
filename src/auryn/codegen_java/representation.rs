@@ -1,10 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    auryn::air::typecheck::{
-        type_context::{TypeView, TypeViewKind},
-        types::FunctionItemType,
-    },
+    auryn::air::typecheck::types::{FunctionItemType, TypeView, TypeViewKind},
     java::{
         class::{PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,

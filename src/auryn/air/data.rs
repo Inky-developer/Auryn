@@ -5,8 +5,8 @@ use crate::{
         air::{
             namespace::UserDefinedTypeId,
             typecheck::{
-                type_context::{TypeContext, TypeId, TypeView, TypeViewKind},
-                types::{FunctionItemType, FunctionParameters, Type},
+                type_context::{TypeContext, TypeId},
+                types::{FunctionItemType, FunctionParameters, Type, TypeView, TypeViewKind},
             },
         },
         syntax_id::SyntaxId,
