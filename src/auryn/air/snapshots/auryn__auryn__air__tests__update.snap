@@ -1,0 +1,177 @@
+---
+source: src/auryn/air/mod.rs
+expression: "compile_wrapped(\"let a = 1\\na = 2\")"
+---
+AirOutput {
+    air: Air {
+        functions: {
+            AirFunctionId(
+                AirStaticValueId(
+                    SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            4,
+                        ),
+                    },
+                ),
+            ): AirFunction {
+                type: Computed(
+                    FunctionItem(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    4,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                        },
+                    ),
+                ),
+                unresolved_type: Function {
+                    parameters_reference: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            105553116266498,
+                        ),
+                    },
+                    parameters: [],
+                    return_type: None,
+                    reference: UserDefined(
+                        AirFunctionId(
+                            AirStaticValueId(
+                                SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        4,
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                },
+                ident: "main",
+                blocks: {
+                    AirBlockId(
+                        0,
+                    ): AirBlock {
+                        nodes: [
+                            AirNode {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        211106232532993,
+                                    ),
+                                },
+                                kind: Assignment(
+                                    Assignment {
+                                        target: AirLocalValueId(
+                                            0,
+                                        ),
+                                        expression: AirExpression {
+                                            id: SyntaxId {
+                                                file_id: Some(
+                                                    FileId(
+                                                        1,
+                                                    ),
+                                                ),
+                                                number: Some(
+                                                    221158910272660,
+                                                ),
+                                            },
+                                            type: Computed(
+                                                Number,
+                                            ),
+                                            kind: Constant(
+                                                Number(
+                                                    1,
+                                                ),
+                                            ),
+                                        },
+                                    },
+                                ),
+                            },
+                            AirNode {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        234562480592213,
+                                    ),
+                                },
+                                kind: Assignment(
+                                    Assignment {
+                                        target: AirLocalValueId(
+                                            0,
+                                        ),
+                                        expression: AirExpression {
+                                            id: SyntaxId {
+                                                file_id: Some(
+                                                    FileId(
+                                                        1,
+                                                    ),
+                                                ),
+                                                number: Some(
+                                                    243944979815900,
+                                                ),
+                                            },
+                                            type: Computed(
+                                                Number,
+                                            ),
+                                            kind: Constant(
+                                                Number(
+                                                    2,
+                                                ),
+                                            ),
+                                        },
+                                    },
+                                ),
+                            },
+                        ],
+                        finalizer: Return(
+                            Null(
+                                SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        211106232532991,
+                                    ),
+                                },
+                            ),
+                        ),
+                    },
+                },
+            },
+        },
+        ..
+    },
+    diagnostics: Diagnostics {
+        diagnostics: [],
+    },
+}

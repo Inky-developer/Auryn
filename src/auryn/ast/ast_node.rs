@@ -1,7 +1,7 @@
 use crate::auryn::{
     syntax_id::SyntaxId,
     syntax_tree::{SyntaxNode, SyntaxNodeKind, SyntaxToken},
-    tokenizer::{BinaryOperatorToken, TokenKind},
+    tokenizer::{BinaryOperatorToken, TokenKind, UpdateOperatorToken},
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -246,6 +246,15 @@ ast_node! {
 
 ast_node! {
     pub struct VariableUpdate = SyntaxNodeKind::VariableUpdate as { token ident: TokenKind::Identifier, expression: Expression, }
+}
+
+impl VariableUpdate<'_> {
+    pub fn assignment_token(self) -> AstResult<UpdateOperatorToken> {
+        self.0
+            .tokens()
+            .find_map(|it| it.kind.to_assignment_operator())
+            .ok_or(AstError)
+    }
 }
 
 ast_node! {

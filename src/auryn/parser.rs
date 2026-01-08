@@ -6,7 +6,7 @@ use crate::{
         file_id::FileId,
         syntax_id::SyntaxId,
         syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
-        tokenizer::{Token, TokenKind, TokenSet, Tokenizer},
+        tokenizer::{Token, TokenKind, TokenSet, Tokenizer, UpdateOperatorToken},
     },
     bitset,
     utils::default,
@@ -582,8 +582,19 @@ impl Parser<'_> {
             TokenKind::KeywordBreak => self.parse_break()?,
             TokenKind::KeywordReturn => self.parse_return()?,
             _ => {
-                if let [TokenKind::Identifier, TokenKind::Equal] = self.multipeek() {
+                if let [TokenKind::Identifier, op] = self.multipeek()
+                    && UpdateOperatorToken::TOKEN_SET.contains(op)
+                {
                     self.parse_variable_update()?;
+                } else if let [TokenKind::Identifier, _, TokenKind::Equal] = self.multipeek() {
+                    // This branch is just for better error messages in case the user typed a update operator token
+                    // that does not exist
+                    self.consume();
+                    self.push_error(DiagnosticError::UnexpectedToken {
+                        expected: UpdateOperatorToken::TOKEN_SET,
+                        got: self.peek().text.into(),
+                    });
+                    return Err(());
                 } else {
                     self.parse_expression()?
                 }
@@ -657,7 +668,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::Identifier)?;
-        self.expect(TokenKind::Equal)?;
+        self.expect(UpdateOperatorToken::TOKEN_SET)?;
         self.parse_expression()?;
 
         self.finish_node(watcher, SyntaxNodeKind::VariableUpdate);
@@ -973,6 +984,7 @@ mod tests {
     #[test]
     fn test_variable_update() {
         insta::assert_debug_snapshot!(verify_block("a = 3"));
+        insta::assert_debug_snapshot!(verify_block("a *= 3"));
     }
 
     #[test]

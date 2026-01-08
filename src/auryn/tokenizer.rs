@@ -17,12 +17,46 @@ pub enum BinaryOperatorToken {
 
 impl BinaryOperatorToken {
     pub fn binding_power(self) -> u32 {
+        use BinaryOperatorToken::*;
         match self {
-            Self::Equal | Self::NotEqual => 1,
-            Self::GreaterOrEqual | Self::Greater | Self::LessOrEqual | Self::Less => 2,
-            Self::Plus | Self::Minus => 3,
-            Self::Times => 4,
+            Equal | NotEqual => 1,
+            GreaterOrEqual | Greater | LessOrEqual | Less => 2,
+            Plus | Minus => 3,
+            Times => 4,
         }
+    }
+}
+
+bitset_item! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum UpdateOperatorToken {
+        Assign,
+        PlusAssign,
+        MinusAssign,
+        TimesAssign,
+    }
+}
+
+impl UpdateOperatorToken {
+    pub const fn to_token_kind(self) -> TokenKind {
+        match self {
+            Self::Assign => TokenKind::Equal,
+            Self::PlusAssign => TokenKind::PlusAssign,
+            Self::MinusAssign => TokenKind::MinusAssign,
+            Self::TimesAssign => TokenKind::TimesAssign,
+        }
+    }
+
+    pub const TOKEN_SET: TokenSet = Self::bitset();
+
+    pub const fn bitset() -> TokenSet {
+        let mut set = TokenSet::new();
+        let mut i = 0;
+        while i < Self::VARIANTS.len() {
+            set.insert_raw(Self::VARIANTS[i].to_token_kind() as u8);
+            i += 1
+        }
+        set
     }
 }
 
@@ -37,6 +71,9 @@ bitset_item! {
         Plus,
         Minus,
         Times,
+        PlusAssign,
+        MinusAssign,
+        TimesAssign,
         Equal,
         DoubleEqual,
         NotEqual,
@@ -89,6 +126,16 @@ impl TokenKind {
         }
     }
 
+    pub fn to_assignment_operator(self) -> Option<UpdateOperatorToken> {
+        Some(match self {
+            TokenKind::Equal => UpdateOperatorToken::Assign,
+            TokenKind::PlusAssign => UpdateOperatorToken::PlusAssign,
+            TokenKind::TimesAssign => UpdateOperatorToken::TimesAssign,
+            TokenKind::MinusAssign => UpdateOperatorToken::MinusAssign,
+            _ => return None,
+        })
+    }
+
     pub fn as_str(self) -> &'static str {
         match self {
             TokenKind::NumberLiteral => "<number>",
@@ -97,6 +144,9 @@ impl TokenKind {
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Times => "*",
+            TokenKind::PlusAssign => "+=",
+            TokenKind::MinusAssign => "-=",
+            TokenKind::TimesAssign => "*=",
             TokenKind::Equal => "=",
             TokenKind::DoubleEqual => "==",
             TokenKind::NotEqual => "!=",
@@ -246,9 +296,33 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("->"),
                 });
             }
-            '+' => TokenKind::Plus,
-            '-' => TokenKind::Minus,
-            '*' => TokenKind::Times,
+            '+' => {
+                if self.input.starts_with("+=") {
+                    return Some(Token {
+                        kind: TokenKind::PlusAssign,
+                        text: self.consume_text("+="),
+                    });
+                }
+                TokenKind::Plus
+            }
+            '-' => {
+                if self.input.starts_with("-=") {
+                    return Some(Token {
+                        kind: TokenKind::MinusAssign,
+                        text: self.consume_text("-="),
+                    });
+                }
+                TokenKind::Minus
+            }
+            '*' => {
+                if self.input.starts_with("*=") {
+                    return Some(Token {
+                        kind: TokenKind::TimesAssign,
+                        text: self.consume_text("*="),
+                    });
+                }
+                TokenKind::Times
+            }
             '=' => {
                 if self.input.starts_with("==") {
                     return Some(Token {
@@ -380,7 +454,7 @@ impl<'a> Iterator for Tokenizer<'a> {
 #[cfg(test)]
 mod tests {
 
-    use crate::auryn::tokenizer::TokenKind;
+    use crate::auryn::tokenizer::{TokenKind, UpdateOperatorToken};
 
     use super::{Token, Tokenizer};
 
@@ -401,6 +475,7 @@ mod tests {
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
         insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));
+        insta::assert_debug_snapshot!(tokenize("a *= b += c -= 3"));
     }
 
     #[test]
@@ -424,6 +499,14 @@ mod tests {
                     vec![*kind]
                 );
             }
+        }
+    }
+
+    #[test]
+    fn test_assignment_token_conversion() {
+        for variant in UpdateOperatorToken::VARIANTS {
+            let kind = variant.to_token_kind();
+            assert_eq!(kind.to_assignment_operator(), Some(*variant))
         }
     }
 }

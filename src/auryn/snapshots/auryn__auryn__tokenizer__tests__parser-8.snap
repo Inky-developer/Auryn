@@ -1,0 +1,58 @@
+---
+source: src/auryn/tokenizer.rs
+expression: "tokenize(\"a *= b += c -= 3\")"
+---
+[
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: TimesAssign,
+        text: "*=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "b",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: PlusAssign,
+        text: "+=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "c",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: MinusAssign,
+        text: "-=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "3",
+    },
+]

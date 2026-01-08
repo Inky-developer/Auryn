@@ -1,0 +1,14 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "\nfn main() {\n\tlet a = 0\n\ta ^= 1\n}\n"
+input_file: src/auryn/tests/inputs/ui/recover_assignment.au
+---
+Error: Unexpected token
+   ╭─[ main:4:4 ]
+   │
+ 4 │     a ^= 1
+   │       │ 
+   │       ╰─ got "^"
+   │ 
+   │ Note: Expected `+=`, `-=`, `*=` or `=`
+───╯

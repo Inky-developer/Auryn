@@ -23,6 +23,7 @@ use crate::{
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
         syntax_tree::SyntaxToken,
+        tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
@@ -569,10 +570,40 @@ impl FunctionTransformer<'_> {
     }
 
     fn transform_variable_update(&mut self, variable_update: VariableUpdate) {
+        /// Desugars updates like `a *= 2` into `a = a * 2`
+        fn desugar_update(
+            id: SyntaxId,
+            ident_id: SyntaxId,
+            variable_id: AirValueId,
+            expression: AirExpression,
+            token: UpdateOperatorToken,
+        ) -> AirExpression {
+            let operator = match token {
+                UpdateOperatorToken::Assign => return expression,
+                UpdateOperatorToken::PlusAssign => BinaryOperatorToken::Plus,
+                UpdateOperatorToken::MinusAssign => BinaryOperatorToken::Minus,
+                UpdateOperatorToken::TimesAssign => BinaryOperatorToken::Times,
+            };
+
+            let lhs = Box::new(AirExpression::new(
+                ident_id,
+                AirExpressionKind::Variable(variable_id),
+            ));
+            let rhs = Box::new(expression);
+            AirExpression::new(
+                id,
+                AirExpressionKind::BinaryOperator(data::BinaryOperation { lhs, rhs, operator }),
+            )
+        }
+
         let Ok(expression) = variable_update.expression() else {
             return;
         };
         let expression = self.transform_expression(expression);
+
+        let Ok(token) = variable_update.assignment_token() else {
+            return;
+        };
 
         let Ok(ident) = variable_update.ident() else {
             return;
@@ -586,6 +617,14 @@ impl FunctionTransformer<'_> {
             );
             return;
         };
+
+        let expression = desugar_update(
+            variable_update.id(),
+            ident.id,
+            AirValueId::Local(variable_id),
+            expression,
+            token,
+        );
 
         self.add_node(AirNode {
             id: variable_update.id(),
