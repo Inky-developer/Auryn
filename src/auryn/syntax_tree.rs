@@ -143,7 +143,23 @@ pub struct SyntaxToken {
     pub text: SmallString,
 }
 
-impl SyntaxToken {}
+impl SyntaxToken {
+    /// Unescapes this string literal token.
+    /// Currently only removes the leading and trailing " characters
+    /// and replaces newline escapes with actual newlines
+    pub fn string_literal_text(&self) -> String {
+        assert_eq!(
+            self.kind,
+            TokenKind::StringLiteral,
+            "Should be a string literal token"
+        );
+
+        self.text
+            .trim_start_matches("\"")
+            .trim_end_matches("\"")
+            .replace("\\n", "\n")
+    }
+}
 
 #[derive(Debug)]
 pub struct ErrorNode {

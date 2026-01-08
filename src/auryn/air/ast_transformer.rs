@@ -140,7 +140,7 @@ impl AstTransformer {
 
     fn transform_extern_block(&mut self, block: ExternBlock) {
         if let Ok(target) = block.extern_target()
-            && parse_string_literal_text(&target.text).as_ref() != "java"
+            && target.string_literal_text().as_str() != "java"
         {
             self.diagnostics
                 .add(target.id, DiagnosticError::UnexpectedExternTarget);
@@ -171,7 +171,7 @@ impl AstTransformer {
                 let def_id = self.namespace.types[&ident.text];
                 let extern_members = self.collect_extern_type_members(def_id, extern_body);
 
-                let extern_path = parse_string_literal_text(&extern_path.text);
+                let extern_path = extern_path.string_literal_text().into();
                 let extern_type = AirType::Unresolved(UnresolvedType::Extern {
                     id: extern_type.id(),
                     extern_name: extern_path,
@@ -198,7 +198,7 @@ impl AstTransformer {
             let Ok(metadata_token) = metadata.value() else {
                 continue;
             };
-            let extern_name = parse_string_literal_text(&metadata_token.text);
+            let extern_name = metadata_token.string_literal_text().into();
 
             let Ok(kind) = item.kind() else {
                 continue;
@@ -729,7 +729,7 @@ impl FunctionTransformer<'_> {
             return AirExpression::error(string.id());
         };
 
-        let text = parse_string_literal_text(&token.text);
+        let text = token.string_literal_text().into();
         AirExpression::new(
             token.id,
             AirExpressionKind::Constant(AirConstant::String(text)),
@@ -792,12 +792,4 @@ impl FunctionTransformer<'_> {
         };
         self.transform_expression(expression)
     }
-}
-
-/// Returns the text content of a string literal.
-/// For example, `"hello, \\\n world"` is converted into `hello, \n world`
-fn parse_string_literal_text(literal: &str) -> SmallString {
-    // TODO: Unescape the string
-    let result = literal.trim_start_matches("\"").trim_end_matches("\"");
-    result.into()
 }
