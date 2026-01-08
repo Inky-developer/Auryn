@@ -1,9 +1,18 @@
 use std::{
+    fmt::{Debug, Display},
     io::{self, Write},
     num::NonZeroU16,
 };
 
-use crate::{java::constant_pool_builder::ConstantPoolBuilder, utils::small_string::SmallString};
+use crate::{
+    java::{
+        constant_pool_builder::ConstantPoolBuilder,
+        display::{
+            ConstantPoolDisplay, ConstantPoolEntryDisplay, InstructionDisplay, MethodDisplay,
+        },
+    },
+    utils::small_string::SmallString,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct JVMVersion {
@@ -106,6 +115,10 @@ impl ConstantPoolEntry {
             ConstantPoolEntry::Integer { .. } => 3,
         }
     }
+
+    pub fn display<'a>(&'a self, pool: &'a [ConstantPoolEntry]) -> ConstantPoolEntryDisplay<'a> {
+        ConstantPoolEntryDisplay { entry: self, pool }
+    }
 }
 
 /// Marks the byte of an instruction that should be jumped to.
@@ -187,7 +200,7 @@ pub enum Instruction {
     AStore(u16),
     /// Must be -1 <= value <= 8
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iconst_i>
-    Iconst(i8),
+    IConst(i8),
     IAdd,
     /// Subtract two integers
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.isub>
@@ -228,7 +241,7 @@ impl Instruction {
                 buf.write_all(&[0xb2])?;
                 reference.serialize(buf)?;
             }
-            Instruction::Iconst(value) => {
+            Instruction::IConst(value) => {
                 assert!((-1..=8).contains(&value), "Invalid value for iconst");
                 buf.write_all(&(3 + value).to_be_bytes())?;
             }
@@ -336,21 +349,50 @@ impl Instruction {
 
         Ok(())
     }
+
+    /// Returns the number of bytes this instrutions takes if serialized
+    pub fn len_bytes(&self) -> u16 {
+        /// A writer that voids everything but keeps track of the total number of bytes
+        #[derive(Default)]
+        struct VoidWriter {
+            pub len: usize,
+        }
+
+        impl Write for VoidWriter {
+            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                self.len += buf.len();
+                Ok(buf.len())
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+
+        let mut writer = VoidWriter::default();
+        self.serialize(&mut writer, 0).unwrap();
+        writer.len.try_into().unwrap()
+    }
+
+    pub fn display<'a>(&'a self, pool: &'a [ConstantPoolEntry]) -> impl Display {
+        InstructionDisplay {
+            instruction: self,
+            pool,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct CodeAttribute {
     pub max_locals: u16,
+    pub max_stack: u16,
     pub code: Vec<Instruction>,
     pub attributes: Vec<AttributeInfo>,
 }
 
 impl CodeAttribute {
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
-        // Max stack size
-        // Todo: calculate that
-        buf.write_all(&[0, 8])?;
-
+        buf.write_all(&self.max_stack.to_be_bytes())?;
         buf.write_all(&self.max_locals.to_be_bytes())?;
 
         let mut code_buf = Vec::new();
@@ -611,6 +653,10 @@ impl Method {
 
         Ok(())
     }
+
+    pub fn display<'a>(&'a self, pool: &'a [ConstantPoolEntry]) -> MethodDisplay<'a> {
+        MethodDisplay { method: self, pool }
+    }
 }
 
 #[repr(u16)]
@@ -619,7 +665,6 @@ pub enum ClassAccessFlag {
     Final = 0x0010,
 }
 
-#[derive(Debug)]
 pub struct ClassData {
     pub constant_pool: Vec<ConstantPoolEntry>,
     // Index into the constant pool that must reference a class entry
@@ -682,6 +727,42 @@ impl ClassData {
 
         // Attributes count & attributes
         buf.write_all(&[0, 0])?;
+
+        Ok(())
+    }
+}
+
+impl Debug for ClassData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ClassData {
+            constant_pool,
+            this_class,
+            super_class,
+            methods,
+        } = self;
+
+        writeln!(f, "ClassData")?;
+        writeln!(
+            f,
+            "  this_class:\t\t{this_class}\t{}",
+            constant_pool[this_class.0.get() as usize - 1].display(constant_pool)
+        )?;
+        writeln!(
+            f,
+            "  super_class:\t\t{super_class}\t{}",
+            constant_pool[super_class.0.get() as usize - 1].display(constant_pool)
+        )?;
+
+        let pool_display = ConstantPoolDisplay {
+            pool: constant_pool,
+        };
+        writeln!(f, "{pool_display}")?;
+
+        writeln!(f, "{{")?;
+        for method in methods {
+            writeln!(f, "{}", method.display(constant_pool))?;
+        }
+        writeln!(f, "}}")?;
 
         Ok(())
     }

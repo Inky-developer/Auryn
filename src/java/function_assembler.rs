@@ -144,6 +144,8 @@ impl<'a> FunctionAssembler<'a> {
                 name_index: code_name_index,
                 attribute: class::Attribute::Code(class::CodeAttribute {
                     max_locals,
+                    // TODO calculate that
+                    max_stack: 8,
                     code: class_instructions,
                     attributes: vec![class::AttributeInfo {
                         name_index: self.constant_pool.add_utf8("StackMapTable".into()),

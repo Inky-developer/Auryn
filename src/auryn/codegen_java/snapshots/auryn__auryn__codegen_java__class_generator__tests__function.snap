@@ -2,309 +2,83 @@
 source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class(\"fn main() { bar() }\\nfn bar() { print(1) }\")"
 ---
-ClassData {
-    constant_pool: [
-        Utf8(
-            "java/io/PrintStream",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                1,
-            ),
-        },
-        Utf8(
-            "java/lang/System",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                3,
-            ),
-        },
-        Utf8(
-            "out",
-        ),
-        Utf8(
-            "Ljava/io/PrintStream;",
-        ),
-        NameAndType {
-            name_index: ConstantPoolIndex(
-                5,
-            ),
-            type_index: ConstantPoolIndex(
-                6,
-            ),
-        },
-        FieldRef {
-            class_index: ConstantPoolIndex(
-                4,
-            ),
-            name_and_type_index: ConstantPoolIndex(
-                7,
-            ),
-        },
-        Integer {
-            integer: 1,
-        },
-        Utf8(
-            "println",
-        ),
-        Utf8(
-            "(I)V",
-        ),
-        NameAndType {
-            name_index: ConstantPoolIndex(
-                10,
-            ),
-            type_index: ConstantPoolIndex(
-                11,
-            ),
-        },
-        MethodRef {
-            class_index: ConstantPoolIndex(
-                2,
-            ),
-            name_and_type_index: ConstantPoolIndex(
-                12,
-            ),
-        },
-        Utf8(
-            "bar",
-        ),
-        Utf8(
-            "()V",
-        ),
-        Utf8(
-            "Code",
-        ),
-        Utf8(
-            "StackMapTable",
-        ),
-        Utf8(
-            "Main",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                18,
-            ),
-        },
-        NameAndType {
-            name_index: ConstantPoolIndex(
-                14,
-            ),
-            type_index: ConstantPoolIndex(
-                15,
-            ),
-        },
-        MethodRef {
-            class_index: ConstantPoolIndex(
-                19,
-            ),
-            name_and_type_index: ConstantPoolIndex(
-                20,
-            ),
-        },
-        Utf8(
-            "main",
-        ),
-        Utf8(
-            "[Ljava/lang/String;",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                23,
-            ),
-        },
-        NameAndType {
-            name_index: ConstantPoolIndex(
-                22,
-            ),
-            type_index: ConstantPoolIndex(
-                15,
-            ),
-        },
-        MethodRef {
-            class_index: ConstantPoolIndex(
-                19,
-            ),
-            name_and_type_index: ConstantPoolIndex(
-                25,
-            ),
-        },
-        Utf8(
-            "([Ljava/lang/String;)V",
-        ),
-        Utf8(
-            "java/lang/Object",
-        ),
-        Class {
-            name_index: ConstantPoolIndex(
-                28,
-            ),
-        },
-    ],
-    this_class: ConstantPoolIndex(
-        19,
-    ),
-    super_class: ConstantPoolIndex(
-        29,
-    ),
-    methods: [
-        Method {
-            flags: 9,
-            name_index: ConstantPoolIndex(
-                14,
-            ),
-            descriptor_index: ConstantPoolIndex(
-                15,
-            ),
-            attributes: [
-                AttributeInfo {
-                    name_index: ConstantPoolIndex(
-                        16,
-                    ),
-                    attribute: Code(
-                        CodeAttribute {
-                            max_locals: 1,
-                            code: [
-                                GetStatic(
-                                    ConstantPoolIndex(
-                                        8,
-                                    ),
-                                ),
-                                Ldc(
-                                    ConstantPoolIndex(
-                                        9,
-                                    ),
-                                ),
-                                InvokeVirtual(
-                                    ConstantPoolIndex(
-                                        13,
-                                    ),
-                                ),
-                                Return,
-                            ],
-                            attributes: [
-                                AttributeInfo {
-                                    name_index: ConstantPoolIndex(
-                                        17,
-                                    ),
-                                    attribute: StackMapTable(
-                                        StackMapTableAttribute {
-                                            entries: [
-                                                Full {
-                                                    offset_delta: 0,
-                                                    locals: [],
-                                                    stack: [],
-                                                },
-                                            ],
-                                        },
-                                    ),
-                                },
-                            ],
-                        },
-                    ),
-                },
-            ],
-        },
-        Method {
-            flags: 9,
-            name_index: ConstantPoolIndex(
-                22,
-            ),
-            descriptor_index: ConstantPoolIndex(
-                15,
-            ),
-            attributes: [
-                AttributeInfo {
-                    name_index: ConstantPoolIndex(
-                        16,
-                    ),
-                    attribute: Code(
-                        CodeAttribute {
-                            max_locals: 1,
-                            code: [
-                                InvokeStatic(
-                                    ConstantPoolIndex(
-                                        21,
-                                    ),
-                                ),
-                                Return,
-                            ],
-                            attributes: [
-                                AttributeInfo {
-                                    name_index: ConstantPoolIndex(
-                                        17,
-                                    ),
-                                    attribute: StackMapTable(
-                                        StackMapTableAttribute {
-                                            entries: [
-                                                Full {
-                                                    offset_delta: 0,
-                                                    locals: [],
-                                                    stack: [],
-                                                },
-                                            ],
-                                        },
-                                    ),
-                                },
-                            ],
-                        },
-                    ),
-                },
-            ],
-        },
-        Method {
-            flags: 9,
-            name_index: ConstantPoolIndex(
-                22,
-            ),
-            descriptor_index: ConstantPoolIndex(
-                27,
-            ),
-            attributes: [
-                AttributeInfo {
-                    name_index: ConstantPoolIndex(
-                        16,
-                    ),
-                    attribute: Code(
-                        CodeAttribute {
-                            max_locals: 2,
-                            code: [
-                                InvokeStatic(
-                                    ConstantPoolIndex(
-                                        26,
-                                    ),
-                                ),
-                                Return,
-                            ],
-                            attributes: [
-                                AttributeInfo {
-                                    name_index: ConstantPoolIndex(
-                                        17,
-                                    ),
-                                    attribute: StackMapTable(
-                                        StackMapTableAttribute {
-                                            entries: [
-                                                Full {
-                                                    offset_delta: 0,
-                                                    locals: [
-                                                        Object {
-                                                            constant_pool_index: ConstantPoolIndex(
-                                                                24,
-                                                            ),
-                                                        },
-                                                    ],
-                                                    stack: [],
-                                                },
-                                            ],
-                                        },
-                                    ),
-                                },
-                            ],
-                        },
-                    ),
-                },
-            ],
-        },
-    ],
+ClassData
+  this_class:		#18	Main
+  super_class:		#28	java/lang/Object
+Constant pool:
+  #00 = Utf8			java/io/PrintStream
+  #01 = Class		#0	java/io/PrintStream
+  #02 = Utf8			java/lang/System
+  #03 = Class		#2	java/lang/System
+  #04 = Utf8			out
+  #05 = Utf8			Ljava/io/PrintStream;
+  #06 = NameAndType	#4:#5	out:Ljava/io/PrintStream;
+  #07 = FieldRef		#3.#6	java/lang/System.out:Ljava/io/PrintStream;
+  #08 = Integer			1
+  #09 = Utf8			println
+  #10 = Utf8			(I)V
+  #11 = NameAndType	#9:#10	println:(I)V
+  #12 = MethodRef		#1.#11	java/io/PrintStream:println:(I)V
+  #13 = Utf8			bar
+  #14 = Utf8			()V
+  #15 = Utf8			Code
+  #16 = Utf8			StackMapTable
+  #17 = Utf8			Main
+  #18 = Class		#17	Main
+  #19 = NameAndType	#13:#14	bar:()V
+  #20 = MethodRef		#18.#19	Main:bar:()V
+  #21 = Utf8			main
+  #22 = Utf8			[Ljava/lang/String;
+  #23 = Class		#22	[Ljava/lang/String;
+  #24 = NameAndType	#21:#14	main:()V
+  #25 = MethodRef		#18.#24	Main:main:()V
+  #26 = Utf8			([Ljava/lang/String;)V
+  #27 = Utf8			java/lang/Object
+  #28 = Class		#27	java/lang/Object
+
+{
+  fn bar {
+    descriptor: ()V
+    flags: 9
+    Code:
+      stack = 8, locals = 1
+      0: GetStatic		#7	java/lang/System.out:Ljava/io/PrintStream;
+      3: LoadConstant		#8	1
+      5: InvokeVirtual		#12	java/io/PrintStream:println:(I)V
+      8: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ()V
+    flags: 9
+    Code:
+      stack = 8, locals = 1
+      0: InvokeStatic		#20	Main:bar:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: 9
+    Code:
+      stack = 8, locals = 2
+      0: InvokeStatic		#25	Main:main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
 }

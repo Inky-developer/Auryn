@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use crate::{
     auryn::codegen_java::representation::PrimitiveOrObject,
     java::{
@@ -132,7 +130,7 @@ impl SourceGraph {
                 block_order.get(index + 1).copied(),
                 |_| JumpPoint(0),
             ) {
-                current_offset += measure_class_len(&finalizer_instruction);
+                current_offset += finalizer_instruction.len_bytes();
             }
         }
 
@@ -238,11 +236,11 @@ impl AssemblyContext<'_> {
 
     /// Returns the length of the instructions compiled into bytecode
     fn measure_len(&mut self, instructions: &[Instruction]) -> u16 {
-        let mut writer = VoidWriter::default();
+        let mut len = 0;
         for instruction in instructions {
-            self.convert_instruction(instruction, |i| i.serialize(&mut writer, 0).unwrap());
+            self.convert_instruction(instruction, |i| len += i.len_bytes());
         }
-        writer.len.try_into().unwrap()
+        len
     }
 
     fn convert_instruction(
@@ -325,7 +323,7 @@ impl AssemblyContext<'_> {
                     }
                     ConstantValue::Integer(integer) => load_constant(self.0.add_integer(*integer)),
                     ConstantValue::Boolean(boolean) => {
-                        on_instruction(class::Instruction::Iconst(*boolean as i8))
+                        on_instruction(class::Instruction::IConst(*boolean as i8))
                     }
                 }
             }
@@ -464,28 +462,4 @@ fn convert_verification_frames(verification_frames: Vec<(u16, Frame)>) -> StackM
             })
             .collect(),
     }
-}
-
-/// A writer that voids everything but keeps track of the total number of bytes
-#[derive(Debug, Default)]
-struct VoidWriter {
-    pub len: usize,
-}
-
-impl Write for VoidWriter {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.len += buf.len();
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-
-fn measure_class_len(class_instruction: &class::Instruction) -> u16 {
-    let mut writer = VoidWriter::default();
-    // The current index should not be relevant when just measuring instructions
-    class_instruction.serialize(&mut writer, 0).unwrap();
-    writer.len.try_into().unwrap()
 }
