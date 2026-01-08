@@ -102,6 +102,7 @@ bitset_item! {
         KeywordFalse,
         Whitespace,
         Newline,
+        Comment,
         Error,
         EndOfInput,
         Comma,
@@ -176,6 +177,7 @@ impl TokenKind {
             TokenKind::KeywordFalse => "false",
             TokenKind::Whitespace => "<whitespace>",
             TokenKind::Newline => "<newline>",
+            TokenKind::Comment => "<comment>",
             TokenKind::Error => "<error>",
             TokenKind::EndOfInput => "<end of input>",
             TokenKind::Comma => ",",
@@ -274,6 +276,13 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    fn consume_comment(&mut self) -> Token<'a> {
+        Token {
+            kind: TokenKind::Comment,
+            text: self.consume_while(|char| char != '\n'),
+        }
+    }
+
     fn consume_text(&mut self, arg: &str) -> &'a str {
         let (text, rest) = self.input.split_at(arg.len());
         assert_eq!(
@@ -364,6 +373,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             ':' => TokenKind::Colon,
             '.' => TokenKind::Dot,
             '\n' => TokenKind::Newline,
+            '/' if self.input.starts_with("//") => return Some(self.consume_comment()),
             'l' if self.starts_with_keyword("let") => {
                 return Some(Token {
                     kind: TokenKind::KeywordLet,
@@ -484,6 +494,7 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
         insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));
         insta::assert_debug_snapshot!(tokenize("a *= b += c -= 3"));
+        insta::assert_debug_snapshot!(tokenize("before comment // commment text \n after comment"));
     }
 
     #[test]

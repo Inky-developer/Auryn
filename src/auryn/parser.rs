@@ -153,11 +153,14 @@ impl<'a> Parser<'a> {
         }
     }
 
+    const WHITESPACE_LIKE: TokenSet = bitset![
+        TokenKind::Whitespace,
+        TokenKind::Newline,
+        TokenKind::Comment
+    ];
     fn consume_whitespace_and_newlines(&mut self) {
         while self
-            .consume_if(|token| {
-                matches!(token.kind, TokenKind::Whitespace | TokenKind::Newline).then_some(token)
-            })
+            .consume_if(|token| Self::WHITESPACE_LIKE.contains(token.kind).then_some(token))
             .is_ok()
         {}
     }
@@ -165,11 +168,11 @@ impl<'a> Parser<'a> {
     fn consume_statement_separator(&mut self) -> bool {
         let mut consumed = false;
         loop {
-            if !matches!(self.peek().kind, TokenKind::Whitespace | TokenKind::Newline) {
+            if !Self::WHITESPACE_LIKE.contains(self.peek().kind) {
                 break;
             }
-            self.consume();
-            consumed = true;
+            let kind = self.consume().kind;
+            consumed |= kind == TokenKind::Newline;
         }
         consumed || self.peek().kind == TokenKind::EndOfInput
     }
@@ -1059,6 +1062,20 @@ mod tests {
             }
             "#
         ));
+    }
+
+    #[test]
+    fn test_parse_whitespace() {
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            // This is the main function
+            fn main() {
+                // We will now initialize a variable called 'a' to 1
+                let a = 1 // this is the assignment
+                // This is the end of the function
+            }
+            "#
+        ))
     }
 
     #[test]
