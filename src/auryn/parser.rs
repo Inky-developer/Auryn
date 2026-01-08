@@ -480,9 +480,7 @@ impl Parser<'_> {
         if self.peek().kind == TokenKind::Arrow {
             self.parse_return_type()?;
         }
-        self.expect(TokenKind::BraceOpen)?;
-        self.parse_block(bitset![TokenKind::BraceClose])?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_braced_block()?;
 
         self.finish_node(watcher, SyntaxNodeKind::FunctionDefinition);
         Ok(())
@@ -572,6 +570,14 @@ impl Parser<'_> {
         Ok(())
     }
 
+    fn parse_braced_block(&mut self) -> ParseResult {
+        self.expect(TokenKind::BraceOpen)?;
+        self.parse_block(bitset![TokenKind::BraceClose])?;
+        self.expect(TokenKind::BraceClose)?;
+
+        Ok(())
+    }
+
     fn parse_statement(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
@@ -622,9 +628,21 @@ impl Parser<'_> {
 
         self.expect(TokenKind::KeywordIf)?;
         self.parse_expression()?;
-        self.expect(TokenKind::BraceOpen)?;
-        self.parse_block(bitset![TokenKind::BraceClose])?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_braced_block()?;
+
+        if self.peek().kind == TokenKind::KeywordElse {
+            let watcher = self.push_node();
+
+            self.consume();
+
+            if self.peek().kind == TokenKind::KeywordIf {
+                self.parse_statement()?;
+            } else {
+                self.parse_braced_block()?;
+            }
+
+            self.finish_node(watcher, SyntaxNodeKind::IfStatementElse);
+        }
 
         self.finish_node(watcher, SyntaxNodeKind::IfStatement);
         Ok(())
@@ -634,10 +652,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordLoop)?;
-        self.expect(TokenKind::BraceOpen)?;
-        self.consume_whitespace();
-        self.parse_block(bitset![TokenKind::BraceClose])?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_braced_block()?;
 
         self.finish_node(watcher, SyntaxNodeKind::Loop);
         Ok(())
@@ -995,7 +1010,12 @@ mod tests {
     #[test]
     fn test_if_statemt() {
         insta::assert_debug_snapshot!(verify_block("if 1 { print(42) }"));
-        insta::assert_debug_snapshot!(verify_block("if true { print(false) }"));
+        insta::assert_debug_snapshot!(verify_block(
+            "if true { print(false) } else { print(true) }"
+        ));
+        insta::assert_debug_snapshot!(verify_block(
+            "if true { print(false) } else if false { print(true) } else { print(69) }"
+        ));
     }
 
     #[test]

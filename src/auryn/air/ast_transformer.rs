@@ -15,10 +15,10 @@ use crate::{
         ast::ast_node::{
             Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
             BreakStatement, Expression, ExternBlock, ExternBlockItem, ExternBlockItemKind,
-            ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement, Item,
-            LoopStatement, NumberLiteral, Parenthesis, PostfixOperation, PostfixOperator,
-            ReturnStatement, Root, Statement, StringLiteral, Type, Value, ValueOrPostfix,
-            VariableUpdate,
+            ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement,
+            IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, PostfixOperation,
+            PostfixOperator, ReturnStatement, Root, Statement, StringLiteral, Type, Value,
+            ValueOrPostfix, VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -508,6 +508,7 @@ impl FunctionTransformer<'_> {
         };
 
         let pos_block_id = self.add_block();
+        let neg_block_id = self.add_block();
         let next_block_id = self.add_block();
 
         self.finish_block(
@@ -515,10 +516,18 @@ impl FunctionTransformer<'_> {
             AirBlockFinalizer::Branch {
                 value: Box::new(expression),
                 pos_block: pos_block_id,
-                neg_block: next_block_id,
+                neg_block: neg_block_id,
             },
         );
         self.transform_block(block);
+        self.finish_block(neg_block_id, AirBlockFinalizer::Goto(next_block_id));
+
+        if let Ok(neg_block_or_statement) = if_statement.r#else() {
+            match neg_block_or_statement {
+                IfStatementElse::Block(neg_block) => self.transform_block(neg_block),
+                IfStatementElse::Statement(statement) => self.transform_statement(statement),
+            }
+        }
         self.finish_block(next_block_id, AirBlockFinalizer::Goto(next_block_id));
     }
 

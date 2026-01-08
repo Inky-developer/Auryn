@@ -1,0 +1,95 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"if true { print(false) } else if false { print(true) } else { print(69) }\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..73 Root
+        |0..73 Block
+        ||0..73 Statement
+        |||0..73 IfStatement
+        ||||KeywordIf `if`
+        ||||Whitespace ` `
+        ||||3..8 Expression
+        |||||3..8 Value
+        ||||||3..8 BooleanLiteral
+        |||||||KeywordTrue `true`
+        |||||||Whitespace ` `
+        ||||BraceOpen `{`
+        ||||Whitespace ` `
+        ||||10..23 Block
+        |||||10..23 Statement
+        ||||||10..23 Expression
+        |||||||10..23 PostfixOperation
+        ||||||||10..15 Value
+        |||||||||10..15 Ident
+        ||||||||||Identifier `print`
+        ||||||||15..23 PostfixOperator
+        |||||||||15..23 ArgumentList
+        ||||||||||ParensOpen `(`
+        ||||||||||16..21 Expression
+        |||||||||||16..21 Value
+        ||||||||||||16..21 Ident
+        |||||||||||||Identifier `false`
+        ||||||||||ParensClose `)`
+        ||||||||||Whitespace ` `
+        ||||BraceClose `}`
+        ||||Whitespace ` `
+        ||||25..73 IfStatementElse
+        |||||KeywordElse `else`
+        |||||Whitespace ` `
+        |||||30..73 Statement
+        ||||||30..73 IfStatement
+        |||||||KeywordIf `if`
+        |||||||Whitespace ` `
+        |||||||33..39 Expression
+        ||||||||33..39 Value
+        |||||||||33..39 BooleanLiteral
+        ||||||||||KeywordFalse `false`
+        ||||||||||Whitespace ` `
+        |||||||BraceOpen `{`
+        |||||||Whitespace ` `
+        |||||||41..53 Block
+        ||||||||41..53 Statement
+        |||||||||41..53 Expression
+        ||||||||||41..53 PostfixOperation
+        |||||||||||41..46 Value
+        ||||||||||||41..46 Ident
+        |||||||||||||Identifier `print`
+        |||||||||||46..53 PostfixOperator
+        ||||||||||||46..53 ArgumentList
+        |||||||||||||ParensOpen `(`
+        |||||||||||||47..51 Expression
+        ||||||||||||||47..51 Value
+        |||||||||||||||47..51 Ident
+        ||||||||||||||||Identifier `true`
+        |||||||||||||ParensClose `)`
+        |||||||||||||Whitespace ` `
+        |||||||BraceClose `}`
+        |||||||Whitespace ` `
+        |||||||55..73 IfStatementElse
+        ||||||||KeywordElse `else`
+        ||||||||Whitespace ` `
+        ||||||||BraceOpen `{`
+        ||||||||Whitespace ` `
+        ||||||||62..72 Block
+        |||||||||62..72 Statement
+        ||||||||||62..72 Expression
+        |||||||||||62..72 PostfixOperation
+        ||||||||||||62..67 Value
+        |||||||||||||62..67 Ident
+        ||||||||||||||Identifier `print`
+        ||||||||||||67..72 PostfixOperator
+        |||||||||||||67..72 ArgumentList
+        ||||||||||||||ParensOpen `(`
+        ||||||||||||||68..70 Expression
+        |||||||||||||||68..70 Value
+        ||||||||||||||||68..70 NumberLiteral
+        |||||||||||||||||NumberLiteral `69`
+        ||||||||||||||ParensClose `)`
+        ||||||||||||||Whitespace ` `
+        ||||||||BraceClose `}`
+        ,
+    ),
+    diagnostics: [],
+}

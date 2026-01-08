@@ -91,6 +91,7 @@ bitset_item! {
         KeywordLoop,
         KeywordBreak,
         KeywordIf,
+        KeywordElse,
         KeywordFn,
         KeywordReturn,
         KeywordUnsafe,
@@ -164,6 +165,7 @@ impl TokenKind {
             TokenKind::KeywordLoop => "loop",
             TokenKind::KeywordBreak => "break",
             TokenKind::KeywordIf => "if",
+            TokenKind::KeywordElse => "else",
             TokenKind::KeywordFn => "fn",
             TokenKind::KeywordReturn => "return",
             TokenKind::KeywordUnsafe => "unsafe",
@@ -384,6 +386,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(Token {
                     kind: TokenKind::KeywordExtern,
                     text: self.consume_text("extern"),
+                });
+            }
+            'e' if self.starts_with_keyword("else") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordElse,
+                    text: self.consume_text("else"),
                 });
             }
             'f' if self.starts_with_keyword("fn") => {

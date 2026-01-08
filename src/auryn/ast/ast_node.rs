@@ -229,7 +229,13 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct IfStatement = SyntaxNodeKind::IfStatement as { expression: Expression, block: Block, }
+    pub struct IfStatement = SyntaxNodeKind::IfStatement as { expression: Expression, block: Block, r#else: IfStatementElse, }
+}
+
+ast_node! {
+    pub enum IfStatementElse = SyntaxNodeKind::IfStatementElse as
+        | SyntaxNodeKind::Statement as Statement
+        | SyntaxNodeKind::Block as Block
 }
 
 ast_node! {

@@ -156,7 +156,7 @@ ClassData {
                                 IfI {
                                     comparison: Equal,
                                     jump_point: JumpPoint(
-                                        12,
+                                        15,
                                     ),
                                 },
                                 GetStatic(
@@ -172,6 +172,11 @@ ClassData {
                                 InvokeVirtual(
                                     ConstantPoolIndex(
                                         13,
+                                    ),
+                                ),
+                                Goto(
+                                    JumpPoint(
+                                        15,
                                     ),
                                 ),
                                 GetStatic(
@@ -214,7 +219,7 @@ ClassData {
                                                     stack: [],
                                                 },
                                                 Full {
-                                                    offset_delta: 7,
+                                                    offset_delta: 10,
                                                     locals: [],
                                                     stack: [],
                                                 },

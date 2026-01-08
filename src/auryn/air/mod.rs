@@ -53,6 +53,7 @@ mod tests {
     #[test]
     fn it_works() {
         insta::assert_debug_snapshot!(compile_wrapped("print(1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("if false { print(0) } else { print(1) }"));
     }
 
     #[test]

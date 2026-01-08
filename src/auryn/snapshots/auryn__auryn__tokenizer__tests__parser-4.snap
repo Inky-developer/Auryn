@@ -76,7 +76,7 @@ expression: "tokenize(\"loop let some_text = if true { false } else { break retu
         text: " ",
     },
     Token {
-        kind: Identifier,
+        kind: KeywordElse,
         text: "else",
     },
     Token {

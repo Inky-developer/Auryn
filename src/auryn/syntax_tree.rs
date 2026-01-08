@@ -53,6 +53,7 @@ pub enum SyntaxNodeKind {
     Accessor,
     VariableUpdate,
     IfStatement,
+    IfStatementElse,
     Loop,
     Break,
     Return,
