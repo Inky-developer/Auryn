@@ -13,16 +13,20 @@ pub enum BinaryOperatorToken {
     GreaterOrEqual,
     Less,
     LessOrEqual,
+    And,
+    Or,
 }
 
 impl BinaryOperatorToken {
     pub fn binding_power(self) -> u32 {
         use BinaryOperatorToken::*;
         match self {
-            Equal | NotEqual => 1,
-            GreaterOrEqual | Greater | LessOrEqual | Less => 2,
-            Plus | Minus => 3,
-            Times => 4,
+            Or => 1,
+            And => 2,
+            Equal | NotEqual => 3,
+            GreaterOrEqual | Greater | LessOrEqual | Less => 4,
+            Plus | Minus => 5,
+            Times => 6,
         }
     }
 }
@@ -99,6 +103,8 @@ bitset_item! {
         KeywordStatic,
         KeywordType,
         KeywordTrue,
+        KeywordAnd,
+        KeywordOr,
         KeywordFalse,
         Whitespace,
         Newline,
@@ -124,6 +130,8 @@ impl TokenKind {
             TokenKind::GreaterOrEqual => Some(BinaryOperatorToken::GreaterOrEqual),
             TokenKind::Less => Some(BinaryOperatorToken::Less),
             TokenKind::LessOrEqual => Some(BinaryOperatorToken::LessOrEqual),
+            TokenKind::KeywordAnd => Some(BinaryOperatorToken::And),
+            TokenKind::KeywordOr => Some(BinaryOperatorToken::Or),
             _ => None,
         }
     }
@@ -156,6 +164,8 @@ impl TokenKind {
             TokenKind::GreaterOrEqual => ">=",
             TokenKind::Less => "<",
             TokenKind::LessOrEqual => "<=",
+            TokenKind::KeywordAnd => "and",
+            TokenKind::KeywordOr => "or",
             TokenKind::ParensOpen => "(",
             TokenKind::ParensClose => ")",
             TokenKind::BraceOpen => "{",
@@ -386,6 +396,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("loop"),
                 });
             }
+            'a' if self.starts_with_keyword("and") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordAnd,
+                    text: self.consume_text("and"),
+                });
+            }
             'b' if self.starts_with_keyword("break") => {
                 return Some(Token {
                     kind: TokenKind::KeywordBreak,
@@ -420,6 +436,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(Token {
                     kind: TokenKind::KeywordIf,
                     text: self.consume_text("if"),
+                });
+            }
+            'o' if self.starts_with_keyword("or") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordOr,
+                    text: self.consume_text("or"),
                 });
             }
             'r' if self.starts_with_keyword("return") => {
@@ -489,7 +511,7 @@ mod tests {
             "loop let some_text = if true { false } else { break return } fn [foo.bar]"
         ));
         insta::assert_debug_snapshot!(tokenize(
-            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 -> a"
+            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 and true or false -> a"
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
         insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));

@@ -268,33 +268,53 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_binary_operation(&mut self, operation: &BinaryOperation) {
-        let lhs_type = self.generate_expression(&operation.lhs);
-        let rhs_type = self.generate_expression(&operation.rhs);
-        assert_eq!(lhs_type, rhs_type);
-        assert_eq!(lhs_type, Some(Representation::Integer));
-
         match operation.operator {
             BinaryOperatorToken::Plus => {
+                self.generate_expression(&operation.lhs);
+                self.generate_expression(&operation.rhs);
                 self.assembler.add(Instruction::IAdd);
             }
             BinaryOperatorToken::Minus => {
+                self.generate_expression(&operation.lhs);
+                self.generate_expression(&operation.rhs);
                 self.assembler.add(Instruction::ISub);
             }
             BinaryOperatorToken::Times => {
+                self.generate_expression(&operation.lhs);
+                self.generate_expression(&operation.rhs);
                 self.assembler.add(Instruction::IMul);
             }
-            BinaryOperatorToken::Equal => self.generate_comparison(Comparison::Equal),
-            BinaryOperatorToken::NotEqual => self.generate_comparison(Comparison::NotEqual),
-            BinaryOperatorToken::Greater => self.generate_comparison(Comparison::Greater),
-            BinaryOperatorToken::GreaterOrEqual => {
-                self.generate_comparison(Comparison::GreaterOrEqual)
+            BinaryOperatorToken::Equal => {
+                self.generate_comparison(Comparison::Equal, &operation.lhs, &operation.rhs)
             }
-            BinaryOperatorToken::Less => self.generate_comparison(Comparison::Less),
-            BinaryOperatorToken::LessOrEqual => self.generate_comparison(Comparison::LessOrEqual),
+            BinaryOperatorToken::NotEqual => {
+                self.generate_comparison(Comparison::NotEqual, &operation.lhs, &operation.rhs)
+            }
+            BinaryOperatorToken::Greater => {
+                self.generate_comparison(Comparison::Greater, &operation.lhs, &operation.rhs)
+            }
+            BinaryOperatorToken::GreaterOrEqual => {
+                self.generate_comparison(Comparison::GreaterOrEqual, &operation.lhs, &operation.rhs)
+            }
+            BinaryOperatorToken::Less => {
+                self.generate_comparison(Comparison::Less, &operation.lhs, &operation.rhs)
+            }
+            BinaryOperatorToken::LessOrEqual => {
+                self.generate_comparison(Comparison::LessOrEqual, &operation.lhs, &operation.rhs)
+            }
+            BinaryOperatorToken::And => self.generate_and(&operation.lhs, &operation.rhs),
+            BinaryOperatorToken::Or => self.generate_or(&operation.lhs, &operation.rhs),
         };
     }
 
-    fn generate_comparison(&mut self, comparison: Comparison) {
+    fn generate_comparison(
+        &mut self,
+        comparison: Comparison,
+        lhs: &AirExpression,
+        rhs: &AirExpression,
+    ) {
+        self.generate_expression(lhs);
+        self.generate_expression(rhs);
         let pos_block_id = self.assembler.add_block();
         let neg_block_id = self.assembler.add_block();
         let next_block_id = self.assembler.add_block();
@@ -317,6 +337,56 @@ impl FunctionGenerator<'_> {
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
 
         self.assembler.set_current_block_id(next_block_id);
+    }
+
+    fn generate_and(&mut self, lhs: &AirExpression, rhs: &AirExpression) {
+        let first_true_block = self.assembler.add_block();
+        let false_block = self.assembler.add_block();
+        let next_block = self.assembler.add_block();
+
+        self.generate_expression(lhs);
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+            comparison: Comparison::NotEqual,
+            positive_block: first_true_block,
+            negative_block: false_block,
+        };
+
+        self.assembler.set_current_block_id(first_true_block);
+        self.generate_expression(rhs);
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+
+        self.assembler.set_current_block_id(false_block);
+        self.assembler.add(Instruction::LoadConstant {
+            value: ConstantValue::Boolean(false),
+        });
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+
+        self.assembler.set_current_block_id(next_block);
+    }
+
+    fn generate_or(&mut self, lhs: &AirExpression, rhs: &AirExpression) {
+        let first_false_block = self.assembler.add_block();
+        let true_block = self.assembler.add_block();
+        let next_block = self.assembler.add_block();
+
+        self.generate_expression(lhs);
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+            comparison: Comparison::Equal,
+            positive_block: first_false_block,
+            negative_block: true_block,
+        };
+
+        self.assembler.set_current_block_id(first_false_block);
+        self.generate_expression(rhs);
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+
+        self.assembler.set_current_block_id(true_block);
+        self.assembler.add(Instruction::LoadConstant {
+            value: ConstantValue::Boolean(true),
+        });
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+
+        self.assembler.set_current_block_id(next_block);
     }
 
     fn generate_variable(&mut self, variable: &AirValueId) {

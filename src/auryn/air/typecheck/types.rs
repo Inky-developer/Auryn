@@ -90,8 +90,11 @@ define_types! {
 }
 
 impl Type {
-    pub fn is_subtype(&self, other: &Type) -> bool {
-        self == other || matches!(other, Type::Top)
+    pub fn is_subtype(self, other: Type) -> bool {
+        match other {
+            Type::Top | Type::Error => true,
+            other => self == other,
+        }
     }
 }
 

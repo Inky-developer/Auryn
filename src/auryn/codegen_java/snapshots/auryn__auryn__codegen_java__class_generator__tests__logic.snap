@@ -1,0 +1,204 @@
+---
+source: src/auryn/codegen_java/class_generator.rs
+expression: "generate_class_wrapped(\"false and true\")"
+---
+ClassData {
+    constant_pool: [
+        Utf8(
+            "main",
+        ),
+        Utf8(
+            "()V",
+        ),
+        Utf8(
+            "Code",
+        ),
+        Utf8(
+            "StackMapTable",
+        ),
+        Utf8(
+            "[Ljava/lang/String;",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                5,
+            ),
+        },
+        Utf8(
+            "Main",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                7,
+            ),
+        },
+        NameAndType {
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+            type_index: ConstantPoolIndex(
+                2,
+            ),
+        },
+        MethodRef {
+            class_index: ConstantPoolIndex(
+                8,
+            ),
+            name_and_type_index: ConstantPoolIndex(
+                9,
+            ),
+        },
+        Utf8(
+            "([Ljava/lang/String;)V",
+        ),
+        Utf8(
+            "java/lang/Object",
+        ),
+        Class {
+            name_index: ConstantPoolIndex(
+                12,
+            ),
+        },
+    ],
+    this_class: ConstantPoolIndex(
+        8,
+    ),
+    super_class: ConstantPoolIndex(
+        13,
+    ),
+    methods: [
+        Method {
+            flags: 9,
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+            descriptor_index: ConstantPoolIndex(
+                2,
+            ),
+            attributes: [
+                AttributeInfo {
+                    name_index: ConstantPoolIndex(
+                        3,
+                    ),
+                    attribute: Code(
+                        CodeAttribute {
+                            max_locals: 1,
+                            code: [
+                                Iconst(
+                                    0,
+                                ),
+                                IfI {
+                                    comparison: Equal,
+                                    jump_point: JumpPoint(
+                                        8,
+                                    ),
+                                },
+                                Iconst(
+                                    1,
+                                ),
+                                Goto(
+                                    JumpPoint(
+                                        9,
+                                    ),
+                                ),
+                                Iconst(
+                                    0,
+                                ),
+                                Pop,
+                                Return,
+                            ],
+                            attributes: [
+                                AttributeInfo {
+                                    name_index: ConstantPoolIndex(
+                                        4,
+                                    ),
+                                    attribute: StackMapTable(
+                                        StackMapTableAttribute {
+                                            entries: [
+                                                Full {
+                                                    offset_delta: 0,
+                                                    locals: [],
+                                                    stack: [],
+                                                },
+                                                Full {
+                                                    offset_delta: 3,
+                                                    locals: [],
+                                                    stack: [],
+                                                },
+                                                Full {
+                                                    offset_delta: 3,
+                                                    locals: [],
+                                                    stack: [],
+                                                },
+                                                Full {
+                                                    offset_delta: 0,
+                                                    locals: [],
+                                                    stack: [
+                                                        Integer,
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                },
+            ],
+        },
+        Method {
+            flags: 9,
+            name_index: ConstantPoolIndex(
+                1,
+            ),
+            descriptor_index: ConstantPoolIndex(
+                11,
+            ),
+            attributes: [
+                AttributeInfo {
+                    name_index: ConstantPoolIndex(
+                        3,
+                    ),
+                    attribute: Code(
+                        CodeAttribute {
+                            max_locals: 2,
+                            code: [
+                                InvokeStatic(
+                                    ConstantPoolIndex(
+                                        10,
+                                    ),
+                                ),
+                                Return,
+                            ],
+                            attributes: [
+                                AttributeInfo {
+                                    name_index: ConstantPoolIndex(
+                                        4,
+                                    ),
+                                    attribute: StackMapTable(
+                                        StackMapTableAttribute {
+                                            entries: [
+                                                Full {
+                                                    offset_delta: 0,
+                                                    locals: [
+                                                        Object {
+                                                            constant_pool_index: ConstantPoolIndex(
+                                                                6,
+                                                            ),
+                                                        },
+                                                    ],
+                                                    stack: [],
+                                                },
+                                            ],
+                                        },
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                },
+            ],
+        },
+    ],
+}

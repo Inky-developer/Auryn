@@ -176,6 +176,12 @@ mod tests {
     }
 
     #[test]
+    fn test_logic() {
+        insta::assert_debug_snapshot!(generate_class_wrapped("false and true"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("false or true"));
+    }
+
+    #[test]
     fn test_weird() {
         insta::assert_debug_snapshot!(generate_class_wrapped("loop { loop {} }"));
     }

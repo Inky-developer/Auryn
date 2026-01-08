@@ -960,6 +960,7 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("1 + 2 * 3"));
         insta::assert_debug_snapshot!(verify_block("1 * 2 + 3"));
         insta::assert_debug_snapshot!(verify_block("1 * \"test\""));
+        insta::assert_debug_snapshot!(verify_block("1 + 1 == 2 or true and false"));
     }
 
     #[test]

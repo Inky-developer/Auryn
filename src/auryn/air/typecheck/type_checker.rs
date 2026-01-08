@@ -105,7 +105,7 @@ impl Typechecker {
     #[track_caller]
     fn expect_type(&mut self, received: &AirExpression, expected: Type) {
         if let AirType::Computed(got) = &received.r#type
-            && got == &expected
+            && got.is_subtype(expected)
         {
             return;
         }
@@ -121,7 +121,7 @@ impl Typechecker {
 
     #[track_caller]
     fn expect_type_at(&mut self, at: SyntaxId, received: Type, expected: Type) {
-        if received == expected {
+        if received.is_subtype(expected) {
             return;
         }
 
@@ -130,23 +130,6 @@ impl Typechecker {
             DiagnosticError::TypeMismatch {
                 expected: expected.as_view(&self.ty_ctx).to_string(),
                 got: received.as_view(&self.ty_ctx).to_string(),
-            },
-        );
-    }
-
-    #[track_caller]
-    fn expect_assignable(&mut self, received: &AirExpression, expected: Type) {
-        if let AirType::Computed(got) = &received.r#type
-            && got.is_subtype(&expected)
-        {
-            return;
-        }
-
-        self.diagnostics.add(
-            received.id,
-            DiagnosticError::TypeMismatch {
-                expected: expected.as_view(&self.ty_ctx).to_string(),
-                got: received.r#type.as_view(&self.ty_ctx).to_string(),
             },
         );
     }
@@ -335,7 +318,7 @@ impl Typechecker {
     fn typecheck_assignment(&mut self, assignment: &mut Assignment) {
         self.typecheck_expression(&mut assignment.expression);
         if let Some(expected_type) = self.function.variables.get(&assignment.target) {
-            self.expect_assignable(&assignment.expression, *expected_type);
+            self.expect_type(&assignment.expression, *expected_type);
         } else {
             self.function
                 .variables
@@ -371,8 +354,21 @@ impl Typechecker {
         self.typecheck_expression(&mut binary_operator.lhs);
         self.typecheck_expression(&mut binary_operator.rhs);
 
-        self.expect_type(&binary_operator.lhs, Type::Number);
-        self.expect_type(&binary_operator.rhs, Type::Number);
+        let parameter_type = match binary_operator.operator {
+            BinaryOperatorToken::Plus
+            | BinaryOperatorToken::Minus
+            | BinaryOperatorToken::Times
+            | BinaryOperatorToken::Equal
+            | BinaryOperatorToken::NotEqual
+            | BinaryOperatorToken::Greater
+            | BinaryOperatorToken::GreaterOrEqual
+            | BinaryOperatorToken::Less
+            | BinaryOperatorToken::LessOrEqual => Type::Number,
+            BinaryOperatorToken::And | BinaryOperatorToken::Or => Type::Bool,
+        };
+
+        self.expect_type(&binary_operator.lhs, parameter_type);
+        self.expect_type(&binary_operator.rhs, parameter_type);
 
         match binary_operator.operator {
             BinaryOperatorToken::Plus | BinaryOperatorToken::Minus | BinaryOperatorToken::Times => {
@@ -383,7 +379,9 @@ impl Typechecker {
             | BinaryOperatorToken::Greater
             | BinaryOperatorToken::GreaterOrEqual
             | BinaryOperatorToken::Less
-            | BinaryOperatorToken::LessOrEqual => Type::Bool,
+            | BinaryOperatorToken::LessOrEqual
+            | BinaryOperatorToken::And
+            | BinaryOperatorToken::Or => Type::Bool,
         }
     }
 
@@ -467,7 +465,7 @@ impl Typechecker {
             }
 
             for (expected, actual) in parameters.into_iter().zip(call.arguments.iter()) {
-                self.expect_assignable(actual, expected);
+                self.expect_type(actual, expected);
             }
         }
 
