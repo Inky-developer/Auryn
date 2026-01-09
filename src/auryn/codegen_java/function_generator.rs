@@ -517,7 +517,7 @@ impl FunctionGenerator<'_> {
     fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) {
         fn is_printable(repr: &Representation) -> bool {
             match repr {
-                Representation::Integer => true,
+                Representation::Integer | Representation::Boolean => true,
                 Representation::Object(path) if path.as_ref() == "java/lang/String" => true,
                 _ => false,
             }
