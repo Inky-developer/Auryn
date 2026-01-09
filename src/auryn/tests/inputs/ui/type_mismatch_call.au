@@ -2,4 +2,4 @@ fn main() {
     bar("not a number")
 }
 
-fn bar(value: Number) {}
+fn bar(value: I32) {}

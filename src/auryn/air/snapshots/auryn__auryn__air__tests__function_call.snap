@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: Number) -> Number { print(bar) }\")"
+expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(bar) }\")"
 ---
 AirOutput {
     air: Air {
@@ -59,7 +59,7 @@ AirOutput {
                                     223485919008694,
                                 ),
                             },
-                            "Number",
+                            "I32",
                         ),
                     ],
                     return_type: Some(
@@ -74,7 +74,7 @@ AirOutput {
                                     236299980448452,
                                 ),
                             },
-                            "Number",
+                            "I32",
                         ),
                     ),
                     reference: UserDefined(
@@ -171,7 +171,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            Number,
+                                                            I32,
                                                         ),
                                                         kind: Variable(
                                                             Local(
@@ -296,7 +296,7 @@ AirOutput {
                                             ),
                                         },
                                         type: Computed(
-                                            Number,
+                                            I32,
                                         ),
                                         kind: Call(
                                             Call {
@@ -358,7 +358,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            Number,
+                                                            I32,
                                                         ),
                                                         kind: Constant(
                                                             Number(
@@ -408,7 +408,7 @@ AirOutput {
                 },
                 kind: Error(
                     TypeMismatch {
-                        expected: "Number",
+                        expected: "I32",
                         got: "Null",
                     },
                 ),

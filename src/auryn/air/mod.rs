@@ -59,21 +59,21 @@ mod tests {
     #[test]
     fn test_function_call() {
         insta::assert_debug_snapshot!(compile(
-            "fn main() { foo(1) }\nfn foo(bar: Number) -> Number { print(bar) }"
+            "fn main() { foo(1) }\nfn foo(bar: I32) -> I32 { print(bar) }"
         ));
     }
 
     #[test]
     fn test_array_type() {
         insta::assert_debug_snapshot!(compile(
-            "fn main() {}\nfn foo(array: []Number) -> []Number { return array }"
+            "fn main() {}\nfn foo(array: []I32) -> []I32 { return array }"
         ));
     }
 
     #[test]
     fn test_extern_items() {
         insta::assert_debug_snapshot!(compile(
-            "unsafe extern \"java\" { [\"java/lang/Foo\"] type Foo { [\"foo\"] static let foo: Number } }"
+            "unsafe extern \"java\" { [\"java/lang/Foo\"] type Foo { [\"foo\"] static let foo: I32 } }"
         ));
     }
 

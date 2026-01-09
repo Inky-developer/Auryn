@@ -206,7 +206,7 @@ impl Display for MethodDescriptor {
 /// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
 pub fn get_representation(air_type: TypeView) -> Option<Representation> {
     match air_type {
-        TypeView::Number => Some(Representation::Integer),
+        TypeView::I32 => Some(Representation::Integer),
         TypeView::Bool => Some(Representation::Boolean),
         TypeView::String => Some(Representation::string()),
         TypeView::Array(content_type) => {
@@ -220,6 +220,7 @@ pub fn get_representation(air_type: TypeView) -> Option<Representation> {
             Some(Representation::Object(extern_type.extern_name.clone()))
         }
         TypeView::Null | TypeView::FunctionItem(_) | TypeView::Meta(_) => None,
+        TypeView::Number => todo!("The number type cannot be represented yet"),
         TypeView::Top => todo!("The top type cannot be represented yet"),
         TypeView::Error => unreachable!("Called with error type"),
     }

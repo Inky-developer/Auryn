@@ -100,7 +100,7 @@ AirOutput {
                                                 ),
                                             },
                                             type: Computed(
-                                                Number,
+                                                I32,
                                             ),
                                             kind: Constant(
                                                 Number(
@@ -139,7 +139,7 @@ AirOutput {
                                                 ),
                                             },
                                             type: Computed(
-                                                Number,
+                                                I32,
                                             ),
                                             kind: BinaryOperator(
                                                 BinaryOperation {
@@ -155,7 +155,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            Number,
+                                                            I32,
                                                         ),
                                                         kind: Variable(
                                                             Local(
@@ -177,7 +177,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            Number,
+                                                            I32,
                                                         ),
                                                         kind: Constant(
                                                             Number(

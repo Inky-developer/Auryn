@@ -2,4 +2,4 @@ fn main() {
     bar()
 }
 
-fn bar(value: Number) {}
+fn bar(value: I32) {}

@@ -72,9 +72,10 @@ macro_rules! define_types {
 define_types! {
     /// The base type, which every other type is a subtype of
     Top,
-    /// Currently a 32-bit signed integer.
-    /// TODO: Rename to I32
+    /// Supertype of every number
     Number,
+    /// A 32-bit signed integer
+    I32,
     Bool,
     String,
     /// A type without value. Not to be confused with javas void type
@@ -93,6 +94,7 @@ impl Type {
     pub fn is_subtype(self, other: Type) -> bool {
         match other {
             Type::Top | Type::Error => true,
+            Type::Number => matches!(self, Type::Number | Type::I32),
             other => self == other,
         }
     }
@@ -223,7 +225,7 @@ impl FromStr for Type {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "Number" => Type::Number,
+            "I32" => Type::I32,
             "Bool" => Type::Bool,
             "String" => Type::String,
             _ => return Err(()),
@@ -319,6 +321,7 @@ impl Display for TypeView<'_> {
         match self {
             TypeView::Top => f.write_str("Top"),
             TypeView::Number => f.write_str("Number"),
+            TypeView::I32 => f.write_str("I32"),
             TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),
             TypeView::Null => f.write_str("Null"),

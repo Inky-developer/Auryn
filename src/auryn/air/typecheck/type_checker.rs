@@ -344,7 +344,7 @@ impl Typechecker {
 
     fn typecheck_constant(&self, constant: &AirConstant) -> Type {
         match constant {
-            AirConstant::Number(_) => Type::Number,
+            AirConstant::Number(_) => Type::I32,
             AirConstant::Boolean(_) => Type::Bool,
             AirConstant::String(_) => Type::String,
         }
@@ -365,7 +365,7 @@ impl Typechecker {
             | BinaryOperatorToken::Greater
             | BinaryOperatorToken::GreaterOrEqual
             | BinaryOperatorToken::Less
-            | BinaryOperatorToken::LessOrEqual => Type::Number,
+            | BinaryOperatorToken::LessOrEqual => Type::I32,
             BinaryOperatorToken::And | BinaryOperatorToken::Or => Type::Bool,
         };
 
@@ -377,7 +377,7 @@ impl Typechecker {
             | BinaryOperatorToken::Minus
             | BinaryOperatorToken::Times
             | BinaryOperatorToken::Divide
-            | BinaryOperatorToken::Remainder => Type::Number,
+            | BinaryOperatorToken::Remainder => Type::I32,
             BinaryOperatorToken::Equal
             | BinaryOperatorToken::NotEqual
             | BinaryOperatorToken::Greater
@@ -578,7 +578,7 @@ impl Typechecker {
             return self.ty_ctx.array_of(id, Type::Error);
         };
 
-        self.expect_type(count, Type::Number);
+        self.expect_type(count, Type::I32);
 
         let element_type = r#type.r#type.computed();
         let TypeView::Meta(inner) = element_type.as_view(&self.ty_ctx) else {
@@ -621,7 +621,7 @@ impl Typechecker {
         };
         let element_type = array_type.element_type;
 
-        self.expect_type(index, Type::Number);
+        self.expect_type(index, Type::I32);
         element_type
     }
 
@@ -649,7 +649,7 @@ impl Typechecker {
             return Type::Error;
         };
         let element_type = array_type.element_type;
-        self.expect_type(index, Type::Number);
+        self.expect_type(index, Type::I32);
         self.expect_type(value, element_type);
 
         Type::Null
@@ -665,7 +665,7 @@ impl Typechecker {
                     parameter_def: None,
                 },
             );
-            return Type::Number;
+            return Type::I32;
         };
 
         if !matches!(array.r#type.computed(), Type::Array(_)) {
@@ -676,9 +676,9 @@ impl Typechecker {
                     got: array.r#type.as_view(&self.ty_ctx).to_string(),
                 },
             );
-            return Type::Number;
+            return Type::I32;
         }
 
-        Type::Number
+        Type::I32
     }
 }

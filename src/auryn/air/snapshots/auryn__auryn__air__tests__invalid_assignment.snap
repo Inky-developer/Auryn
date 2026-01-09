@@ -147,7 +147,7 @@ AirOutput {
                                                                 ),
                                                             },
                                                             type: Computed(
-                                                                Number,
+                                                                I32,
                                                             ),
                                                             kind: Constant(
                                                                 Number(
@@ -233,7 +233,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            Number,
+                                                            I32,
                                                         ),
                                                         kind: BinaryOperator(
                                                             BinaryOperation {
@@ -271,7 +271,7 @@ AirOutput {
                                                                         ),
                                                                     },
                                                                     type: Computed(
-                                                                        Number,
+                                                                        I32,
                                                                     ),
                                                                     kind: Constant(
                                                                         Number(
@@ -325,7 +325,7 @@ AirOutput {
                 },
                 kind: Error(
                     TypeMismatch {
-                        expected: "Number",
+                        expected: "I32",
                         got: "Null",
                     },
                 ),

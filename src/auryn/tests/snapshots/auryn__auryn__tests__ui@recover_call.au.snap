@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tests/mod.rs
-expression: "fn main() {\n    let a = 1\n    bar(a., 2)\n}\n\nfn bar(a: Number, b: Number) {\n    print(a)\n    print(b)\n}"
+expression: "fn main() {\n    let a = 1\n    bar(a., 2)\n}\n\nfn bar(a: I32, b: I32) {\n    print(a)\n    print(b)\n}\n"
 input_file: src/auryn/tests/inputs/ui/recover_call.au
 ---
 Error: Unexpected token
@@ -16,9 +16,9 @@ Error: Unexpected token
 Error: Mismatched argument count
    ╭─[ main:3:5 ]
    │
- 6 │ fn bar(a: Number, b: Number) {
-   │       ───────────┬───────────  
-   │                  ╰───────────── Due to the definition here
+ 6 │ fn bar(a: I32, b: I32) {
+   │       ────────┬────────  
+   │               ╰────────── Due to the definition here
    │
    ├─[ main:3:5 ]
    │

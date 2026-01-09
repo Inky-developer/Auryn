@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(\"fn main() {}\\nfn foo(array: []Number) -> []Number { return array }\")"
+expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return array }\")"
 ---
 AirOutput {
     air: Air {
@@ -70,7 +70,7 @@ AirOutput {
                                         223920293972754,
                                     ),
                                 },
-                                "Number",
+                                "I32",
                             ),
                         ),
                     ],
@@ -97,7 +97,7 @@ AirOutput {
                                         238616646923436,
                                     ),
                                 },
-                                "Number",
+                                "I32",
                             ),
                         ),
                     ),

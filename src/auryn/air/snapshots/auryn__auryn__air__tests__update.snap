@@ -100,7 +100,7 @@ AirOutput {
                                                 ),
                                             },
                                             type: Computed(
-                                                Number,
+                                                I32,
                                             ),
                                             kind: Constant(
                                                 Number(
@@ -139,7 +139,7 @@ AirOutput {
                                                 ),
                                             },
                                             type: Computed(
-                                                Number,
+                                                I32,
                                             ),
                                             kind: Constant(
                                                 Number(
