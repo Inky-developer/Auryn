@@ -33,6 +33,7 @@ pub enum SyntaxNodeKind {
     ReturnType,
     Type,
     ArrayType,
+    UnitType,
     Block,
     Statement,
     Expression,

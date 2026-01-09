@@ -161,6 +161,7 @@ impl Typechecker {
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         match unresolved {
             UnresolvedType::DefinedType(user_defined_type_id) => user_defined_type_id.to_type(),
+            UnresolvedType::Unit => Type::Unit,
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
@@ -185,7 +186,7 @@ impl Typechecker {
                     .collect();
                 let return_type = return_type
                     .as_ref()
-                    .map_or(Type::Null, |ty| self.resolve_type(ty));
+                    .map_or(Type::Unit, |ty| self.resolve_type(ty));
                 Type::FunctionItem(self.ty_ctx.add_function_item(
                     reference.syntax_id(),
                     FunctionItemType {
@@ -301,7 +302,7 @@ impl Typechecker {
                     self.check_expression(expression, self.function.return_type);
                 }
                 ReturnValue::Null(id) => {
-                    self.expect_type_at(*id, Type::Null, self.function.return_type);
+                    self.expect_type_at(*id, Type::Unit, self.function.return_type);
                 }
             },
             AirBlockFinalizer::Goto(next_id) => on_next_id(*next_id),
@@ -349,7 +350,7 @@ impl Typechecker {
             AirExpressionKind::Variable(value) => self.infer_value(value),
             AirExpressionKind::Type(r#type) => self.ty_ctx.meta_of(expression.id, *r#type),
             AirExpressionKind::Accessor(accessor) => self.infer_accessor(accessor),
-            AirExpressionKind::Call(call) => self.infer_call(expression.id, call),
+            AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call, None),
             AirExpressionKind::Error => Type::Error,
         };
 
@@ -367,7 +368,9 @@ impl Typechecker {
             AirExpressionKind::Variable(variable) => self.infer_value(variable),
             AirExpressionKind::Type(r#type) => self.ty_ctx.meta_of(expression.id, *r#type),
             AirExpressionKind::Accessor(accessor) => self.infer_accessor(accessor),
-            AirExpressionKind::Call(call) => self.infer_call(expression.id, call),
+            AirExpressionKind::Call(call) => {
+                self.typecheck_call(expression.id, call, Some(expected))
+            }
             AirExpressionKind::Error => Type::Error,
         };
         self.expect_type_at(expression.id, inferred_type, expected);
@@ -529,7 +532,7 @@ impl Typechecker {
         }
     }
 
-    fn infer_call(&mut self, id: SyntaxId, call: &mut Call) -> Type {
+    fn typecheck_call(&mut self, id: SyntaxId, call: &mut Call, expected: Option<Type>) -> Type {
         self.infer_expression(&mut call.function);
 
         let TypeView::FunctionItem(function_type) = call.function.r#type.as_view(&self.ty_ctx)
@@ -548,7 +551,7 @@ impl Typechecker {
         // Small hack while intrinsics are more powerful than user defined functions.
         // E.g. `arrayOf` is variadic
         if let FunctionReference::Intrinsic(intrinsic) = function_type.value.reference {
-            return self.infer_intrinsic(id, intrinsic, &mut call.arguments);
+            return self.typecheck_intrinsic(id, intrinsic, &mut call.arguments, expected);
         }
 
         if let FunctionParameters::Constrained {
@@ -575,24 +578,36 @@ impl Typechecker {
         return_type
     }
 
-    fn infer_intrinsic(
+    /// Handles both inference and checking because I am lazy
+    fn typecheck_intrinsic(
         &mut self,
         id: SyntaxId,
         intrinsic: Intrinsic,
         arguments: &mut [AirExpression],
+        expected: Option<Type>,
     ) -> Type {
         match intrinsic {
-            Intrinsic::Print => self.infer_intrinsic_print(id, arguments),
-            Intrinsic::UnsafeTransmute => self.infer_intrinsic_unsafe_transmute(id, arguments),
-            Intrinsic::ArrayOf => self.infer_intrinsic_array_of(id, arguments),
-            Intrinsic::ArrayOfZeros => self.typecheck_intrinsic_array_of_zeros(id, arguments),
-            Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, arguments),
+            Intrinsic::Print => self.typecheck_intrinsic_print(id, arguments),
+            Intrinsic::UnsafeTransmute => {
+                self.typecheck_intrinsic_transmute(id, arguments, expected)
+            }
+            Intrinsic::ArrayOf => match expected {
+                Some(expected) => {
+                    self.check_intrinsic_array_of(id, arguments, expected);
+                    expected
+                }
+                None => self.infer_intrinsic_array_of(id, arguments),
+            },
+            Intrinsic::ArrayOfZeros => {
+                self.typecheck_intrinsic_array_of_zeros(id, arguments, expected)
+            }
+            Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, arguments, expected),
             Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, arguments),
             Intrinsic::ArrayLen => self.typecheck_intrinsic_array_len(id, arguments),
         }
     }
 
-    fn infer_intrinsic_print(&mut self, id: SyntaxId, arguments: &mut [AirExpression]) -> Type {
+    fn typecheck_intrinsic_print(&mut self, id: SyntaxId, arguments: &mut [AirExpression]) -> Type {
         let [first] = arguments else {
             self.diagnostics.add(
                 id,
@@ -602,46 +617,62 @@ impl Typechecker {
                     parameter_def: None,
                 },
             );
-            return Type::Null;
+            return Type::Unit;
         };
         self.infer_expression(first);
-        Type::Null
+        Type::Unit
     }
 
-    fn infer_intrinsic_unsafe_transmute(
+    fn typecheck_intrinsic_transmute(
         &mut self,
         id: SyntaxId,
         arguments: &mut [AirExpression],
+        expected: Option<Type>,
     ) -> Type {
-        let [first, value] = arguments else {
+        let [value] = arguments else {
             self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
-                    expected: 2,
+                    expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
                 },
             );
             return Type::Error;
         };
-        self.infer_expression(first);
         self.infer_expression(value);
-        let TypeView::Meta(meta_type) = first.r#type.computed().as_view(&self.ty_ctx) else {
-            self.diagnostics.add(
-                first.id,
-                DiagnosticError::TypeMismatch {
-                    expected: "Type".to_string(),
-                    got: first.r#type.computed().as_view(&self.ty_ctx).to_string(),
-                },
-            );
+        let Some(expected) = expected else {
+            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
             return Type::Error;
         };
 
-        meta_type.inner
+        expected
+    }
+
+    fn check_intrinsic_array_of(
+        &mut self,
+        id: SyntaxId,
+        arguments: &mut [AirExpression],
+        expected: Type,
+    ) {
+        let TypeView::Array(array) = expected.as_view(&self.ty_ctx) else {
+            let array_type = self.ty_ctx.array_of(id, Type::Top).as_view(&self.ty_ctx);
+            self.diagnostics.add(
+                id,
+                DiagnosticError::TypeMismatch {
+                    expected: array_type.to_string(),
+                    got: expected.as_view(&self.ty_ctx).to_string(),
+                },
+            );
+            return;
+        };
+        let element_type = array.element_type;
+        for argument in arguments {
+            self.check_expression(argument, element_type);
+        }
     }
 
     fn infer_intrinsic_array_of(&mut self, id: SyntaxId, arguments: &mut [AirExpression]) -> Type {
-        // Currently an array needs at least one element or we cannot compute its type
         let [first, rest @ ..] = arguments else {
             self.diagnostics.add(
                 id,
@@ -668,8 +699,9 @@ impl Typechecker {
         &mut self,
         id: SyntaxId,
         arguments: &mut [AirExpression],
+        expected: Option<Type>,
     ) -> Type {
-        let [r#type, count] = arguments else {
+        let [count] = arguments else {
             self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
@@ -681,29 +713,26 @@ impl Typechecker {
             return self.ty_ctx.array_of(id, Type::Error);
         };
 
-        self.infer_expression(r#type);
         self.check_expression(count, Type::I32);
 
-        let element_type = r#type.r#type.computed();
-        let TypeView::Meta(inner) = element_type.as_view(&self.ty_ctx) else {
-            self.diagnostics.add(
-                r#type.id,
-                DiagnosticError::TypeMismatch {
-                    expected: "Type".to_string(),
-                    got: element_type.as_view(&self.ty_ctx).to_string(),
-                },
-            );
-
+        let Some(expected) = expected else {
+            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
             return self.ty_ctx.array_of(id, Type::Error);
         };
-
-        self.ty_ctx.array_of(id, inner.inner)
+        if expected.as_view(&self.ty_ctx).is_abstract() {
+            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
+            return self.ty_ctx.array_of(id, Type::Error);
+        }
+        let any_array = self.ty_ctx.array_of(id, Type::Top);
+        self.expect_type_at(id, expected, any_array);
+        expected
     }
 
     fn typecheck_intrinsic_array_get(
         &mut self,
         id: SyntaxId,
         arguments: &mut [AirExpression],
+        expected: Option<Type>,
     ) -> Type {
         let [array, index] = arguments else {
             self.diagnostics.add(
@@ -717,7 +746,8 @@ impl Typechecker {
             return Type::Error;
         };
 
-        let expected_type = self.ty_ctx.array_of(id, Type::Top);
+        let expected = expected.unwrap_or(Type::Top);
+        let expected_type = self.ty_ctx.array_of(id, expected);
         self.check_expression(array, expected_type);
         self.check_expression(index, Type::I32);
 
@@ -756,7 +786,7 @@ impl Typechecker {
 
         self.check_expression(value, element_type);
 
-        Type::Null
+        Type::Unit
     }
 
     fn typecheck_intrinsic_array_len(

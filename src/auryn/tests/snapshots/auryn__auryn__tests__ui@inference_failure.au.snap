@@ -1,0 +1,14 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n\tlet a = arrayOfZeros(50)\n}\n"
+input_file: src/auryn/tests/inputs/ui/inference_failure.au
+---
+Error: Could not infer type
+   ╭─[ main:2:10 ]
+   │
+ 2 │     let a = arrayOfZeros(50)
+   │             ────────┬───────  
+   │                     ╰───────── Could not infer the type of this expresssion
+   │ 
+   │ Help: Try annotating the expression: `let val: ExpectedType = ...`
+───╯

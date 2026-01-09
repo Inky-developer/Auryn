@@ -1,0 +1,289 @@
+---
+source: src/auryn/air/mod.rs
+expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
+---
+AirOutput {
+    air: Air {
+        functions: {
+            AirFunctionId(
+                AirStaticValueId(
+                    SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            4,
+                        ),
+                    },
+                ),
+            ): AirFunction {
+                type: Computed(
+                    FunctionItem(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    4,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                        },
+                    ),
+                ),
+                unresolved_type: Function {
+                    parameters_reference: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            105553116266498,
+                        ),
+                    },
+                    parameters: [],
+                    return_type: None,
+                    reference: UserDefined(
+                        AirFunctionId(
+                            AirStaticValueId(
+                                SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        4,
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                },
+                ident: "main",
+                blocks: {
+                    AirBlockId(
+                        0,
+                    ): AirBlock {
+                        nodes: [
+                            AirNode {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        211106232532993,
+                                    ),
+                                },
+                                kind: Assignment(
+                                    Assignment {
+                                        target: AirLocalValueId(
+                                            0,
+                                        ),
+                                        expected_type: Some(
+                                            Ident(
+                                                SyntaxId {
+                                                    file_id: Some(
+                                                        FileId(
+                                                            1,
+                                                        ),
+                                                    ),
+                                                    number: Some(
+                                                        230653105915676,
+                                                    ),
+                                                },
+                                                "I64",
+                                            ),
+                                        ),
+                                        expression: AirExpression {
+                                            id: SyntaxId {
+                                                file_id: Some(
+                                                    FileId(
+                                                        1,
+                                                    ),
+                                                ),
+                                                number: Some(
+                                                    242381229945283,
+                                                ),
+                                            },
+                                            type: Computed(
+                                                I64,
+                                            ),
+                                            kind: Call(
+                                                Call {
+                                                    function: AirExpression {
+                                                        id: SyntaxId {
+                                                            file_id: Some(
+                                                                FileId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                            number: Some(
+                                                                242381229945286,
+                                                            ),
+                                                        },
+                                                        type: Computed(
+                                                            FunctionItem(
+                                                                TypeId {
+                                                                    id: SyntaxId {
+                                                                        file_id: None,
+                                                                        number: Some(
+                                                                            5,
+                                                                        ),
+                                                                    },
+                                                                    kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                                                                },
+                                                            ),
+                                                        ),
+                                                        kind: Variable(
+                                                            Intrinsic(
+                                                                ArrayGet,
+                                                            ),
+                                                        ),
+                                                    },
+                                                    arguments: [
+                                                        AirExpression {
+                                                            id: SyntaxId {
+                                                                file_id: Some(
+                                                                    FileId(
+                                                                        1,
+                                                                    ),
+                                                                ),
+                                                                number: Some(
+                                                                    244615158331877,
+                                                                ),
+                                                            },
+                                                            type: Computed(
+                                                                Array(
+                                                                    TypeId {
+                                                                        id: SyntaxId {
+                                                                            file_id: Some(
+                                                                                FileId(
+                                                                                    1,
+                                                                                ),
+                                                                            ),
+                                                                            number: Some(
+                                                                                242381229945283,
+                                                                            ),
+                                                                        },
+                                                                        kind: "auryn::auryn::air::typecheck::types::ArrayType",
+                                                                    },
+                                                                ),
+                                                            ),
+                                                            kind: Call(
+                                                                Call {
+                                                                    function: AirExpression {
+                                                                        id: SyntaxId {
+                                                                            file_id: Some(
+                                                                                FileId(
+                                                                                    1,
+                                                                                ),
+                                                                            ),
+                                                                            number: Some(
+                                                                                244615158331880,
+                                                                            ),
+                                                                        },
+                                                                        type: Computed(
+                                                                            FunctionItem(
+                                                                                TypeId {
+                                                                                    id: SyntaxId {
+                                                                                        file_id: None,
+                                                                                        number: Some(
+                                                                                            4,
+                                                                                        ),
+                                                                                    },
+                                                                                    kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                        kind: Variable(
+                                                                            Intrinsic(
+                                                                                ArrayOfZeros,
+                                                                            ),
+                                                                        ),
+                                                                    },
+                                                                    arguments: [
+                                                                        AirExpression {
+                                                                            id: SyntaxId {
+                                                                                file_id: Some(
+                                                                                    FileId(
+                                                                                        1,
+                                                                                    ),
+                                                                                ),
+                                                                                number: Some(
+                                                                                    244801319030761,
+                                                                                ),
+                                                                            },
+                                                                            type: Computed(
+                                                                                I32,
+                                                                            ),
+                                                                            kind: Constant(
+                                                                                Number(
+                                                                                    3,
+                                                                                ),
+                                                                            ),
+                                                                        },
+                                                                    ],
+                                                                },
+                                                            ),
+                                                        },
+                                                        AirExpression {
+                                                            id: SyntaxId {
+                                                                file_id: Some(
+                                                                    FileId(
+                                                                        1,
+                                                                    ),
+                                                                ),
+                                                                number: Some(
+                                                                    245452881476847,
+                                                                ),
+                                                            },
+                                                            type: Computed(
+                                                                I32,
+                                                            ),
+                                                            kind: Constant(
+                                                                Number(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ],
+                                                },
+                                            ),
+                                        },
+                                    },
+                                ),
+                            },
+                        ],
+                        finalizer: Return(
+                            Null(
+                                SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        211106232532991,
+                                    ),
+                                },
+                            ),
+                        ),
+                    },
+                },
+            },
+        },
+        ..
+    },
+    diagnostics: Diagnostics {
+        diagnostics: [],
+    },
+}

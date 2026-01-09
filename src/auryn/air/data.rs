@@ -198,8 +198,8 @@ pub enum UnresolvedType {
     DefinedType(UserDefinedTypeId),
     /// A type not defined by the user (so probably built-in, like `String`)
     Ident(SyntaxId, SmallString),
-    /// An array type
     Array(SyntaxId, Box<UnresolvedType>),
+    Unit,
     /// A function type
     Function {
         parameters_reference: SyntaxId,

@@ -87,7 +87,7 @@ define_types! {
     Bool,
     String,
     /// A type without value. Not to be confused with javas void type
-    Null,
+    Unit,
     /// A zero-sized type of a concrete function item
     FunctionItem(FunctionItemType),
     Array(ArrayType),
@@ -104,7 +104,7 @@ impl Type {
         match self {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
-            Top | Number | NumberLiteral(_) | Bool | String | Null | FunctionItem(_) | Array(_)
+            Top | Number | NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Array(_)
             | Extern(_) | Meta(_) | Error => None,
         }
     }
@@ -135,7 +135,7 @@ impl<'a> TypeView<'a> {
 
         match other {
             Top | Error => true,
-            Number => matches!(self, Number | I32 | I64),
+            Number => matches!(self, Number | I32 | I64 | NumberLiteral(_)),
             Array(other_data) => {
                 if let Array(self_data) = self {
                     self_data.element().is_subtype(other_data.element())
@@ -144,6 +144,18 @@ impl<'a> TypeView<'a> {
                 }
             }
             other => self.as_type() == other.as_type(),
+        }
+    }
+
+    /// Currently a hack
+    /// A type is considered abstract if no value can have its type.
+    /// Instead, abstract types are just used as utility types during type checking
+    pub fn is_abstract(self) -> bool {
+        use TypeView::*;
+        match self {
+            Top | Number => true,
+            Array(array) => array.element().is_abstract(),
+            _ => false,
         }
     }
 
@@ -365,7 +377,7 @@ impl Display for TypeView<'_> {
             TypeView::NumberLiteral(data) => write!(f, "{}", data.value.value),
             TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),
-            TypeView::Null => f.write_str("Null"),
+            TypeView::Unit => f.write_str("()"),
             TypeView::FunctionItem(function_type) => function_type.fmt(f),
             TypeView::Array(array_type) => array_type.fmt(f),
             TypeView::Extern(extern_type) => extern_type.fmt(f),

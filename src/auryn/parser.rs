@@ -538,6 +538,7 @@ impl Parser<'_> {
 
         match self.peek().kind {
             TokenKind::BracketOpen => self.parse_array_type()?,
+            TokenKind::ParensOpen => self.parse_unit_type()?,
             TokenKind::Identifier => self.parse_identifier()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedType {
@@ -559,6 +560,16 @@ impl Parser<'_> {
         self.parse_type()?;
 
         self.finish_node(watcher, SyntaxNodeKind::ArrayType);
+        Ok(())
+    }
+
+    fn parse_unit_type(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::ParensOpen)?;
+        self.expect(TokenKind::ParensClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::UnitType);
         Ok(())
     }
 
@@ -1037,7 +1048,7 @@ mod tests {
     #[test]
     fn test_function() {
         insta::assert_debug_snapshot!(verify(
-            "fn foo(a: Int, b: []String,) -> Null { print(9000) }"
+            "fn foo(a: Int, b: []String, c: ()) -> Null { print(9000) }"
         ));
     }
 

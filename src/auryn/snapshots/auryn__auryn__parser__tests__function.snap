@@ -1,17 +1,17 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"fn foo(a: Int, b: []String,) -> Null { print(9000) }\")"
+expression: "verify(\"fn foo(a: Int, b: []String, c: ()) -> Null { print(9000) }\")"
 ---
 AnnotatedParserOutput {
     ast: Some(
-        0..52 Root
-        |0..52 File
-        ||0..52 Item
-        |||0..52 FunctionDefinition
+        0..58 Root
+        |0..58 File
+        ||0..58 Item
+        |||0..58 FunctionDefinition
         ||||KeywordFn `fn`
         ||||Whitespace ` `
         ||||Identifier `foo`
-        ||||6..29 ParameterList
+        ||||6..35 ParameterList
         |||||ParensOpen `(`
         |||||7..13 ParameterDefinition
         ||||||Identifier `a`
@@ -34,30 +34,39 @@ AnnotatedParserOutput {
         |||||||||20..26 Ident
         ||||||||||Identifier `String`
         |||||Comma `,`
+        |||||Whitespace ` `
+        |||||28..33 ParameterDefinition
+        ||||||Identifier `c`
+        ||||||Colon `:`
+        ||||||Whitespace ` `
+        ||||||31..33 Type
+        |||||||31..33 UnitType
+        ||||||||ParensOpen `(`
+        ||||||||ParensClose `)`
         |||||ParensClose `)`
         |||||Whitespace ` `
-        ||||29..37 ReturnType
+        ||||35..43 ReturnType
         |||||Arrow `->`
         |||||Whitespace ` `
-        |||||32..37 Type
-        ||||||32..37 Ident
+        |||||38..43 Type
+        ||||||38..43 Ident
         |||||||Identifier `Null`
         |||||||Whitespace ` `
         ||||BraceOpen `{`
         ||||Whitespace ` `
-        ||||39..51 Block
-        |||||39..51 Statement
-        ||||||39..51 Expression
-        |||||||39..51 PostfixOperation
-        ||||||||39..44 Value
-        |||||||||39..44 Ident
+        ||||45..57 Block
+        |||||45..57 Statement
+        ||||||45..57 Expression
+        |||||||45..57 PostfixOperation
+        ||||||||45..50 Value
+        |||||||||45..50 Ident
         ||||||||||Identifier `print`
-        ||||||||44..51 PostfixOperator
-        |||||||||44..51 ArgumentList
+        ||||||||50..57 PostfixOperator
+        |||||||||50..57 ArgumentList
         ||||||||||ParensOpen `(`
-        ||||||||||45..49 Expression
-        |||||||||||45..49 Value
-        ||||||||||||45..49 NumberLiteral
+        ||||||||||51..55 Expression
+        |||||||||||51..55 Value
+        ||||||||||||51..55 NumberLiteral
         |||||||||||||NumberLiteral `9000`
         ||||||||||ParensClose `)`
         ||||||||||Whitespace ` `

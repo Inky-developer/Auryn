@@ -83,6 +83,7 @@ pub enum DiagnosticError {
         got: usize,
         parameter_def: Option<SyntaxId>,
     },
+    InferenceFailed,
 }
 
 #[derive(Debug, Clone)]
@@ -316,6 +317,10 @@ impl Diagnostic {
                         .with_code("Mismatched argument count")
                         .with_message(format!("Expected {expected} {argument_str}, but got {got}"))
                 }
+                DiagnosticError::InferenceFailed => builder
+                    .with_code("Could not infer type")
+                    .with_message("Could not infer the type of this expresssion")
+                    .with_help("Try annotating the expression: `let val: ExpectedType = ...`"),
             },
         };
     }

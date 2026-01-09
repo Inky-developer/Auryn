@@ -28,11 +28,13 @@ mod tests {
         parser::Parser,
     };
 
+    #[track_caller]
     fn compile_wrapped(input: &str) -> AirOutput {
         let wrapped_input = format!("fn main() {{ {input} }}");
         compile(&wrapped_input)
     }
 
+    #[track_caller]
     fn compile(input: &str) -> AirOutput {
         let output = Parser::new(FileId::MAIN_FILE, input).parse();
         let diagnostics = output
@@ -75,6 +77,14 @@ mod tests {
         insta::assert_debug_snapshot!(compile(
             "unsafe extern \"java\" { [\"java/lang/Foo\"] type Foo { [\"foo\"] static let foo: I32 } }"
         ));
+    }
+
+    #[test]
+    fn test_intrinsics() {
+        insta::assert_debug_snapshot!(compile_wrapped("let a: () = print(1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: []I64 = arrayOf(1, 2, 3)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: []I64 = arrayOfZeros(3)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: I64 = arrayGet(arrayOfZeros(3), 1)"));
     }
 
     #[test]

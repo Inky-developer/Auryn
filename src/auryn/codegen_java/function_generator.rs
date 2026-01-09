@@ -581,10 +581,9 @@ impl FunctionGenerator<'_> {
         target_type: TypeView,
         arguments: &[AirExpression],
     ) {
-        let [r#type, expression] = arguments else {
+        let [expression] = arguments else {
             panic!("Invalid transmute call");
         };
-        self.generate_expression(r#type);
         let repr = self.generate_expression(expression);
 
         if let Some(Representation::Object(_)) = repr
@@ -633,7 +632,7 @@ impl FunctionGenerator<'_> {
         arguments: &[AirExpression],
         result_type: TypeView,
     ) {
-        let [_element_type, count] = arguments else {
+        let [count] = arguments else {
             unreachable!("Should be a valid call");
         };
 

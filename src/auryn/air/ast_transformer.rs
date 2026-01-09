@@ -673,7 +673,7 @@ impl FunctionTransformer<'_> {
 
         match operator {
             PostfixOperator::ArgumentList(argument_list) => {
-                self.transform_postfix_call(value, argument_list)
+                self.transform_postfix_call(postfix_op.id(), value, argument_list)
             }
             PostfixOperator::Accessor(accessor) => {
                 self.transform_accessor(postfix_op.id(), value, accessor)
@@ -695,6 +695,7 @@ impl FunctionTransformer<'_> {
 
     fn transform_postfix_call(
         &mut self,
+        id: SyntaxId,
         value: ValueOrPostfix,
         argument_list: ArgumentList,
     ) -> AirExpression {
@@ -705,7 +706,7 @@ impl FunctionTransformer<'_> {
             .collect();
 
         AirExpression::new(
-            value.id(),
+            id,
             AirExpressionKind::Call(Call {
                 function,
                 arguments,
@@ -843,6 +844,7 @@ fn transform_to_unresolved(
             )),
             Err(err) => Err(err),
         },
+        Type::UnitType(_) => Ok(UnresolvedType::Unit),
         Type::Ident(ident) => ident
             .ident()
             .map(|token| match namespace.types.get(&token.text) {

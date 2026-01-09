@@ -1,0 +1,3 @@
+fn main() {
+	let a = arrayGet(arrayOfZeros(50), 25)
+}

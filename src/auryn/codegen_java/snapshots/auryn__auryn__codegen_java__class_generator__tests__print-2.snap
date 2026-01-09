@@ -22,8 +22,8 @@ Constant pool:
   #14 = Utf8			(Ljava/lang/String;)V
   #15 = NameAndType	#13:#14	println:(Ljava/lang/String;)V
   #16 = MethodRef	#2.#15	java/io/PrintStream:println:(Ljava/lang/String;)V
-  #17 = Utf8			Null
-  #18 = String		#17	Null
+  #17 = Utf8			()
+  #18 = String		#17	()
   #19 = Utf8			main
   #20 = Utf8			()V
   #21 = Utf8			Code
@@ -48,7 +48,7 @@ Constant pool:
        3: GetStatic		#10	java/lang/System.out:Ljava/io/PrintStream;
        6: LoadConstant		#12	Hallo, Welt!
        8: InvokeVirtual		#16	java/io/PrintStream:println:(Ljava/lang/String;)V
-      11: LoadConstant		#18	Null
+      11: LoadConstant		#18	()
       13: InvokeVirtual		#16	java/io/PrintStream:println:(Ljava/lang/String;)V
       16: Return
       StackMapTable:

@@ -108,7 +108,7 @@ AirOutput {
                                         ),
                                     ),
                                     number: Some(
-                                        260624978435795,
+                                        260624978435793,
                                     ),
                                 },
                                 kind: Expression(
@@ -120,11 +120,11 @@ AirOutput {
                                                 ),
                                             ),
                                             number: Some(
-                                                260624978435795,
+                                                260624978435793,
                                             ),
                                         },
                                         type: Computed(
-                                            Null,
+                                            Unit,
                                         ),
                                         kind: Call(
                                             Call {
@@ -280,7 +280,7 @@ AirOutput {
                                         ),
                                     ),
                                     number: Some(
-                                        70368744177670,
+                                        70368744177668,
                                     ),
                                 },
                                 kind: Expression(
@@ -292,7 +292,7 @@ AirOutput {
                                                 ),
                                             ),
                                             number: Some(
-                                                70368744177670,
+                                                70368744177668,
                                             ),
                                         },
                                         type: Computed(
@@ -409,7 +409,7 @@ AirOutput {
                 kind: Error(
                     TypeMismatch {
                         expected: "I32",
-                        got: "Null",
+                        got: "()",
                     },
                 ),
                 ..
