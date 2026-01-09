@@ -171,9 +171,11 @@ mod tests {
 
     #[test]
     fn test_assignment() {
-        insta::assert_debug_snapshot!(generate_class_wrapped("let a = 1"));
-        insta::assert_debug_snapshot!(generate_class_wrapped("let a = 1\nprint(a)"));
-        insta::assert_debug_snapshot!(generate_class_wrapped("let a = 7\na = a * a\nprint(a)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a: I32 = 1"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a: I32 = 1\nprint(a)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            "let a: I32 = 7\na = a * a\nprint(a)"
+        ));
     }
 
     #[test]

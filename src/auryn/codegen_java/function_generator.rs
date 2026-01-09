@@ -232,11 +232,11 @@ impl FunctionGenerator<'_> {
         let repr = get_representation(expression.r#type.computed().as_view(self.ty_ctx));
 
         match &expression.kind {
-            AirExpressionKind::Constant(constant) => self.generate_constant(constant),
+            AirExpressionKind::Constant(constant) => self.generate_constant(&repr, constant),
             AirExpressionKind::BinaryOperator(binary_operator) => {
                 self.generate_binary_operation(binary_operator)
             }
-            AirExpressionKind::Variable(variable) => self.generate_variable(variable),
+            AirExpressionKind::Variable(variable) => self.generate_variable(repr.clone(), variable),
             AirExpressionKind::Type(_) => {
                 // Nothing needs to be done, since types are compile time constructs
             }
@@ -249,12 +249,19 @@ impl FunctionGenerator<'_> {
         repr
     }
 
-    fn generate_constant(&mut self, constant: &AirConstant) {
+    fn generate_constant(&mut self, result_repr: &Option<Representation>, constant: &AirConstant) {
         match constant {
-            AirConstant::Number(number) => {
-                let value = ConstantValue::Integer(*number);
-                self.assembler.add(Instruction::LoadConstant { value });
-            }
+            AirConstant::Number(number) => match result_repr {
+                None => {}
+                Some(Representation::Integer) => self.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Integer(
+                        (*number)
+                            .try_into()
+                            .expect("Number should fit into target type"),
+                    ),
+                }),
+                Some(other) => panic!("Cannot load number as {other:?}"),
+            },
             AirConstant::Boolean(boolean) => {
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::Boolean(*boolean),
@@ -399,11 +406,13 @@ impl FunctionGenerator<'_> {
         self.assembler.set_current_block_id(next_block);
     }
 
-    fn generate_variable(&mut self, variable: &AirValueId) {
+    fn generate_variable(&mut self, result_repr: Option<Representation>, variable: &AirValueId) {
         match variable {
             AirValueId::Local(local_variable_id) => {
-                let variable_id = self.variable_map[local_variable_id].clone();
-                self.assembler.add(Instruction::Load(variable_id));
+                if result_repr.is_some() {
+                    let variable_id = self.variable_map[local_variable_id].clone();
+                    self.assembler.add(Instruction::Load(variable_id));
+                }
             }
             AirValueId::Intrinsic(_) | AirValueId::Global(_) => {
                 // Intrinsic functions and globals have no run time representation

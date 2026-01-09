@@ -1,0 +1,30 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"let helloworld: I32 = 1\\n\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..24 Root
+        |0..24 Block
+        ||0..23 Statement
+        |||0..23 Assignment
+        ||||KeywordLet `let`
+        ||||Whitespace ` `
+        ||||Identifier `helloworld`
+        ||||Colon `:`
+        ||||Whitespace ` `
+        ||||16..20 Type
+        |||||16..20 Ident
+        ||||||Identifier `I32`
+        ||||||Whitespace ` `
+        ||||Equal `=`
+        ||||Whitespace ` `
+        ||||22..23 Expression
+        |||||22..23 Value
+        ||||||22..23 NumberLiteral
+        |||||||NumberLiteral `1`
+        ||Newline `\n`
+        ,
+    ),
+    diagnostics: [],
+}

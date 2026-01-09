@@ -207,6 +207,7 @@ impl Display for MethodDescriptor {
 pub fn get_representation(air_type: TypeView) -> Option<Representation> {
     match air_type {
         TypeView::I32 => Some(Representation::Integer),
+        TypeView::NumberLiteral(_) => None,
         TypeView::Bool => Some(Representation::Boolean),
         TypeView::String => Some(Representation::string()),
         TypeView::Array(content_type) => {

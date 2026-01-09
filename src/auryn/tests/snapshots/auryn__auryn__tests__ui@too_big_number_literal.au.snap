@@ -1,0 +1,12 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "\nfn main() {\n\tlet a: I32 = 9000000000\n}\n"
+input_file: src/auryn/tests/inputs/ui/too_big_number_literal.au
+---
+Error: Value outside of valid range
+   ╭─[ main:3:15 ]
+   │
+ 3 │     let a: I32 = 9000000000
+   │                  ─────┬────  
+   │                       ╰────── Value 9000000000 is outside the valid range -2147483648..=2147483647 for type `I32`
+───╯

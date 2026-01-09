@@ -195,7 +195,21 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            I32,
+                                                            NumberLiteral(
+                                                                TypeId {
+                                                                    id: SyntaxId {
+                                                                        file_id: Some(
+                                                                            FileId(
+                                                                                1,
+                                                                            ),
+                                                                        ),
+                                                                        number: Some(
+                                                                            233096465088514,
+                                                                        ),
+                                                                    },
+                                                                    kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
+                                                                },
+                                                            ),
                                                         ),
                                                         kind: Constant(
                                                             Number(
@@ -291,7 +305,21 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            I32,
+                                                            NumberLiteral(
+                                                                TypeId {
+                                                                    id: SyntaxId {
+                                                                        file_id: Some(
+                                                                            FileId(
+                                                                                1,
+                                                                            ),
+                                                                        ),
+                                                                        number: Some(
+                                                                            244964209642279,
+                                                                        ),
+                                                                    },
+                                                                    kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
+                                                                },
+                                                            ),
                                                         ),
                                                         kind: Constant(
                                                             Number(

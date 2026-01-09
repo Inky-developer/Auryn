@@ -146,6 +146,7 @@ pub enum AirNodeKind {
 #[derive(Debug)]
 pub struct Assignment {
     pub target: AirLocalValueId,
+    pub expected_type: Option<UnresolvedType>,
     pub expression: Box<AirExpression>,
 }
 
@@ -288,7 +289,7 @@ pub struct LoadConstant {
 
 #[derive(Debug)]
 pub enum AirConstant {
-    Number(i32),
+    Number(i128),
     Boolean(bool),
     String(SmallString),
 }

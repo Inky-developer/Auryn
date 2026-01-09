@@ -4,7 +4,10 @@ use crate::{
     auryn::{
         air::{
             data::Intrinsic,
-            typecheck::types::{ArrayType, ExternType, FunctionItemType, MetaType, Type, TypeData},
+            typecheck::types::{
+                ArrayType, ExternType, FunctionItemType, MetaType, NumberLiteralType, Type,
+                TypeData,
+            },
         },
         syntax_id::SyntaxId,
     },
@@ -16,6 +19,7 @@ pub type BidirectionalTypeMap<T> = BidirectionalMap<TypeId<T>, T>;
 
 #[derive(Debug)]
 pub struct TypeContext {
+    number_literals: BidirectionalTypeMap<NumberLiteralType>,
     arrays: BidirectionalTypeMap<ArrayType>,
     metas: BidirectionalTypeMap<MetaType>,
     externs: TypeMap<ExternType>,
@@ -23,12 +27,24 @@ pub struct TypeContext {
 }
 
 impl TypeContext {
+    pub fn number_literal_of(&mut self, syntax_id: SyntaxId, value: i128) -> Type {
+        Type::NumberLiteral(self.add_number_literal(syntax_id, NumberLiteralType { value }))
+    }
+
     pub fn array_of(&mut self, syntax_id: SyntaxId, element_type: Type) -> Type {
         Type::Array(self.add_array(syntax_id, ArrayType { element_type }))
     }
 
     pub fn meta_of(&mut self, syntax_id: SyntaxId, inner: Type) -> Type {
         Type::Meta(self.add_meta(syntax_id, MetaType { inner }))
+    }
+
+    pub fn add_number_literal(
+        &mut self,
+        syntax_id: SyntaxId,
+        number_literal: NumberLiteralType,
+    ) -> TypeId<NumberLiteralType> {
+        add_non_unique_type(syntax_id, number_literal, &mut self.number_literals)
     }
 
     pub fn add_array(&mut self, syntax_id: SyntaxId, array: ArrayType) -> TypeId<ArrayType> {
@@ -61,6 +77,9 @@ impl TypeContext {
         T::from_context(id, self)
     }
 
+    pub(super) fn get_number_literal(&self, id: TypeId<NumberLiteralType>) -> &NumberLiteralType {
+        self.number_literals.get_by_key(&id).unwrap()
+    }
     pub(super) fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
         &self.function_items[&id]
     }
@@ -92,6 +111,7 @@ fn add_non_unique_type<T: Eq + Hash + Clone>(
 impl Default for TypeContext {
     fn default() -> Self {
         let mut this = Self {
+            number_literals: default(),
             arrays: default(),
             metas: default(),
             externs: default(),

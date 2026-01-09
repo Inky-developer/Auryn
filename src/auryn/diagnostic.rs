@@ -1,6 +1,6 @@
-use std::fmt::Debug;
 #[cfg(debug_assertions)]
 use std::panic::Location;
+use std::{fmt::Debug, ops::RangeInclusive};
 
 use crate::{
     auryn::{
@@ -68,6 +68,15 @@ pub enum DiagnosticError {
     TypeMismatch {
         expected: String,
         got: String,
+    },
+    UnsupportedOperationWithType {
+        operation: SmallString,
+        r#type: String,
+    },
+    ValueOutsideRange {
+        range: RangeInclusive<i128>,
+        got: i128,
+        r#type: String,
     },
     MismatchedArgumentCount {
         expected: usize,
@@ -277,6 +286,16 @@ impl Diagnostic {
                 DiagnosticError::TypeMismatch { expected, got } => builder
                     .with_code("Type mismatch")
                     .with_message(format!("Expected `{expected}`, but got `{got}`")),
+                DiagnosticError::UnsupportedOperationWithType { operation, r#type } => builder
+                    .with_code("Unsupported operation")
+                    .with_message(format!(
+                        "Operation `{operation}` is not supported on type `{type}`"
+                    )),
+                DiagnosticError::ValueOutsideRange { range, got, r#type } => builder
+                    .with_code("Value outside of valid range")
+                    .with_message(format!(
+                        "Value {got} is outside the valid range {range:?} for type `{type}`"
+                    )),
                 DiagnosticError::MismatchedArgumentCount {
                     expected,
                     got,

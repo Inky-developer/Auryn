@@ -619,6 +619,10 @@ impl Parser<'_> {
 
         self.expect(TokenKind::KeywordLet)?;
         self.expect(TokenKind::Identifier)?;
+        if self.peek().kind == TokenKind::Colon {
+            self.consume();
+            self.parse_type()?;
+        }
         self.expect(TokenKind::Equal)?;
         self.parse_expression()?;
 
@@ -993,6 +997,7 @@ mod tests {
     #[test]
     fn test_parse_assignment() {
         insta::assert_debug_snapshot!(verify_block("let helloworld = 1\n"));
+        insta::assert_debug_snapshot!(verify_block("let helloworld: I32 = 1\n"));
     }
 
     #[test]

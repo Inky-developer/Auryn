@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile_wrapped(\"let a = print(1)\\nprint(a + 1)\")"
+expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
 ---
 AirOutput {
     air: Air {
@@ -88,6 +88,21 @@ AirOutput {
                                         target: AirLocalValueId(
                                             0,
                                         ),
+                                        expected_type: Some(
+                                            Ident(
+                                                SyntaxId {
+                                                    file_id: Some(
+                                                        FileId(
+                                                            1,
+                                                        ),
+                                                    ),
+                                                    number: Some(
+                                                        217621856993886,
+                                                    ),
+                                                },
+                                                "I32",
+                                            ),
+                                        ),
                                         expression: AirExpression {
                                             id: SyntaxId {
                                                 file_id: Some(
@@ -96,7 +111,7 @@ AirOutput {
                                                     ),
                                                 ),
                                                 number: Some(
-                                                    221158910272661,
+                                                    221531231670421,
                                                 ),
                                             },
                                             type: Computed(
@@ -112,7 +127,7 @@ AirOutput {
                                                                 ),
                                                             ),
                                                             number: Some(
-                                                                221158910272662,
+                                                                221531231670422,
                                                             ),
                                                         },
                                                         type: Computed(
@@ -143,11 +158,25 @@ AirOutput {
                                                                     ),
                                                                 ),
                                                                 number: Some(
-                                                                    222275874465958,
+                                                                    222399981598540,
                                                                 ),
                                                             },
                                                             type: Computed(
-                                                                I32,
+                                                                NumberLiteral(
+                                                                    TypeId {
+                                                                        id: SyntaxId {
+                                                                            file_id: Some(
+                                                                                FileId(
+                                                                                    1,
+                                                                                ),
+                                                                            ),
+                                                                            number: Some(
+                                                                                222399981598540,
+                                                                            ),
+                                                                        },
+                                                                        kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
+                                                                    },
+                                                                ),
                                                             ),
                                                             kind: Constant(
                                                                 Number(
@@ -233,7 +262,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            I32,
+                                                            Null,
                                                         ),
                                                         kind: BinaryOperator(
                                                             BinaryOperation {
@@ -320,13 +349,51 @@ AirOutput {
                         ),
                     ),
                     number: Some(
-                        241892558110725,
+                        221531231670421,
                     ),
                 },
                 kind: Error(
                     TypeMismatch {
                         expected: "I32",
                         got: "Null",
+                    },
+                ),
+                ..
+            },
+            Diagnostic {
+                syntax_id: SyntaxId {
+                    file_id: Some(
+                        FileId(
+                            1,
+                        ),
+                    ),
+                    number: Some(
+                        241892558110725,
+                    ),
+                },
+                kind: Error(
+                    TypeMismatch {
+                        expected: "Number",
+                        got: "Null",
+                    },
+                ),
+                ..
+            },
+            Diagnostic {
+                syntax_id: SyntaxId {
+                    file_id: Some(
+                        FileId(
+                            1,
+                        ),
+                    ),
+                    number: Some(
+                        242992069738496,
+                    ),
+                },
+                kind: Error(
+                    TypeMismatch {
+                        expected: "Null",
+                        got: "I32",
                     },
                 ),
                 ..

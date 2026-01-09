@@ -65,26 +65,6 @@ impl AstTransformer {
         }
     }
 
-    fn transform_to_unresolved(&self, r#type: Type) -> Result<UnresolvedType, AstError> {
-        match r#type {
-            Type::ArrayType(inner) => match inner.r#type() {
-                Ok(r#type) => Ok(UnresolvedType::Array(
-                    r#type.id(),
-                    Box::new(self.transform_to_unresolved(r#type)?),
-                )),
-                Err(err) => Err(err),
-            },
-            Type::Ident(ident) => {
-                ident
-                    .ident()
-                    .map(|token| match self.namespace.types.get(&token.text) {
-                        Some(def_id) => UnresolvedType::DefinedType(*def_id),
-                        None => UnresolvedType::Ident(token.id, token.text.clone()),
-                    })
-            }
-        }
-    }
-
     fn register_item(&mut self, item: Item) {
         match item {
             Item::FunctionDefinition(function_definition) => {
@@ -214,7 +194,7 @@ impl AstTransformer {
                         continue;
                     };
 
-                    let Ok(unresolved) = self.transform_to_unresolved(r#type) else {
+                    let Ok(unresolved) = transform_to_unresolved(&self.namespace, r#type) else {
                         continue;
                     };
                     let member = UnresolvedExternMember::StaticLet {
@@ -239,14 +219,14 @@ impl AstTransformer {
                             param
                                 .r#type()
                                 .ok()
-                                .and_then(|ty| self.transform_to_unresolved(ty).ok())
+                                .and_then(|ty| transform_to_unresolved(&self.namespace, ty).ok())
                         })
                         .collect();
                     let declared_return_type = function
                         .return_type()
                         .ok()
                         .and_then(|ty| ty.r#type().ok())
-                        .and_then(|ty| self.transform_to_unresolved(ty).ok())
+                        .and_then(|ty| transform_to_unresolved(&self.namespace, ty).ok())
                         .map(Box::new);
                     let kind = if function.is_static() {
                         ExternFunctionKind::Static
@@ -296,14 +276,14 @@ impl AstTransformer {
                 param
                     .r#type()
                     .ok()
-                    .and_then(|ty| self.transform_to_unresolved(ty).ok())
+                    .and_then(|ty| transform_to_unresolved(&self.namespace, ty).ok())
             })
             .collect::<Vec<_>>();
         let declared_return_type = function_definition
             .return_type()
             .ok()
             .and_then(|r#type| r#type.r#type().ok())
-            .and_then(|r#type| self.transform_to_unresolved(r#type).ok())
+            .and_then(|r#type| transform_to_unresolved(&self.namespace, r#type).ok())
             .map(Box::new);
 
         let parameter_idents = parameters
@@ -485,6 +465,11 @@ impl FunctionTransformer<'_> {
             return;
         };
 
+        let expected_type = assignment
+            .r#type()
+            .and_then(|r#type| transform_to_unresolved(self.namespace, r#type))
+            .ok();
+
         let expression = self.transform_expression(expression);
         let id = self.create_value();
         self.create_variable(ident, id);
@@ -492,6 +477,7 @@ impl FunctionTransformer<'_> {
             id: assignment.id(),
             kind: AirNodeKind::Assignment(data::Assignment {
                 target: id,
+                expected_type,
                 expression: Box::new(expression),
             }),
         });
@@ -641,6 +627,7 @@ impl FunctionTransformer<'_> {
             id: variable_update.id(),
             kind: AirNodeKind::Assignment(data::Assignment {
                 target: variable_id,
+                expected_type: None,
                 expression: Box::new(expression),
             }),
         });
@@ -841,5 +828,26 @@ impl FunctionTransformer<'_> {
             return AirExpression::error(parenthesis.id());
         };
         self.transform_expression(expression)
+    }
+}
+
+fn transform_to_unresolved(
+    namespace: &Namespace,
+    r#type: Type,
+) -> Result<UnresolvedType, AstError> {
+    match r#type {
+        Type::ArrayType(inner) => match inner.r#type() {
+            Ok(r#type) => Ok(UnresolvedType::Array(
+                r#type.id(),
+                Box::new(transform_to_unresolved(namespace, r#type)?),
+            )),
+            Err(err) => Err(err),
+        },
+        Type::Ident(ident) => ident
+            .ident()
+            .map(|token| match namespace.types.get(&token.text) {
+                Some(def_id) => UnresolvedType::DefinedType(*def_id),
+                None => UnresolvedType::Ident(token.id, token.text.clone()),
+            }),
     }
 }

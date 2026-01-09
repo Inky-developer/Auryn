@@ -79,12 +79,12 @@ mod tests {
 
     #[test]
     fn invalid_assignment() {
-        insta::assert_debug_snapshot!(compile_wrapped("let a = print(1)\nprint(a + 1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: I32 = print(1)\nprint(a + 1)"));
     }
 
     #[test]
     fn test_update() {
-        insta::assert_debug_snapshot!(compile_wrapped("let a = 1\na = 2"));
-        insta::assert_debug_snapshot!(compile_wrapped("let a = 1\na += 2"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: I32 = 1\na = 2"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: I32 = 1\na += 2"));
     }
 }

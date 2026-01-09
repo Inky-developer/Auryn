@@ -31,6 +31,25 @@ impl BinaryOperatorToken {
             Times | Divide | Remainder => 6,
         }
     }
+
+    pub fn to_token_kind(self) -> TokenKind {
+        use BinaryOperatorToken::*;
+        match self {
+            Plus => TokenKind::Plus,
+            Minus => TokenKind::Minus,
+            Times => TokenKind::Times,
+            Divide => TokenKind::Divide,
+            Remainder => TokenKind::Remainder,
+            Equal => TokenKind::Equal,
+            NotEqual => TokenKind::NotEqual,
+            Greater => TokenKind::Greater,
+            GreaterOrEqual => TokenKind::GreaterOrEqual,
+            Less => TokenKind::Less,
+            LessOrEqual => TokenKind::LessOrEqual,
+            And => TokenKind::KeywordAnd,
+            Or => TokenKind::KeywordOr,
+        }
+    }
 }
 
 bitset_item! {
@@ -82,7 +101,7 @@ bitset_item! {
         Minus,
         Times,
         Divide,
-        Modulo,
+        Remainder,
         PlusAssign,
         MinusAssign,
         TimesAssign,
@@ -135,7 +154,7 @@ impl TokenKind {
             TokenKind::Minus => Some(BinaryOperatorToken::Minus),
             TokenKind::Times => Some(BinaryOperatorToken::Times),
             TokenKind::Divide => Some(BinaryOperatorToken::Divide),
-            TokenKind::Modulo => Some(BinaryOperatorToken::Remainder),
+            TokenKind::Remainder => Some(BinaryOperatorToken::Remainder),
             TokenKind::DoubleEqual => Some(BinaryOperatorToken::Equal),
             TokenKind::NotEqual => Some(BinaryOperatorToken::NotEqual),
             TokenKind::Greater => Some(BinaryOperatorToken::Greater),
@@ -169,7 +188,7 @@ impl TokenKind {
             TokenKind::Minus => "-",
             TokenKind::Times => "*",
             TokenKind::Divide => "/",
-            TokenKind::Modulo => "%",
+            TokenKind::Remainder => "%",
             TokenKind::PlusAssign => "+=",
             TokenKind::MinusAssign => "-=",
             TokenKind::TimesAssign => "*=",
@@ -380,7 +399,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                         text: self.consume_text("%="),
                     });
                 }
-                TokenKind::Modulo
+                TokenKind::Remainder
             }
             '=' => {
                 if self.input.starts_with("==") {

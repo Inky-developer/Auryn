@@ -225,7 +225,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct Assignment = SyntaxNodeKind::Assignment as { token ident: TokenKind::Identifier, expression: Expression, }
+    pub struct Assignment = SyntaxNodeKind::Assignment as { token ident: TokenKind::Identifier, r#type: Type, expression: Expression, }
 }
 
 ast_node! {
