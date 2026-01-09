@@ -205,7 +205,15 @@ pub enum Instruction {
     /// Subtract two integers
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.isub>
     ISub,
+    /// Multiplies two integers
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.imul>
     IMul,
+    /// Divides two integers
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.idiv>
+    IDiv,
+    /// Calculates the reminder of the division of two integers
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.irem>
+    IRem,
     IStore(u16),
     ILoad(u16),
     /// Compares the two topmost stack entries according to the given `comparison`
@@ -288,6 +296,12 @@ impl Instruction {
             }
             Instruction::IMul => {
                 buf.write_all(&[0x68])?;
+            }
+            Instruction::IDiv => {
+                buf.write_all(&[0x6c])?;
+            }
+            Instruction::IRem => {
+                buf.write_all(&[0x70])?;
             }
             Instruction::IStore(index) => {
                 // TODO: implement istore_<n> as space optimization

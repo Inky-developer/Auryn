@@ -330,6 +330,8 @@ impl AssemblyContext<'_> {
             Instruction::IAdd => on_instruction(class::Instruction::IAdd),
             Instruction::ISub => on_instruction(class::Instruction::ISub),
             Instruction::IMul => on_instruction(class::Instruction::IMul),
+            Instruction::IDiv => on_instruction(class::Instruction::IDiv),
+            Instruction::IRem => on_instruction(class::Instruction::IRem),
             Instruction::Store(id) => {
                 on_instruction(match id.r#type.clone().to_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => {

@@ -108,7 +108,11 @@ impl SymbolicEvaluator {
                 let verification_type = value.to_verification_type(pool);
                 self.stack.push(verification_type);
             }
-            Instruction::IAdd | Instruction::IMul | Instruction::ISub => {
+            Instruction::IAdd
+            | Instruction::IMul
+            | Instruction::ISub
+            | Instruction::IDiv
+            | Instruction::IRem => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
                 self.stack.push(VerificationTypeInfo::Integer);

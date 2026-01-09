@@ -253,6 +253,8 @@ impl Display for InstructionDisplay<'_> {
             IAdd => write!(f, "IAdd"),
             ISub => write!(f, "ISub"),
             IMul => write!(f, "IMul"),
+            IDiv => write!(f, "IDiv"),
+            IRem => write!(f, "IRem"),
             IStore(index) => write!(f, "IStore\t\t\t{index}"),
             ILoad(index) => write!(f, "ILoad\t\t\t{index}"),
             IfICmp {

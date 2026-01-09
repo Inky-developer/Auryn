@@ -592,6 +592,8 @@ impl FunctionTransformer<'_> {
                 UpdateOperatorToken::PlusAssign => BinaryOperatorToken::Plus,
                 UpdateOperatorToken::MinusAssign => BinaryOperatorToken::Minus,
                 UpdateOperatorToken::TimesAssign => BinaryOperatorToken::Times,
+                UpdateOperatorToken::DivideAssign => BinaryOperatorToken::Divide,
+                UpdateOperatorToken::RemainderAssign => BinaryOperatorToken::Remainder,
             };
 
             let lhs = Box::new(AirExpression::new(

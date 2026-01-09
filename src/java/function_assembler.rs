@@ -71,6 +71,8 @@ pub enum Instruction {
     IAdd,
     ISub,
     IMul,
+    IDiv,
+    IRem,
     Store(VariableId),
     Load(VariableId),
     Nop,

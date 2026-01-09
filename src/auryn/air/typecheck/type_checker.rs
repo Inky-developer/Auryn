@@ -358,6 +358,8 @@ impl Typechecker {
             BinaryOperatorToken::Plus
             | BinaryOperatorToken::Minus
             | BinaryOperatorToken::Times
+            | BinaryOperatorToken::Divide
+            | BinaryOperatorToken::Remainder
             | BinaryOperatorToken::Equal
             | BinaryOperatorToken::NotEqual
             | BinaryOperatorToken::Greater
@@ -371,9 +373,11 @@ impl Typechecker {
         self.expect_type(&binary_operator.rhs, parameter_type);
 
         match binary_operator.operator {
-            BinaryOperatorToken::Plus | BinaryOperatorToken::Minus | BinaryOperatorToken::Times => {
-                Type::Number
-            }
+            BinaryOperatorToken::Plus
+            | BinaryOperatorToken::Minus
+            | BinaryOperatorToken::Times
+            | BinaryOperatorToken::Divide
+            | BinaryOperatorToken::Remainder => Type::Number,
             BinaryOperatorToken::Equal
             | BinaryOperatorToken::NotEqual
             | BinaryOperatorToken::Greater

@@ -160,6 +160,7 @@ mod tests {
     #[test]
     fn test_simple() {
         insta::assert_debug_snapshot!(generate_class_wrapped("1 + 2 * 3"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("1 / 2 % 3"));
     }
 
     #[test]

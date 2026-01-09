@@ -1,0 +1,60 @@
+---
+source: src/auryn/codegen_java/class_generator.rs
+expression: "generate_class_wrapped(\"1 / 2 % 3\")"
+---
+ClassData
+  this_class:		#10	Main
+  super_class:		#15	java/lang/Object
+Constant pool:
+  #00 = Integer			1
+  #01 = Integer			2
+  #02 = Integer			3
+  #03 = Utf8			main
+  #04 = Utf8			()V
+  #05 = Utf8			Code
+  #06 = Utf8			StackMapTable
+  #07 = Utf8			[Ljava/lang/String;
+  #08 = Class		#7	[Ljava/lang/String;
+  #09 = Utf8			Main
+  #10 = Class		#9	Main
+  #11 = NameAndType	#3:#4	main:()V
+  #12 = MethodRef		#10.#11	Main:main:()V
+  #13 = Utf8			([Ljava/lang/String;)V
+  #14 = Utf8			java/lang/Object
+  #15 = Class		#14	java/lang/Object
+
+{
+  fn main {
+    descriptor: ()V
+    flags: 9
+    Code:
+      stack = 8, locals = 1
+       0: LoadConstant		#0	1
+       2: LoadConstant		#1	2
+       4: IDiv
+       5: LoadConstant		#2	3
+       7: IRem
+       8: Pop
+       9: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: 9
+    Code:
+      stack = 8, locals = 2
+      0: InvokeStatic		#12	Main:main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

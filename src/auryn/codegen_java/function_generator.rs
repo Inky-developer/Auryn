@@ -284,6 +284,16 @@ impl FunctionGenerator<'_> {
                 self.generate_expression(&operation.rhs);
                 self.assembler.add(Instruction::IMul);
             }
+            BinaryOperatorToken::Divide => {
+                self.generate_expression(&operation.lhs);
+                self.generate_expression(&operation.rhs);
+                self.assembler.add(Instruction::IDiv);
+            }
+            BinaryOperatorToken::Remainder => {
+                self.generate_expression(&operation.lhs);
+                self.generate_expression(&operation.rhs);
+                self.assembler.add(Instruction::IRem);
+            }
             BinaryOperatorToken::Equal => {
                 self.generate_comparison(Comparison::Equal, &operation.lhs, &operation.rhs)
             }

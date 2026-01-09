@@ -7,6 +7,8 @@ pub enum BinaryOperatorToken {
     Plus,
     Minus,
     Times,
+    Divide,
+    Remainder,
     Equal,
     NotEqual,
     Greater,
@@ -26,7 +28,7 @@ impl BinaryOperatorToken {
             Equal | NotEqual => 3,
             GreaterOrEqual | Greater | LessOrEqual | Less => 4,
             Plus | Minus => 5,
-            Times => 6,
+            Times | Divide | Remainder => 6,
         }
     }
 }
@@ -38,6 +40,8 @@ bitset_item! {
         PlusAssign,
         MinusAssign,
         TimesAssign,
+        DivideAssign,
+        RemainderAssign,
     }
 }
 
@@ -48,6 +52,8 @@ impl UpdateOperatorToken {
             Self::PlusAssign => TokenKind::PlusAssign,
             Self::MinusAssign => TokenKind::MinusAssign,
             Self::TimesAssign => TokenKind::TimesAssign,
+            Self::DivideAssign => TokenKind::DivideAssign,
+            Self::RemainderAssign => TokenKind::RemainderAssign,
         }
     }
 
@@ -75,9 +81,13 @@ bitset_item! {
         Plus,
         Minus,
         Times,
+        Divide,
+        Modulo,
         PlusAssign,
         MinusAssign,
         TimesAssign,
+        DivideAssign,
+        RemainderAssign,
         Equal,
         DoubleEqual,
         NotEqual,
@@ -124,6 +134,8 @@ impl TokenKind {
             TokenKind::Plus => Some(BinaryOperatorToken::Plus),
             TokenKind::Minus => Some(BinaryOperatorToken::Minus),
             TokenKind::Times => Some(BinaryOperatorToken::Times),
+            TokenKind::Divide => Some(BinaryOperatorToken::Divide),
+            TokenKind::Modulo => Some(BinaryOperatorToken::Remainder),
             TokenKind::DoubleEqual => Some(BinaryOperatorToken::Equal),
             TokenKind::NotEqual => Some(BinaryOperatorToken::NotEqual),
             TokenKind::Greater => Some(BinaryOperatorToken::Greater),
@@ -142,6 +154,8 @@ impl TokenKind {
             TokenKind::PlusAssign => UpdateOperatorToken::PlusAssign,
             TokenKind::TimesAssign => UpdateOperatorToken::TimesAssign,
             TokenKind::MinusAssign => UpdateOperatorToken::MinusAssign,
+            TokenKind::DivideAssign => UpdateOperatorToken::DivideAssign,
+            TokenKind::RemainderAssign => UpdateOperatorToken::RemainderAssign,
             _ => return None,
         })
     }
@@ -154,9 +168,13 @@ impl TokenKind {
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Times => "*",
+            TokenKind::Divide => "/",
+            TokenKind::Modulo => "%",
             TokenKind::PlusAssign => "+=",
             TokenKind::MinusAssign => "-=",
             TokenKind::TimesAssign => "*=",
+            TokenKind::DivideAssign => "/=",
+            TokenKind::RemainderAssign => "%=",
             TokenKind::Equal => "=",
             TokenKind::DoubleEqual => "==",
             TokenKind::NotEqual => "!=",
@@ -295,7 +313,7 @@ impl<'a> Tokenizer<'a> {
 
     fn consume_text(&mut self, arg: &str) -> &'a str {
         let (text, rest) = self.input.split_at(arg.len());
-        assert_eq!(
+        debug_assert_eq!(
             text, arg,
             "Could not consume text, expected {arg} got {text}"
         );
@@ -344,6 +362,26 @@ impl<'a> Iterator for Tokenizer<'a> {
                 }
                 TokenKind::Times
             }
+            '/' if self.input.starts_with("//") => return Some(self.consume_comment()),
+            '/' => {
+                if self.input.starts_with("/=") {
+                    return Some(Token {
+                        kind: TokenKind::DivideAssign,
+                        text: self.consume_text("/="),
+                    });
+                }
+
+                TokenKind::Divide
+            }
+            '%' => {
+                if self.input.starts_with("%=") {
+                    return Some(Token {
+                        kind: TokenKind::RemainderAssign,
+                        text: self.consume_text("%="),
+                    });
+                }
+                TokenKind::Modulo
+            }
             '=' => {
                 if self.input.starts_with("==") {
                     return Some(Token {
@@ -383,7 +421,6 @@ impl<'a> Iterator for Tokenizer<'a> {
             ':' => TokenKind::Colon,
             '.' => TokenKind::Dot,
             '\n' => TokenKind::Newline,
-            '/' if self.input.starts_with("//") => return Some(self.consume_comment()),
             'l' if self.starts_with_keyword("let") => {
                 return Some(Token {
                     kind: TokenKind::KeywordLet,
@@ -515,7 +552,7 @@ mod tests {
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
         insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));
-        insta::assert_debug_snapshot!(tokenize("a *= b += c -= 3"));
+        insta::assert_debug_snapshot!(tokenize("a *= b += c -= 3 / /= 1 // test"));
         insta::assert_debug_snapshot!(tokenize("before comment // commment text \n after comment"));
     }
 
