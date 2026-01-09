@@ -133,6 +133,13 @@ impl<'a> TypeView<'a> {
     pub fn is_subtype(self, other: TypeView) -> bool {
         use TypeView::*;
 
+        // A as quick and dirty hack we can just treat Error as subtype of every type
+        // and every type also as subtype of eror, to prevent the compiler from
+        // emitting redundant error messages
+        if matches!(self, Error) {
+            return true;
+        }
+
         match other {
             Top | Error => true,
             Number => matches!(self, Number | I32 | I64 | NumberLiteral(_)),

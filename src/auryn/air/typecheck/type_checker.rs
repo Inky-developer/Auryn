@@ -705,7 +705,7 @@ impl Typechecker {
             self.diagnostics.add(
                 id,
                 DiagnosticError::MismatchedArgumentCount {
-                    expected: 2,
+                    expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
                 },
