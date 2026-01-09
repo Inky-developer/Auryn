@@ -1,30 +1,41 @@
-use std::ops::Index;
+use std::{num::NonZeroU16, ops::Index};
 
 use crate::{
     auryn::codegen_java::representation::FieldDescriptor,
-    java::class::{ConstantPoolEntry, ConstantPoolIndex},
-    utils::{fast_map::FastIndexMap, small_string::SmallString},
+    java::class::{ConstantPool, ConstantPoolEntry, ConstantPoolIndex},
+    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ConstantPoolBuilder {
-    entries: FastIndexMap<ConstantPoolEntry, ConstantPoolIndex>,
+    cache: FastMap<ConstantPoolEntry, ConstantPoolIndex>,
+    entries: Vec<Option<ConstantPoolEntry>>,
+    next_index: NonZeroU16,
 }
 
 impl ConstantPoolBuilder {
-    pub fn build(self) -> Vec<ConstantPoolEntry> {
-        let mut as_vec = self.entries.into_iter().collect::<Vec<_>>();
-        as_vec.sort_unstable_by_key(|(_, key)| key.0);
-        as_vec.into_iter().map(|(value, _)| value).collect()
+    pub fn build(self) -> ConstantPool {
+        ConstantPool {
+            entries: self.entries.into_boxed_slice(),
+        }
     }
 
     pub fn add(&mut self, entry: ConstantPoolEntry) -> ConstantPoolIndex {
-        let entry = self.entries.entry(entry);
-        let index: u16 = entry
-            .index()
-            .try_into()
-            .expect("Should not be too many entries");
-        *entry.or_insert(ConstantPoolIndex::new(index + 1))
+        if let Some(index) = self.cache.get(&entry) {
+            return *index;
+        }
+
+        let index = ConstantPoolIndex(self.next_index);
+        let size = entry.size_in_constant_pool();
+        self.next_index = self.next_index.checked_add(size).unwrap();
+
+        self.cache.insert(entry.clone(), index);
+        self.entries.push(Some(entry));
+        for _ in 1..size {
+            self.entries.push(None);
+        }
+
+        index
     }
 
     pub fn add_utf8(&mut self, text: SmallString) -> ConstantPoolIndex {
@@ -86,6 +97,10 @@ impl ConstantPoolBuilder {
         self.add(ConstantPoolEntry::Integer { integer })
     }
 
+    pub fn add_long(&mut self, long: i64) -> ConstantPoolIndex {
+        self.add(ConstantPoolEntry::Long { long })
+    }
+
     pub fn add_array_class(&mut self, inner: FieldDescriptor) -> ConstantPoolIndex {
         self.add_class(
             FieldDescriptor::Array {
@@ -106,9 +121,16 @@ impl Index<ConstantPoolIndex> for ConstantPoolBuilder {
     type Output = ConstantPoolEntry;
 
     fn index(&self, index: ConstantPoolIndex) -> &Self::Output {
-        self.entries
-            .get_index(index.0.get() as usize - 1)
-            .map(|(k, _)| k)
-            .expect("Should be a valid index")
+        self.entries[index.0.get() as usize - 1].as_ref().unwrap()
+    }
+}
+
+impl Default for ConstantPoolBuilder {
+    fn default() -> Self {
+        Self {
+            cache: default(),
+            entries: vec![None],
+            next_index: NonZeroU16::new(1).unwrap(),
+        }
     }
 }

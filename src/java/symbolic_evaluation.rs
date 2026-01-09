@@ -35,13 +35,15 @@ impl SymbolicEvaluator {
 
     pub fn eval_finalizer(&mut self, finalizer: &BlockFinalizer, _pool: &mut ConstantPoolBuilder) {
         match finalizer {
-            BlockFinalizer::BranchIntegerCmp {
+            BlockFinalizer::BranchValueCmp {
+                value_type,
                 comparison: _,
                 positive_block: _,
                 negative_block: _,
             } => {
-                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
-                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+                let expected = value_type.to_verification_type();
+                assert_eq!(self.stack.pop(), Some(expected));
+                assert_eq!(self.stack.pop(), Some(expected));
             }
             BlockFinalizer::BranchInteger {
                 comparison: _,
@@ -60,6 +62,9 @@ impl SymbolicEvaluator {
             }
             BlockFinalizer::ReturnInteger | BlockFinalizer::ReturnBoolean => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+            }
+            BlockFinalizer::ReturnLong => {
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Long));
             }
         }
     }
@@ -108,20 +113,27 @@ impl SymbolicEvaluator {
                 let verification_type = value.to_verification_type(pool);
                 self.stack.push(verification_type);
             }
-            Instruction::IAdd
-            | Instruction::IMul
-            | Instruction::ISub
-            | Instruction::IDiv
-            | Instruction::IRem => {
-                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
-                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
-                self.stack.push(VerificationTypeInfo::Integer);
+            Instruction::Add(p)
+            | Instruction::Mul(p)
+            | Instruction::Sub(p)
+            | Instruction::Div(p)
+            | Instruction::Rem(p) => {
+                let expected = p.to_verification_type();
+                assert_eq!(self.stack.pop(), Some(expected));
+                assert_eq!(self.stack.pop(), Some(expected));
+                self.stack.push(expected);
             }
             Instruction::Store(id) => {
                 let verification_type = id.r#type.clone().into_verification_type(pool);
                 assert_eq!(self.stack.pop(), Some(verification_type));
                 // FIXME: Probably need to rework the whole locals allocation system :(
-                if self.locals.len() == id.index.into() {
+                let is_new_allocation = id.index
+                    == self
+                        .locals
+                        .iter()
+                        .map(|l| l.category().stack_size())
+                        .sum::<u16>();
+                if is_new_allocation {
                     self.locals.push(verification_type);
                 }
             }

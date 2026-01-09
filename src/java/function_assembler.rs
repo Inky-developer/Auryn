@@ -1,7 +1,7 @@
 use crate::{
     auryn::codegen_java::representation::{FieldDescriptor, MethodDescriptor, Representation},
     java::{
-        class::{self, TypeCategory, VerificationTypeInfo},
+        class::{self, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
         source_graph::{BasicBlock, BasicBlockId, SourceGraph},
     },
@@ -12,6 +12,7 @@ use crate::{
 pub enum ConstantValue {
     String(SmallString),
     Integer(i32),
+    Long(i64),
     Boolean(bool),
 }
 impl ConstantValue {
@@ -19,6 +20,7 @@ impl ConstantValue {
         match self {
             ConstantValue::String(_) => Representation::string(),
             ConstantValue::Integer(_) => Representation::Integer,
+            ConstantValue::Long(_) => Representation::Long,
             ConstantValue::Boolean(_) => Representation::Boolean,
         }
     }
@@ -31,6 +33,7 @@ impl ConstantValue {
                 constant_pool_index: constant_pool_builder.get_string_index(),
             },
             ConstantValue::Integer(_) | ConstantValue::Boolean(_) => VerificationTypeInfo::Integer,
+            ConstantValue::Long(_) => VerificationTypeInfo::Long,
         }
     }
 }
@@ -68,11 +71,11 @@ pub enum Instruction {
     ArrayLoad(Representation),
     /// Returns the length of the given array
     ArrayLength,
-    IAdd,
-    ISub,
-    IMul,
-    IDiv,
-    IRem,
+    Add(PrimitiveType),
+    Sub(PrimitiveType),
+    Mul(PrimitiveType),
+    Div(PrimitiveType),
+    Rem(PrimitiveType),
     Store(VariableId),
     Load(VariableId),
     Nop,
@@ -105,14 +108,14 @@ impl<'a> FunctionAssembler<'a> {
         name: SmallString,
         descriptor: MethodDescriptor,
         constant_pool: &'a mut ConstantPoolBuilder,
+        first_valid_variable_index: u16,
     ) -> Self {
-        let next_variable_index = descriptor.parameters.len().try_into().unwrap();
         Self {
             function_name: name,
             descriptor,
             constant_pool,
             blocks: SourceGraph::default(),
-            next_variable_index,
+            next_variable_index: first_valid_variable_index,
         }
     }
 
@@ -213,6 +216,7 @@ mod tests {
                 return_type: ReturnDescriptor::Void,
             },
             &mut pool,
+            0,
         );
         assembler.add_all([
             Instruction::GetStatic {

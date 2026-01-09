@@ -1,0 +1,195 @@
+---
+source: src/auryn/codegen_java/class_generator.rs
+expression: "generate_class(r#\"\n            fn main() {\n                let a: I64 = 35\n                let b: I64 = 65\n                let sum = a + b\n                if sum >= 100 {\n                    print(\"Greater or equal than 100\")\n                }\n                printArray(arrayOf(a, b, sum))\n            }\n\n            fn printArray(values: []I64) {\n                let i: I32 = 0\n                loop {\n                    if i >= arrayLen(values) {\n                        break\n                    }\n\n                    print(arrayGet(values, i))\n\n                    i += 1\n                }\n            }\n            \"#)"
+---
+ClassData
+  this_class:		#30	Main
+  super_class:		#48	java/lang/Object
+Constant pool:
+  #01 = Utf8			java/io/PrintStream
+  #02 = Class		#1	java/io/PrintStream
+  #03 = Utf8			java/lang/String
+  #04 = Class		#3	java/lang/String
+  #05 = Utf8			[J
+  #06 = Class		#5	[J
+  #07 = Long			35
+  #09 = Long			65
+  #11 = Long			100
+  #13 = Utf8			java/lang/System
+  #14 = Class		#13	java/lang/System
+  #15 = Utf8			out
+  #16 = Utf8			Ljava/io/PrintStream;
+  #17 = NameAndType	#15:#16	out:Ljava/io/PrintStream;
+  #18 = FieldRef	#14.#17	java/lang/System.out:Ljava/io/PrintStream;
+  #19 = Utf8			Greater or equal than 100
+  #20 = String		#19	Greater or equal than 100
+  #21 = Utf8			println
+  #22 = Utf8			(Ljava/lang/String;)V
+  #23 = NameAndType	#21:#22	println:(Ljava/lang/String;)V
+  #24 = MethodRef	#2.#23	java/io/PrintStream:println:(Ljava/lang/String;)V
+  #25 = Integer			3
+  #26 = Integer			0
+  #27 = Integer			1
+  #28 = Integer			2
+  #29 = Utf8			Main
+  #30 = Class		#29	Main
+  #31 = Utf8			printArray
+  #32 = Utf8			([J)V
+  #33 = NameAndType	#31:#32	printArray:([J)V
+  #34 = MethodRef	#30.#33	Main:printArray:([J)V
+  #35 = Utf8			main
+  #36 = Utf8			()V
+  #37 = Utf8			Code
+  #38 = Utf8			StackMapTable
+  #39 = Utf8			(J)V
+  #40 = NameAndType	#21:#39	println:(J)V
+  #41 = MethodRef	#2.#40	java/io/PrintStream:println:(J)V
+  #42 = Utf8			[Ljava/lang/String;
+  #43 = Class		#42	[Ljava/lang/String;
+  #44 = NameAndType	#35:#36	main:()V
+  #45 = MethodRef	#30.#44	Main:main:()V
+  #46 = Utf8			([Ljava/lang/String;)V
+  #47 = Utf8			java/lang/Object
+  #48 = Class		#47	java/lang/Object
+
+{
+  fn main {
+    descriptor: ()V
+    flags: 9
+    Code:
+      stack = 8, locals = 7
+       0: Ldc2W			#7	35
+       3: LStore		0
+       5: Ldc2W			#9	65
+       8: LStore		2
+      10: LLoad			0
+      12: LLoad			2
+      14: LAdd
+      15: LStore		4
+      17: LLoad			4
+      19: Ldc2W			#11	100
+      22: Lcmp
+      23: IfI >=		30
+      26: IConst			0
+      27: Goto				31
+      30: IConst			1
+      31: IfI ==		45
+      34: GetStatic		#18	java/lang/System.out:Ljava/io/PrintStream;
+      37: LoadConstant		#20	Greater or equal than 100
+      39: InvokeVirtual		#24	java/io/PrintStream:println:(Ljava/lang/String;)V
+      42: Goto				45
+      45: LoadConstant		#25	3
+      47: NewArray		Long
+      49: Dup
+      50: LoadConstant		#26	0
+      52: LLoad			0
+      54: LAStore
+      55: Dup
+      56: LoadConstant		#27	1
+      58: LLoad			2
+      60: LAStore
+      61: Dup
+      62: LoadConstant		#28	2
+      64: LLoad			4
+      66: LAStore
+      67: InvokeStatic		#34	Main:printArray:([J)V
+      70: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+        Full
+          offset_delta = 25
+          locals = [ Long,Long,Long ]
+          Stack = [  ]
+        Full
+          offset_delta = 3
+          locals = [ Long,Long,Long ]
+          Stack = [  ]
+        Full
+          offset_delta = 0
+          locals = [ Long,Long,Long ]
+          Stack = [ Integer ]
+        Full
+          offset_delta = 2
+          locals = [ Long,Long,Long ]
+          Stack = [  ]
+        Full
+          offset_delta = 10
+          locals = [ Long,Long,Long ]
+          Stack = [  ]
+  }
+
+  fn printArray {
+    descriptor: ([J)V
+    flags: 9
+    Code:
+      stack = 8, locals = 3
+       0: LoadConstant		#26	0
+       2: IStore			1
+       4: ILoad			1
+       6: ALoad			0
+       8: ArrayLength
+       9: IfICmp >=		16
+      12: IConst			0
+      13: Goto				17
+      16: IConst			1
+      17: IfI ==		21
+      20: Return
+      21: GetStatic		#18	java/lang/System.out:Ljava/io/PrintStream;
+      24: ALoad			0
+      26: ILoad			1
+      28: LALoad
+      29: InvokeVirtual		#41	java/io/PrintStream:println:(J)V
+      32: ILoad			1
+      34: LoadConstant		#27	1
+      36: IAdd
+      37: IStore			1
+      39: Goto				4
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[J' ]
+          Stack = [  ]
+        Full
+          offset_delta = 3
+          locals = [ Object '[J',Integer ]
+          Stack = [  ]
+        Full
+          offset_delta = 7
+          locals = [ Object '[J',Integer ]
+          Stack = [  ]
+        Full
+          offset_delta = 3
+          locals = [ Object '[J',Integer ]
+          Stack = [  ]
+        Full
+          offset_delta = 0
+          locals = [ Object '[J',Integer ]
+          Stack = [ Integer ]
+        Full
+          offset_delta = 2
+          locals = [ Object '[J',Integer ]
+          Stack = [  ]
+        Full
+          offset_delta = 0
+          locals = [ Object '[J',Integer ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: 9
+    Code:
+      stack = 8, locals = 2
+      0: InvokeStatic		#45	Main:main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

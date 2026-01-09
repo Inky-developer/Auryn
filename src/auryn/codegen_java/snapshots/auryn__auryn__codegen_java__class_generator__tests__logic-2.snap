@@ -3,22 +3,22 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"false or true\")"
 ---
 ClassData
-  this_class:		#7	Main
-  super_class:		#12	java/lang/Object
+  this_class:		#8	Main
+  super_class:		#13	java/lang/Object
 Constant pool:
-  #00 = Utf8			main
-  #01 = Utf8			()V
-  #02 = Utf8			Code
-  #03 = Utf8			StackMapTable
-  #04 = Utf8			[Ljava/lang/String;
-  #05 = Class		#4	[Ljava/lang/String;
-  #06 = Utf8			Main
-  #07 = Class		#6	Main
-  #08 = NameAndType	#0:#1	main:()V
-  #09 = MethodRef		#7.#8	Main:main:()V
-  #10 = Utf8			([Ljava/lang/String;)V
-  #11 = Utf8			java/lang/Object
-  #12 = Class		#11	java/lang/Object
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Utf8			Code
+  #04 = Utf8			StackMapTable
+  #05 = Utf8			[Ljava/lang/String;
+  #06 = Class		#5	[Ljava/lang/String;
+  #07 = Utf8			Main
+  #08 = Class		#7	Main
+  #09 = NameAndType	#1:#2	main:()V
+  #10 = MethodRef	#8.#9	Main:main:()V
+  #11 = Utf8			([Ljava/lang/String;)V
+  #12 = Utf8			java/lang/Object
+  #13 = Class		#12	java/lang/Object
 
 {
   fn main {
@@ -27,7 +27,7 @@ Constant pool:
     Code:
       stack = 8, locals = 1
        0: IConst			0
-       1: IfI NotEqual			8
+       1: IfI !=		8
        4: IConst			1
        5: Goto				9
        8: IConst			1
@@ -57,7 +57,7 @@ Constant pool:
     flags: 9
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#9	Main:main:()V
+      0: InvokeStatic		#10	Main:main:()V
       3: Return
       StackMapTable:
         Full

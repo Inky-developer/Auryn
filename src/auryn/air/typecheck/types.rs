@@ -80,6 +80,8 @@ define_types! {
     Number,
     /// A 32-bit signed integer
     I32,
+    /// A 64-bit signed integer
+    I64,
     /// The type of a concrete number
     NumberLiteral(NumberLiteralType),
     Bool,
@@ -101,6 +103,7 @@ impl Type {
         use Type::*;
         match self {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
+            I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             Top | Number | NumberLiteral(_) | Bool | String | Null | FunctionItem(_) | Array(_)
             | Extern(_) | Meta(_) | Error => None,
         }
@@ -132,7 +135,7 @@ impl<'a> TypeView<'a> {
 
         match other {
             Top | Error => true,
-            Number => matches!(self, Number | I32),
+            Number => matches!(self, Number | I32 | I64),
             Array(other_data) => {
                 if let Array(self_data) = self {
                     self_data.element().is_subtype(other_data.element())
@@ -261,6 +264,7 @@ impl FromStr for Type {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "I32" => Type::I32,
+            "I64" => Type::I64,
             "Bool" => Type::Bool,
             "String" => Type::String,
             _ => return Err(()),
@@ -357,6 +361,7 @@ impl Display for TypeView<'_> {
             TypeView::Top => f.write_str("Top"),
             TypeView::Number => f.write_str("Number"),
             TypeView::I32 => f.write_str("I32"),
+            TypeView::I64 => f.write_str("I64"),
             TypeView::NumberLiteral(data) => write!(f, "{}", data.value.value),
             TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),

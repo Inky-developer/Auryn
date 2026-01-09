@@ -18,7 +18,8 @@ pub struct BasicBlockId(pub usize);
 #[derive(Debug, Default)]
 pub enum BlockFinalizer {
     /// Compares the first two stack entries according to `comparison`.
-    BranchIntegerCmp {
+    BranchValueCmp {
+        value_type: PrimitiveType,
         comparison: Comparison,
         positive_block: BasicBlockId,
         negative_block: BasicBlockId,
@@ -34,6 +35,7 @@ pub enum BlockFinalizer {
     ReturnNull,
     ReturnObject,
     ReturnInteger,
+    ReturnLong,
     ReturnBoolean,
 }
 
@@ -41,7 +43,8 @@ impl BlockFinalizer {
     pub fn targets(&self) -> impl Iterator<Item = BasicBlockId> {
         let targets = match self {
             BlockFinalizer::Goto(basic_block_id) => [Some(*basic_block_id), None],
-            BlockFinalizer::BranchIntegerCmp {
+            BlockFinalizer::BranchValueCmp {
+                value_type: _,
                 comparison: _,
                 positive_block,
                 negative_block,
@@ -54,6 +57,7 @@ impl BlockFinalizer {
             BlockFinalizer::ReturnNull
             | BlockFinalizer::ReturnObject
             | BlockFinalizer::ReturnInteger
+            | BlockFinalizer::ReturnLong
             | BlockFinalizer::ReturnBoolean => [None, None],
         };
 
@@ -125,13 +129,12 @@ impl SourceGraph {
             let block = graph.get_vertex(block_id).expect("Should exist");
             current_offset += context.measure_len(&block.instructions);
 
-            if let Some(finalizer_instruction) = context.convert_finalizer_instruction(
+            context.convert_finalizer_instruction(
                 &block.finalizer,
                 block_order.get(index + 1).copied(),
                 |_| JumpPoint(0),
-            ) {
-                current_offset += finalizer_instruction.len_bytes();
-            }
+                |instruction| current_offset += instruction.len_bytes(),
+            )
         }
 
         let mut code = Vec::new();
@@ -141,17 +144,18 @@ impl SourceGraph {
             for instruction in &block.instructions {
                 context.convert_instruction(instruction, |i| code.push(i));
             }
-            if let Some(finalizer) =
-                context.convert_finalizer_instruction(&block.finalizer, next_block_id, |block_id| {
+            context.convert_finalizer_instruction(
+                &block.finalizer,
+                next_block_id,
+                |block_id| {
                     JumpPoint(
                         *block_to_byte_offset
                             .get(&block_id)
                             .expect("Offset should be computed"),
                     )
-                })
-            {
-                code.push(finalizer);
-            }
+                },
+                |instruction| code.push(instruction),
+            )
         }
 
         let verification_frames = block_order
@@ -298,6 +302,9 @@ impl AssemblyContext<'_> {
             Instruction::ArrayStore(element_type) => {
                 on_instruction(match element_type.clone().to_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => class::Instruction::IAStore,
+                    PrimitiveOrObject::Primitive(PrimitiveType::Long) => {
+                        class::Instruction::LAStore
+                    }
                     PrimitiveOrObject::Primitive(other) => {
                         todo!("Add instruction for stroring into {other:?} arrays")
                     }
@@ -307,6 +314,7 @@ impl AssemblyContext<'_> {
             Instruction::ArrayLoad(element_type) => {
                 on_instruction(match element_type.clone().to_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => class::Instruction::IALoad,
+                    PrimitiveOrObject::Primitive(PrimitiveType::Long) => class::Instruction::LALoad,
                     PrimitiveOrObject::Primitive(other) => {
                         todo!("Add instruction for loading from {other:?} arrays")
                     }
@@ -322,20 +330,46 @@ impl AssemblyContext<'_> {
                         load_constant(self.0.add_string(string.clone()))
                     }
                     ConstantValue::Integer(integer) => load_constant(self.0.add_integer(*integer)),
+                    ConstantValue::Long(long) => {
+                        on_instruction(class::Instruction::Ldc2W(self.0.add_long(*long)))
+                    }
                     ConstantValue::Boolean(boolean) => {
                         on_instruction(class::Instruction::IConst(*boolean as i8))
                     }
                 }
             }
-            Instruction::IAdd => on_instruction(class::Instruction::IAdd),
-            Instruction::ISub => on_instruction(class::Instruction::ISub),
-            Instruction::IMul => on_instruction(class::Instruction::IMul),
-            Instruction::IDiv => on_instruction(class::Instruction::IDiv),
-            Instruction::IRem => on_instruction(class::Instruction::IRem),
+            Instruction::Add(primitive) => on_instruction(match primitive {
+                PrimitiveType::Int => class::Instruction::IAdd,
+                PrimitiveType::Long => class::Instruction::LAdd,
+                _ => unimplemented!(),
+            }),
+            Instruction::Sub(primitive) => on_instruction(match primitive {
+                PrimitiveType::Int => class::Instruction::ISub,
+                PrimitiveType::Long => class::Instruction::LSub,
+                _ => unimplemented!(),
+            }),
+            Instruction::Mul(primitive) => on_instruction(match primitive {
+                PrimitiveType::Int => class::Instruction::IMul,
+                PrimitiveType::Long => class::Instruction::LMul,
+                _ => unimplemented!(),
+            }),
+            Instruction::Div(primitive) => on_instruction(match primitive {
+                PrimitiveType::Int => class::Instruction::IDiv,
+                PrimitiveType::Long => class::Instruction::LDiv,
+                _ => unimplemented!(),
+            }),
+            Instruction::Rem(primitive) => on_instruction(match primitive {
+                PrimitiveType::Int => class::Instruction::IRem,
+                PrimitiveType::Long => class::Instruction::LRem,
+                _ => unimplemented!(),
+            }),
             Instruction::Store(id) => {
                 on_instruction(match id.r#type.clone().to_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => {
                         class::Instruction::IStore(id.index)
+                    }
+                    PrimitiveOrObject::Primitive(PrimitiveType::Long) => {
+                        class::Instruction::LStore(id.index)
                     }
                     PrimitiveOrObject::Primitive(other) => {
                         todo!("Add support for storing {other:?}")
@@ -348,8 +382,11 @@ impl AssemblyContext<'_> {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => {
                         class::Instruction::ILoad(id.index)
                     }
+                    PrimitiveOrObject::Primitive(PrimitiveType::Long) => {
+                        class::Instruction::LLoad(id.index)
+                    }
                     PrimitiveOrObject::Primitive(other) => {
-                        todo!("Ad support for storing {other:?}")
+                        todo!("Add support for loading {other:?}")
                     }
                     PrimitiveOrObject::Object(_) => class::Instruction::ALoad(id.index),
                 })
@@ -372,40 +409,61 @@ impl AssemblyContext<'_> {
         finalizer: &BlockFinalizer,
         next_implicit_block_id: Option<BasicBlockId>,
         mut resolve_jump_point: impl FnMut(BasicBlockId) -> JumpPoint,
-    ) -> Option<class::Instruction> {
+        mut on_instruction: impl FnMut(class::Instruction),
+    ) {
         match finalizer {
             BlockFinalizer::Goto(target) => {
                 if Some(*target) != next_implicit_block_id {
-                    Some(class::Instruction::Goto(resolve_jump_point(*target)))
-                } else {
-                    None
+                    on_instruction(class::Instruction::Goto(resolve_jump_point(*target)))
                 }
             }
-            BlockFinalizer::ReturnNull => Some(class::Instruction::Return),
-            BlockFinalizer::ReturnObject => Some(class::Instruction::AReturn),
+            BlockFinalizer::ReturnNull => on_instruction(class::Instruction::Return),
+            BlockFinalizer::ReturnObject => on_instruction(class::Instruction::AReturn),
             BlockFinalizer::ReturnInteger | BlockFinalizer::ReturnBoolean => {
-                Some(class::Instruction::IReturn)
+                on_instruction(class::Instruction::IReturn)
             }
-            BlockFinalizer::BranchIntegerCmp {
+            BlockFinalizer::ReturnLong => on_instruction(class::Instruction::LReturn),
+            BlockFinalizer::BranchValueCmp {
+                value_type,
                 comparison,
                 positive_block,
                 negative_block,
-            } => Some(match next_implicit_block_id {
-                Some(id) if id == *positive_block => class::Instruction::IfICmp {
-                    comparison: comparison.invert(),
-                    jump_point: resolve_jump_point(*negative_block),
-                },
-                Some(id) if id == *negative_block => class::Instruction::IfICmp {
-                    comparison: *comparison,
-                    jump_point: resolve_jump_point(*positive_block),
-                },
-                _ => panic!("Either positive block negative block has to be implicit!"),
-            }),
+            } => {
+                let (comparison, jump_point) = match next_implicit_block_id {
+                    Some(id) if id == *positive_block => {
+                        (comparison.invert(), resolve_jump_point(*negative_block))
+                    }
+
+                    Some(id) if id == *negative_block => {
+                        (*comparison, resolve_jump_point(*positive_block))
+                    }
+                    _ => panic!("Either positive block negative block has to be implicit!"),
+                };
+                match value_type {
+                    PrimitiveType::Int
+                    | PrimitiveType::Char
+                    | PrimitiveType::Boolean
+                    | PrimitiveType::Byte
+                    | PrimitiveType::Short => on_instruction(class::Instruction::IfICmp {
+                        comparison,
+                        jump_point,
+                    }),
+                    PrimitiveType::Long => {
+                        on_instruction(class::Instruction::Lcmp);
+                        on_instruction(class::Instruction::IfI {
+                            comparison,
+                            jump_point,
+                        })
+                    }
+                    PrimitiveType::Float => todo!(),
+                    PrimitiveType::Double => todo!(),
+                }
+            }
             BlockFinalizer::BranchInteger {
                 comparison,
                 positive_block,
                 negative_block,
-            } => Some(match next_implicit_block_id {
+            } => on_instruction(match next_implicit_block_id {
                 Some(id) if id == *positive_block => class::Instruction::IfI {
                     comparison: comparison.invert(),
                     jump_point: resolve_jump_point(*negative_block),

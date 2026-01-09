@@ -2,6 +2,7 @@ use std::{
     fmt::{Debug, Display},
     io::{self, Write},
     num::NonZeroU16,
+    ops::Index,
 };
 
 use crate::{
@@ -34,7 +35,8 @@ impl ConstantPoolIndex {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.4>
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum ConstantPoolEntry {
     Class {
         name_index: ConstantPoolIndex,
@@ -62,15 +64,17 @@ pub enum ConstantPoolEntry {
     Integer {
         integer: i32,
     },
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.4.5>
+    Long {
+        long: i64,
+    },
 }
 
 impl ConstantPoolEntry {
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
         buf.write_all(&[self.tag()])?;
         match self {
-            ConstantPoolEntry::Class { name_index } => {
-                name_index.serialize(buf)?;
-            }
+            ConstantPoolEntry::Class { name_index } => name_index.serialize(buf)?,
             ConstantPoolEntry::MethodRef {
                 class_index,
                 name_and_type_index,
@@ -93,11 +97,13 @@ impl ConstantPoolEntry {
                 buf.write_all(&(text.len() as u16).to_be_bytes())?;
                 buf.write_all(text.as_bytes())?;
             }
-            ConstantPoolEntry::String { string_index } => {
-                string_index.serialize(buf)?;
-            }
-            ConstantPoolEntry::Integer { integer } => {
-                buf.write_all(&integer.to_be_bytes())?;
+            ConstantPoolEntry::String { string_index } => string_index.serialize(buf)?,
+            ConstantPoolEntry::Integer { integer } => buf.write_all(&integer.to_be_bytes())?,
+            ConstantPoolEntry::Long { long } => {
+                let hi_bytes = (long >> 32) as i32;
+                let lo_bytes = *long as i32;
+                buf.write_all(&hi_bytes.to_be_bytes())?;
+                buf.write_all(&lo_bytes.to_be_bytes())?;
             }
         }
 
@@ -113,11 +119,47 @@ impl ConstantPoolEntry {
             ConstantPoolEntry::Utf8 { .. } => 1,
             ConstantPoolEntry::String { .. } => 8,
             ConstantPoolEntry::Integer { .. } => 3,
+            ConstantPoolEntry::Long { .. } => 5,
         }
     }
 
-    pub fn display<'a>(&'a self, pool: &'a [ConstantPoolEntry]) -> ConstantPoolEntryDisplay<'a> {
+    pub fn size_in_constant_pool(&self) -> u16 {
+        match self {
+            Self::Long { .. } => 2,
+            _ => 1,
+        }
+    }
+
+    pub fn display<'a>(&'a self, pool: &'a ConstantPool) -> ConstantPoolEntryDisplay<'a> {
         ConstantPoolEntryDisplay { entry: self, pool }
+    }
+}
+
+pub struct ConstantPool {
+    pub(super) entries: Box<[Option<ConstantPoolEntry>]>,
+}
+
+impl ConstantPool {
+    fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
+        let effective_size = self
+            .entries
+            .iter()
+            .flatten()
+            .map(ConstantPoolEntry::size_in_constant_pool)
+            .sum::<u16>();
+        buf.write_all(&(effective_size + 1).to_be_bytes())?;
+        for entry in self.entries.iter().flatten() {
+            entry.serialize(buf)?;
+        }
+        Ok(())
+    }
+}
+
+impl Index<ConstantPoolIndex> for ConstantPool {
+    type Output = ConstantPoolEntry;
+
+    fn index(&self, index: ConstantPoolIndex) -> &Self::Output {
+        self.entries[index.0.get() as usize].as_ref().unwrap()
     }
 }
 
@@ -147,6 +189,17 @@ impl Comparison {
             Comparison::LessOrEqual => Self::Greater,
         }
     }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Comparison::Equal => "==",
+            Comparison::NotEqual => "!=",
+            Comparison::Less => "<",
+            Comparison::GreaterOrEqual => ">=",
+            Comparison::Greater => ">",
+            Comparison::LessOrEqual => "<=",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -162,6 +215,9 @@ pub enum Instruction {
     /// Loads a constant from the constant pool
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc>
     Ldc(ConstantPoolIndex),
+    /// Loads a constant of type Long or Double from the constant pool
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc2_w>
+    Ldc2W(ConstantPoolIndex),
     /// Returns void
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.return>
     Return,
@@ -171,6 +227,9 @@ pub enum Instruction {
     /// Returns Int, short, char, byte or boolean
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ireturn>
     IReturn,
+    //// Returns Long
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lreturn>
+    LReturn,
     /// Create a new array of references, initialize to nulls
     /// Argument must be a reference to a class, array or function
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.anewarray>
@@ -192,6 +251,12 @@ pub enum Instruction {
     /// Stores an int into an int array
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iastore>
     IAStore,
+    /// Loads a long from a long array
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.laload>
+    LALoad,
+    /// Stores a long into a long array
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lastore>
+    LAStore,
     // Load a reference
     // https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.aload
     ALoad(u16),
@@ -214,7 +279,11 @@ pub enum Instruction {
     /// Calculates the reminder of the division of two integers
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.irem>
     IRem,
+    /// Stores an integer into a local variable
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.istore>
     IStore(u16),
+    /// Loads an integer from a local variable
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iload>
     ILoad(u16),
     /// Compares the two topmost stack entries according to the given `comparison`
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond>
@@ -228,6 +297,30 @@ pub enum Instruction {
         comparison: Comparison,
         jump_point: JumpPoint,
     },
+    /// Add two Longs
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ladd>
+    LAdd,
+    /// Subtract two Longs
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lsub>
+    LSub,
+    /// Multiply two Longs
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lmul>
+    LMul,
+    /// Divide two Longs
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldiv>
+    LDiv,
+    /// Calculate the reminder of two Longs
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lrem>
+    LRem,
+    /// Store a Long in a local variable
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lstore>
+    LStore(u16),
+    /// Load a Long from a local variable
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lload>
+    LLoad(u16),
+    /// Compares two Long values and pushes the integer -1, 0, or 1 to the stack
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lcmp>
+    Lcmp,
     Goto(JumpPoint),
     Nop,
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.pop>
@@ -270,6 +363,9 @@ impl Instruction {
             Instruction::IReturn => {
                 buf.write_all(&[0xac])?;
             }
+            Instruction::LReturn => {
+                buf.write_all(&[0xad])?;
+            }
             Instruction::ANewArray(index) => {
                 buf.write_all(&[0xbd])?;
                 index.serialize(buf)?;
@@ -284,25 +380,21 @@ impl Instruction {
             Instruction::AAStore => buf.write_all(&[0x53])?,
             Instruction::IALoad => buf.write_all(&[0x2e])?,
             Instruction::IAStore => buf.write_all(&[0x4f])?,
+            Instruction::LALoad => buf.write_all(&[0x2f])?,
+            Instruction::LAStore => buf.write_all(&[0x50])?,
             Instruction::Ldc(index) => {
                 let index: u8 = index.0.get().try_into().expect("TODO: implement wide load");
                 buf.write_all(&[0x12, index])?;
             }
-            Instruction::IAdd => {
-                buf.write_all(&[0x60])?;
+            Instruction::Ldc2W(index) => {
+                buf.write_all(&[0x14])?;
+                buf.write_all(&index.0.get().to_be_bytes())?;
             }
-            Instruction::ISub => {
-                buf.write_all(&[0x64])?;
-            }
-            Instruction::IMul => {
-                buf.write_all(&[0x68])?;
-            }
-            Instruction::IDiv => {
-                buf.write_all(&[0x6c])?;
-            }
-            Instruction::IRem => {
-                buf.write_all(&[0x70])?;
-            }
+            Instruction::IAdd => buf.write_all(&[0x60])?,
+            Instruction::ISub => buf.write_all(&[0x64])?,
+            Instruction::IMul => buf.write_all(&[0x68])?,
+            Instruction::IDiv => buf.write_all(&[0x6c])?,
+            Instruction::IRem => buf.write_all(&[0x70])?,
             Instruction::IStore(index) => {
                 // TODO: implement istore_<n> as space optimization
                 let index: u8 = index.try_into().expect("TODO: Implement wide store");
@@ -315,6 +407,24 @@ impl Instruction {
                     .expect("TODO: Implement support for wide loads");
                 buf.write_all(&[0x15, index])?;
             }
+            Instruction::LAdd => buf.write_all(&[0x61])?,
+            Instruction::LSub => buf.write_all(&[0x65])?,
+            Instruction::LMul => buf.write_all(&[0x69])?,
+            Instruction::LDiv => buf.write_all(&[0x6d])?,
+            Instruction::LRem => buf.write_all(&[0x71])?,
+            Instruction::LStore(index) => {
+                // TODO: implement istore_<n> as space optimization
+                let index: u8 = index.try_into().expect("TODO: Implement wide store");
+                buf.write_all(&[0x37, index])?;
+            }
+            Instruction::LLoad(index) => {
+                // TODO: implement iload_<n> as space optimization
+                let index: u8 = index
+                    .try_into()
+                    .expect("TODO: Implement support for wide loads");
+                buf.write_all(&[0x16, index])?;
+            }
+            Instruction::Lcmp => buf.write_all(&[0x94])?,
             Instruction::ALoad(index) => {
                 let index: u8 = index
                     .try_into()
@@ -332,9 +442,7 @@ impl Instruction {
                 buf.write_all(&[0xa7])?;
                 buf.write_all(&offset.to_be_bytes())?;
             }
-            Instruction::Nop => {
-                buf.write_all(&[0x0])?;
-            }
+            Instruction::Nop => buf.write_all(&[0x0])?,
             Instruction::IfICmp {
                 comparison,
                 jump_point,
@@ -351,12 +459,8 @@ impl Instruction {
                 let offset: i16 = jump_point.0 as i16 - current_index as i16;
                 buf.write_all(&offset.to_be_bytes())?;
             }
-            Instruction::Pop => {
-                buf.write_all(&[0x57])?;
-            }
-            Instruction::Pop2 => {
-                buf.write_all(&[0x58])?;
-            }
+            Instruction::Pop => buf.write_all(&[0x57])?,
+            Instruction::Pop2 => buf.write_all(&[0x58])?,
             Instruction::Dup => buf.write_all(&[0x59])?,
             Instruction::Dup2 => buf.write_all(&[0x5c])?,
         }
@@ -388,7 +492,7 @@ impl Instruction {
         writer.len.try_into().unwrap()
     }
 
-    pub fn display<'a>(&'a self, pool: &'a [ConstantPoolEntry]) -> impl Display {
+    pub fn display<'a>(&'a self, pool: &'a ConstantPool) -> impl Display {
         InstructionDisplay {
             instruction: self,
             pool,
@@ -467,6 +571,18 @@ pub enum PrimitiveType {
     Short,
     Int,
     Long,
+}
+
+impl PrimitiveType {
+    pub fn to_verification_type(self) -> VerificationTypeInfo {
+        use PrimitiveType::*;
+        match self {
+            Boolean | Char | Short | Byte | Int => VerificationTypeInfo::Integer,
+            Float => VerificationTypeInfo::Float,
+            Double => VerificationTypeInfo::Double,
+            Long => VerificationTypeInfo::Long,
+        }
+    }
 }
 
 /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.4>
@@ -668,7 +784,7 @@ impl Method {
         Ok(())
     }
 
-    pub fn display<'a>(&'a self, pool: &'a [ConstantPoolEntry]) -> MethodDisplay<'a> {
+    pub fn display<'a>(&'a self, pool: &'a ConstantPool) -> MethodDisplay<'a> {
         MethodDisplay { method: self, pool }
     }
 }
@@ -680,7 +796,7 @@ pub enum ClassAccessFlag {
 }
 
 pub struct ClassData {
-    pub constant_pool: Vec<ConstantPoolEntry>,
+    pub constant_pool: ConstantPool,
     // Index into the constant pool that must reference a class entry
     pub this_class: ConstantPoolIndex,
     // Index into the constant pool that must reference a class entry
@@ -718,10 +834,7 @@ impl ClassData {
         buf.write_all(&JVM_VERSION.minor.to_be_bytes())?;
         buf.write_all(&JVM_VERSION.major.to_be_bytes())?;
 
-        buf.write_all(&(self.constant_pool.len() as u16 + 1).to_be_bytes())?;
-        for entry in &self.constant_pool {
-            entry.serialize(buf)?;
-        }
+        self.constant_pool.serialize(buf)?;
 
         buf.write_all(&ACCESSS_FLAG.to_be_bytes())?;
 
@@ -759,12 +872,12 @@ impl Debug for ClassData {
         writeln!(
             f,
             "  this_class:\t\t{this_class}\t{}",
-            constant_pool[this_class.0.get() as usize - 1].display(constant_pool)
+            constant_pool[*this_class].display(constant_pool)
         )?;
         writeln!(
             f,
             "  super_class:\t\t{super_class}\t{}",
-            constant_pool[super_class.0.get() as usize - 1].display(constant_pool)
+            constant_pool[*super_class].display(constant_pool)
         )?;
 
         let pool_display = ConstantPoolDisplay {

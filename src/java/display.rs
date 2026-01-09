@@ -1,18 +1,18 @@
 use std::fmt::Display;
 
 use crate::java::class::{
-    Attribute, CodeAttribute, ConstantPoolEntry, ConstantPoolIndex, Instruction, Method,
-    StackMapFrame, StackMapTableAttribute, VerificationTypeInfo,
+    Attribute, CodeAttribute, ConstantPool, ConstantPoolEntry, ConstantPoolIndex, Instruction,
+    Method, StackMapFrame, StackMapTableAttribute, VerificationTypeInfo,
 };
 
 impl Display for ConstantPoolIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "#{}", self.0.get() - 1)
+        write!(f, "#{}", self.0.get())
     }
 }
 
 pub struct ConstantPoolDisplay<'a> {
-    pub(super) pool: &'a [ConstantPoolEntry],
+    pub(super) pool: &'a ConstantPool,
 }
 
 impl Display for ConstantPoolDisplay<'_> {
@@ -20,8 +20,11 @@ impl Display for ConstantPoolDisplay<'_> {
         use ConstantPoolEntry::*;
 
         writeln!(f, "Constant pool:")?;
-        let padding = self.pool.len().ilog10() as usize + 1;
-        for (index, entry) in self.pool.iter().enumerate() {
+        let padding = self.pool.entries.as_ref().len().ilog10() as usize + 1;
+        for (index, entry) in self.pool.entries.iter().enumerate() {
+            let Some(entry) = entry else {
+                continue;
+            };
             write!(f, "  #{index:0>padding$} = ")?;
 
             match entry {
@@ -29,11 +32,11 @@ impl Display for ConstantPoolDisplay<'_> {
                 FieldRef {
                     class_index,
                     name_and_type_index,
-                } => write!(f, "FieldRef\t\t{class_index}.{name_and_type_index}"),
+                } => write!(f, "FieldRef\t{class_index}.{name_and_type_index}"),
                 MethodRef {
                     class_index,
                     name_and_type_index,
-                } => write!(f, "MethodRef\t\t{class_index}.{name_and_type_index}"),
+                } => write!(f, "MethodRef\t{class_index}.{name_and_type_index}"),
                 NameAndType {
                     name_index,
                     type_index,
@@ -41,6 +44,7 @@ impl Display for ConstantPoolDisplay<'_> {
                 Utf8(_) => write!(f, "Utf8\t\t"),
                 String { string_index } => write!(f, "String\t\t{string_index}"),
                 Integer { integer: _ } => write!(f, "Integer\t\t"),
+                Long { long: _ } => write!(f, "Long\t\t"),
             }?;
 
             writeln!(f, "\t{}", entry.display(self.pool))?;
@@ -52,15 +56,14 @@ impl Display for ConstantPoolDisplay<'_> {
 
 pub struct ConstantPoolEntryDisplay<'a> {
     pub(super) entry: &'a ConstantPoolEntry,
-    pub(super) pool: &'a [ConstantPoolEntry],
+    pub(super) pool: &'a ConstantPool,
 }
 
 impl Display for ConstantPoolEntryDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ConstantPoolEntry::*;
 
-        let load =
-            |index: ConstantPoolIndex| self.pool[index.0.get() as usize - 1].display(self.pool);
+        let load = |index: ConstantPoolIndex| self.pool[index].display(self.pool);
 
         match self.entry {
             Class { name_index } => {
@@ -81,19 +84,19 @@ impl Display for ConstantPoolEntryDisplay<'_> {
             Utf8(small_string) => write!(f, "{}", small_string),
             String { string_index } => write!(f, "{}", load(*string_index)),
             Integer { integer } => write!(f, "{integer}"),
+            Long { long } => write!(f, "{long}"),
         }
     }
 }
 
 pub struct MethodDisplay<'a> {
     pub(super) method: &'a Method,
-    pub(super) pool: &'a [ConstantPoolEntry],
+    pub(super) pool: &'a ConstantPool,
 }
 
 impl Display for MethodDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let load =
-            |index: ConstantPoolIndex| self.pool[index.0.get() as usize - 1].display(self.pool);
+        let load = |index: ConstantPoolIndex| self.pool[index].display(self.pool);
 
         let Method {
             flags,
@@ -124,7 +127,7 @@ impl Display for MethodDisplay<'_> {
 
 pub struct AttributeDisplay<'a> {
     attribute: &'a Attribute,
-    pool: &'a [ConstantPoolEntry],
+    pool: &'a ConstantPool,
     indent: usize,
 }
 
@@ -149,7 +152,7 @@ impl Display for AttributeDisplay<'_> {
 
 pub struct CodeAttributeDisplay<'a> {
     code: &'a CodeAttribute,
-    pool: &'a [ConstantPoolEntry],
+    pool: &'a ConstantPool,
     indent: usize,
 }
 
@@ -200,15 +203,14 @@ impl Display for CodeAttributeDisplay<'_> {
 
 pub struct InstructionDisplay<'a> {
     pub(super) instruction: &'a Instruction,
-    pub(super) pool: &'a [ConstantPoolEntry],
+    pub(super) pool: &'a ConstantPool,
 }
 
 impl Display for InstructionDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Instruction::*;
 
-        let load =
-            |index: &ConstantPoolIndex| self.pool[index.0.get() as usize - 1].display(self.pool);
+        let load = |index: &ConstantPoolIndex| self.pool[*index].display(self.pool);
 
         match &self.instruction {
             GetStatic(constant_pool_index) => write!(
@@ -221,13 +223,11 @@ impl Display for InstructionDisplay<'_> {
                 "InvokeStatic\t\t{constant_pool_index}\t{}",
                 load(constant_pool_index)
             ),
-
             InvokeVirtual(constant_pool_index) => write!(
                 f,
                 "InvokeVirtual\t\t{constant_pool_index}\t{}",
                 load(constant_pool_index)
             ),
-
             Ldc(constant_pool_index) => write!(
                 f,
                 "LoadConstant\t\t{constant_pool_index}\t{}",
@@ -260,24 +260,40 @@ impl Display for InstructionDisplay<'_> {
             IfICmp {
                 comparison,
                 jump_point,
-            } => write!(f, "IfICmp {comparison:?}\t\t\t{}", jump_point.0),
+            } => write!(f, "IfICmp {}\t\t{}", comparison.as_str(), jump_point.0),
             IfI {
                 comparison,
                 jump_point,
-            } => write!(f, "IfI {comparison:?}\t\t\t{}", jump_point.0),
+            } => write!(f, "IfI {}\t\t{}", comparison.as_str(), jump_point.0),
             Goto(jump_point) => write!(f, "Goto\t\t\t\t{}", jump_point.0),
             Nop => write!(f, "Nop"),
             Pop => write!(f, "Pop"),
             Pop2 => write!(f, "Pop2"),
             Dup => write!(f, "Dup"),
             Dup2 => write!(f, "Dup2"),
+            Ldc2W(constant_pool_index) => write!(
+                f,
+                "Ldc2W\t\t\t{constant_pool_index}\t{}",
+                load(constant_pool_index)
+            ),
+            LReturn => write!(f, "LReturn"),
+            LALoad => write!(f, "LALoad"),
+            LAStore => write!(f, "LAStore"),
+            LAdd => write!(f, "LAdd"),
+            LSub => write!(f, "LSub"),
+            LMul => write!(f, "LMul"),
+            LDiv => write!(f, "LDiv"),
+            LRem => write!(f, "LRem"),
+            LStore(index) => write!(f, "LStore\t\t{index}"),
+            LLoad(index) => write!(f, "LLoad\t\t\t{index}"),
+            Lcmp => write!(f, "Lcmp"),
         }
     }
 }
 
 struct StackMapTableAttributeDisplay<'a> {
     stack_map_table: &'a StackMapTableAttribute,
-    pool: &'a [ConstantPoolEntry],
+    pool: &'a ConstantPool,
     indent: usize,
 }
 
@@ -350,7 +366,7 @@ impl Display for StackMapTableAttributeDisplay<'_> {
 
 struct VerificationTypeInfoDisplay<'a> {
     info: &'a VerificationTypeInfo,
-    pool: &'a [ConstantPoolEntry],
+    pool: &'a ConstantPool,
 }
 
 impl Display for VerificationTypeInfoDisplay<'_> {
@@ -368,7 +384,7 @@ impl Display for VerificationTypeInfoDisplay<'_> {
             } => write!(
                 f,
                 "Object '{}'",
-                self.pool[constant_pool_index.0.get() as usize - 1].display(self.pool)
+                self.pool[*constant_pool_index].display(self.pool)
             ),
             UninitializedVariable { offset } => write!(f, "UninitializedVariable {offset}"),
             Long => write!(f, "Long"),

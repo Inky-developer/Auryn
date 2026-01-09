@@ -1,37 +1,37 @@
 ---
 source: src/auryn/codegen_java/class_generator.rs
-expression: "generate_class_wrapped(\"let a = 1\\nprint(a)\")"
+expression: "generate_class_wrapped(\"let a: I32 = 1\\nprint(a)\")"
 ---
 ClassData
-  this_class:		#20	Main
-  super_class:		#25	java/lang/Object
+  this_class:		#21	Main
+  super_class:		#26	java/lang/Object
 Constant pool:
-  #00 = Utf8			java/io/PrintStream
-  #01 = Class		#0	java/io/PrintStream
-  #02 = Integer			1
-  #03 = Utf8			java/lang/System
-  #04 = Class		#3	java/lang/System
-  #05 = Utf8			out
-  #06 = Utf8			Ljava/io/PrintStream;
-  #07 = NameAndType	#5:#6	out:Ljava/io/PrintStream;
-  #08 = FieldRef		#4.#7	java/lang/System.out:Ljava/io/PrintStream;
-  #09 = Utf8			println
-  #10 = Utf8			(I)V
-  #11 = NameAndType	#9:#10	println:(I)V
-  #12 = MethodRef		#1.#11	java/io/PrintStream:println:(I)V
-  #13 = Utf8			main
-  #14 = Utf8			()V
-  #15 = Utf8			Code
-  #16 = Utf8			StackMapTable
-  #17 = Utf8			[Ljava/lang/String;
-  #18 = Class		#17	[Ljava/lang/String;
-  #19 = Utf8			Main
-  #20 = Class		#19	Main
-  #21 = NameAndType	#13:#14	main:()V
-  #22 = MethodRef		#20.#21	Main:main:()V
-  #23 = Utf8			([Ljava/lang/String;)V
-  #24 = Utf8			java/lang/Object
-  #25 = Class		#24	java/lang/Object
+  #01 = Utf8			java/io/PrintStream
+  #02 = Class		#1	java/io/PrintStream
+  #03 = Integer			1
+  #04 = Utf8			java/lang/System
+  #05 = Class		#4	java/lang/System
+  #06 = Utf8			out
+  #07 = Utf8			Ljava/io/PrintStream;
+  #08 = NameAndType	#6:#7	out:Ljava/io/PrintStream;
+  #09 = FieldRef	#5.#8	java/lang/System.out:Ljava/io/PrintStream;
+  #10 = Utf8			println
+  #11 = Utf8			(I)V
+  #12 = NameAndType	#10:#11	println:(I)V
+  #13 = MethodRef	#2.#12	java/io/PrintStream:println:(I)V
+  #14 = Utf8			main
+  #15 = Utf8			()V
+  #16 = Utf8			Code
+  #17 = Utf8			StackMapTable
+  #18 = Utf8			[Ljava/lang/String;
+  #19 = Class		#18	[Ljava/lang/String;
+  #20 = Utf8			Main
+  #21 = Class		#20	Main
+  #22 = NameAndType	#14:#15	main:()V
+  #23 = MethodRef	#21.#22	Main:main:()V
+  #24 = Utf8			([Ljava/lang/String;)V
+  #25 = Utf8			java/lang/Object
+  #26 = Class		#25	java/lang/Object
 
 {
   fn main {
@@ -39,11 +39,11 @@ Constant pool:
     flags: 9
     Code:
       stack = 8, locals = 2
-       0: LoadConstant		#2	1
+       0: LoadConstant		#3	1
        2: IStore			0
-       4: GetStatic		#8	java/lang/System.out:Ljava/io/PrintStream;
+       4: GetStatic		#9	java/lang/System.out:Ljava/io/PrintStream;
        7: ILoad			0
-       9: InvokeVirtual		#12	java/io/PrintStream:println:(I)V
+       9: InvokeVirtual		#13	java/io/PrintStream:println:(I)V
       12: Return
       StackMapTable:
         Full
@@ -57,7 +57,7 @@ Constant pool:
     flags: 9
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#22	Main:main:()V
+      0: InvokeStatic		#23	Main:main:()V
       3: Return
       StackMapTable:
         Full

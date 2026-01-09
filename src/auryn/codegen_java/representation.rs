@@ -13,6 +13,7 @@ use crate::{
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Representation {
     Integer,
+    Long,
     Boolean,
     Array(Box<Representation>),
     Object(SmallString),
@@ -26,6 +27,7 @@ impl Representation {
     pub fn to_primitive_type_or_object(self) -> PrimitiveOrObject {
         match self {
             Representation::Integer => PrimitiveOrObject::Primitive(PrimitiveType::Int),
+            Representation::Long => PrimitiveOrObject::Primitive(PrimitiveType::Long),
             Representation::Boolean => PrimitiveOrObject::Primitive(PrimitiveType::Boolean),
             Representation::Object(descriptor) => PrimitiveOrObject::Object(descriptor),
             Representation::Array(inner) => {
@@ -37,6 +39,7 @@ impl Representation {
     pub fn into_field_descriptor(self) -> FieldDescriptor {
         match self {
             Representation::Integer => FieldDescriptor::Integer,
+            Representation::Long => FieldDescriptor::Long,
             Representation::Boolean => FieldDescriptor::Boolean,
             Representation::Object(r#type) => FieldDescriptor::Object(r#type),
             Representation::Array(element_type) => FieldDescriptor::Array {
@@ -49,6 +52,7 @@ impl Representation {
     pub fn into_verification_type(self, pool: &mut ConstantPoolBuilder) -> VerificationTypeInfo {
         match self {
             Representation::Integer => VerificationTypeInfo::Integer,
+            Representation::Long => VerificationTypeInfo::Long,
             Representation::Boolean => VerificationTypeInfo::Integer,
             Representation::Array(inner) => VerificationTypeInfo::Object {
                 constant_pool_index: pool.add_array_class(inner.into_field_descriptor()),
@@ -65,6 +69,7 @@ impl Representation {
             | Representation::Boolean
             | Representation::Array(_)
             | Representation::Object(_) => TypeCategory::Normal,
+            Representation::Long => TypeCategory::Big,
         }
     }
 
@@ -113,6 +118,7 @@ impl FieldDescriptor {
             | FieldDescriptor::Integer
             | FieldDescriptor::Short
             | FieldDescriptor::Boolean => Representation::Integer,
+            FieldDescriptor::Long => Representation::Long,
             FieldDescriptor::Object(name) => Representation::Object(name),
             FieldDescriptor::Array {
                 dimension_count,
@@ -207,6 +213,7 @@ impl Display for MethodDescriptor {
 pub fn get_representation(air_type: TypeView) -> Option<Representation> {
     match air_type {
         TypeView::I32 => Some(Representation::Integer),
+        TypeView::I64 => Some(Representation::Long),
         TypeView::NumberLiteral(_) => None,
         TypeView::Bool => Some(Representation::Boolean),
         TypeView::String => Some(Representation::string()),

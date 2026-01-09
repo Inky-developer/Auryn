@@ -120,7 +120,7 @@ impl ClassGenerator<'_> {
         );
 
         let mut assembler =
-            FunctionAssembler::new("main".into(), main_descriptor, &mut self.constant_pool);
+            FunctionAssembler::new("main".into(), main_descriptor, &mut self.constant_pool, 1);
 
         assembler.add(Instruction::InvokeStatic {
             class_name: self.class_name.clone(),
@@ -199,6 +199,49 @@ mod tests {
     #[test]
     fn test_function() {
         insta::assert_debug_snapshot!(generate_class("fn main() { bar() }\nfn bar() { print(1) }"));
+    }
+
+    #[test]
+    fn test_i64() {
+        insta::assert_debug_snapshot!(generate_class(
+            r#"
+            fn main() {
+                let a: I64 = 35
+                let b: I64 = 65
+                let sum = a + b
+                if sum >= 100 {
+                    print("Greater or equal than 100")
+                }
+                printArray(arrayOf(a, b, sum))
+            }
+
+            fn printArray(values: []I64) {
+                let i: I32 = 0
+                loop {
+                    if i >= arrayLen(values) {
+                        break
+                    }
+
+                    print(arrayGet(values, i))
+
+                    i += 1
+                }
+            }
+            "#
+        ));
+
+        insta::assert_debug_snapshot!(generate_class(
+            r#"
+            fn main() {
+                foo(2034)
+            }
+
+            fn foo(a: I64) {
+                let b = a + 1            
+                print(b % 2 == 1)
+            }
+            "#
+        ));
     }
 
     #[test]

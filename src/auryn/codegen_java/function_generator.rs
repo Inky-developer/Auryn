@@ -12,8 +12,8 @@ use crate::{
         codegen_java::{
             class_generator::GeneratedMethodData,
             representation::{
-                FieldDescriptor, MethodDescriptor, Representation, ReturnDescriptor,
-                get_function_representation, get_representation,
+                FieldDescriptor, MethodDescriptor, PrimitiveOrObject, Representation,
+                ReturnDescriptor, get_function_representation, get_representation,
             },
         },
         tokenizer::BinaryOperatorToken,
@@ -91,16 +91,17 @@ impl<'a> FunctionGenerator<'a> {
             .zip(function.argument_ids())
         {
             if let Some(primitive) = get_representation(parameter.as_view(ty_ctx)) {
+                let size = primitive.stack_size();
                 let variable_id = VariableId {
                     index: variable_index,
                     r#type: primitive,
                 };
-                variable_index += 1;
+                variable_index += size;
                 variable_map.insert(argument_id, variable_id);
             }
         }
 
-        let assembler = FunctionAssembler::new(name, method_descriptor, pool);
+        let assembler = FunctionAssembler::new(name, method_descriptor, pool, variable_index);
 
         Self {
             class_name,
@@ -163,6 +164,7 @@ impl FunctionGenerator<'_> {
                     None => BlockFinalizer::ReturnNull,
                     Some(r#type) => match r#type {
                         Representation::Integer => BlockFinalizer::ReturnInteger,
+                        Representation::Long => BlockFinalizer::ReturnLong,
                         Representation::Boolean => BlockFinalizer::ReturnBoolean,
                         Representation::Object { .. } | Representation::Array(_) => {
                             BlockFinalizer::ReturnObject
@@ -260,6 +262,13 @@ impl FunctionGenerator<'_> {
                             .expect("Number should fit into target type"),
                     ),
                 }),
+                Some(Representation::Long) => self.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Long(
+                        (*number)
+                            .try_into()
+                            .expect("Number should fit into target type"),
+                    ),
+                }),
                 Some(other) => panic!("Cannot load number as {other:?}"),
             },
             AirConstant::Boolean(boolean) => {
@@ -276,30 +285,28 @@ impl FunctionGenerator<'_> {
 
     fn generate_binary_operation(&mut self, operation: &BinaryOperation) {
         match operation.operator {
-            BinaryOperatorToken::Plus => {
-                self.generate_expression(&operation.lhs);
+            BinaryOperatorToken::Plus
+            | BinaryOperatorToken::Minus
+            | BinaryOperatorToken::Times
+            | BinaryOperatorToken::Divide
+            | BinaryOperatorToken::Remainder => {
+                let PrimitiveOrObject::Primitive(primitive) = self
+                    .generate_expression(&operation.lhs)
+                    .unwrap()
+                    .to_primitive_type_or_object()
+                else {
+                    panic!("Can only perform operation on primitives");
+                };
                 self.generate_expression(&operation.rhs);
-                self.assembler.add(Instruction::IAdd);
-            }
-            BinaryOperatorToken::Minus => {
-                self.generate_expression(&operation.lhs);
-                self.generate_expression(&operation.rhs);
-                self.assembler.add(Instruction::ISub);
-            }
-            BinaryOperatorToken::Times => {
-                self.generate_expression(&operation.lhs);
-                self.generate_expression(&operation.rhs);
-                self.assembler.add(Instruction::IMul);
-            }
-            BinaryOperatorToken::Divide => {
-                self.generate_expression(&operation.lhs);
-                self.generate_expression(&operation.rhs);
-                self.assembler.add(Instruction::IDiv);
-            }
-            BinaryOperatorToken::Remainder => {
-                self.generate_expression(&operation.lhs);
-                self.generate_expression(&operation.rhs);
-                self.assembler.add(Instruction::IRem);
+                let instruction = match operation.operator {
+                    BinaryOperatorToken::Plus => Instruction::Add(primitive),
+                    BinaryOperatorToken::Minus => Instruction::Sub(primitive),
+                    BinaryOperatorToken::Times => Instruction::Mul(primitive),
+                    BinaryOperatorToken::Divide => Instruction::Div(primitive),
+                    BinaryOperatorToken::Remainder => Instruction::Rem(primitive),
+                    _ => unreachable!(),
+                };
+                self.assembler.add(instruction);
             }
             BinaryOperatorToken::Equal => {
                 self.generate_comparison(Comparison::Equal, &operation.lhs, &operation.rhs)
@@ -330,12 +337,19 @@ impl FunctionGenerator<'_> {
         lhs: &AirExpression,
         rhs: &AirExpression,
     ) {
-        self.generate_expression(lhs);
+        let PrimitiveOrObject::Primitive(primitive) = self
+            .generate_expression(lhs)
+            .unwrap()
+            .to_primitive_type_or_object()
+        else {
+            panic!("Can only compare primitives")
+        };
         self.generate_expression(rhs);
         let pos_block_id = self.assembler.add_block();
         let neg_block_id = self.assembler.add_block();
         let next_block_id = self.assembler.add_block();
-        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchIntegerCmp {
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchValueCmp {
+            value_type: primitive,
             comparison,
             positive_block: pos_block_id,
             negative_block: neg_block_id,
@@ -526,7 +540,7 @@ impl FunctionGenerator<'_> {
     fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) {
         fn is_printable(repr: &Representation) -> bool {
             match repr {
-                Representation::Integer | Representation::Boolean => true,
+                Representation::Integer | Representation::Boolean | Representation::Long => true,
                 Representation::Object(path) if path.as_ref() == "java/lang/String" => true,
                 _ => false,
             }
@@ -591,21 +605,21 @@ impl FunctionGenerator<'_> {
         let repr = get_representation(array_type.element());
 
         match repr {
-            Some(primitive) => {
+            Some(repr) => {
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::Integer(arguments.len().try_into().unwrap()),
                 });
-                self.assembler.add(Instruction::NewArray(primitive.clone()));
+                self.assembler.add(Instruction::NewArray(repr.clone()));
 
                 for (index, argument) in arguments.iter().enumerate() {
-                    self.assembler.add(Instruction::Dup(primitive.category()));
+                    self.assembler
+                        .add(Instruction::Dup(class::TypeCategory::Normal));
                     self.assembler.add(Instruction::LoadConstant {
                         value: ConstantValue::Integer(index.try_into().unwrap()),
                     });
                     let actual_repr = self.generate_expression(argument);
-                    assert_eq!(actual_repr.as_ref(), Some(&primitive));
-                    self.assembler
-                        .add(Instruction::ArrayStore(primitive.clone()));
+                    assert_eq!(actual_repr.as_ref(), Some(&repr));
+                    self.assembler.add(Instruction::ArrayStore(repr.clone()));
                 }
             }
             None => unimplemented!(

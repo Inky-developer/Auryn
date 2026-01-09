@@ -300,7 +300,7 @@ AirOutput {
                                                                         ),
                                                                     },
                                                                     type: Computed(
-                                                                        I32,
+                                                                        Null,
                                                                     ),
                                                                     kind: Constant(
                                                                         Number(
@@ -392,8 +392,8 @@ AirOutput {
                 },
                 kind: Error(
                     TypeMismatch {
-                        expected: "Null",
-                        got: "I32",
+                        expected: "Number",
+                        got: "Null",
                     },
                 ),
                 ..

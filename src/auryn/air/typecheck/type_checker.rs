@@ -456,7 +456,10 @@ impl Typechecker {
         };
 
         self.check_expression(&mut binary_operator.lhs, parameter_type);
-        self.check_expression(&mut binary_operator.rhs, parameter_type);
+        self.check_expression(
+            &mut binary_operator.rhs,
+            binary_operator.lhs.r#type.computed(),
+        );
         self.expect_type(&binary_operator.rhs, binary_operator.lhs.r#type.computed());
 
         match binary_operator.operator {
