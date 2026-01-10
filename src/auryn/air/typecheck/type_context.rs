@@ -4,9 +4,11 @@ use crate::{
     auryn::{
         air::{
             data::Intrinsic,
-            typecheck::types::{
-                ArrayType, ExternType, FunctionItemType, MetaType, NumberLiteralType, Type,
-                TypeData,
+            typecheck::{
+                bounds::{ArrayBound, Bound},
+                types::{
+                    ArrayType, ExternType, FunctionItemType, MetaType, NumberLiteralType, Type,
+                },
             },
         },
         syntax_id::SyntaxId,
@@ -17,8 +19,13 @@ use crate::{
 pub type TypeMap<T> = FastMap<TypeId<T>, T>;
 pub type BidirectionalTypeMap<T> = BidirectionalMap<TypeId<T>, T>;
 
+pub trait FromTypeContext: Sized {
+    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
+}
+
 #[derive(Debug)]
 pub struct TypeContext {
+    array_bounds: BidirectionalTypeMap<ArrayBound>,
     number_literals: BidirectionalTypeMap<NumberLiteralType>,
     arrays: BidirectionalTypeMap<ArrayType>,
     metas: BidirectionalTypeMap<MetaType>,
@@ -27,6 +34,22 @@ pub struct TypeContext {
 }
 
 impl TypeContext {
+    pub fn array_bound_of(&mut self, syntax_id: SyntaxId, element_bound: Bound) -> Bound {
+        Bound::Array(self.add_array_bound(syntax_id, ArrayBound { element_bound }))
+    }
+
+    pub fn add_array_bound(
+        &mut self,
+        syntax_id: SyntaxId,
+        bound: ArrayBound,
+    ) -> TypeId<ArrayBound> {
+        add_non_unique_type(syntax_id, bound, &mut self.array_bounds)
+    }
+
+    pub fn get_array_bound(&self, id: TypeId<ArrayBound>) -> &ArrayBound {
+        self.array_bounds.get_by_key(&id).unwrap()
+    }
+
     pub fn number_literal_of(&mut self, syntax_id: SyntaxId, value: i128) -> Type {
         Type::NumberLiteral(self.add_number_literal(syntax_id, NumberLiteralType { value }))
     }
@@ -73,7 +96,7 @@ impl TypeContext {
         id
     }
 
-    pub fn get<T: TypeData>(&self, id: TypeId<T>) -> &T {
+    pub fn get<T: FromTypeContext>(&self, id: TypeId<T>) -> &T {
         T::from_context(id, self)
     }
 
@@ -111,6 +134,7 @@ fn add_non_unique_type<T: Eq + Hash + Clone>(
 impl Default for TypeContext {
     fn default() -> Self {
         let mut this = Self {
+            array_bounds: default(),
             number_literals: default(),
             arrays: default(),
             metas: default(),

@@ -346,7 +346,7 @@ impl Intrinsic {
     pub fn function_type(&self) -> FunctionItemType {
         FunctionItemType {
             parameters: FunctionParameters::Unconstrained,
-            return_type: Type::Top,
+            return_type: Type::Error,
             reference: FunctionReference::Intrinsic(*self),
         }
     }

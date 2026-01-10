@@ -1,5 +1,5 @@
 use std::{
-    fmt::Display,
+    fmt::{Debug, Display},
     ops::{Deref, RangeInclusive},
     str::FromStr,
 };
@@ -8,7 +8,10 @@ use crate::{
     auryn::{
         air::{
             data::{ExternFunctionKind, FunctionReference},
-            typecheck::type_context::{TypeContext, TypeId},
+            typecheck::{
+                bounds::MaybeBounded,
+                type_context::{FromTypeContext, TypeContext, TypeId},
+            },
         },
         syntax_id::SyntaxId,
     },
@@ -74,10 +77,6 @@ macro_rules! define_types {
 }
 
 define_types! {
-    /// The base type, which every other type is a subtype of
-    Top,
-    /// Supertype of every number
-    Number,
     /// A 32-bit signed integer
     I32,
     /// A 64-bit signed integer
@@ -99,13 +98,17 @@ define_types! {
 }
 
 impl Type {
+    pub fn as_bounded(self) -> MaybeBounded {
+        MaybeBounded::Type(self)
+    }
+
     pub fn int_value_range(self) -> Option<RangeInclusive<i128>> {
         use Type::*;
         match self {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
-            Top | Number | NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Array(_)
-            | Extern(_) | Meta(_) | Error => None,
+            NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Array(_) | Extern(_)
+            | Meta(_) | Error => None,
         }
     }
 }
@@ -130,42 +133,6 @@ impl<'a> TypeView<'a> {
         }
     }
 
-    pub fn is_subtype(self, other: TypeView) -> bool {
-        use TypeView::*;
-
-        // A as quick and dirty hack we can just treat Error as subtype of every type
-        // and every type also as subtype of eror, to prevent the compiler from
-        // emitting redundant error messages
-        if matches!(self, Error) {
-            return true;
-        }
-
-        match other {
-            Top | Error => true,
-            Number => matches!(self, Number | I32 | I64 | NumberLiteral(_)),
-            Array(other_data) => {
-                if let Array(self_data) = self {
-                    self_data.element().is_subtype(other_data.element())
-                } else {
-                    false
-                }
-            }
-            other => self.as_type() == other.as_type(),
-        }
-    }
-
-    /// Currently a hack
-    /// A type is considered abstract if no value can have its type.
-    /// Instead, abstract types are just used as utility types during type checking
-    pub fn is_abstract(self) -> bool {
-        use TypeView::*;
-        match self {
-            Top | Number => true,
-            Array(array) => array.element().is_abstract(),
-            _ => false,
-        }
-    }
-
     /// Returns whether a type is a static extern member.
     /// Right now, every type is considered static except for methods which don't have the static kind
     fn is_static_extern_member(self) -> bool {
@@ -182,16 +149,12 @@ impl<'a> TypeView<'a> {
     }
 }
 
-pub trait TypeData: Sized {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
-}
-
 #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
 pub struct NumberLiteralType {
     pub value: i128,
 }
 
-impl TypeData for NumberLiteralType {
+impl FromTypeContext for NumberLiteralType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_number_literal(id)
     }
@@ -204,7 +167,7 @@ pub struct FunctionItemType {
     pub reference: FunctionReference,
 }
 
-impl TypeData for FunctionItemType {
+impl FromTypeContext for FunctionItemType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_function_item(id)
     }
@@ -236,7 +199,7 @@ pub struct ArrayType {
     pub element_type: Type,
 }
 
-impl TypeData for ArrayType {
+impl FromTypeContext for ArrayType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_array(id)
     }
@@ -248,7 +211,7 @@ pub struct ExternType {
     pub members: FastMap<SmallString, ExternTypeMember>,
 }
 
-impl TypeData for ExternType {
+impl FromTypeContext for ExternType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_extern(id)
     }
@@ -271,7 +234,7 @@ pub struct MetaType {
     pub inner: Type,
 }
 
-impl TypeData for MetaType {
+impl FromTypeContext for MetaType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_meta(id)
     }
@@ -292,6 +255,7 @@ impl FromStr for Type {
 }
 
 /// A reference to the [`TypeData`] of a type
+#[derive(Debug)]
 pub struct TypeViewKind<'a, T> {
     pub id: TypeId<T>,
     pub value: &'a T,
@@ -377,19 +341,23 @@ impl<'a> Display for TypeViewKind<'a, MetaType> {
 impl Display for TypeView<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TypeView::Top => f.write_str("Top"),
-            TypeView::Number => f.write_str("Number"),
             TypeView::I32 => f.write_str("I32"),
             TypeView::I64 => f.write_str("I64"),
             TypeView::NumberLiteral(data) => write!(f, "{}", data.value.value),
             TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),
             TypeView::Unit => f.write_str("()"),
-            TypeView::FunctionItem(function_type) => function_type.fmt(f),
-            TypeView::Array(array_type) => array_type.fmt(f),
-            TypeView::Extern(extern_type) => extern_type.fmt(f),
-            TypeView::Meta(meta_type) => meta_type.fmt(f),
+            TypeView::FunctionItem(function_type) => Display::fmt(&function_type, f),
+            TypeView::Array(array_type) => Display::fmt(&array_type, f),
+            TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
+            TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Error => f.write_str("<<Error>>"),
         }
+    }
+}
+
+impl Debug for TypeView<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(self, f)
     }
 }

@@ -228,8 +228,6 @@ pub fn get_representation(air_type: TypeView) -> Option<Representation> {
             Some(Representation::Object(extern_type.extern_name.clone()))
         }
         TypeView::Unit | TypeView::FunctionItem(_) | TypeView::Meta(_) => None,
-        TypeView::Number => todo!("The number type cannot be represented yet"),
-        TypeView::Top => todo!("The top type cannot be represented yet"),
         TypeView::Error => unreachable!("Called with error type"),
     }
 }
