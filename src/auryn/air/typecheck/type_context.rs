@@ -21,6 +21,19 @@ pub trait FromTypeContext: Sized {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
 }
 
+/// Keeps track of additional data associated to a [`Type`].
+///
+/// The [`TypeContext`] differentiates between two kinds of types:
+/// 1. Nominal types: Identified of the syntax id of the identifier in the source code which defined them
+/// 2. Structual types: Identified by a id counter, which is mapped to the syntax ids of the [`None`] file.
+///
+/// Structural types are also deduplicated on insertion: When a structural type is added that already exists,
+/// the [`TypeContext`] will return the existing type id, instead of allocating a new one.
+///
+/// This allows [`Type`]s to be compared directly.
+///
+/// The [`TypeContext`] can be queryied via [`TypeId`]s and new type data can also be inserted via
+/// the various `add_*` methods.
 #[derive(Debug)]
 pub struct TypeContext {
     array_bounds: BidirectionalTypeMap<ArrayBound>,

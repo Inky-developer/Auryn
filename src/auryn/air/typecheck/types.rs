@@ -28,8 +28,10 @@ use crate::{
 macro_rules! define_types {
     ($($(#[$meta:meta])* $name:ident $(($data:ident))?),+ $(,)?) => {
         /// The representation of a type of the auryn language
-        /// A type can have associated data, which implements the [`TypeData`] trait.
+        /// A type can have associated data, which implements the [`FromTypeContext`] trait.
         /// These data can be accessed via the [`TypeContext`] or by creating a view via [`Type::as_view`].
+        ///
+        /// [`Type`] implements [`Eq`].
         #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
         pub enum Type {
             $(
@@ -267,7 +269,7 @@ impl FromStr for Type {
     }
 }
 
-/// A reference to the [`TypeData`] of a type
+/// A reference to the `TypeData` of a type
 #[derive(Debug)]
 pub struct TypeViewKind<'a, T> {
     pub id: TypeId<T>,
