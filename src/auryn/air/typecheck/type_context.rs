@@ -1,14 +1,12 @@
-use std::{fmt::Debug, hash::Hash, marker::PhantomData};
+use std::{fmt::Debug, hash::Hash, marker::PhantomData, num::NonZeroU64};
 
 use crate::{
     auryn::{
-        air::{
-            data::Intrinsic,
-            typecheck::{
-                bounds::{ArrayBound, Bound},
-                types::{
-                    ArrayType, ExternType, FunctionItemType, MetaType, NumberLiteralType, Type,
-                },
+        air::typecheck::{
+            bounds::{ArrayBound, Bound},
+            types::{
+                ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType,
+                NumberLiteralType, Type,
             },
         },
         syntax_id::SyntaxId,
@@ -31,51 +29,52 @@ pub struct TypeContext {
     metas: BidirectionalTypeMap<MetaType>,
     externs: TypeMap<ExternType>,
     function_items: TypeMap<FunctionItemType>,
+    intrinsics: BidirectionalTypeMap<IntrinsicType>,
+    next_id: NonZeroU64,
 }
 
 impl TypeContext {
-    pub fn array_bound_of(&mut self, syntax_id: SyntaxId, element_bound: Bound) -> Bound {
-        Bound::Array(self.add_array_bound(syntax_id, ArrayBound { element_bound }))
+    pub fn array_bound_of(&mut self, element_bound: Bound) -> Bound {
+        Bound::Array(self.add_array_bound(ArrayBound { element_bound }))
     }
 
-    pub fn add_array_bound(
-        &mut self,
-        syntax_id: SyntaxId,
-        bound: ArrayBound,
-    ) -> TypeId<ArrayBound> {
-        add_non_unique_type(syntax_id, bound, &mut self.array_bounds)
+    pub fn add_array_bound(&mut self, bound: ArrayBound) -> TypeId<ArrayBound> {
+        add_non_unique_type(&mut self.next_id, bound, &mut self.array_bounds)
     }
 
     pub fn get_array_bound(&self, id: TypeId<ArrayBound>) -> &ArrayBound {
         self.array_bounds.get_by_key(&id).unwrap()
     }
 
-    pub fn number_literal_of(&mut self, syntax_id: SyntaxId, value: i128) -> Type {
-        Type::NumberLiteral(self.add_number_literal(syntax_id, NumberLiteralType { value }))
+    pub fn number_literal_of(&mut self, value: i128) -> Type {
+        Type::NumberLiteral(self.add_number_literal(NumberLiteralType { value }))
     }
 
-    pub fn array_of(&mut self, syntax_id: SyntaxId, element_type: Type) -> Type {
-        Type::Array(self.add_array(syntax_id, ArrayType { element_type }))
+    pub fn array_of(&mut self, element_type: Type) -> Type {
+        Type::Array(self.add_array(ArrayType { element_type }))
     }
 
-    pub fn meta_of(&mut self, syntax_id: SyntaxId, inner: Type) -> Type {
-        Type::Meta(self.add_meta(syntax_id, MetaType { inner }))
+    pub fn meta_of(&mut self, inner: Type) -> Type {
+        Type::Meta(self.add_meta(MetaType { inner }))
     }
 
     pub fn add_number_literal(
         &mut self,
-        syntax_id: SyntaxId,
         number_literal: NumberLiteralType,
     ) -> TypeId<NumberLiteralType> {
-        add_non_unique_type(syntax_id, number_literal, &mut self.number_literals)
+        add_non_unique_type(&mut self.next_id, number_literal, &mut self.number_literals)
     }
 
-    pub fn add_array(&mut self, syntax_id: SyntaxId, array: ArrayType) -> TypeId<ArrayType> {
-        add_non_unique_type(syntax_id, array, &mut self.arrays)
+    pub fn add_array(&mut self, array: ArrayType) -> TypeId<ArrayType> {
+        add_non_unique_type(&mut self.next_id, array, &mut self.arrays)
     }
 
-    pub fn add_meta(&mut self, syntax_id: SyntaxId, meta: MetaType) -> TypeId<MetaType> {
-        add_non_unique_type(syntax_id, meta, &mut self.metas)
+    pub fn add_meta(&mut self, meta: MetaType) -> TypeId<MetaType> {
+        add_non_unique_type(&mut self.next_id, meta, &mut self.metas)
+    }
+
+    pub fn add_intrinsic(&mut self, intrinsic: IntrinsicType) -> TypeId<IntrinsicType> {
+        add_non_unique_type(&mut self.next_id, intrinsic, &mut self.intrinsics)
     }
 
     pub fn add_function_item(
@@ -106,6 +105,9 @@ impl TypeContext {
     pub(super) fn get_function_item(&self, id: TypeId<FunctionItemType>) -> &FunctionItemType {
         &self.function_items[&id]
     }
+    pub(super) fn get_intrinsic(&self, id: TypeId<IntrinsicType>) -> &IntrinsicType {
+        self.intrinsics.get_by_key(&id).unwrap()
+    }
     pub(super) fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
         &self.externs[&id]
     }
@@ -118,7 +120,7 @@ impl TypeContext {
 }
 
 fn add_non_unique_type<T: Eq + Hash + Clone>(
-    syntax_id: SyntaxId,
+    next_id: &mut NonZeroU64,
     r#type: T,
     map: &mut BidirectionalTypeMap<T>,
 ) -> TypeId<T> {
@@ -126,27 +128,24 @@ fn add_non_unique_type<T: Eq + Hash + Clone>(
         return *existing_id;
     }
 
-    let id = TypeId::new(syntax_id);
+    let id = TypeId::new(SyntaxId::new(None, *next_id));
+    *next_id = next_id.checked_add(1).unwrap();
     map.insert(id, r#type);
     id
 }
 
 impl Default for TypeContext {
     fn default() -> Self {
-        let mut this = Self {
+        Self {
             array_bounds: default(),
             number_literals: default(),
             arrays: default(),
             metas: default(),
             externs: default(),
             function_items: default(),
-        };
-
-        for intrinsic in Intrinsic::ALL {
-            this.add_function_item(intrinsic.syntax_id(), intrinsic.function_type());
+            intrinsics: default(),
+            next_id: NonZeroU64::new(1).unwrap(),
         }
-
-        this
     }
 }
 

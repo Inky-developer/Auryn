@@ -119,7 +119,7 @@ AirOutput {
                                                             ),
                                                         },
                                                         type: Computed(
-                                                            FunctionItem(
+                                                            Intrinsic(
                                                                 TypeId {
                                                                     id: SyntaxId {
                                                                         file_id: None,
@@ -127,7 +127,7 @@ AirOutput {
                                                                             1,
                                                                         ),
                                                                     },
-                                                                    kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                                                                    kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
                                                                 },
                                                             ),
                                                         ),
@@ -153,13 +153,9 @@ AirOutput {
                                                                 NumberLiteral(
                                                                     TypeId {
                                                                         id: SyntaxId {
-                                                                            file_id: Some(
-                                                                                FileId(
-                                                                                    1,
-                                                                                ),
-                                                                            ),
+                                                                            file_id: None,
                                                                             number: Some(
-                                                                                244824589118121,
+                                                                                2,
                                                                             ),
                                                                         },
                                                                         kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",

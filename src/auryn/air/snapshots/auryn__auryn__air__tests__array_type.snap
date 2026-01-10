@@ -141,13 +141,9 @@ AirOutput {
                                         Array(
                                             TypeId {
                                                 id: SyntaxId {
-                                                    file_id: Some(
-                                                        FileId(
-                                                            1,
-                                                        ),
-                                                    ),
+                                                    file_id: None,
                                                     number: Some(
-                                                        223920293972753,
+                                                        1,
                                                     ),
                                                 },
                                                 kind: "auryn::auryn::air::typecheck::types::ArrayType",

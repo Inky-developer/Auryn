@@ -1,4 +1,4 @@
-use std::{fmt::Debug, num::NonZeroU64, str::FromStr};
+use std::{fmt::Debug, str::FromStr};
 
 use crate::{
     auryn::{
@@ -6,7 +6,7 @@ use crate::{
             namespace::UserDefinedTypeId,
             typecheck::{
                 type_context::{TypeContext, TypeId},
-                types::{FunctionItemType, FunctionParameters, Type, TypeView, TypeViewKind},
+                types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
             },
         },
         syntax_id::SyntaxId,
@@ -165,7 +165,6 @@ pub enum UnresolvedExternMember {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum FunctionReference {
-    Intrinsic(Intrinsic),
     UserDefined(AirFunctionId),
     Extern {
         parent: Type,
@@ -180,7 +179,6 @@ impl FunctionReference {
         match self {
             FunctionReference::UserDefined(air_function_id) => air_function_id.0.0,
             FunctionReference::Extern { syntax_id, .. } => *syntax_id,
-            other => panic!("{other:?} has no syntax id"),
         }
     }
 }
@@ -300,14 +298,20 @@ pub struct Call {
     pub arguments: Vec<AirExpression>,
 }
 
+pub enum CallKind<'a> {
+    FunctionItem(TypeViewKind<'a, FunctionItemType>),
+    Intrinsic(TypeViewKind<'a, IntrinsicType>),
+}
+
 impl Call {
     /// Should be called from codegen
-    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> TypeViewKind<'a, FunctionItemType> {
+    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> CallKind<'a> {
         let computed_type = self.function.r#type.computed().as_view(ty_ctx);
-        let TypeView::FunctionItem(function_type) = computed_type else {
-            unreachable!("Should generate call only with function type");
-        };
-        function_type
+        match computed_type {
+            TypeView::FunctionItem(function_type) => CallKind::FunctionItem(function_type),
+            TypeView::Intrinsic(intrinsic_type) => CallKind::Intrinsic(intrinsic_type),
+            other => panic!("invalid function type {other}"),
+        }
     }
 }
 
@@ -334,21 +338,8 @@ impl Intrinsic {
         Self::ArrayLen,
     ];
 
-    /// The id for an intrinsic is the syntax id without file.
-    pub fn syntax_id(&self) -> SyntaxId {
-        SyntaxId::new(None, NonZeroU64::new(*self as u64 + 1).unwrap())
-    }
-
-    pub fn r#type(&self) -> Type {
-        Type::FunctionItem(TypeId::new(self.syntax_id()))
-    }
-
-    pub fn function_type(&self) -> FunctionItemType {
-        FunctionItemType {
-            parameters: FunctionParameters::Unconstrained,
-            return_type: Type::Error,
-            reference: FunctionReference::Intrinsic(*self),
-        }
+    pub fn r#type(self, ty_ctx: &mut TypeContext) -> Type {
+        Type::Intrinsic(ty_ctx.add_intrinsic(IntrinsicType { intrinsic: self }))
     }
 }
 

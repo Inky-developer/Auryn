@@ -7,7 +7,7 @@ use std::{
 use crate::{
     auryn::{
         air::{
-            data::{ExternFunctionKind, FunctionReference},
+            data::{ExternFunctionKind, FunctionReference, Intrinsic},
             typecheck::{
                 bounds::MaybeBounded,
                 type_context::{FromTypeContext, TypeContext, TypeId},
@@ -89,6 +89,8 @@ define_types! {
     Unit,
     /// A zero-sized type of a concrete function item
     FunctionItem(FunctionItemType),
+    /// A function defined & implemented by the compiler
+    Intrinsic(IntrinsicType),
     Array(ArrayType),
     Extern(ExternType),
     /// Represents the type of a type, also zero sized, because it is a compile-time only construct.
@@ -107,8 +109,8 @@ impl Type {
         match self {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
-            NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Array(_) | Extern(_)
-            | Meta(_) | Error => None,
+            NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Intrinsic(_) | Array(_)
+            | Extern(_) | Meta(_) | Error => None,
         }
     }
 }
@@ -181,6 +183,17 @@ impl FunctionItemType {
             }
             FunctionParameters::Constrained { parameters, .. } => parameters,
         }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct IntrinsicType {
+    pub intrinsic: Intrinsic,
+}
+
+impl FromTypeContext for IntrinsicType {
+    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
+        ctx.get_intrinsic(id)
     }
 }
 
@@ -348,6 +361,7 @@ impl Display for TypeView<'_> {
             TypeView::String => f.write_str("String"),
             TypeView::Unit => f.write_str("()"),
             TypeView::FunctionItem(function_type) => Display::fmt(&function_type, f),
+            TypeView::Intrinsic(intrinsic) => Debug::fmt(intrinsic.value, f),
             TypeView::Array(array_type) => Display::fmt(&array_type, f),
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),

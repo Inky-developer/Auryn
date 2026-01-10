@@ -140,7 +140,7 @@ AirOutput {
                                                         ),
                                                     },
                                                     type: Computed(
-                                                        FunctionItem(
+                                                        Intrinsic(
                                                             TypeId {
                                                                 id: SyntaxId {
                                                                     file_id: None,
@@ -148,7 +148,7 @@ AirOutput {
                                                                         1,
                                                                     ),
                                                                 },
-                                                                kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                                                                kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
                                                             },
                                                         ),
                                                     ),

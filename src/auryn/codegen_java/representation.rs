@@ -211,24 +211,23 @@ impl Display for MethodDescriptor {
 /// Returns the representation of an auryn type for the jvm.
 /// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
 pub fn get_representation(air_type: TypeView) -> Option<Representation> {
+    use TypeView::*;
     match air_type {
-        TypeView::I32 => Some(Representation::Integer),
-        TypeView::I64 => Some(Representation::Long),
-        TypeView::NumberLiteral(_) => None,
-        TypeView::Bool => Some(Representation::Boolean),
-        TypeView::String => Some(Representation::string()),
-        TypeView::Array(content_type) => {
+        I32 => Some(Representation::Integer),
+        I64 => Some(Representation::Long),
+        NumberLiteral(_) => None,
+        Bool => Some(Representation::Boolean),
+        String => Some(Representation::string()),
+        Array(content_type) => {
             let content_repr = get_representation(content_type.element());
             match content_repr {
                 Some(repr) => Some(Representation::Array(Box::new(repr))),
                 None => todo!("Add representation for array of zero-sized types"),
             }
         }
-        TypeView::Extern(extern_type) => {
-            Some(Representation::Object(extern_type.extern_name.clone()))
-        }
-        TypeView::Unit | TypeView::FunctionItem(_) | TypeView::Meta(_) => None,
-        TypeView::Error => unreachable!("Called with error type"),
+        Extern(extern_type) => Some(Representation::Object(extern_type.extern_name.clone())),
+        Unit | FunctionItem(_) | Intrinsic(_) | Meta(_) => None,
+        Error => unreachable!("Called with error type"),
     }
 }
 

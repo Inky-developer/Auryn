@@ -4,8 +4,8 @@ use crate::{
             data::{
                 Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, ExternFunctionKind,
-                FunctionReference, Intrinsic,
+                AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, CallKind,
+                ExternFunctionKind, FunctionReference, Intrinsic,
             },
             typecheck::{type_context::TypeContext, types::TypeView},
         },
@@ -464,57 +464,61 @@ impl FunctionGenerator<'_> {
         self.generate_expression(&call.function);
 
         let function_type = call.function_type(self.ty_ctx);
-        match &function_type.reference {
-            FunctionReference::Intrinsic(intrinsic) => {
-                self.generate_intrinsic_call(expression_type, *intrinsic, &call.arguments)
+        match function_type {
+            CallKind::Intrinsic(intrinsic) => {
+                self.generate_intrinsic_call(expression_type, intrinsic.intrinsic, &call.arguments)
             }
-            FunctionReference::UserDefined(function_id) => {
-                for argument in &call.arguments {
-                    self.generate_expression(argument);
-                }
-
-                let GeneratedMethodData {
-                    generated_name,
-                    method_descriptor,
-                } = &self.function_infos[function_id];
-                self.assembler.add(Instruction::InvokeStatic {
-                    class_name: self.class_name.clone(),
-                    name: generated_name.clone(),
-                    method_descriptor: method_descriptor.clone(),
-                });
-            }
-            FunctionReference::Extern {
-                parent,
-                extern_name,
-                kind,
-                ..
-            } => {
-                for argument in &call.arguments {
-                    self.generate_expression(argument);
-                }
-
-                let method_descriptor = get_function_representation(function_type);
-                let Some(Representation::Object(class_name)) =
-                    get_representation(parent.as_view(self.ty_ctx))
-                else {
-                    panic!("Extern function should be member of an object");
-                };
-
-                match kind {
-                    ExternFunctionKind::Method => {
-                        self.assembler.add(Instruction::InvokeVirtual {
-                            class_name,
-                            name: extern_name.clone(),
-                            method_descriptor,
-                        });
+            CallKind::FunctionItem(function_item) => match &function_item.reference {
+                FunctionReference::UserDefined(function_id) => {
+                    for argument in &call.arguments {
+                        self.generate_expression(argument);
                     }
-                    ExternFunctionKind::Static => self.assembler.add(Instruction::InvokeStatic {
-                        class_name,
-                        name: extern_name.clone(),
+
+                    let GeneratedMethodData {
+                        generated_name,
                         method_descriptor,
-                    }),
+                    } = &self.function_infos[function_id];
+                    self.assembler.add(Instruction::InvokeStatic {
+                        class_name: self.class_name.clone(),
+                        name: generated_name.clone(),
+                        method_descriptor: method_descriptor.clone(),
+                    });
                 }
-            }
+                FunctionReference::Extern {
+                    parent,
+                    extern_name,
+                    kind,
+                    ..
+                } => {
+                    for argument in &call.arguments {
+                        self.generate_expression(argument);
+                    }
+
+                    let method_descriptor = get_function_representation(function_item);
+                    let Some(Representation::Object(class_name)) =
+                        get_representation(parent.as_view(self.ty_ctx))
+                    else {
+                        panic!("Extern function should be member of an object");
+                    };
+
+                    match kind {
+                        ExternFunctionKind::Method => {
+                            self.assembler.add(Instruction::InvokeVirtual {
+                                class_name,
+                                name: extern_name.clone(),
+                                method_descriptor,
+                            });
+                        }
+                        ExternFunctionKind::Static => {
+                            self.assembler.add(Instruction::InvokeStatic {
+                                class_name,
+                                name: extern_name.clone(),
+                                method_descriptor,
+                            })
+                        }
+                    }
+                }
+            },
         }
     }
 
