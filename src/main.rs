@@ -18,6 +18,9 @@ fn main() -> std::io::Result<()> {
     if let Some(filename) = args.next() {
         let input = std::fs::read_to_string(filename)?;
         if let Some(class) = get_class(&input) {
+            if args.next().as_deref() == Some("--print-class") {
+                println!("{class:?}");
+            }
             run(class);
         }
     } else {
