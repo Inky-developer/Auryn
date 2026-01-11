@@ -532,13 +532,15 @@ impl Typechecker {
                 expected,
             ),
             other => {
-                self.diagnostics.add(
-                    id,
-                    DiagnosticError::TypeMismatch {
-                        expected: "function".into(),
-                        got: other.as_view(&self.ty_ctx).to_string(),
-                    },
-                );
+                if !matches!(other, Type::Error) {
+                    self.diagnostics.add(
+                        id,
+                        DiagnosticError::TypeMismatch {
+                            expected: "function".into(),
+                            got: other.as_view(&self.ty_ctx).to_string(),
+                        },
+                    );
+                }
                 Type::Error
             }
         }

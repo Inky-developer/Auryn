@@ -38,7 +38,11 @@ impl MaybeBoundedView<'_> {
     pub fn contains(&self, other: TypeView) -> bool {
         match self {
             MaybeBoundedView::Bounded(bound) => bound.contains(other),
-            MaybeBoundedView::Type(ty) => ty.as_type() == other.as_type(),
+            MaybeBoundedView::Type(ty) => {
+                ty.as_type() == other.as_type()
+                    || matches!(ty, TypeView::Error)
+                    || matches!(other, TypeView::Error)
+            }
         }
     }
 }
