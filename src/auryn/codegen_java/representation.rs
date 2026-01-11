@@ -30,9 +30,14 @@ impl Representation {
             Representation::Long => PrimitiveOrObject::Primitive(PrimitiveType::Long),
             Representation::Boolean => PrimitiveOrObject::Primitive(PrimitiveType::Boolean),
             Representation::Object(descriptor) => PrimitiveOrObject::Object(descriptor),
-            Representation::Array(inner) => {
-                PrimitiveOrObject::Object(inner.into_field_descriptor().to_string().into())
-            }
+            Representation::Array(inner) => PrimitiveOrObject::Object(
+                FieldDescriptor::Array {
+                    dimension_count: 1,
+                    descriptor: Box::new(inner.into_field_descriptor()),
+                }
+                .to_string()
+                .into(),
+            ),
         }
     }
 

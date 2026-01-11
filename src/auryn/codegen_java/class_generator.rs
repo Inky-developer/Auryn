@@ -202,6 +202,12 @@ mod tests {
     }
 
     #[test]
+    fn test_arrays() {
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a: []I32 = arrayOfZeros(5)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a: [][]I32 = arrayOfZeros(5)"));
+    }
+
+    #[test]
     fn test_i64() {
         insta::assert_debug_snapshot!(generate_class(
             r#"
