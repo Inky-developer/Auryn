@@ -208,6 +208,16 @@ mod tests {
     }
 
     #[test]
+    fn test_conversions() {
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            "let a: I32 = 5\nlet b: I64 = cast(a)"
+        ));
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            "let a: I64 = 5\nlet b: I32 = cast(a)"
+        ));
+    }
+
+    #[test]
     fn test_i64() {
         insta::assert_debug_snapshot!(generate_class(
             r#"

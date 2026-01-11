@@ -78,6 +78,8 @@ pub enum Instruction {
     Rem(PrimitiveType),
     Store(VariableId),
     Load(VariableId),
+    IntToLong,
+    LongToInt,
     Nop,
     /// Does not correspond to any jvm instruction.
     /// Assumes that the top most stack value is now an object of the given type

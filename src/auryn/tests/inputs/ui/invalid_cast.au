@@ -1,0 +1,5 @@
+fn main() {
+	let a = print("Unit")
+	let b: I32 = cast(a)
+	print(b)
+}

@@ -320,6 +320,7 @@ impl Call {
 pub enum Intrinsic {
     Print,
     UnsafeTransmute,
+    Cast,
     ArrayOf,
     ArrayOfZeros,
     ArrayGet,
@@ -328,16 +329,6 @@ pub enum Intrinsic {
 }
 
 impl Intrinsic {
-    pub const ALL: &[Self] = &[
-        Self::Print,
-        Self::UnsafeTransmute,
-        Self::ArrayOf,
-        Self::ArrayOfZeros,
-        Self::ArrayGet,
-        Self::ArraySet,
-        Self::ArrayLen,
-    ];
-
     pub fn r#type(self, ty_ctx: &mut TypeContext) -> Type {
         Type::Intrinsic(ty_ctx.add_intrinsic(IntrinsicType { intrinsic: self }))
     }
@@ -350,6 +341,7 @@ impl FromStr for Intrinsic {
         Ok(match s {
             "print" => Intrinsic::Print,
             "unsafeTransmute" => Intrinsic::UnsafeTransmute,
+            "cast" => Intrinsic::Cast,
             "arrayOf" => Intrinsic::ArrayOf,
             "arrayOfZeros" => Intrinsic::ArrayOfZeros,
             "arrayGet" => Intrinsic::ArrayGet,

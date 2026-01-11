@@ -533,6 +533,7 @@ impl FunctionGenerator<'_> {
             Intrinsic::UnsafeTransmute => {
                 self.generate_intrinsic_unsafe_transmute(r#type, arguments)
             }
+            Intrinsic::Cast => self.generate_intrinsic_cast(r#type, arguments),
             Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, arguments),
             Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(arguments, r#type),
             Intrinsic::ArrayGet => self.generate_intrinsic_array_get(arguments),
@@ -599,6 +600,31 @@ impl FunctionGenerator<'_> {
                 "Transmute can never succeed: Tried to transmute from {repr:?} to {target_type}",
             );
         };
+    }
+
+    fn generate_intrinsic_cast(&mut self, target_type: TypeView, argument: &[AirExpression]) {
+        let [value] = argument else {
+            panic!("Invalid cast call");
+        };
+
+        self.generate_expression(value);
+
+        let from_type = value.r#type.computed().as_view(self.ty_ctx);
+
+        let from = get_representation(from_type).unwrap();
+        let to = get_representation(target_type).unwrap();
+
+        match (from, to) {
+            (Representation::Integer | Representation::Boolean, Representation::Long) => {
+                self.assembler.add(Instruction::IntToLong)
+            }
+            (Representation::Long, Representation::Integer) => {
+                self.assembler.add(Instruction::LongToInt)
+            }
+            (Representation::Boolean, Representation::Integer) => {}
+            (Representation::Integer | Representation::Long, Representation::Boolean) => todo!(),
+            other => unreachable!("Invalid cast {other:?}"),
+        }
     }
 
     fn generate_intrinsic_array_of(&mut self, r#type: TypeView, arguments: &[AirExpression]) {

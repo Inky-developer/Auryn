@@ -285,6 +285,9 @@ pub enum Instruction {
     /// Loads an integer from a local variable
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iload>
     ILoad(u16),
+    /// Converts from Int to Long
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.i2l>
+    I2L,
     /// Compares the two topmost stack entries according to the given `comparison`
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.if_icmp_cond>
     IfICmp {
@@ -318,6 +321,9 @@ pub enum Instruction {
     /// Load a Long from a local variable
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lload>
     LLoad(u16),
+    /// Converts from a Long to an In
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.l2i>
+    L2I,
     /// Compares two Long values and pushes the integer -1, 0, or 1 to the stack
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lcmp>
     Lcmp,
@@ -407,6 +413,7 @@ impl Instruction {
                     .expect("TODO: Implement support for wide loads");
                 buf.write_all(&[0x15, index])?;
             }
+            Instruction::I2L => buf.write_all(&[0x85])?,
             Instruction::LAdd => buf.write_all(&[0x61])?,
             Instruction::LSub => buf.write_all(&[0x65])?,
             Instruction::LMul => buf.write_all(&[0x69])?,
@@ -424,6 +431,7 @@ impl Instruction {
                     .expect("TODO: Implement support for wide loads");
                 buf.write_all(&[0x16, index])?;
             }
+            Instruction::L2I => buf.write_all(&[0x88])?,
             Instruction::Lcmp => buf.write_all(&[0x94])?,
             Instruction::ALoad(index) => {
                 let index: u8 = index

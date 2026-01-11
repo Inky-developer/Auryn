@@ -257,6 +257,7 @@ impl Display for InstructionDisplay<'_> {
             IRem => write!(f, "IRem"),
             IStore(index) => write!(f, "IStore\t\t\t{index}"),
             ILoad(index) => write!(f, "ILoad\t\t\t{index}"),
+            I2L => write!(f, "I2L"),
             IfICmp {
                 comparison,
                 jump_point,
@@ -287,6 +288,7 @@ impl Display for InstructionDisplay<'_> {
             LStore(index) => write!(f, "LStore\t\t{index}"),
             LLoad(index) => write!(f, "LLoad\t\t\t{index}"),
             Lcmp => write!(f, "Lcmp"),
+            L2I => write!(f, "L2I"),
         }
     }
 }

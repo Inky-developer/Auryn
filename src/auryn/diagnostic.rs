@@ -84,6 +84,10 @@ pub enum DiagnosticError {
         parameter_def: Option<SyntaxId>,
     },
     InferenceFailed,
+    InvalidCast {
+        from: String,
+        to: String,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -321,6 +325,9 @@ impl Diagnostic {
                     .with_code("Could not infer type")
                     .with_message("Could not infer the type of this expresssion")
                     .with_help("Try annotating the expression: `let val: ExpectedType = ...`"),
+                DiagnosticError::InvalidCast { from, to } => builder
+                    .with_code("Invalid cast")
+                    .with_message(format!("Can not cast from `{from}` to `{to}`")),
             },
         };
     }

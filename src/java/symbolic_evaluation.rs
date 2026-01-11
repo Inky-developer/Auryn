@@ -209,6 +209,14 @@ impl SymbolicEvaluator {
                 assert_eq!(info.category(), *type_category);
                 self.stack.push(*info);
             }
+            Instruction::IntToLong => {
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
+                self.stack.push(VerificationTypeInfo::Long);
+            }
+            Instruction::LongToInt => {
+                assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Long));
+                self.stack.push(VerificationTypeInfo::Integer);
+            }
         }
     }
 }

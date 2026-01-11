@@ -1,0 +1,12 @@
+---
+source: src/auryn/tests/mod.rs
+expression: "fn main() {\n\tlet a = print(\"Unit\")\n\tlet b: I32 = cast(a)\n\tprint(b)\n}\n"
+input_file: src/auryn/tests/inputs/ui/invalid_cast.au
+---
+Error: Invalid cast
+   ╭─[ main:3:15 ]
+   │
+ 3 │     let b: I32 = cast(a)
+   │                  ───┬───  
+   │                     ╰───── Can not cast from `()` to `I32`
+───╯

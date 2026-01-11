@@ -592,6 +592,7 @@ impl Typechecker {
             Intrinsic::UnsafeTransmute => {
                 self.typecheck_intrinsic_transmute(id, arguments, expected)
             }
+            Intrinsic::Cast => self.typecheck_intrinsic_cast(id, arguments, expected),
             Intrinsic::ArrayOf => match expected {
                 Some(expected) => self.check_intrinsic_array_of(id, arguments, expected),
                 None => self.infer_intrinsic_array_of(id, arguments),
@@ -643,6 +644,48 @@ impl Typechecker {
             self.diagnostics.add(id, DiagnosticError::InferenceFailed);
             return Type::Error;
         };
+
+        expected
+    }
+
+    fn typecheck_intrinsic_cast(
+        &mut self,
+        id: SyntaxId,
+        arguments: &mut [AirExpression],
+        expected: Option<MaybeBounded>,
+    ) -> Type {
+        let Some(MaybeBounded::Type(expected)) = expected else {
+            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
+            return Type::Error;
+        };
+
+        let [value] = arguments else {
+            self.diagnostics.add(
+                id,
+                DiagnosticError::MismatchedArgumentCount {
+                    expected: 1,
+                    got: arguments.len(),
+                    parameter_def: None,
+                },
+            );
+            return expected;
+        };
+
+        self.infer_expression(value);
+        let received = value.r#type.computed();
+
+        if !matches!(
+            (received, expected),
+            (Type::I32 | Type::Bool, Type::I64) | (Type::I64 | Type::Bool, Type::I32),
+        ) {
+            self.diagnostics.add(
+                id,
+                DiagnosticError::InvalidCast {
+                    from: received.as_view(&self.ty_ctx).to_string(),
+                    to: expected.as_view(&self.ty_ctx).to_string(),
+                },
+            );
+        }
 
         expected
     }

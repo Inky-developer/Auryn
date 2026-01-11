@@ -391,6 +391,8 @@ impl AssemblyContext<'_> {
                     PrimitiveOrObject::Object(_) => class::Instruction::ALoad(id.index),
                 })
             }
+            Instruction::IntToLong => on_instruction(class::Instruction::I2L),
+            Instruction::LongToInt => on_instruction(class::Instruction::L2I),
             Instruction::Transmute(_) => {}
             Instruction::Nop => on_instruction(class::Instruction::Nop),
             Instruction::Pop(category) => match category {
