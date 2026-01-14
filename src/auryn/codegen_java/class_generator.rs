@@ -135,10 +135,7 @@ impl ClassGenerator<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        auryn::{air::query_air, ast::query_ast, file_id::FileId, parser::Parser},
-        java::class::ClassData,
-    };
+    use crate::{auryn::api::compile, java::class::ClassData};
 
     fn generate_class_wrapped(input: &str) -> ClassData {
         let wrapped_input = format!("fn main() {{ {input} }}");
@@ -146,15 +143,12 @@ mod tests {
     }
 
     fn generate_class(input: &str) -> ClassData {
-        let result = Parser::new(FileId::MAIN_FILE, input).parse();
-        let ast = query_ast(result.syntax_tree.as_ref().unwrap());
-        let air = query_air(ast.unwrap());
-        let mut diagnostics = Vec::new();
-        diagnostics.extend(result.syntax_tree.unwrap().collect_diagnostics());
-        diagnostics.extend(air.diagnostics.take());
-        assert!(diagnostics.is_empty(), "Got diagnostics: {diagnostics:?}");
-
-        super::generate_class(&air.air)
+        match compile(input) {
+            Ok(class) => class,
+            Err(diagnostics) => {
+                panic!("Could not compile {input}:\n{:?}", diagnostics.display());
+            }
+        }
     }
 
     #[test]

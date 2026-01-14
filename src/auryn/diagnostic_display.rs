@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{fmt::Debug, io::Write};
 
 use crate::{
     auryn::{
@@ -107,7 +107,6 @@ impl DiagnosticDisplay {
     }
 }
 
-#[derive(Debug)]
 pub struct DiagnosticCollectionDisplay<'a> {
     displays: Vec<DiagnosticDisplay>,
     cache: implementation::InputFilesCache<'a>,
@@ -126,7 +125,10 @@ impl<'a> DiagnosticCollectionDisplay<'a> {
     }
 
     pub fn eprint(&self) {
-        self.write(std::io::stderr(), true).unwrap();
+        let stderr = std::io::stdout();
+        let mut lock = stderr.lock();
+        self.write(&mut lock, true).unwrap();
+        lock.flush().unwrap();
     }
 
     pub fn write(&self, writer: impl Write, enable_color: bool) -> std::io::Result<()> {
@@ -141,6 +143,15 @@ impl<'a> DiagnosticCollectionDisplay<'a> {
 impl Extend<DiagnosticDisplay> for DiagnosticCollectionDisplay<'_> {
     fn extend<T: IntoIterator<Item = DiagnosticDisplay>>(&mut self, iter: T) {
         self.displays.extend(iter)
+    }
+}
+
+impl Debug for DiagnosticCollectionDisplay<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = Vec::<u8>::new();
+        self.write(&mut buf, true).unwrap();
+        let content: String = buf.try_into().unwrap();
+        f.write_str(&content)
     }
 }
 
