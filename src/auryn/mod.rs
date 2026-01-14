@@ -1,4 +1,5 @@
 pub mod air;
+pub mod api;
 pub mod ast;
 pub mod codegen_java;
 pub mod diagnostic;

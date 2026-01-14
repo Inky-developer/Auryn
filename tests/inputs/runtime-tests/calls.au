@@ -1,0 +1,23 @@
+// expect-output:
+// Hi
+// Hi
+// Hi
+// Hi
+// Hi
+
+fn main() {
+	say_times("Hi", 5)
+}
+
+fn say_times(message: String, times: I32) {
+	let i: I32 = 0
+	loop {
+		if i >= times {
+			break
+		}
+
+		print(message)
+
+		i = i + 1
+	}
+}

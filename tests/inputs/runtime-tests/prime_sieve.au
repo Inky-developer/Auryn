@@ -1,0 +1,63 @@
+// expect-output:
+// 1
+// 2
+// 3
+// 5
+// 7
+// 11
+// 13
+// 17
+// 19
+// 23
+// 29
+// 31
+// 37
+// 41
+// 43
+// 47
+
+fn main() {
+	let primes = sieve(50)
+	printArray(primes)
+}
+
+fn sieve(up_to: I32) -> []I32 {
+	let sieve: []I32 = arrayOfZeros(up_to)
+
+	let i: I32 = 2
+	loop {
+		let n = 2 * i
+		loop {
+			if n >= up_to {
+				break
+			}
+			arraySet(sieve, n, 1)
+			n += i
+		}
+
+		loop {
+			i += 1
+			if i >= up_to {
+				return sieve
+			}
+			if arrayGet(sieve, i) == 0 {
+				break
+			}
+		}
+	}
+}
+
+fn printArray(array: []I32) {
+	let i: I32 = 1
+	loop {
+		if i >= arrayLen(array) {
+			break
+		}
+
+		if arrayGet(array, i) == 0 {
+			print(i)
+		}
+
+		i += 1
+	}
+}

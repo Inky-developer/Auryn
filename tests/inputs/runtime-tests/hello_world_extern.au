@@ -1,0 +1,21 @@
+// expect-output:
+// Hello world!
+
+unsafe extern "java" {
+	["java/io/PrintStream"]
+	type PrintStream {
+		["println"]
+		fn printString(string: String)
+	}
+
+	["java/lang/System"]
+	type System {
+		["out"]
+		static let out: PrintStream
+	}
+}
+
+fn main() {
+	System.out.printString("Hello world!")
+}
+

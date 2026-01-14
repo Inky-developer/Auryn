@@ -1,0 +1,26 @@
+// expect-output:
+// 1
+// 1
+// 2
+// 3
+// 5
+// 8
+// 13
+// 21
+// 34
+// 55
+
+fn main() {
+	let a: I32 = 1
+	let b: I32 = 1
+	loop {
+		print(a)
+		if a > 50 {
+			break
+		}
+
+		let tmp = a
+		a = b
+		b = tmp + b
+	}
+}

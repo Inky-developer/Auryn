@@ -1,0 +1,35 @@
+// expect-output:
+// 1
+// 1
+// 2
+// 3
+// 5
+// 8
+// 13
+// 21
+// 34
+// 55
+
+fn main() {
+	let i: I32 = 0
+	loop {
+		print(fib(i))
+		i += 1
+
+		if i > 9 {
+			break
+		}
+	}
+}
+
+fn fib(n: I32) -> I32 {
+	if n == 0 {
+		return 1
+	}
+
+	if n == 1 {
+		return 1
+	}
+
+	return fib(n - 2) + fib(n - 1)
+}

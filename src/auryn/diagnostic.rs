@@ -152,9 +152,9 @@ impl Diagnostics {
         self.diagnostics
     }
 
-    pub fn display(self, input_files: &InputFiles) -> DiagnosticCollectionDisplay<'_> {
+    pub fn display<'a>(&'a self, input_files: &'a InputFiles) -> DiagnosticCollectionDisplay<'a> {
         let mut display = DiagnosticCollectionDisplay::new(input_files);
-        display.extend(self.diagnostics.into_iter().map(|it| it.display()));
+        display.extend(self.diagnostics.iter().map(|it| it.display()));
         display
     }
 }

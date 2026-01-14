@@ -1,0 +1,38 @@
+// expect-output:
+// 1
+// 2
+// 3
+// Printing array...
+// 1
+// 42
+// 3
+// Done
+
+fn main() {
+	let a: []I32 = arrayOf(1, 2, 3)
+
+	print(arrayGet(a, 0))
+	print(arrayGet(a, 1))
+	print(arrayGet(a, 2))
+
+	arraySet(a, 1, 42)
+
+	print("Printing array...")
+	print_array(a)
+	print("Done")
+
+	print(arrayGet(a, 5))
+}
+
+fn print_array(array: []I32) {
+	let length = arrayLen(array)
+	let index: I32 = 0
+	loop {
+		if index >= length {
+			break
+		}
+
+		print(arrayGet(array, index))
+		index = index + 1
+	}
+}
