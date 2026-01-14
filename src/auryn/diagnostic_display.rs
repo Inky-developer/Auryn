@@ -1,4 +1,7 @@
-use std::{fmt::Debug, io::Write};
+use std::{
+    fmt::{Debug, Display},
+    io::Write,
+};
 
 use crate::{
     auryn::{
@@ -146,12 +149,30 @@ impl Extend<DiagnosticDisplay> for DiagnosticCollectionDisplay<'_> {
     }
 }
 
+impl Display for DiagnosticCollectionDisplay<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        struct IoWriteAdapter<'a, 'b>(&'a mut std::fmt::Formatter<'b>);
+
+        impl std::io::Write for IoWriteAdapter<'_, '_> {
+            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                let as_str = std::str::from_utf8(buf).expect("Should only print valid utf-8");
+                self.0.write_str(as_str).map_err(std::io::Error::other)?;
+                Ok(buf.len())
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+
+        self.write(&mut IoWriteAdapter(f), true).unwrap();
+        Ok(())
+    }
+}
+
 impl Debug for DiagnosticCollectionDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = Vec::<u8>::new();
-        self.write(&mut buf, true).unwrap();
-        let content: String = buf.try_into().unwrap();
-        f.write_str(&content)
+        Display::fmt(self, f)
     }
 }
 
