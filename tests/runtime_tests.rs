@@ -47,7 +47,7 @@ fn runtime_tests() {
         let output = match compile(&content) {
             Ok(output) => output,
             Err(diagnostics) => {
-                diagnostics.display().eprint();
+                diagnostics.to_display().eprint();
                 panic!("Could not compile {path:?}");
             }
         };

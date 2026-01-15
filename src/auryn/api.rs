@@ -6,11 +6,12 @@ use crate::{
         ast::query_ast,
         codegen_java::class_generator::generate_class,
         diagnostic::{DiagnosticKind, Diagnostics, InputFile, InputFiles},
-        diagnostic_display::DiagnosticCollectionDisplay,
+        diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
         file_id::FileId,
         parser::Parser,
     },
     java::class::ClassData,
+    utils::default,
 };
 
 pub struct OwnedDiagnostics {
@@ -19,8 +20,12 @@ pub struct OwnedDiagnostics {
 }
 
 impl OwnedDiagnostics {
-    pub fn display(&self) -> DiagnosticCollectionDisplay<'_> {
-        self.diagnostics.display(&self.input_files)
+    pub fn to_display(&self) -> DiagnosticCollectionDisplay<'_> {
+        self.to_display_with_opts(default())
+    }
+
+    pub fn to_display_with_opts(&self, opts: DisplayOptions) -> DiagnosticCollectionDisplay<'_> {
+        self.diagnostics.to_display(&self.input_files, opts)
     }
 }
 

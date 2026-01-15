@@ -110,15 +110,40 @@ impl DiagnosticDisplay {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct DisplayOptions {
+    pub use_color: bool,
+    pub write_debug_info: bool,
+}
+
+impl DisplayOptions {
+    pub const FOR_TESTING: Self = Self {
+        use_color: false,
+        write_debug_info: false,
+    };
+    pub const DEFAULT: Self = Self {
+        use_color: true,
+        write_debug_info: cfg!(debug_assertions),
+    };
+}
+
+impl Default for DisplayOptions {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
+
 pub struct DiagnosticCollectionDisplay<'a> {
     displays: Vec<DiagnosticDisplay>,
+    opts: DisplayOptions,
     cache: implementation::InputFilesCache<'a>,
 }
 
 impl<'a> DiagnosticCollectionDisplay<'a> {
-    pub fn new(input_files: &'a InputFiles) -> Self {
+    pub fn new(input_files: &'a InputFiles, opts: DisplayOptions) -> Self {
         Self {
             cache: InputFilesCache::new(input_files),
+            opts,
             displays: default(),
         }
     }
@@ -130,12 +155,12 @@ impl<'a> DiagnosticCollectionDisplay<'a> {
     pub fn eprint(&self) {
         let stderr = std::io::stdout();
         let mut lock = stderr.lock();
-        self.write(&mut lock, true).unwrap();
+        self.write(&mut lock).unwrap();
         lock.flush().unwrap();
     }
 
-    pub fn write(&self, writer: impl Write, enable_color: bool) -> std::io::Result<()> {
-        implementation::write(self, writer, enable_color)
+    pub fn write(&self, writer: impl Write) -> std::io::Result<()> {
+        implementation::write(self, writer, self.opts.use_color)
     }
 
     fn compute_span(&self, syntax_id: SyntaxId) -> ComputedSpan {
@@ -165,7 +190,7 @@ impl Display for DiagnosticCollectionDisplay<'_> {
             }
         }
 
-        self.write(&mut IoWriteAdapter(f), true).unwrap();
+        self.write(&mut IoWriteAdapter(f)).unwrap();
         Ok(())
     }
 }

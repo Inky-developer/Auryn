@@ -146,7 +146,7 @@ mod tests {
         match compile(input) {
             Ok(class) => class,
             Err(diagnostics) => {
-                panic!("Could not compile {input}:\n{:?}", diagnostics.display());
+                panic!("Could not compile {input}:\n{:?}", diagnostics.to_display());
             }
         }
     }

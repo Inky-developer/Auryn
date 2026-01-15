@@ -1,7 +1,7 @@
 ---
-source: src/auryn/tests/mod.rs
+source: tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a = arrayGet(arrayOfZeros(50), 25)\n}\n"
-input_file: src/auryn/tests/inputs/ui/inference_failure_nested_array_calls.au
+input_file: tests/inputs/diagnostics/inference_failure_nested_array_calls.au
 ---
 Error: Could not infer type
    ╭─[ main:2:19 ]

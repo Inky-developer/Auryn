@@ -14,7 +14,7 @@ fn main() -> std::io::Result<()> {
                 }
                 print!("{}", run(class, "."));
             }
-            Err(diagnostics) => diagnostics.display().eprint(),
+            Err(diagnostics) => diagnostics.to_display().eprint(),
         }
     } else {
         repl();
@@ -33,7 +33,7 @@ fn repl() {
             Ok(class) => {
                 print!("{}", run(class, "."));
             }
-            Err(diagnostics) => diagnostics.display().eprint(),
+            Err(diagnostics) => diagnostics.to_display().eprint(),
         }
     }
 }

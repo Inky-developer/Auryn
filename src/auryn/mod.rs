@@ -8,5 +8,4 @@ pub mod file_id;
 pub mod parser;
 pub mod syntax_id;
 pub mod syntax_tree;
-mod tests;
 pub mod tokenizer;

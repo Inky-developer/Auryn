@@ -1,7 +1,7 @@
 ---
-source: src/auryn/tests/mod.rs
+source: tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a: I32 = print(\"Hello\")\n}\n"
-input_file: src/auryn/tests/inputs/ui/assignment_type_mismatch.au
+input_file: tests/inputs/diagnostics/assignment_type_mismatch.au
 ---
 Error: Type mismatch
    ╭─[ main:2:15 ]

@@ -1,7 +1,7 @@
 ---
-source: src/auryn/tests/mod.rs
+source: tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a = ,\n}\n"
-input_file: src/auryn/tests/inputs/ui/recover_expression.au
+input_file: tests/inputs/diagnostics/recover_expression.au
 ---
 Error: Expected expression
    ╭─[ main:2:10 ]

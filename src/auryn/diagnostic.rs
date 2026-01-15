@@ -1,11 +1,10 @@
-#[cfg(debug_assertions)]
-use std::panic::Location;
-use std::{fmt::Debug, ops::RangeInclusive};
+use std::{fmt::Debug, ops::RangeInclusive, panic::Location};
 
 use crate::{
     auryn::{
         diagnostic_display::{
-            ComputedSpan, DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel, Label,
+            ComputedSpan, DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel,
+            DisplayOptions, Label,
         },
         file_id::FileId,
         syntax_id::SyntaxId,
@@ -112,7 +111,6 @@ impl From<DiagnosticError> for DiagnosticKind {
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub syntax_id: SyntaxId,
-    #[cfg(debug_assertions)]
     pub location: &'static Location<'static>,
 }
 
@@ -122,7 +120,6 @@ impl Diagnostic {
         Diagnostic {
             kind: kind.into(),
             syntax_id,
-            #[cfg(debug_assertions)]
             location: Location::caller(),
         }
     }
@@ -152,9 +149,13 @@ impl Diagnostics {
         self.diagnostics
     }
 
-    pub fn display<'a>(&'a self, input_files: &'a InputFiles) -> DiagnosticCollectionDisplay<'a> {
-        let mut display = DiagnosticCollectionDisplay::new(input_files);
-        display.extend(self.diagnostics.iter().map(|it| it.display()));
+    pub fn to_display<'a>(
+        &'a self,
+        input_files: &'a InputFiles,
+        opts: DisplayOptions,
+    ) -> DiagnosticCollectionDisplay<'a> {
+        let mut display = DiagnosticCollectionDisplay::new(input_files, opts.clone());
+        display.extend(self.diagnostics.iter().map(|it| it.display(&opts)));
         display
     }
 }
@@ -205,14 +206,11 @@ impl InputFiles {
 }
 
 impl Diagnostic {
-    fn display(&self) -> DiagnosticDisplay {
+    fn display(&self, opts: &DisplayOptions) -> DiagnosticDisplay {
         let mut builder = DiagnosticDisplay::new(self.level(), self.syntax_id);
         self.build_report(&mut builder);
 
-        // We also don't really want this info in the test output, because the location is very unstable,
-        // which would cause lots of snapshot tests to update when there isn't really any change
-        #[cfg(debug_assertions)]
-        if !cfg!(test) {
+        if opts.write_debug_info {
             builder.with_info(format!("This diagnostic was emmited at {}", self.location));
         }
 

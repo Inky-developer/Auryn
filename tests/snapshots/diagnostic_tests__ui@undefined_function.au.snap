@@ -1,7 +1,7 @@
 ---
-source: src/auryn/tests/mod.rs
+source: tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a: I32 = foo()\n\tprint(a)\n}\n"
-input_file: src/auryn/tests/inputs/ui/undefined_function.au
+input_file: tests/inputs/diagnostics/undefined_function.au
 ---
 Error: Undefined variable
    ╭─[ main:2:15 ]
