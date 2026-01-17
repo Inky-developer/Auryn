@@ -256,12 +256,16 @@ impl<'a> Tokenizer<'a> {
         Self { input }
     }
 
+    fn is_valid_identifier_char(char: char) -> bool {
+        matches!(char, '0'..='9' | 'a'..='z' | 'A'..='Z' | '_')
+    }
+
     fn starts_with_keyword(&self, keyword: &str) -> bool {
         self.input.starts_with(keyword)
             && self.input[keyword.len()..]
                 .chars()
                 .next()
-                .is_none_or(|char| char.is_ascii_whitespace())
+                .is_none_or(|char| !Self::is_valid_identifier_char(char))
     }
 
     fn consume_while<F: FnMut(char) -> bool>(&mut self, mut predicate: F) -> &'a str {
@@ -292,8 +296,7 @@ impl<'a> Tokenizer<'a> {
     fn consume_identifier(&mut self) -> Option<Token<'a>> {
         Some(Token {
             kind: TokenKind::Identifier,
-            text: self
-                .consume_while(|char| matches!(char, '0'..='9' | 'a'..='z' | 'A'..='Z' | '_')),
+            text: self.consume_while(Self::is_valid_identifier_char),
         })
     }
 
@@ -558,8 +561,12 @@ mod tests {
         Tokenizer::new(input).collect()
     }
 
+    fn tokenize_kinds(input: &str) -> Vec<TokenKind> {
+        tokenize(input).into_iter().map(|t| t.kind).collect()
+    }
+
     #[test]
-    fn test_parser() {
+    fn test_tokenizer() {
         insta::assert_debug_snapshot!(tokenize(" 1 +4  \n"));
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 1 -2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
@@ -605,5 +612,23 @@ mod tests {
             let kind = variant.to_token_kind();
             assert_eq!(kind.to_assignment_operator(), Some(*variant))
         }
+    }
+
+    #[test]
+    fn test_keyword() {
+        assert_eq!(tokenize_kinds("true"), vec![TokenKind::KeywordTrue]);
+        assert_eq!(
+            tokenize_kinds("true "),
+            vec![TokenKind::KeywordTrue, TokenKind::Whitespace]
+        );
+        assert_eq!(
+            tokenize_kinds("true,"),
+            vec![TokenKind::KeywordTrue, TokenKind::Comma]
+        );
+        assert_eq!(
+            tokenize_kinds("true+"),
+            vec![TokenKind::KeywordTrue, TokenKind::Plus]
+        );
+        assert_eq!(tokenize_kinds("true0"), vec![TokenKind::Identifier]);
     }
 }

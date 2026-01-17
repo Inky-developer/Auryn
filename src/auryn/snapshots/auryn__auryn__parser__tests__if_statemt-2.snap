@@ -29,8 +29,8 @@ AnnotatedParserOutput {
         ||||||||||ParensOpen `(`
         ||||||||||16..21 Expression
         |||||||||||16..21 Value
-        ||||||||||||16..21 Ident
-        |||||||||||||Identifier `false`
+        ||||||||||||16..21 BooleanLiteral
+        |||||||||||||KeywordFalse `false`
         ||||||||||ParensClose `)`
         ||||||||||Whitespace ` `
         ||||BraceClose `}`
@@ -52,8 +52,8 @@ AnnotatedParserOutput {
         |||||||||||ParensOpen `(`
         |||||||||||38..42 Expression
         ||||||||||||38..42 Value
-        |||||||||||||38..42 Ident
-        ||||||||||||||Identifier `true`
+        |||||||||||||38..42 BooleanLiteral
+        ||||||||||||||KeywordTrue `true`
         |||||||||||ParensClose `)`
         |||||||||||Whitespace ` `
         |||||BraceClose `}`
