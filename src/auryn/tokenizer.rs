@@ -548,6 +548,11 @@ impl<'a> Iterator for Tokenizer<'a> {
             text: char_text,
         })
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let min = if self.input.is_empty() { 0 } else { 1 };
+        (min, Some(self.input.len()))
+    }
 }
 
 #[cfg(test)]
