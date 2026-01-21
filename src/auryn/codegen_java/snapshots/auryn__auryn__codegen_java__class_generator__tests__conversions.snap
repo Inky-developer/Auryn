@@ -3,31 +3,31 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"let a: I32 = 5\\nlet b: I64 = cast(a)\")"
 ---
 ClassData
-  this_class:		#9	Main
+  this_class:		#10	Main
   super_class:		#14	java/lang/Object
 Constant pool:
-  #01 = Integer			5
-  #02 = Utf8			main
-  #03 = Utf8			()V
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Integer			5
   #04 = Utf8			Code
   #05 = Utf8			StackMapTable
-  #06 = Utf8			[Ljava/lang/String;
-  #07 = Class		#6	[Ljava/lang/String;
-  #08 = Utf8			Main
-  #09 = Class		#8	Main
-  #10 = NameAndType	#2:#3	main:()V
-  #11 = MethodRef	#9.#10	Main:main:()V
-  #12 = Utf8			([Ljava/lang/String;)V
+  #06 = Utf8			([Ljava/lang/String;)V
+  #07 = Utf8			[Ljava/lang/String;
+  #08 = Class		#7	[Ljava/lang/String;
+  #09 = Utf8			Main
+  #10 = Class		#9	Main
+  #11 = NameAndType	#1:#2	main:()V
+  #12 = MethodRef	#10.#11	Main:main:()V
   #13 = Utf8			java/lang/Object
   #14 = Class		#13	java/lang/Object
 
 {
   fn main {
     descriptor: ()V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 4
-       0: LoadConstant		#1	5
+       0: LoadConstant		#3	5
        2: IStore			0
        4: ILoad			0
        6: I2L
@@ -42,10 +42,10 @@ Constant pool:
 
   fn main {
     descriptor: ([Ljava/lang/String;)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#11	Main:main:()V
+      0: InvokeStatic		#12	Main:main:()V
       3: Return
       StackMapTable:
         Full

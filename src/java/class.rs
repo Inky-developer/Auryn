@@ -6,10 +6,12 @@ use std::{
 };
 
 use crate::{
+    bitflags,
     java::{
         constant_pool_builder::ConstantPoolBuilder,
         display::{
-            ConstantPoolDisplay, ConstantPoolEntryDisplay, InstructionDisplay, MethodDisplay,
+            ConstantPoolDisplay, ConstantPoolEntryDisplay, FieldDisplay, InstructionDisplay,
+            MethodDisplay,
         },
     },
     utils::small_string::SmallString,
@@ -204,14 +206,26 @@ impl Comparison {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
+    /// Creates a new object of the given class
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.new>
+    New(ConstantPoolIndex),
     /// Static must be a FieldRef
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.getstatic>
     GetStatic(ConstantPoolIndex),
+    /// Loads a field of an object
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.getfield>
+    GetField(ConstantPoolIndex),
+    /// Writes a value to a field of an object
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.putfield>
+    PutField(ConstantPoolIndex),
     /// Static must be a MethodRef
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokestatic>
     InvokeStatic(ConstantPoolIndex),
     /// Index must be a MethodRef
     InvokeVirtual(ConstantPoolIndex),
+    /// Similar to [`Instruction::InvokeVirtual`], but only used for `<init>` and `super` calls.
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.invokespecial>
+    InvokeSpecial(ConstantPoolIndex),
     /// Loads a constant from the constant pool
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.ldc>
     Ldc(ConstantPoolIndex),
@@ -344,8 +358,20 @@ pub enum Instruction {
 impl Instruction {
     pub fn serialize(&self, buf: &mut impl Write, current_index: u16) -> io::Result<()> {
         match *self {
+            Instruction::New(reference) => {
+                buf.write_all(&[0xbb])?;
+                reference.serialize(buf)?;
+            }
             Instruction::GetStatic(reference) => {
                 buf.write_all(&[0xb2])?;
+                reference.serialize(buf)?;
+            }
+            Instruction::GetField(reference) => {
+                buf.write_all(&[0xb4])?;
+                reference.serialize(buf)?;
+            }
+            Instruction::PutField(reference) => {
+                buf.write_all(&[0xb5])?;
                 reference.serialize(buf)?;
             }
             Instruction::IConst(value) => {
@@ -359,6 +385,10 @@ impl Instruction {
             Instruction::InvokeVirtual(reference) => {
                 buf.write_all(&[0xb6])?;
                 reference.serialize(buf)?;
+            }
+            Instruction::InvokeSpecial(method_reference) => {
+                buf.write_all(&[0xb7])?;
+                method_reference.serialize(buf)?;
             }
             Instruction::Return => {
                 buf.write_all(&[0xb1])?;
@@ -761,16 +791,69 @@ impl AttributeInfo {
     }
 }
 
-#[repr(u16)]
-pub enum MethodAccessFlag {
-    Public = 0x0001,
-    Static = 0x0008,
-    Final = 0x0010,
+bitflags! {
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.5-200-A.1>
+    pub struct FieldAccessFlags: u16 {
+        pub const PUBLIC    = 0x0001;
+        pub const PRIVATE   = 0x0002;
+        pub const PROTECTED = 0x0004;
+        pub const STATIC    = 0x0008;
+        pub const FINAL     = 0x0010;
+        pub const VOLATILE  = 0x0040;
+        pub const SYNTHETIC = 0x1000;
+        pub const ENUM      = 0x4000;
+    }
+}
+
+/// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.5>
+#[derive(Debug)]
+pub struct Field {
+    pub flags: FieldAccessFlags,
+    /// points to utf8 of the class name
+    pub name_index: ConstantPoolIndex,
+    /// points to utf8 of the descriptor
+    pub descriptor_index: ConstantPoolIndex,
+    pub attributes: Vec<AttributeInfo>,
+}
+
+impl Field {
+    pub fn display<'a>(&'a self, pool: &'a ConstantPool) -> FieldDisplay<'a> {
+        FieldDisplay { field: self, pool }
+    }
+
+    pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
+        buf.write_all(&self.flags.get().to_be_bytes())?;
+        self.name_index.serialize(buf)?;
+        self.descriptor_index.serialize(buf)?;
+        let attribute_count: u16 = self.attributes.len().try_into().unwrap();
+        buf.write_all(&attribute_count.to_be_bytes())?;
+        for attribute in &self.attributes {
+            attribute.serialize(buf)?;
+        }
+        Ok(())
+    }
+}
+
+bitflags! {
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.6-200-A.1>
+    pub struct MethodAccessFlags: u16 {
+        pub const PUBLIC       = 0x0001;
+        pub const PRIVATE      = 0x0002;
+        pub const PROTECTED    = 0x0004;
+        pub const STATIC       = 0x0008;
+        pub const FINAL        = 0x0010;
+        pub const SYNCHRONIZED = 0x0020;
+        pub const BRIDGE       = 0x0040;
+        pub const VARARGS      = 0x0080;
+        pub const NATIVE       = 0x0100;
+        pub const ABSTRACT     = 0x0400;
+        pub const SYNTHETIC    = 0x1000;
+    }
 }
 
 #[derive(Debug)]
 pub struct Method {
-    pub flags: u16,
+    pub flags: MethodAccessFlags,
     /// Index into the constant pool that must reference a Utf8 entry
     pub name_index: ConstantPoolIndex,
     /// Index into the constant pool that must reference a Utf8 entry
@@ -780,7 +863,7 @@ pub struct Method {
 
 impl Method {
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
-        buf.write_all(&self.flags.to_be_bytes())?;
+        buf.write_all(&self.flags.get().to_be_bytes())?;
         self.name_index.serialize(buf)?;
         self.descriptor_index.serialize(buf)?;
 
@@ -809,6 +892,7 @@ pub struct ClassData {
     pub this_class: ConstantPoolIndex,
     // Index into the constant pool that must reference a class entry
     pub super_class: ConstantPoolIndex,
+    pub fields: Vec<Field>,
     pub methods: Vec<Method>,
 }
 
@@ -823,6 +907,7 @@ impl ClassData {
     pub fn new(
         class_name: SmallString,
         mut builder: ConstantPoolBuilder,
+        fields: Vec<Field>,
         methods: Vec<Method>,
     ) -> Self {
         let this_class = builder.add_class(class_name);
@@ -832,6 +917,7 @@ impl ClassData {
             constant_pool,
             this_class,
             super_class,
+            fields,
             methods,
         }
     }
@@ -852,8 +938,11 @@ impl ClassData {
         // Interfaces count & interfaces
         buf.write_all(&[0, 0])?;
 
-        // Fields count & fields
-        buf.write_all(&[0, 0])?;
+        let field_count: u16 = self.fields.len().try_into().unwrap();
+        buf.write_all(&field_count.to_be_bytes())?;
+        for field in &self.fields {
+            field.serialize(buf)?;
+        }
 
         buf.write_all(&(self.methods.len() as u16).to_be_bytes())?;
         for method in &self.methods {
@@ -873,6 +962,7 @@ impl Debug for ClassData {
             constant_pool,
             this_class,
             super_class,
+            fields,
             methods,
         } = self;
 
@@ -894,6 +984,9 @@ impl Debug for ClassData {
         writeln!(f, "{pool_display}")?;
 
         writeln!(f, "{{")?;
+        for field in fields {
+            writeln!(f, "{}", field.display(constant_pool))?;
+        }
         for method in methods {
             writeln!(f, "{}", method.display(constant_pool))?;
         }

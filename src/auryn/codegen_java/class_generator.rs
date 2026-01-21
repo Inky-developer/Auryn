@@ -5,22 +5,23 @@ use crate::{
             typecheck::types::TypeView,
         },
         codegen_java::{
-            function_generator::generate_function,
+            function_generator::FunctionGenerator,
             representation::{
-                FieldDescriptor, MethodDescriptor, ReturnDescriptor, get_function_representation,
+                FieldDescriptor, ImplicitArgs, MethodDescriptor, RepresentationCtx,
+                ReturnDescriptor,
             },
         },
     },
     java::{
-        class::{self},
+        class,
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{FunctionAssembler, Instruction},
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
-pub fn generate_class(air: &Air) -> class::ClassData {
-    let generator = ClassGenerator::new("Main".into(), air);
+pub(super) fn generate_main_class(air: &Air, repr_ctx: &mut RepresentationCtx) -> class::ClassData {
+    let generator = ClassGenerator::new("Main".into(), air, repr_ctx);
     generator.generate_from_air()
 }
 
@@ -31,21 +32,23 @@ pub struct GeneratedMethodData {
 }
 
 pub struct ClassGenerator<'a> {
-    air: &'a Air,
-    class_name: SmallString,
+    pub(super) air: &'a Air,
+    pub(super) repr_ctx: &'a mut RepresentationCtx,
+    pub(super) class_name: SmallString,
     methods: Vec<class::Method>,
-    constant_pool: ConstantPoolBuilder,
-    generated_methods: FastMap<AirFunctionId, GeneratedMethodData>,
+    pub(super) constant_pool: ConstantPoolBuilder,
+    pub(super) generated_methods: FastMap<AirFunctionId, GeneratedMethodData>,
 }
 
 impl<'a> ClassGenerator<'a> {
-    fn new(class_name: SmallString, air: &'a Air) -> Self {
+    fn new(class_name: SmallString, air: &'a Air, repr_ctx: &'a mut RepresentationCtx) -> Self {
         Self {
             air,
             class_name,
-            methods: Vec::new(),
-            constant_pool: ConstantPoolBuilder::default(),
-            generated_methods: FastMap::default(),
+            repr_ctx,
+            methods: default(),
+            constant_pool: default(),
+            generated_methods: default(),
         }
     }
 }
@@ -58,7 +61,7 @@ impl ClassGenerator<'_> {
             else {
                 unreachable!("Function should have a function type");
             };
-            let method_descriptor = get_function_representation(function_type);
+            let method_descriptor = self.repr_ctx.get_function_representation(function_type);
 
             let mangled_name = function.ident.clone();
 
@@ -78,20 +81,27 @@ impl ClassGenerator<'_> {
         let main_function_id = self.air.main_function().0;
         self.generate_main_function(main_function_id);
 
-        class::ClassData::new(self.class_name, self.constant_pool, self.methods)
+        class::ClassData::new(
+            self.class_name,
+            self.constant_pool,
+            Vec::new(),
+            self.methods,
+        )
     }
 
     fn generate_function(&mut self, id: AirFunctionId, function: &AirFunction) {
         let data = &self.generated_methods[&id];
-        let method = generate_function(
-            &mut self.constant_pool,
-            &self.air.ty_ctx,
-            &self.generated_methods,
-            &self.class_name,
-            function,
-            data.generated_name.clone(),
-            data.method_descriptor.clone(),
-        );
+        let method = {
+            let mut generator = FunctionGenerator::new(
+                data.generated_name.clone(),
+                function,
+                data.method_descriptor.clone(),
+                self,
+            );
+            generator.generate_from_function(function);
+
+            generator.finish()
+        };
         self.methods.push(method);
     }
 
@@ -119,8 +129,12 @@ impl ClassGenerator<'_> {
             "Main function should not take arguments"
         );
 
-        let mut assembler =
-            FunctionAssembler::new("main".into(), main_descriptor, &mut self.constant_pool, 1);
+        let mut assembler = FunctionAssembler::new(
+            "main".into(),
+            main_descriptor,
+            ImplicitArgs::None,
+            &mut self.constant_pool,
+        );
 
         assembler.add(Instruction::InvokeStatic {
             class_name: self.class_name.clone(),
@@ -135,7 +149,10 @@ impl ClassGenerator<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{auryn::api::compile, java::class::ClassData};
+    use crate::{
+        auryn::{api::compile, codegen_java::codegen::CodegenOutput},
+        java::class::ClassData,
+    };
 
     fn generate_class_wrapped(input: &str) -> ClassData {
         let wrapped_input = format!("fn main() {{ {input} }}");
@@ -143,10 +160,16 @@ mod tests {
     }
 
     fn generate_class(input: &str) -> ClassData {
+        let mut output = generate_classes(input);
+        assert_eq!(output.files.len(), 1);
+        output.files.remove("Main").unwrap()
+    }
+
+    fn generate_classes(input: &str) -> CodegenOutput {
         match compile(input) {
-            Ok(class) => class,
+            Ok(output) => output,
             Err(diagnostics) => {
-                panic!("Could not compile {input}:\n{:?}", diagnostics.to_display());
+                panic!("Could not compile '{input}':\n{}", diagnostics.to_display())
             }
         }
     }
@@ -293,6 +316,15 @@ mod tests {
             }
             "#
         ))
+    }
+
+    #[test]
+    fn test_structural() {
+        insta::assert_debug_snapshot!(generate_classes(
+            "fn main() { print({a: true, b: 2, c: false}) }"
+        ));
+        insta::assert_debug_snapshot!(generate_classes("fn main() { print({a: 1}.a) }"));
+        insta::assert_debug_snapshot!(generate_classes(r#"fn main() { print({a: "test"}.a) }"#));
     }
 
     #[test]

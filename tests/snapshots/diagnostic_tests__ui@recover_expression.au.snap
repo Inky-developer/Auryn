@@ -10,5 +10,5 @@ Error: Expected expression
    │             │ 
    │             ╰─ got ","
    │ 
-   │ Note: Valid tokens: `<number>`, `<string>`, `<identifier>`, `(`, `true` or `false`
+   │ Note: Valid tokens: `<number>`, `<string>`, `<identifier>`, `(`, `{`, `true` or `false`
 ───╯

@@ -3,38 +3,38 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class(r#\"\n            unsafe extern \"java\" {\n                [\"java/io/PrintStream\"]\n                type PrintStream {}\n\n                [\"java/lang/System\"]\n                type System {\n                    [\"out\"]\n                    static let out: PrintStream\n                }\n            }\n            fn main() { System.out }\n            \"#)"
 ---
 ClassData
-  this_class:		#16	Main
+  this_class:		#17	Main
   super_class:		#21	java/lang/Object
 Constant pool:
-  #01 = Utf8			java/io/PrintStream
-  #02 = Class		#1	java/io/PrintStream
-  #03 = Utf8			java/lang/System
-  #04 = Class		#3	java/lang/System
-  #05 = Utf8			out
-  #06 = Utf8			Ljava/io/PrintStream;
-  #07 = NameAndType	#5:#6	out:Ljava/io/PrintStream;
-  #08 = FieldRef	#4.#7	java/lang/System.out:Ljava/io/PrintStream;
-  #09 = Utf8			main
-  #10 = Utf8			()V
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Utf8			java/io/PrintStream
+  #04 = Class		#3	java/io/PrintStream
+  #05 = Utf8			java/lang/System
+  #06 = Class		#5	java/lang/System
+  #07 = Utf8			out
+  #08 = Utf8			Ljava/io/PrintStream;
+  #09 = NameAndType	#7:#8	out:Ljava/io/PrintStream;
+  #10 = FieldRef	#6.#9	java/lang/System.out:Ljava/io/PrintStream;
   #11 = Utf8			Code
   #12 = Utf8			StackMapTable
-  #13 = Utf8			[Ljava/lang/String;
-  #14 = Class		#13	[Ljava/lang/String;
-  #15 = Utf8			Main
-  #16 = Class		#15	Main
-  #17 = NameAndType	#9:#10	main:()V
-  #18 = MethodRef	#16.#17	Main:main:()V
-  #19 = Utf8			([Ljava/lang/String;)V
+  #13 = Utf8			([Ljava/lang/String;)V
+  #14 = Utf8			[Ljava/lang/String;
+  #15 = Class		#14	[Ljava/lang/String;
+  #16 = Utf8			Main
+  #17 = Class		#16	Main
+  #18 = NameAndType	#1:#2	main:()V
+  #19 = MethodRef	#17.#18	Main:main:()V
   #20 = Utf8			java/lang/Object
   #21 = Class		#20	java/lang/Object
 
 {
   fn main {
     descriptor: ()V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 1
-      0: GetStatic		#8	java/lang/System.out:Ljava/io/PrintStream;
+      0: GetStatic		#10	java/lang/System.out:Ljava/io/PrintStream;
       3: Pop
       4: Return
       StackMapTable:
@@ -46,10 +46,10 @@ Constant pool:
 
   fn main {
     descriptor: ([Ljava/lang/String;)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#18	Main:main:()V
+      0: InvokeStatic		#19	Main:main:()V
       3: Return
       StackMapTable:
         Full

@@ -6,7 +6,7 @@ use crate::{
             bounds::{ArrayBound, Bound},
             types::{
                 ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType,
-                NumberLiteralType, Type,
+                NumberLiteralType, StructuralType, Type,
             },
         },
         syntax_id::SyntaxId,
@@ -40,6 +40,7 @@ pub struct TypeContext {
     number_literals: BidirectionalTypeMap<NumberLiteralType>,
     arrays: BidirectionalTypeMap<ArrayType>,
     metas: BidirectionalTypeMap<MetaType>,
+    structurals: BidirectionalTypeMap<StructuralType>,
     externs: TypeMap<ExternType>,
     function_items: TypeMap<FunctionItemType>,
     intrinsics: BidirectionalTypeMap<IntrinsicType>,
@@ -67,6 +68,10 @@ impl TypeContext {
         Type::Array(self.add_array(ArrayType { element_type }))
     }
 
+    pub fn structural_of(&mut self, structural_type: StructuralType) -> Type {
+        Type::Structural(self.add_structural(structural_type))
+    }
+
     pub fn meta_of(&mut self, inner: Type) -> Type {
         Type::Meta(self.add_meta(MetaType { inner }))
     }
@@ -80,6 +85,10 @@ impl TypeContext {
 
     pub fn add_array(&mut self, array: ArrayType) -> TypeId<ArrayType> {
         add_non_unique_type(&mut self.next_id, array, &mut self.arrays)
+    }
+
+    pub fn add_structural(&mut self, structural: StructuralType) -> TypeId<StructuralType> {
+        add_non_unique_type(&mut self.next_id, structural, &mut self.structurals)
     }
 
     pub fn add_meta(&mut self, meta: MetaType) -> TypeId<MetaType> {
@@ -127,6 +136,9 @@ impl TypeContext {
     pub(super) fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
         self.arrays.get_by_key(&id).unwrap()
     }
+    pub(super) fn get_structural(&self, id: TypeId<StructuralType>) -> &StructuralType {
+        self.structurals.get_by_key(&id).unwrap()
+    }
     pub(super) fn get_meta(&self, id: TypeId<MetaType>) -> &MetaType {
         self.metas.get_by_key(&id).unwrap()
     }
@@ -153,6 +165,7 @@ impl Default for TypeContext {
             array_bounds: default(),
             number_literals: default(),
             arrays: default(),
+            structurals: default(),
             metas: default(),
             externs: default(),
             function_items: default(),

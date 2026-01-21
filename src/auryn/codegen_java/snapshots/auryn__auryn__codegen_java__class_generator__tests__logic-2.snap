@@ -3,27 +3,27 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"false or true\")"
 ---
 ClassData
-  this_class:		#8	Main
+  this_class:		#9	Main
   super_class:		#13	java/lang/Object
 Constant pool:
   #01 = Utf8			main
   #02 = Utf8			()V
   #03 = Utf8			Code
   #04 = Utf8			StackMapTable
-  #05 = Utf8			[Ljava/lang/String;
-  #06 = Class		#5	[Ljava/lang/String;
-  #07 = Utf8			Main
-  #08 = Class		#7	Main
-  #09 = NameAndType	#1:#2	main:()V
-  #10 = MethodRef	#8.#9	Main:main:()V
-  #11 = Utf8			([Ljava/lang/String;)V
+  #05 = Utf8			([Ljava/lang/String;)V
+  #06 = Utf8			[Ljava/lang/String;
+  #07 = Class		#6	[Ljava/lang/String;
+  #08 = Utf8			Main
+  #09 = Class		#8	Main
+  #10 = NameAndType	#1:#2	main:()V
+  #11 = MethodRef	#9.#10	Main:main:()V
   #12 = Utf8			java/lang/Object
   #13 = Class		#12	java/lang/Object
 
 {
   fn main {
     descriptor: ()V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 1
        0: IConst			0
@@ -54,10 +54,10 @@ Constant pool:
 
   fn main {
     descriptor: ([Ljava/lang/String;)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#10	Main:main:()V
+      0: InvokeStatic		#11	Main:main:()V
       3: Return
       StackMapTable:
         Full

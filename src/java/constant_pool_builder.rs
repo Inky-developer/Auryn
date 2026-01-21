@@ -115,6 +115,10 @@ impl ConstantPoolBuilder {
     pub fn get_string_index(&mut self) -> ConstantPoolIndex {
         self.add_class("java/lang/String".into())
     }
+
+    pub fn get_code_attribute_index(&mut self) -> ConstantPoolIndex {
+        self.add_utf8("Code".into())
+    }
 }
 
 impl Index<ConstantPoolIndex> for ConstantPoolBuilder {

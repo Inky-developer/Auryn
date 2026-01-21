@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
 use crate::java::class::{
-    Attribute, CodeAttribute, ConstantPool, ConstantPoolEntry, ConstantPoolIndex, Instruction,
-    Method, StackMapFrame, StackMapTableAttribute, VerificationTypeInfo,
+    Attribute, CodeAttribute, ConstantPool, ConstantPoolEntry, ConstantPoolIndex, Field,
+    Instruction, Method, StackMapFrame, StackMapTableAttribute, VerificationTypeInfo,
 };
 
 impl Display for ConstantPoolIndex {
@@ -89,6 +89,44 @@ impl Display for ConstantPoolEntryDisplay<'_> {
     }
 }
 
+pub struct FieldDisplay<'a> {
+    pub(super) field: &'a Field,
+    pub(super) pool: &'a ConstantPool,
+}
+
+impl Display for FieldDisplay<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let load = |index: ConstantPoolIndex| self.pool[index].display(self.pool);
+
+        let Field {
+            flags,
+            name_index,
+            descriptor_index,
+            attributes,
+        } = &self.field;
+
+        write!(f, "  ")?;
+        for flag in flags.active_variants() {
+            write!(f, "{} ", flag.name)?;
+        }
+        writeln!(f, "{}: {}", load(*name_index), load(*descriptor_index))?;
+
+        for attribute in attributes {
+            writeln!(
+                f,
+                "{}",
+                AttributeDisplay {
+                    attribute: &attribute.attribute,
+                    pool: self.pool,
+                    indent: 4
+                }
+            )?;
+        }
+
+        Ok(())
+    }
+}
+
 pub struct MethodDisplay<'a> {
     pub(super) method: &'a Method,
     pub(super) pool: &'a ConstantPool,
@@ -107,7 +145,7 @@ impl Display for MethodDisplay<'_> {
         writeln!(f, "  fn {} {{", load(*name_index))?;
 
         writeln!(f, "    descriptor: {}", load(*descriptor_index))?;
-        writeln!(f, "    flags: {flags}")?;
+        writeln!(f, "    flags: {flags:?}")?;
 
         for attribute_info in attributes {
             let attribute = &attribute_info.attribute;
@@ -289,6 +327,26 @@ impl Display for InstructionDisplay<'_> {
             LLoad(index) => write!(f, "LLoad\t\t\t{index}"),
             Lcmp => write!(f, "Lcmp"),
             L2I => write!(f, "L2I"),
+            New(constant_pool_index) => write!(
+                f,
+                "New\t\t\t{constant_pool_index}\t{}",
+                load(constant_pool_index)
+            ),
+            InvokeSpecial(constant_pool_index) => write!(
+                f,
+                "InvokeSpecial\t\t{constant_pool_index}\t{}",
+                load(constant_pool_index)
+            ),
+            GetField(constant_pool_index) => write!(
+                f,
+                "GetField\t\t{constant_pool_index}\t{}",
+                load(constant_pool_index)
+            ),
+            PutField(constant_pool_index) => write!(
+                f,
+                "PutField\t\t{constant_pool_index}\t{}",
+                load(constant_pool_index)
+            ),
         }
     }
 }

@@ -3,36 +3,36 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"1 / 2 % 3\")"
 ---
 ClassData
-  this_class:		#11	Main
+  this_class:		#12	Main
   super_class:		#16	java/lang/Object
 Constant pool:
-  #01 = Integer			1
-  #02 = Integer			2
-  #03 = Integer			3
-  #04 = Utf8			main
-  #05 = Utf8			()V
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Integer			1
+  #04 = Integer			2
+  #05 = Integer			3
   #06 = Utf8			Code
   #07 = Utf8			StackMapTable
-  #08 = Utf8			[Ljava/lang/String;
-  #09 = Class		#8	[Ljava/lang/String;
-  #10 = Utf8			Main
-  #11 = Class		#10	Main
-  #12 = NameAndType	#4:#5	main:()V
-  #13 = MethodRef	#11.#12	Main:main:()V
-  #14 = Utf8			([Ljava/lang/String;)V
+  #08 = Utf8			([Ljava/lang/String;)V
+  #09 = Utf8			[Ljava/lang/String;
+  #10 = Class		#9	[Ljava/lang/String;
+  #11 = Utf8			Main
+  #12 = Class		#11	Main
+  #13 = NameAndType	#1:#2	main:()V
+  #14 = MethodRef	#12.#13	Main:main:()V
   #15 = Utf8			java/lang/Object
   #16 = Class		#15	java/lang/Object
 
 {
   fn main {
     descriptor: ()V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 1
-       0: LoadConstant		#1	1
-       2: LoadConstant		#2	2
+       0: LoadConstant		#3	1
+       2: LoadConstant		#4	2
        4: IDiv
-       5: LoadConstant		#3	3
+       5: LoadConstant		#5	3
        7: IRem
        8: Pop
        9: Return
@@ -45,10 +45,10 @@ Constant pool:
 
   fn main {
     descriptor: ([Ljava/lang/String;)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#13	Main:main:()V
+      0: InvokeStatic		#14	Main:main:()V
       3: Return
       StackMapTable:
         Full

@@ -1,0 +1,6 @@
+// expect-output:
+// Hello, World
+
+fn main() {
+	print({a: "Hello, World"}.a)
+}

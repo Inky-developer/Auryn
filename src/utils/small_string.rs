@@ -115,6 +115,18 @@ impl PartialEq for SmallString {
 
 impl Eq for SmallString {}
 
+impl PartialOrd for SmallString {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for SmallString {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.as_ref().cmp(other.as_ref())
+    }
+}
+
 impl Clone for SmallString {
     fn clone(&self) -> Self {
         SmallString::from(self.as_ref())

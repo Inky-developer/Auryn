@@ -15,8 +15,8 @@ use crate::{
                 bounds::{Bound, BoundView, MaybeBounded},
                 type_context::{TypeContext, TypeId},
                 types::{
-                    ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, Type,
-                    TypeView,
+                    ExternType, ExternTypeMember, FunctionItemType, FunctionParameters,
+                    StructuralType, Type, TypeView,
                 },
             },
         },
@@ -223,6 +223,15 @@ impl Typechecker {
                     },
                 ))
             }
+            UnresolvedType::Structural(structural_type) => {
+                let ty = StructuralType {
+                    fields: structural_type
+                        .iter()
+                        .map(|(ident, field)| (ident.clone(), self.resolve_type(field)))
+                        .collect(),
+                };
+                self.ty_ctx.structural_of(ty)
+            }
         }
     }
 
@@ -359,18 +368,28 @@ impl Typechecker {
         expression.r#type = AirType::Computed(inferred_type);
     }
 
-    fn infer_constant(&mut self, constant: &AirConstant) -> Type {
+    fn infer_constant(&mut self, constant: &mut AirConstant) -> Type {
         match constant {
             AirConstant::Number(value) => self.ty_ctx.number_literal_of(*value),
             AirConstant::Boolean(_) => Type::Bool,
             AirConstant::String(_) => Type::String,
+            AirConstant::StructLiteral(struct_literal) => {
+                let types = struct_literal
+                    .iter_mut()
+                    .map(|(ident, expr)| {
+                        self.infer_expression(expr);
+                        (ident.clone(), expr.r#type.computed())
+                    })
+                    .collect();
+                self.ty_ctx.structural_of(StructuralType { fields: types })
+            }
         }
     }
 
     fn check_constant(
         &mut self,
         id: SyntaxId,
-        constant: &AirConstant,
+        constant: &mut AirConstant,
         expected: MaybeBounded,
     ) -> Type {
         match constant {
@@ -422,6 +441,8 @@ impl Typechecker {
             }
             AirConstant::String(_) => Type::String,
             AirConstant::Boolean(_) => Type::Bool,
+            // TODO: Add type inference for struct literals
+            AirConstant::StructLiteral(_) => self.infer_constant(constant),
         }
     }
 

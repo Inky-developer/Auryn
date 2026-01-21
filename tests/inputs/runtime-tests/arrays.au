@@ -20,8 +20,6 @@ fn main() {
 	print("Printing array...")
 	print_array(a)
 	print("Done")
-
-	print(arrayGet(a, 5))
 }
 
 fn print_array(array: []I32) {

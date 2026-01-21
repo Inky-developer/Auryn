@@ -114,7 +114,8 @@ impl SourceGraph {
     ) -> (Vec<class::Instruction>, StackMapTableAttribute) {
         let mut context = AssemblyContext(constant_pool);
         let mut graph = build_graph(self.graph);
-        let block_order = graph.order_topologically(BasicBlockId(0));
+        let mut block_order = graph.order_topologically([BasicBlockId(0)]);
+        block_order.reverse();
         // The block order gets computed by following the forward edges,
         // but now we want to query the blocks from which a block can be reached, so the graph must be inverted.
         graph.invert_edges();
@@ -253,6 +254,9 @@ impl AssemblyContext<'_> {
         mut on_instruction: impl FnMut(class::Instruction),
     ) {
         match instruction {
+            Instruction::New(class_name) => on_instruction(class::Instruction::New(
+                self.0.add_class(class_name.clone()),
+            )),
             Instruction::GetStatic {
                 class_name,
                 name,
@@ -264,6 +268,30 @@ impl AssemblyContext<'_> {
                     field_type.to_string().into(),
                 );
                 on_instruction(class::Instruction::GetStatic(field_ref_index))
+            }
+            Instruction::GetField {
+                class_name,
+                name,
+                field_descriptor,
+            } => {
+                let field_ref_index = self.0.add_field_ref(
+                    class_name.clone(),
+                    name.clone(),
+                    field_descriptor.to_string().into(),
+                );
+                on_instruction(class::Instruction::GetField(field_ref_index))
+            }
+            Instruction::PutField {
+                class_name,
+                name,
+                field_descriptor,
+            } => {
+                let field_ref_index = self.0.add_field_ref(
+                    class_name.clone(),
+                    name.clone(),
+                    field_descriptor.to_string().into(),
+                );
+                on_instruction(class::Instruction::PutField(field_ref_index))
             }
             Instruction::InvokeVirtual {
                 class_name,
@@ -288,6 +316,18 @@ impl AssemblyContext<'_> {
                     method_descriptor.to_string().into(),
                 );
                 on_instruction(class::Instruction::InvokeStatic(method_ref_index))
+            }
+            Instruction::InvokeSpecial {
+                class_name,
+                name,
+                method_descriptor,
+            } => {
+                let method_ref_index = self.0.add_method_ref(
+                    class_name.clone(),
+                    name.clone(),
+                    method_descriptor.to_string().into(),
+                );
+                on_instruction(class::Instruction::InvokeSpecial(method_ref_index))
             }
             Instruction::NewArray(element_type) => {
                 on_instruction(match element_type.clone().to_primitive_type_or_object() {
@@ -365,7 +405,7 @@ impl AssemblyContext<'_> {
             }),
             Instruction::Store(id) => {
                 on_instruction(match id.r#type.clone().to_primitive_type_or_object() {
-                    PrimitiveOrObject::Primitive(PrimitiveType::Int) => {
+                    PrimitiveOrObject::Primitive(PrimitiveType::Int | PrimitiveType::Boolean) => {
                         class::Instruction::IStore(id.index)
                     }
                     PrimitiveOrObject::Primitive(PrimitiveType::Long) => {
@@ -379,7 +419,7 @@ impl AssemblyContext<'_> {
             }
             Instruction::Load(id) => {
                 on_instruction(match id.r#type.clone().to_primitive_type_or_object() {
-                    PrimitiveOrObject::Primitive(PrimitiveType::Int) => {
+                    PrimitiveOrObject::Primitive(PrimitiveType::Int | PrimitiveType::Boolean) => {
                         class::Instruction::ILoad(id.index)
                     }
                     PrimitiveOrObject::Primitive(PrimitiveType::Long) => {

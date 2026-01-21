@@ -1,7 +1,7 @@
 /target
 /.idea
 # For debugging
-*.class
+/build
 # Code snippets for testing
 /snippets
 /proptest-regressions

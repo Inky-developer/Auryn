@@ -1,0 +1,139 @@
+---
+source: src/auryn/codegen_java/class_generator.rs
+expression: "generate_classes(\"fn main() { print({a: true, b: 2, c: false}) }\")"
+---
+Main:
+ClassData
+  this_class:		#31	Main
+  super_class:		#35	java/lang/Object
+Constant pool:
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Utf8			java/io/PrintStream
+  #04 = Class		#3	java/io/PrintStream
+  #05 = Utf8			Structural3$Bool$2$Bool
+  #06 = Class		#5	Structural3$Bool$2$Bool
+  #07 = Utf8			java/lang/String
+  #08 = Class		#7	java/lang/String
+  #09 = Utf8			java/lang/System
+  #10 = Class		#9	java/lang/System
+  #11 = Utf8			out
+  #12 = Utf8			Ljava/io/PrintStream;
+  #13 = NameAndType	#11:#12	out:Ljava/io/PrintStream;
+  #14 = FieldRef	#10.#13	java/lang/System.out:Ljava/io/PrintStream;
+  #15 = Utf8			<init>
+  #16 = Utf8			(ZZ)V
+  #17 = NameAndType	#15:#16	<init>:(ZZ)V
+  #18 = MethodRef	#6.#17	Structural3$Bool$2$Bool:<init>:(ZZ)V
+  #19 = Utf8			{ a: Bool, b: 2, c: Bool }
+  #20 = String		#19	{ a: Bool, b: 2, c: Bool }
+  #21 = Utf8			println
+  #22 = Utf8			(Ljava/lang/String;)V
+  #23 = NameAndType	#21:#22	println:(Ljava/lang/String;)V
+  #24 = MethodRef	#4.#23	java/io/PrintStream:println:(Ljava/lang/String;)V
+  #25 = Utf8			Code
+  #26 = Utf8			StackMapTable
+  #27 = Utf8			([Ljava/lang/String;)V
+  #28 = Utf8			[Ljava/lang/String;
+  #29 = Class		#28	[Ljava/lang/String;
+  #30 = Utf8			Main
+  #31 = Class		#30	Main
+  #32 = NameAndType	#1:#2	main:()V
+  #33 = MethodRef	#31.#32	Main:main:()V
+  #34 = Utf8			java/lang/Object
+  #35 = Class		#34	java/lang/Object
+
+{
+  fn main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 8, locals = 1
+       0: GetStatic		#14	java/lang/System.out:Ljava/io/PrintStream;
+       3: New			#6	Structural3$Bool$2$Bool
+       6: Dup
+       7: IConst			1
+       8: IConst			0
+       9: InvokeSpecial		#18	Structural3$Bool$2$Bool:<init>:(ZZ)V
+      12: Pop
+      13: LoadConstant		#20	{ a: Bool, b: 2, c: Bool }
+      15: InvokeVirtual		#24	java/io/PrintStream:println:(Ljava/lang/String;)V
+      18: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 8, locals = 2
+      0: InvokeStatic		#33	Main:main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}
+
+-----
+
+Structural3$Bool$2$Bool:
+ClassData
+  this_class:		#4	Structural3$Bool$2$Bool
+  super_class:		#6	java/lang/Object
+Constant pool:
+  #01 = Utf8			<init>
+  #02 = Utf8			(ZZ)V
+  #03 = Utf8			Structural3$Bool$2$Bool
+  #04 = Class		#3	Structural3$Bool$2$Bool
+  #05 = Utf8			java/lang/Object
+  #06 = Class		#5	java/lang/Object
+  #07 = Utf8			()V
+  #08 = NameAndType	#1:#7	<init>:()V
+  #09 = MethodRef	#6.#8	java/lang/Object:<init>:()V
+  #10 = Utf8			a
+  #11 = Utf8			Z
+  #12 = NameAndType	#10:#11	a:Z
+  #13 = FieldRef	#4.#12	Structural3$Bool$2$Bool.a:Z
+  #14 = Utf8			c
+  #15 = NameAndType	#14:#11	c:Z
+  #16 = FieldRef	#4.#15	Structural3$Bool$2$Bool.c:Z
+  #17 = Utf8			Code
+  #18 = Utf8			StackMapTable
+
+{
+  PUBLIC a: Z
+
+  PUBLIC c: Z
+
+  fn <init> {
+    descriptor: (ZZ)V
+    flags: PUBLIC
+    Code:
+      stack = 8, locals = 4
+       0: ALoad			0
+       2: Dup
+       3: InvokeSpecial		#9	java/lang/Object:<init>:()V
+       6: Dup
+       7: ILoad			1
+       9: PutField		#13	Structural3$Bool$2$Bool.a:Z
+      12: ILoad			2
+      14: PutField		#16	Structural3$Bool$2$Bool.c:Z
+      17: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ UninitializedThis,Integer,Integer ]
+          Stack = [  ]
+  }
+
+}
+
+-----

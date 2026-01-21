@@ -16,6 +16,7 @@ use crate::{
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),
+    // TODO: Check if this can be removed
     Function(TypeId<FunctionItemType>),
 }
 

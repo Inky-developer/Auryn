@@ -4,13 +4,12 @@ use crate::{
     auryn::{
         air::query_air,
         ast::query_ast,
-        codegen_java::class_generator::generate_class,
+        codegen_java::codegen::{CodegenOutput, codegen},
         diagnostic::{DiagnosticKind, Diagnostics, InputFile, InputFiles},
         diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
         file_id::FileId,
         parser::Parser,
     },
-    java::class::ClassData,
     utils::default,
 };
 
@@ -29,7 +28,7 @@ impl OwnedDiagnostics {
     }
 }
 
-pub fn compile(input: &str) -> Result<ClassData, OwnedDiagnostics> {
+pub fn compile(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
     let result = Parser::new(FileId::MAIN_FILE, input).parse();
     let mut diagnostics = result
         .syntax_tree
@@ -66,22 +65,34 @@ pub fn compile(input: &str) -> Result<ClassData, OwnedDiagnostics> {
             });
         }
     }
-    Ok(generate_class(&air.air))
+    Ok(codegen(&air.air))
 }
 
-pub fn run(class: ClassData, dir: impl AsRef<Path>) -> String {
-    let mut f = OpenOptions::new()
-        .create(true)
-        .truncate(true)
-        .write(true)
-        .open(dir.as_ref().join("Main.class"))
-        .unwrap();
-    class.serialize(&mut f).unwrap();
+pub fn run(codegen_output: CodegenOutput, dir: impl AsRef<Path>) -> String {
+    let path = dir.as_ref();
+    assert!(
+        codegen_output.files.contains_key("Main"),
+        "Could not find main file"
+    );
+    std::fs::create_dir_all(path).unwrap();
+
+    for (file, data) in codegen_output.files {
+        let mut f = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(path.join(format!("{file}.class")))
+            .unwrap();
+        data.serialize(&mut f).unwrap();
+    }
 
     let output = std::process::Command::new("java")
-        .current_dir(dir)
+        .current_dir(path)
         .arg("Main")
         .output()
         .expect("Java needs to be installed on the system to run a class");
-    output.stdout.try_into().unwrap()
+    let mut result: String = output.stdout.try_into().unwrap();
+
+    result.push_str(std::str::from_utf8(&output.stderr).unwrap());
+    result
 }

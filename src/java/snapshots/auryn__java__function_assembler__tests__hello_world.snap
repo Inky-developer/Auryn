@@ -8,12 +8,12 @@ expression: "(pool, method)"
             Utf8(
                 "Hello World!",
             ): ConstantPoolIndex(
-                11,
+                13,
             ),
             Utf8(
                 "(Ljava/lang/String;)V",
             ): ConstantPoolIndex(
-                14,
+                16,
             ),
             Class {
                 name_index: ConstantPoolIndex(
@@ -24,13 +24,28 @@ expression: "(pool, method)"
             ),
             NameAndType {
                 name_index: ConstantPoolIndex(
-                    13,
+                    9,
                 ),
                 type_index: ConstantPoolIndex(
-                    14,
+                    10,
                 ),
             }: ConstantPoolIndex(
-                15,
+                11,
+            ),
+            FieldRef {
+                class_index: ConstantPoolIndex(
+                    8,
+                ),
+                name_and_type_index: ConstantPoolIndex(
+                    11,
+                ),
+            }: ConstantPoolIndex(
+                12,
+            ),
+            Utf8(
+                "java/io/PrintStream",
+            ): ConstantPoolIndex(
+                3,
             ),
             Utf8(
                 "StackMapTable",
@@ -38,66 +53,58 @@ expression: "(pool, method)"
                 20,
             ),
             Utf8(
-                "java/io/PrintStream",
-            ): ConstantPoolIndex(
-                1,
-            ),
-            MethodRef {
-                class_index: ConstantPoolIndex(
-                    2,
-                ),
-                name_and_type_index: ConstantPoolIndex(
-                    15,
-                ),
-            }: ConstantPoolIndex(
-                16,
-            ),
-            Utf8(
                 "java/lang/String",
-            ): ConstantPoolIndex(
-                3,
-            ),
-            Utf8(
-                "java/lang/System",
             ): ConstantPoolIndex(
                 5,
             ),
             Utf8(
+                "java/lang/System",
+            ): ConstantPoolIndex(
+                7,
+            ),
+            Utf8(
                 "Ljava/io/PrintStream;",
             ): ConstantPoolIndex(
-                8,
-            ),
-            Class {
-                name_index: ConstantPoolIndex(
-                    1,
-                ),
-            }: ConstantPoolIndex(
-                2,
+                10,
             ),
             Utf8(
                 "println",
             ): ConstantPoolIndex(
-                13,
+                15,
             ),
-            NameAndType {
+            Class {
                 name_index: ConstantPoolIndex(
                     7,
                 ),
+            }: ConstantPoolIndex(
+                8,
+            ),
+            NameAndType {
+                name_index: ConstantPoolIndex(
+                    15,
+                ),
                 type_index: ConstantPoolIndex(
-                    8,
+                    16,
                 ),
             }: ConstantPoolIndex(
-                9,
+                17,
             ),
-            FieldRef {
+            MethodRef {
                 class_index: ConstantPoolIndex(
-                    6,
+                    4,
                 ),
                 name_and_type_index: ConstantPoolIndex(
-                    9,
+                    17,
                 ),
             }: ConstantPoolIndex(
-                10,
+                18,
+            ),
+            String {
+                string_index: ConstantPoolIndex(
+                    13,
+                ),
+            }: ConstantPoolIndex(
+                14,
             ),
             Utf8(
                 "Code",
@@ -112,45 +119,36 @@ expression: "(pool, method)"
                 6,
             ),
             Utf8(
-                "out",
-            ): ConstantPoolIndex(
-                7,
-            ),
-            Utf8(
                 "()V",
             ): ConstantPoolIndex(
-                18,
+                2,
+            ),
+            Utf8(
+                "out",
+            ): ConstantPoolIndex(
+                9,
             ),
             Utf8(
                 "main",
             ): ConstantPoolIndex(
-                17,
-            ),
-            String {
-                string_index: ConstantPoolIndex(
-                    11,
-                ),
-            }: ConstantPoolIndex(
-                12,
+                1,
             ),
         },
         entries: [
             None,
             Some(
                 Utf8(
-                    "java/io/PrintStream",
+                    "main",
                 ),
             ),
             Some(
-                Class {
-                    name_index: ConstantPoolIndex(
-                        1,
-                    ),
-                },
+                Utf8(
+                    "()V",
+                ),
             ),
             Some(
                 Utf8(
-                    "java/lang/String",
+                    "java/io/PrintStream",
                 ),
             ),
             Some(
@@ -162,13 +160,25 @@ expression: "(pool, method)"
             ),
             Some(
                 Utf8(
-                    "java/lang/System",
+                    "java/lang/String",
                 ),
             ),
             Some(
                 Class {
                     name_index: ConstantPoolIndex(
                         5,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "java/lang/System",
+                ),
+            ),
+            Some(
+                Class {
+                    name_index: ConstantPoolIndex(
+                        7,
                     ),
                 },
             ),
@@ -185,20 +195,20 @@ expression: "(pool, method)"
             Some(
                 NameAndType {
                     name_index: ConstantPoolIndex(
-                        7,
+                        9,
                     ),
                     type_index: ConstantPoolIndex(
-                        8,
+                        10,
                     ),
                 },
             ),
             Some(
                 FieldRef {
                     class_index: ConstantPoolIndex(
-                        6,
+                        8,
                     ),
                     name_and_type_index: ConstantPoolIndex(
-                        9,
+                        11,
                     ),
                 },
             ),
@@ -210,7 +220,7 @@ expression: "(pool, method)"
             Some(
                 String {
                     string_index: ConstantPoolIndex(
-                        11,
+                        13,
                     ),
                 },
             ),
@@ -227,32 +237,22 @@ expression: "(pool, method)"
             Some(
                 NameAndType {
                     name_index: ConstantPoolIndex(
-                        13,
+                        15,
                     ),
                     type_index: ConstantPoolIndex(
-                        14,
+                        16,
                     ),
                 },
             ),
             Some(
                 MethodRef {
                     class_index: ConstantPoolIndex(
-                        2,
+                        4,
                     ),
                     name_and_type_index: ConstantPoolIndex(
-                        15,
+                        17,
                     ),
                 },
-            ),
-            Some(
-                Utf8(
-                    "main",
-                ),
-            ),
-            Some(
-                Utf8(
-                    "()V",
-                ),
             ),
             Some(
                 Utf8(
@@ -268,12 +268,12 @@ expression: "(pool, method)"
         next_index: 21,
     },
     Method {
-        flags: 9,
+        flags: PUBLIC | STATIC,
         name_index: ConstantPoolIndex(
-            17,
+            1,
         ),
         descriptor_index: ConstantPoolIndex(
-            18,
+            2,
         ),
         attributes: [
             AttributeInfo {
@@ -287,17 +287,17 @@ expression: "(pool, method)"
                         code: [
                             GetStatic(
                                 ConstantPoolIndex(
-                                    10,
+                                    12,
                                 ),
                             ),
                             Ldc(
                                 ConstantPoolIndex(
-                                    12,
+                                    14,
                                 ),
                             ),
                             InvokeVirtual(
                                 ConstantPoolIndex(
-                                    16,
+                                    18,
                                 ),
                             ),
                             Return,

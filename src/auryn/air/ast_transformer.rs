@@ -17,8 +17,8 @@ use crate::{
             BreakStatement, Expression, ExternBlock, ExternBlockItem, ExternBlockItemKind,
             ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement,
             IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, PostfixOperation,
-            PostfixOperator, ReturnStatement, Root, Statement, StringLiteral, Type, Value,
-            ValueOrPostfix, VariableUpdate,
+            PostfixOperator, ReturnStatement, Root, Statement, StringLiteral, StructLiteral,
+            StructLiteralField, StructuralTypeField, Type, Value, ValueOrPostfix, VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -742,6 +742,7 @@ impl FunctionTransformer<'_> {
             Value::BooleanLiteral(boolean) => self.transform_boolean(boolean),
             Value::Ident(ident) => self.transform_ident(ident),
             Value::Parenthesis(parenthesis) => self.transform_parenthesis(parenthesis),
+            Value::StructLiteral(struct_literal) => self.transform_struct_literal(struct_literal),
         }
     }
 
@@ -830,6 +831,27 @@ impl FunctionTransformer<'_> {
         };
         self.transform_expression(expression)
     }
+
+    fn transform_struct_literal(&mut self, struct_literal: StructLiteral) -> AirExpression {
+        let fields = struct_literal
+            .fields()
+            .flat_map(|it| self.transform_struct_literal_field(it))
+            .collect();
+
+        AirExpression::new(
+            struct_literal.id(),
+            AirExpressionKind::Constant(AirConstant::StructLiteral(fields)),
+        )
+    }
+
+    fn transform_struct_literal_field(
+        &mut self,
+        field: StructLiteralField,
+    ) -> Option<(SmallString, AirExpression)> {
+        let ident = field.ident().ok()?;
+        let expression = field.value().ok()?;
+        Some((ident.text.clone(), self.transform_expression(expression)))
+    }
 }
 
 fn transform_to_unresolved(
@@ -837,6 +859,13 @@ fn transform_to_unresolved(
     r#type: Type,
 ) -> Result<UnresolvedType, AstError> {
     match r#type {
+        Type::StructuralType(structural) => {
+            let fields = structural
+                .fields()
+                .map(|field| transform_field_to_unresolved(namespace, field))
+                .collect::<Result<_, _>>()?;
+            Ok(UnresolvedType::Structural(fields))
+        }
         Type::ArrayType(inner) => match inner.r#type() {
             Ok(r#type) => Ok(UnresolvedType::Array(
                 r#type.id(),
@@ -852,4 +881,14 @@ fn transform_to_unresolved(
                 None => UnresolvedType::Ident(token.id, token.text.clone()),
             }),
     }
+}
+
+fn transform_field_to_unresolved(
+    namespace: &Namespace,
+    field: StructuralTypeField,
+) -> Result<(SmallString, UnresolvedType), AstError> {
+    let ident = field.ident()?;
+    let ty = field.r#type()?;
+
+    Ok((ident.text.clone(), transform_to_unresolved(namespace, ty)?))
 }

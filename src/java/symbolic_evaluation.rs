@@ -71,6 +71,11 @@ impl SymbolicEvaluator {
 
     pub fn eval(&mut self, instruction: &Instruction, pool: &mut ConstantPoolBuilder) {
         match instruction {
+            Instruction::New(class_name) => {
+                self.stack.push(VerificationTypeInfo::Object {
+                    constant_pool_index: pool.add_class(class_name.clone()),
+                });
+            }
             Instruction::GetStatic {
                 field_descriptor: field_type,
                 ..
@@ -81,10 +86,52 @@ impl SymbolicEvaluator {
                     .into_verification_type(pool);
                 self.stack.push(verification_type);
             }
+            Instruction::GetField {
+                class_name,
+                field_descriptor,
+                ..
+            } => {
+                assert_eq!(
+                    self.stack.pop(),
+                    Some(VerificationTypeInfo::Object {
+                        constant_pool_index: pool.add_class(class_name.clone())
+                    })
+                );
+                self.stack.push(
+                    field_descriptor
+                        .clone()
+                        .into_primitive()
+                        .into_verification_type(pool),
+                );
+            }
+            Instruction::PutField {
+                class_name,
+                field_descriptor,
+                ..
+            } => {
+                assert_eq!(
+                    self.stack.pop(),
+                    Some(
+                        field_descriptor
+                            .clone()
+                            .into_primitive()
+                            .into_verification_type(pool)
+                    )
+                );
+                assert_eq!(
+                    self.stack.pop(),
+                    Some(VerificationTypeInfo::Object {
+                        constant_pool_index: pool.add_class(class_name.clone())
+                    })
+                );
+            }
             Instruction::InvokeVirtual {
                 method_descriptor, ..
             }
             | Instruction::InvokeStatic {
+                method_descriptor, ..
+            }
+            | Instruction::InvokeSpecial {
                 method_descriptor, ..
             } => {
                 for argument in method_descriptor.parameters.iter().rev() {

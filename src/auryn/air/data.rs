@@ -163,7 +163,7 @@ pub enum UnresolvedExternMember {
     },
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub enum FunctionReference {
     UserDefined(AirFunctionId),
     Extern {
@@ -197,6 +197,8 @@ pub enum UnresolvedType {
     /// A type not defined by the user (so probably built-in, like `String`)
     Ident(SyntaxId, SmallString),
     Array(SyntaxId, Box<UnresolvedType>),
+    /// A structural type like {a: I32, b: I64}
+    Structural(Vec<(SmallString, UnresolvedType)>),
     Unit,
     /// A function type
     Function {
@@ -290,6 +292,7 @@ pub enum AirConstant {
     Number(i128),
     Boolean(bool),
     String(SmallString),
+    StructLiteral(Vec<(SmallString, AirExpression)>),
 }
 
 #[derive(Debug)]

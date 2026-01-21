@@ -1,12 +1,15 @@
-use std::fmt::Display;
+use std::fmt::{Display, Write};
 
 use crate::{
-    auryn::air::typecheck::types::{FunctionItemType, TypeView, TypeViewKind},
+    auryn::air::typecheck::{
+        type_context::TypeId,
+        types::{FunctionItemType, StructuralType, TypeView, TypeViewKind},
+    },
     java::{
-        class::{PrimitiveType, TypeCategory, VerificationTypeInfo},
+        class::{ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
     },
-    utils::small_string::SmallString,
+    utils::{fast_map::FastMap, small_string::SmallString},
 };
 
 /// The representation of a type in the jvm, can be converted into field descriptors and verification type info
@@ -194,10 +197,51 @@ impl From<FieldDescriptor> for ReturnDescriptor {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum ImplicitArgs {
+    None,
+    This,
+    UninitializedThis,
+}
+
+impl ImplicitArgs {
+    pub fn as_verification_type(
+        &self,
+        this_index: ConstantPoolIndex,
+    ) -> Option<VerificationTypeInfo> {
+        match self {
+            ImplicitArgs::None => None,
+            ImplicitArgs::This => Some(VerificationTypeInfo::Object {
+                constant_pool_index: this_index,
+            }),
+            ImplicitArgs::UninitializedThis => Some(VerificationTypeInfo::UninitializedThis),
+        }
+    }
+
+    pub fn stack_size(self) -> u16 {
+        match self {
+            ImplicitArgs::None => 0,
+            ImplicitArgs::This | ImplicitArgs::UninitializedThis => 1,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MethodDescriptor {
     pub parameters: Vec<FieldDescriptor>,
     pub return_type: ReturnDescriptor,
+}
+
+impl MethodDescriptor {
+    /// Returns the index of the first valid local variable of this method
+    pub fn first_variable_index(&self, implicit_args: ImplicitArgs) -> u16 {
+        implicit_args.stack_size()
+            + self
+                .parameters
+                .iter()
+                .map(|param| param.clone().into_primitive().stack_size())
+                .sum::<u16>()
+    }
 }
 
 impl Display for MethodDescriptor {
@@ -213,48 +257,111 @@ impl Display for MethodDescriptor {
     }
 }
 
-/// Returns the representation of an auryn type for the jvm.
-/// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
-pub fn get_representation(air_type: TypeView) -> Option<Representation> {
-    use TypeView::*;
-    match air_type {
-        I32 => Some(Representation::Integer),
-        I64 => Some(Representation::Long),
-        NumberLiteral(_) => None,
-        Bool => Some(Representation::Boolean),
-        String => Some(Representation::string()),
-        Array(content_type) => {
-            let content_repr = get_representation(content_type.element());
-            match content_repr {
-                Some(repr) => Some(Representation::Array(Box::new(repr))),
-                None => todo!("Add representation for array of zero-sized types"),
-            }
+#[derive(Debug, Clone)]
+pub struct StructuralRepr {
+    pub fields: Vec<(SmallString, Representation)>,
+    pub class_name: SmallString,
+}
+
+impl StructuralRepr {
+    pub fn init_descriptor(&self) -> MethodDescriptor {
+        MethodDescriptor {
+            parameters: self
+                .fields
+                .iter()
+                .map(|(_, repr)| repr.clone().into_field_descriptor())
+                .collect(),
+            return_type: ReturnDescriptor::Void,
         }
-        Extern(extern_type) => Some(Representation::Object(extern_type.extern_name.clone())),
-        Unit | FunctionItem(_) | Intrinsic(_) | Meta(_) => None,
-        Error => unreachable!("Called with error type"),
     }
 }
 
-/// Returns the representation of `air_type` as a jvm return [`ReturnDescriptor`]
-pub fn get_return_type_representation(air_type: TypeView) -> ReturnDescriptor {
-    get_representation(air_type)
-        .map(|primitive| primitive.into_field_descriptor().into())
-        .unwrap_or(ReturnDescriptor::Void)
+#[derive(Debug, Default)]
+pub struct RepresentationCtx {
+    pub(super) structural_types: FastMap<TypeId<StructuralType>, StructuralRepr>,
 }
 
-/// Returns the representation of an auryn type for the jvm
-pub fn get_function_representation(ty: TypeViewKind<FunctionItemType>) -> MethodDescriptor {
-    let parameters = ty
-        .constrained_parameters()
-        .iter()
-        .flat_map(|it| get_representation(it.as_view(ty.ctx)).map(|it| it.into_field_descriptor()))
-        .collect();
-    let return_type = get_representation(ty.r#return()).map_or(ReturnDescriptor::Void, |it| {
-        it.into_field_descriptor().into()
-    });
-    MethodDescriptor {
-        parameters,
-        return_type,
+impl RepresentationCtx {
+    /// Returns the representation of an auryn type for the jvm.
+    /// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
+    pub fn get_representation(&mut self, air_type: TypeView) -> Option<Representation> {
+        use TypeView::*;
+        match air_type {
+            I32 => Some(Representation::Integer),
+            I64 => Some(Representation::Long),
+            NumberLiteral(_) => None,
+            Bool => Some(Representation::Boolean),
+            String => Some(Representation::string()),
+            Array(content_type) => {
+                let content_repr = self.get_representation(content_type.element());
+                match content_repr {
+                    Some(repr) => Some(Representation::Array(Box::new(repr))),
+                    None => todo!("Add representation for array of zero-sized types"),
+                }
+            }
+            Extern(extern_type) => Some(Representation::Object(extern_type.extern_name.clone())),
+            Structural(structural_type) => Some(Representation::Object(
+                self.get_structural_repr(structural_type).class_name.clone(),
+            )),
+            Unit | FunctionItem(_) | Intrinsic(_) | Meta(_) => None,
+            Error => unreachable!("Called with error type"),
+        }
+    }
+
+    /// Returns the representation of `air_type` as a jvm return [`ReturnDescriptor`]
+    pub fn get_return_type_representation(&mut self, air_type: TypeView) -> ReturnDescriptor {
+        self.get_representation(air_type)
+            .map(|primitive| primitive.into_field_descriptor().into())
+            .unwrap_or(ReturnDescriptor::Void)
+    }
+
+    /// Returns the representation of an auryn type for the jvm
+    pub fn get_function_representation(
+        &mut self,
+        ty: TypeViewKind<FunctionItemType>,
+    ) -> MethodDescriptor {
+        let parameters = ty
+            .constrained_parameters()
+            .iter()
+            .flat_map(|it| {
+                self.get_representation(it.as_view(ty.ctx))
+                    .map(|it| it.into_field_descriptor())
+            })
+            .collect();
+        let return_type = self
+            .get_representation(ty.r#return())
+            .map_or(ReturnDescriptor::Void, |it| {
+                it.into_field_descriptor().into()
+            });
+        MethodDescriptor {
+            parameters,
+            return_type,
+        }
+    }
+
+    pub fn get_structural_repr(&mut self, ty: TypeViewKind<'_, StructuralType>) -> &StructuralRepr {
+        if !self.structural_types.contains_key(&ty.id) {
+            let mut name = format!("Structural{}", ty.value.fields.len());
+            for (_, ty) in ty.fields() {
+                name.push('$');
+                write!(name, "{ty}").unwrap();
+            }
+
+            let fields = ty
+                .fields()
+                .flat_map(|(ident, ty)| {
+                    self.get_representation(ty)
+                        .map(|repr| (ident.clone(), repr))
+                })
+                .collect();
+
+            let repr = StructuralRepr {
+                fields,
+                class_name: name.into(),
+            };
+
+            self.structural_types.insert(ty.id, repr);
+        }
+        self.structural_types.get(&ty.id).unwrap()
     }
 }

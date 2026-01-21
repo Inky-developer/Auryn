@@ -2,6 +2,8 @@ use std::io::Write;
 
 use auryn::auryn::api::{compile, run};
 
+const BUILD_DIR: &str = "build";
+
 fn main() -> std::io::Result<()> {
     let mut args = std::env::args();
     args.next().unwrap();
@@ -12,7 +14,7 @@ fn main() -> std::io::Result<()> {
                 if args.next().as_deref() == Some("--print-class") {
                     println!("{class:?}");
                 }
-                print!("{}", run(class, "."));
+                print!("{}", run(class, BUILD_DIR));
             }
             Err(diagnostics) => diagnostics.to_display().eprint(),
         }
@@ -31,7 +33,7 @@ fn repl() {
         let input = format!("fn main() {{ {input} }}");
         match compile(&input) {
             Ok(class) => {
-                print!("{}", run(class, "."));
+                print!("{}", run(class, BUILD_DIR));
             }
             Err(diagnostics) => diagnostics.to_display().eprint(),
         }

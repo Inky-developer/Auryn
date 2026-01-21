@@ -3,47 +3,47 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"let a: I32 = 1\\nprint(a)\")"
 ---
 ClassData
-  this_class:		#21	Main
+  this_class:		#22	Main
   super_class:		#26	java/lang/Object
 Constant pool:
-  #01 = Utf8			java/io/PrintStream
-  #02 = Class		#1	java/io/PrintStream
-  #03 = Integer			1
-  #04 = Utf8			java/lang/System
-  #05 = Class		#4	java/lang/System
-  #06 = Utf8			out
-  #07 = Utf8			Ljava/io/PrintStream;
-  #08 = NameAndType	#6:#7	out:Ljava/io/PrintStream;
-  #09 = FieldRef	#5.#8	java/lang/System.out:Ljava/io/PrintStream;
-  #10 = Utf8			println
-  #11 = Utf8			(I)V
-  #12 = NameAndType	#10:#11	println:(I)V
-  #13 = MethodRef	#2.#12	java/io/PrintStream:println:(I)V
-  #14 = Utf8			main
-  #15 = Utf8			()V
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Utf8			java/io/PrintStream
+  #04 = Class		#3	java/io/PrintStream
+  #05 = Integer			1
+  #06 = Utf8			java/lang/System
+  #07 = Class		#6	java/lang/System
+  #08 = Utf8			out
+  #09 = Utf8			Ljava/io/PrintStream;
+  #10 = NameAndType	#8:#9	out:Ljava/io/PrintStream;
+  #11 = FieldRef	#7.#10	java/lang/System.out:Ljava/io/PrintStream;
+  #12 = Utf8			println
+  #13 = Utf8			(I)V
+  #14 = NameAndType	#12:#13	println:(I)V
+  #15 = MethodRef	#4.#14	java/io/PrintStream:println:(I)V
   #16 = Utf8			Code
   #17 = Utf8			StackMapTable
-  #18 = Utf8			[Ljava/lang/String;
-  #19 = Class		#18	[Ljava/lang/String;
-  #20 = Utf8			Main
-  #21 = Class		#20	Main
-  #22 = NameAndType	#14:#15	main:()V
-  #23 = MethodRef	#21.#22	Main:main:()V
-  #24 = Utf8			([Ljava/lang/String;)V
+  #18 = Utf8			([Ljava/lang/String;)V
+  #19 = Utf8			[Ljava/lang/String;
+  #20 = Class		#19	[Ljava/lang/String;
+  #21 = Utf8			Main
+  #22 = Class		#21	Main
+  #23 = NameAndType	#1:#2	main:()V
+  #24 = MethodRef	#22.#23	Main:main:()V
   #25 = Utf8			java/lang/Object
   #26 = Class		#25	java/lang/Object
 
 {
   fn main {
     descriptor: ()V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-       0: LoadConstant		#3	1
+       0: LoadConstant		#5	1
        2: IStore			0
-       4: GetStatic		#9	java/lang/System.out:Ljava/io/PrintStream;
+       4: GetStatic		#11	java/lang/System.out:Ljava/io/PrintStream;
        7: ILoad			0
-       9: InvokeVirtual		#13	java/io/PrintStream:println:(I)V
+       9: InvokeVirtual		#15	java/io/PrintStream:println:(I)V
       12: Return
       StackMapTable:
         Full
@@ -54,10 +54,10 @@ Constant pool:
 
   fn main {
     descriptor: ([Ljava/lang/String;)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#23	Main:main:()V
+      0: InvokeStatic		#24	Main:main:()V
       3: Return
       StackMapTable:
         Full

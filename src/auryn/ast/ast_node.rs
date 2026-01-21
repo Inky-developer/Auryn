@@ -201,6 +201,7 @@ ast_node! {
 
 ast_node! {
     pub enum Type = SyntaxNodeKind::Type as
+        | SyntaxNodeKind::StructuralType as StructuralType
         | SyntaxNodeKind::ArrayType as ArrayType
         | SyntaxNodeKind::UnitType as UnitType
         | SyntaxNodeKind::Ident as Ident
@@ -208,6 +209,14 @@ ast_node! {
 
 ast_node! {
     pub struct ArrayType = SyntaxNodeKind::ArrayType as { r#type: Type, }
+}
+
+ast_node! {
+    pub struct StructuralType = SyntaxNodeKind::StructuralType as { ...fields: StructuralTypeField }
+}
+
+ast_node! {
+    pub struct StructuralTypeField = SyntaxNodeKind::StructuralTypeField as { token ident: TokenKind::Identifier, r#type: Type, }
 }
 
 ast_node! {
@@ -345,6 +354,7 @@ ast_node! {
         | SyntaxNodeKind::BooleanLiteral as BooleanLiteral
         | SyntaxNodeKind::Ident as Ident
         | SyntaxNodeKind::Parenthesis as Parenthesis
+        | SyntaxNodeKind::StructLiteral as StructLiteral
 }
 
 ast_node! {
@@ -371,4 +381,12 @@ ast_node! {
 
 ast_node! {
     pub struct Parenthesis = SyntaxNodeKind::Parenthesis as { expression: Expression, }
+}
+
+ast_node! {
+    pub struct StructLiteral = SyntaxNodeKind::StructLiteral as { ...fields: StructLiteralField }
+}
+
+ast_node! {
+    pub struct StructLiteralField = SyntaxNodeKind::StructLiteralField as { token ident: TokenKind::Identifier, value: Expression, }
 }

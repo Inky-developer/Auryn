@@ -95,6 +95,7 @@ define_types! {
     Intrinsic(IntrinsicType),
     Array(ArrayType),
     Extern(ExternType),
+    Structural(StructuralType),
     /// Represents the type of a type, also zero sized, because it is a compile-time only construct.
     Meta(MetaType),
     /// Created when an erraneous program is being compiled.
@@ -112,7 +113,7 @@ impl Type {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Meta(_) | Error => None,
+            | Extern(_) | Structural(_) | Meta(_) | Error => None,
         }
     }
 }
@@ -125,6 +126,9 @@ impl<'a> TypeView<'a> {
                 .get_member(ident)
                 .map(|it| it.as_view(extern_type.ctx))
                 .take_if(|it| !it.is_static_extern_member()),
+            TypeView::Structural(structural_type) => structural_type
+                .get_member(ident)
+                .map(|it| it.as_view(structural_type.ctx)),
             TypeView::Meta(meta_type) => match meta_type.inner() {
                 TypeView::Extern(extern_type) => extern_type
                     .value
@@ -164,7 +168,7 @@ impl FromTypeContext for NumberLiteralType {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct FunctionItemType {
     pub parameters: FunctionParameters,
     pub return_type: Type,
@@ -245,6 +249,26 @@ pub struct ExternTypeMember {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct StructuralType {
+    pub fields: Vec<(SmallString, Type)>,
+}
+
+impl FromTypeContext for StructuralType {
+    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
+        ctx.get_structural(id)
+    }
+}
+
+impl StructuralType {
+    pub fn get_member(&self, member: &str) -> Option<Type> {
+        self.fields
+            .iter()
+            .find(|(name, _)| name.as_ref() == member)
+            .map(|(_, ty)| *ty)
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct MetaType {
     pub inner: Type,
 }
@@ -292,6 +316,15 @@ impl<'a> TypeViewKind<'a, MetaType> {
 impl<'a> TypeViewKind<'a, FunctionItemType> {
     pub fn r#return(self) -> TypeView<'a> {
         self.return_type.as_view(self.ctx)
+    }
+}
+
+impl<'a> TypeViewKind<'a, StructuralType> {
+    pub fn fields(self) -> impl Iterator<Item = (&'a SmallString, TypeView<'a>)> {
+        self.value
+            .fields
+            .iter()
+            .map(|(ident, ty)| (ident, ty.as_view(self.ctx)))
     }
 }
 
@@ -347,6 +380,19 @@ impl<'a> Display for TypeViewKind<'a, ExternType> {
     }
 }
 
+impl<'a> Display for TypeViewKind<'a, StructuralType> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{ ")?;
+        for (index, (ident, ty)) in self.value.fields.iter().enumerate() {
+            write!(f, "{ident}: {}", ty.as_view(self.ctx))?;
+            if index + 1 < self.value.fields.len() {
+                write!(f, ", ")?;
+            }
+        }
+        write!(f, " }}")
+    }
+}
+
 impl<'a> Display for TypeViewKind<'a, MetaType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Type[{}]", self.value.inner.as_view(self.ctx))
@@ -366,6 +412,7 @@ impl Display for TypeView<'_> {
             TypeView::Intrinsic(intrinsic) => Debug::fmt(intrinsic.value, f),
             TypeView::Array(array_type) => Display::fmt(&array_type, f),
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
+            TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Error => f.write_str("<<Error>>"),
         }

@@ -1,5 +1,7 @@
 use crate::{
-    auryn::codegen_java::representation::{FieldDescriptor, MethodDescriptor, Representation},
+    auryn::codegen_java::representation::{
+        FieldDescriptor, ImplicitArgs, MethodDescriptor, Representation,
+    },
     java::{
         class::{self, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
@@ -40,8 +42,22 @@ impl ConstantValue {
 
 #[derive(Debug, Clone)]
 pub enum Instruction {
+    /// Creaes a new object of the given class name
+    New(SmallString),
     /// Loads a class variable
     GetStatic {
+        class_name: SmallString,
+        name: SmallString,
+        field_descriptor: FieldDescriptor,
+    },
+    /// Loads a non static field from a class
+    GetField {
+        class_name: SmallString,
+        name: SmallString,
+        field_descriptor: FieldDescriptor,
+    },
+    /// Stores a non static field into a class
+    PutField {
         class_name: SmallString,
         name: SmallString,
         field_descriptor: FieldDescriptor,
@@ -54,6 +70,12 @@ pub enum Instruction {
     },
     /// Invokes a class method
     InvokeStatic {
+        class_name: SmallString,
+        name: SmallString,
+        method_descriptor: MethodDescriptor,
+    },
+    /// Invokes a init or super method
+    InvokeSpecial {
         class_name: SmallString,
         name: SmallString,
         method_descriptor: MethodDescriptor,
@@ -101,6 +123,7 @@ pub struct FunctionAssembler<'a> {
     pub function_name: SmallString,
     pub descriptor: MethodDescriptor,
     pub constant_pool: &'a mut ConstantPoolBuilder,
+    implicit_args: ImplicitArgs,
     blocks: SourceGraph,
     next_variable_index: u16,
 }
@@ -109,42 +132,50 @@ impl<'a> FunctionAssembler<'a> {
     pub fn new(
         name: SmallString,
         descriptor: MethodDescriptor,
+        implicit_args: ImplicitArgs,
         constant_pool: &'a mut ConstantPoolBuilder,
-        first_valid_variable_index: u16,
     ) -> Self {
         Self {
             function_name: name,
+            next_variable_index: descriptor.first_variable_index(implicit_args),
+            implicit_args,
             descriptor,
             constant_pool,
             blocks: SourceGraph::default(),
-            next_variable_index: first_valid_variable_index,
         }
     }
 
     pub fn assemble(self) -> class::Method {
-        let function_parameters = self
-            .descriptor
-            .parameters
-            .clone()
-            .into_iter()
-            .map(|it| {
-                it.into_primitive()
-                    .into_verification_type(self.constant_pool)
-            })
-            .collect();
-        let (class_instructions, stack_map_frame) = self
-            .blocks
-            .assemble(self.constant_pool, function_parameters);
         let name_index = self.constant_pool.add_utf8(self.function_name);
         let descriptor_index = self
             .constant_pool
             .add_utf8(self.descriptor.to_string().into());
-        let code_name_index = self.constant_pool.add_utf8("Code".into());
+        let this_type = self.implicit_args.as_verification_type(name_index);
+        let function_parameters = std::iter::chain(
+            this_type,
+            self.descriptor.parameters.clone().into_iter().map(|it| {
+                it.into_primitive()
+                    .into_verification_type(self.constant_pool)
+            }),
+        )
+        .collect();
+        let (class_instructions, stack_map_frame) = self
+            .blocks
+            .assemble(self.constant_pool, function_parameters);
+
+        let flags = {
+            let mut flags = class::MethodAccessFlags::PUBLIC;
+            if matches!(self.implicit_args, ImplicitArgs::None) {
+                flags |= class::MethodAccessFlags::STATIC;
+            }
+            flags
+        };
+
+        let code_name_index = self.constant_pool.get_code_attribute_index();
         // It must be at least 2 bigger than the highest index to a 2-sized variable
         let max_locals = self.next_variable_index + 1;
         class::Method {
-            flags: (class::MethodAccessFlag::Public as u16)
-                | (class::MethodAccessFlag::Static as u16),
+            flags,
             name_index,
             descriptor_index,
             attributes: vec![class::AttributeInfo {
@@ -200,7 +231,7 @@ impl<'a> FunctionAssembler<'a> {
 mod tests {
     use crate::{
         auryn::codegen_java::representation::{
-            FieldDescriptor, MethodDescriptor, ReturnDescriptor,
+            FieldDescriptor, ImplicitArgs, MethodDescriptor, ReturnDescriptor,
         },
         java::{
             constant_pool_builder::ConstantPoolBuilder,
@@ -217,8 +248,8 @@ mod tests {
                 parameters: vec![],
                 return_type: ReturnDescriptor::Void,
             },
+            ImplicitArgs::None,
             &mut pool,
-            0,
         );
         assembler.add_all([
             Instruction::GetStatic {

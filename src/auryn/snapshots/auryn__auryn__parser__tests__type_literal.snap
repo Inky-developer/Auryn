@@ -1,0 +1,78 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(r#\"\n            let a: {a: I32, b: I64} = {a: 10, b: 20 * 2}\n            \"#)"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..70 Root
+        |0..70 Block
+        ||Newline `\n`
+        ||Whitespace `            `
+        ||13..57 Statement
+        |||13..57 Assignment
+        ||||KeywordLet `let`
+        ||||Whitespace ` `
+        ||||Identifier `a`
+        ||||Colon `:`
+        ||||Whitespace ` `
+        ||||20..37 Type
+        |||||20..37 StructuralType
+        ||||||BraceOpen `{`
+        ||||||21..27 StructuralTypeField
+        |||||||Identifier `a`
+        |||||||Colon `:`
+        |||||||Whitespace ` `
+        |||||||24..27 Type
+        ||||||||24..27 Ident
+        |||||||||Identifier `I32`
+        ||||||Comma `,`
+        ||||||Whitespace ` `
+        ||||||29..35 StructuralTypeField
+        |||||||Identifier `b`
+        |||||||Colon `:`
+        |||||||Whitespace ` `
+        |||||||32..35 Type
+        ||||||||32..35 Ident
+        |||||||||Identifier `I64`
+        ||||||BraceClose `}`
+        ||||||Whitespace ` `
+        ||||Equal `=`
+        ||||Whitespace ` `
+        ||||39..57 Expression
+        |||||39..57 Value
+        ||||||39..57 StructLiteral
+        |||||||BraceOpen `{`
+        |||||||40..45 StructLiteralField
+        ||||||||Identifier `a`
+        ||||||||Colon `:`
+        ||||||||Whitespace ` `
+        ||||||||43..45 Expression
+        |||||||||43..45 Value
+        ||||||||||43..45 NumberLiteral
+        |||||||||||NumberLiteral `10`
+        |||||||Comma `,`
+        |||||||Whitespace ` `
+        |||||||47..56 StructLiteralField
+        ||||||||Identifier `b`
+        ||||||||Colon `:`
+        ||||||||Whitespace ` `
+        ||||||||50..56 Expression
+        |||||||||50..56 BinaryOperation
+        ||||||||||50..53 Expression
+        |||||||||||50..53 Value
+        ||||||||||||50..53 NumberLiteral
+        |||||||||||||NumberLiteral `20`
+        |||||||||||||Whitespace ` `
+        ||||||||||Times `*`
+        ||||||||||Whitespace ` `
+        ||||||||||55..56 Expression
+        |||||||||||55..56 Value
+        ||||||||||||55..56 NumberLiteral
+        |||||||||||||NumberLiteral `2`
+        |||||||BraceClose `}`
+        ||Newline `\n`
+        ||Whitespace `            `
+        ,
+    ),
+    diagnostics: [],
+}

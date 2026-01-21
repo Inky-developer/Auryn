@@ -10,17 +10,16 @@ use crate::{
             typecheck::{type_context::TypeContext, types::TypeView},
         },
         codegen_java::{
-            class_generator::GeneratedMethodData,
+            class_generator::{ClassGenerator, GeneratedMethodData},
             representation::{
-                FieldDescriptor, MethodDescriptor, PrimitiveOrObject, Representation,
-                ReturnDescriptor, get_function_representation, get_representation,
+                FieldDescriptor, ImplicitArgs, MethodDescriptor, PrimitiveOrObject, Representation,
+                RepresentationCtx, ReturnDescriptor,
             },
         },
         tokenizer::BinaryOperatorToken,
     },
     java::{
-        class::{self, Comparison},
-        constant_pool_builder::ConstantPoolBuilder,
+        class::{self, Comparison, TypeCategory},
         function_assembler::{ConstantValue, FunctionAssembler, Instruction, VariableId},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
@@ -31,30 +30,7 @@ use crate::{
 };
 use indexmap::IndexSet;
 
-pub fn generate_function(
-    pool: &mut ConstantPoolBuilder,
-    ty_ctx: &TypeContext,
-    function_infos: &FastMap<AirFunctionId, GeneratedMethodData>,
-    class_name: &SmallString,
-    function: &AirFunction,
-    mangled_name: SmallString,
-    method_descriptor: MethodDescriptor,
-) -> class::Method {
-    let mut generator = FunctionGenerator::new(
-        mangled_name,
-        function,
-        method_descriptor,
-        class_name,
-        function_infos,
-        ty_ctx,
-        pool,
-    );
-    generator.generate_from_function(function);
-
-    generator.finish()
-}
-
-struct FunctionGenerator<'a> {
+pub struct FunctionGenerator<'a> {
     assembler: FunctionAssembler<'a>,
     variable_map: FastMap<AirLocalValueId, VariableId>,
     block_translation: FastMap<AirBlockId, BasicBlockId>,
@@ -62,6 +38,7 @@ struct FunctionGenerator<'a> {
     pending_blocks: IndexSet<AirBlockId>,
     function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
     ty_ctx: &'a TypeContext,
+    repr_ctx: &'a mut RepresentationCtx,
     class_name: &'a SmallString,
 }
 
@@ -70,12 +47,10 @@ impl<'a> FunctionGenerator<'a> {
         name: SmallString,
         function: &AirFunction,
         method_descriptor: MethodDescriptor,
-        class_name: &'a SmallString,
-        function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
-        ty_ctx: &'a TypeContext,
-        pool: &'a mut ConstantPoolBuilder,
+        parent: &'a mut ClassGenerator,
     ) -> Self {
-        let TypeView::FunctionItem(function_type) = function.r#type.computed().as_view(ty_ctx)
+        let TypeView::FunctionItem(function_type) =
+            function.r#type.computed().as_view(&parent.air.ty_ctx)
         else {
             panic!("Invalid function type");
         };
@@ -90,7 +65,10 @@ impl<'a> FunctionGenerator<'a> {
             .iter()
             .zip(function.argument_ids())
         {
-            if let Some(primitive) = get_representation(parameter.as_view(ty_ctx)) {
+            if let Some(primitive) = parent
+                .repr_ctx
+                .get_representation(parameter.as_view(&parent.air.ty_ctx))
+            {
                 let size = primitive.stack_size();
                 let variable_id = VariableId {
                     index: variable_index,
@@ -101,15 +79,21 @@ impl<'a> FunctionGenerator<'a> {
             }
         }
 
-        let assembler = FunctionAssembler::new(name, method_descriptor, pool, variable_index);
+        let assembler = FunctionAssembler::new(
+            name,
+            method_descriptor,
+            ImplicitArgs::None,
+            &mut parent.constant_pool,
+        );
 
         Self {
-            class_name,
-            function_infos,
+            class_name: &parent.class_name,
+            function_infos: &parent.generated_methods,
             assembler,
             block_translation,
             variable_map,
-            ty_ctx,
+            ty_ctx: &parent.air.ty_ctx,
+            repr_ctx: &mut parent.repr_ctx,
             generated_blocks: FastSet::default(),
             pending_blocks: IndexSet::default(),
         }
@@ -214,7 +198,7 @@ impl FunctionGenerator<'_> {
             Some(self.variable_map[&assignment.target].clone())
         } else {
             let air_type = assignment.expression.r#type.computed().as_view(self.ty_ctx);
-            if let Some(primitive) = get_representation(air_type) {
+            if let Some(primitive) = self.repr_ctx.get_representation(air_type) {
                 let variable_id = self.assembler.alloc_variable(primitive);
                 self.variable_map
                     .insert(assignment.target, variable_id.clone());
@@ -231,10 +215,13 @@ impl FunctionGenerator<'_> {
 
     /// The return value indicates the stack usage
     fn generate_expression(&mut self, expression: &AirExpression) -> Option<Representation> {
-        let repr = get_representation(expression.r#type.computed().as_view(self.ty_ctx));
+        let result_type = expression.r#type.as_view(self.ty_ctx);
+        let repr = self.repr_ctx.get_representation(result_type);
 
         match &expression.kind {
-            AirExpressionKind::Constant(constant) => self.generate_constant(&repr, constant),
+            AirExpressionKind::Constant(constant) => {
+                self.generate_constant(result_type, &repr, constant)
+            }
             AirExpressionKind::BinaryOperator(binary_operator) => {
                 self.generate_binary_operation(binary_operator)
             }
@@ -251,7 +238,12 @@ impl FunctionGenerator<'_> {
         repr
     }
 
-    fn generate_constant(&mut self, result_repr: &Option<Representation>, constant: &AirConstant) {
+    fn generate_constant(
+        &mut self,
+        result_type: TypeView,
+        result_repr: &Option<Representation>,
+        constant: &AirConstant,
+    ) {
         match constant {
             AirConstant::Number(number) => match result_repr {
                 None => {}
@@ -279,6 +271,27 @@ impl FunctionGenerator<'_> {
             AirConstant::String(text) => {
                 let value = ConstantValue::String(text.clone());
                 self.assembler.add(Instruction::LoadConstant { value });
+            }
+            AirConstant::StructLiteral(fields) => {
+                let TypeView::Structural(structural) = result_type else {
+                    panic!("Struct literal should result in a structural type");
+                };
+                let info = self.repr_ctx.get_structural_repr(structural).clone();
+
+                self.assembler.add_all([
+                    Instruction::New(info.class_name.clone()),
+                    Instruction::Dup(TypeCategory::Normal),
+                ]);
+
+                for (_, expr) in fields {
+                    self.generate_expression(expr);
+                }
+
+                self.assembler.add(Instruction::InvokeSpecial {
+                    method_descriptor: info.init_descriptor(),
+                    class_name: info.class_name,
+                    name: "<init>".into(),
+                });
             }
         }
     }
@@ -436,28 +449,53 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_accessor(&mut self, accessor: &Accessor, result_repr: Option<Representation>) {
-        self.generate_expression(&accessor.value);
+        let value_repr = self.generate_expression(&accessor.value);
 
-        let Some(result_repr) = result_repr else {
-            // If the result has no runtime representation, no further instructions need to be emitted
-            return;
-        };
+        match accessor.value.r#type.as_view(self.ty_ctx) {
+            TypeView::Structural(_) => {
+                let Some(result_repr) = result_repr else {
+                    if let Some(value_repr) = value_repr {
+                        self.assembler.add(Instruction::Pop(value_repr.category()));
+                    }
+                    return;
+                };
 
-        self.generate_expression(&accessor.value);
-        let TypeView::Meta(meta) = accessor.value.r#type.as_view(self.ty_ctx) else {
-            todo!("Implement support for getting non-static values");
-        };
-        let repr = get_representation(meta.inner()).expect("Type should be representable");
-        let Representation::Object(class_name) = repr else {
-            panic!("Cannot get a static value from non-object type {repr:?}");
-        };
-        let name = accessor.ident.clone();
-        let field_descriptor = result_repr.into_field_descriptor();
-        self.assembler.add(Instruction::GetStatic {
-            class_name,
-            name,
-            field_descriptor,
-        });
+                let Some(Representation::Object(class_name)) = value_repr else {
+                    panic!("Structural type should be represented as object");
+                };
+
+                self.assembler.add(Instruction::GetField {
+                    class_name,
+                    name: accessor.ident.clone(),
+                    field_descriptor: result_repr.into_field_descriptor(),
+                });
+            }
+            TypeView::Meta(meta) => {
+                let Some(result_repr) = result_repr else {
+                    return;
+                };
+                let repr = self
+                    .repr_ctx
+                    .get_representation(meta.inner())
+                    .expect("Type should be representable");
+                let Representation::Object(class_name) = repr else {
+                    panic!("Cannot get a static value from non-object type {repr:?}");
+                };
+                let name = accessor.ident.clone();
+                let field_descriptor = result_repr.into_field_descriptor();
+                self.assembler.add(Instruction::GetStatic {
+                    class_name,
+                    name,
+                    field_descriptor,
+                });
+            }
+            TypeView::Extern(_) => {
+                if result_repr.is_some() {
+                    todo!("Add support for loading runtime values from externs");
+                }
+            }
+            other => panic!("Cannot get field on type {other}"),
+        }
     }
 
     fn generate_call(&mut self, call: &Call, expression_type: TypeView) {
@@ -494,9 +532,11 @@ impl FunctionGenerator<'_> {
                         self.generate_expression(argument);
                     }
 
-                    let method_descriptor = get_function_representation(function_item);
-                    let Some(Representation::Object(class_name)) =
-                        get_representation(parent.as_view(self.ty_ctx))
+                    let method_descriptor =
+                        self.repr_ctx.get_function_representation(function_item);
+                    let Some(Representation::Object(class_name)) = self
+                        .repr_ctx
+                        .get_representation(parent.as_view(self.ty_ctx))
                     else {
                         panic!("Extern function should be member of an object");
                     };
@@ -592,7 +632,7 @@ impl FunctionGenerator<'_> {
         let repr = self.generate_expression(expression);
 
         if let Some(Representation::Object(_)) = repr
-            && let Some(Representation::Object(to)) = get_representation(target_type)
+            && let Some(Representation::Object(to)) = self.repr_ctx.get_representation(target_type)
         {
             self.assembler.add(Instruction::Transmute(to));
         } else {
@@ -611,8 +651,8 @@ impl FunctionGenerator<'_> {
 
         let from_type = value.r#type.computed().as_view(self.ty_ctx);
 
-        let from = get_representation(from_type).unwrap();
-        let to = get_representation(target_type).unwrap();
+        let from = self.repr_ctx.get_representation(from_type).unwrap();
+        let to = self.repr_ctx.get_representation(target_type).unwrap();
 
         match (from, to) {
             (Representation::Integer | Representation::Boolean, Representation::Long) => {
@@ -631,7 +671,7 @@ impl FunctionGenerator<'_> {
         let TypeView::Array(array_type) = r#type else {
             unreachable!("Return type should be an array type");
         };
-        let repr = get_representation(array_type.element());
+        let repr = self.repr_ctx.get_representation(array_type.element());
 
         match repr {
             Some(repr) => {
@@ -672,7 +712,9 @@ impl FunctionGenerator<'_> {
         let TypeView::Array(element_type) = result_type else {
             panic!("arrayOf should return an array");
         };
-        let element_repr = get_representation(element_type.element())
+        let element_repr = self
+            .repr_ctx
+            .get_representation(element_type.element())
             .expect("Cannot represent arrays of zero sized types yet");
         self.assembler.add(Instruction::NewArray(element_repr));
     }
@@ -685,7 +727,9 @@ impl FunctionGenerator<'_> {
         let TypeView::Array(array_type) = array.r#type.computed().as_view(self.ty_ctx) else {
             unreachable!("Should be an array");
         };
-        let primitive = get_representation(array_type.element())
+        let primitive = self
+            .repr_ctx
+            .get_representation(array_type.element())
             .expect("Zero sized element types not supported");
 
         self.generate_expression(array);
@@ -702,7 +746,9 @@ impl FunctionGenerator<'_> {
         let TypeView::Array(array_type) = array.r#type.computed().as_view(self.ty_ctx) else {
             unreachable!("Should be an array");
         };
-        let primitive = get_representation(array_type.element())
+        let primitive = self
+            .repr_ctx
+            .get_representation(array_type.element())
             .expect("Zero sized element types not supported");
 
         self.generate_expression(array);

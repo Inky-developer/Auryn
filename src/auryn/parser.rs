@@ -321,7 +321,7 @@ impl Parser<'_> {
         match self.multipeek() {
             [TokenKind::KeywordFn, _] => self.parse_function_definition()?,
             [TokenKind::KeywordUnsafe, TokenKind::KeywordExtern] => self.parse_extern_block()?,
-            [_, _] => {
+            [..] => {
                 let got = self.peek().text.into();
                 self.push_error(DiagnosticError::ExpectedItem { got });
                 return Err(());
@@ -539,6 +539,7 @@ impl Parser<'_> {
         match self.peek().kind {
             TokenKind::BracketOpen => self.parse_array_type()?,
             TokenKind::ParensOpen => self.parse_unit_type()?,
+            TokenKind::BraceOpen => self.parse_structural_type()?,
             TokenKind::Identifier => self.parse_identifier()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedType {
@@ -549,6 +550,40 @@ impl Parser<'_> {
         }
 
         self.finish_node(watcher, SyntaxNodeKind::Type);
+        Ok(())
+    }
+
+    fn parse_structural_type(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::BraceOpen)?;
+        loop {
+            if self.peek().kind == TokenKind::BraceClose {
+                break;
+            }
+            self.parse_recoverable(
+                bitset![TokenKind::Comma, TokenKind::BraceClose],
+                Self::parse_structural_type_field,
+            )?;
+            if self.peek().kind != TokenKind::Comma {
+                break;
+            }
+            self.expect(TokenKind::Comma)?;
+        }
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::StructuralType);
+        Ok(())
+    }
+
+    fn parse_structural_type_field(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::Colon)?;
+        self.parse_type()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::StructuralTypeField);
         Ok(())
     }
 
@@ -775,6 +810,7 @@ impl Parser<'_> {
         TokenKind::NumberLiteral,
         TokenKind::StringLiteral,
         TokenKind::ParensOpen,
+        TokenKind::BraceOpen,
         TokenKind::KeywordTrue,
         TokenKind::KeywordFalse,
     ];
@@ -786,6 +822,7 @@ impl Parser<'_> {
             TokenKind::NumberLiteral => self.parse_number()?,
             TokenKind::StringLiteral => self.parse_string_literal()?,
             TokenKind::ParensOpen => self.parse_parenthesis()?,
+            TokenKind::BraceOpen => self.parse_struct_literal()?,
             TokenKind::KeywordTrue | TokenKind::KeywordFalse => self.parse_boolean_literal()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedValue {
@@ -913,6 +950,40 @@ impl Parser<'_> {
         self.finish_node(watcher, SyntaxNodeKind::Parenthesis);
         Ok(())
     }
+
+    fn parse_struct_literal(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::BraceOpen)?;
+        self.parse_recoverable(bitset![TokenKind::BraceClose], |parser| {
+            loop {
+                if parser.peek().kind == TokenKind::BraceClose {
+                    break;
+                }
+                parser.parse_struct_literal_field()?;
+                if parser.peek().kind != TokenKind::Comma {
+                    break;
+                }
+                parser.expect(TokenKind::Comma)?;
+            }
+            Ok(())
+        })?;
+        self.expect(TokenKind::BraceClose)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::StructLiteral);
+        Ok(())
+    }
+
+    fn parse_struct_literal_field(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::Colon)?;
+        self.parse_expression()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::StructLiteralField);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -976,6 +1047,7 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("1 * 2 + 3"));
         insta::assert_debug_snapshot!(verify_block("1 * \"test\""));
         insta::assert_debug_snapshot!(verify_block("1 + 1 == 2 or true and false"));
+        insta::assert_debug_snapshot!(verify_block("{a: 1, b: 2 * 3}"));
     }
 
     #[test]
@@ -1093,6 +1165,20 @@ mod tests {
             }
             "#
         ))
+    }
+
+    #[test]
+    fn test_type_literal() {
+        insta::assert_debug_snapshot!(verify_block(
+            r#"
+            let a: {a: I32, b: I64} = {a: 10, b: 20 * 2}
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify_block(
+            r#"
+            let a = {a: false, }
+            "#
+        ));
     }
 
     #[test]

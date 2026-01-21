@@ -1,0 +1,8 @@
+// expect-output:
+// { a: 1, b: 2, c: 3 }
+// { a: Bool, b: Bool, c: String }
+
+fn main() {
+	print({a: 1, b: 2, c: 3})
+	print({a: true, b: false, c: "Hi"})
+}

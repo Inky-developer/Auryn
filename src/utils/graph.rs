@@ -54,7 +54,7 @@ where
     }
 
     /// Returns an order of all keys where for any element all edges are ordered before it (ignoring cycles)
-    pub fn order_topologically(&self, start: K) -> Vec<K> {
+    pub fn order_topologically(&self, starts: impl IntoIterator<Item = K>) -> Vec<K> {
         fn dfs<K, V>(this: &Graph<K, V>, key: K, buf: &mut Vec<K>, visited: &mut FastSet<K>)
         where
             K: Eq + Hash + Copy,
@@ -69,8 +69,12 @@ where
         }
 
         let mut buf = Vec::new();
-        dfs(self, start, &mut buf, &mut FastSet::default());
-        buf.reverse();
+        let mut visited = FastSet::default();
+        for idx in starts {
+            if !visited.contains(&idx) {
+                dfs(self, idx, &mut buf, &mut visited);
+            }
+        }
         buf
     }
 }
@@ -93,6 +97,6 @@ mod tests {
         g.connect(2, 3);
         g.connect(3, 0);
 
-        assert_eq!(g.order_topologically(0), vec![0, 1, 2, 3]);
+        assert_eq!(g.order_topologically([0]), vec![3, 2, 1, 0]);
     }
 }

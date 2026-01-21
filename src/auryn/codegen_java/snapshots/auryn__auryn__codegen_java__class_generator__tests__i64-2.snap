@@ -3,18 +3,18 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class(r#\"\n            fn main() {\n                foo(2034)\n            }\n\n            fn foo(a: I64) {\n                let b = a + 1            \n                print(b % 2 == 1)\n            }\n            \"#)"
 ---
 ClassData
-  this_class:		#4	Main
+  this_class:		#6	Main
   super_class:		#35	java/lang/Object
 Constant pool:
-  #01 = Long			2034
-  #03 = Utf8			Main
-  #04 = Class		#3	Main
-  #05 = Utf8			foo
-  #06 = Utf8			(J)V
-  #07 = NameAndType	#5:#6	foo:(J)V
-  #08 = MethodRef	#4.#7	Main:foo:(J)V
-  #09 = Utf8			main
-  #10 = Utf8			()V
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Long			2034
+  #05 = Utf8			Main
+  #06 = Class		#5	Main
+  #07 = Utf8			foo
+  #08 = Utf8			(J)V
+  #09 = NameAndType	#7:#8	foo:(J)V
+  #10 = MethodRef	#6.#9	Main:foo:(J)V
   #11 = Utf8			Code
   #12 = Utf8			StackMapTable
   #13 = Utf8			java/io/PrintStream
@@ -31,22 +31,22 @@ Constant pool:
   #26 = Utf8			(Z)V
   #27 = NameAndType	#25:#26	println:(Z)V
   #28 = MethodRef	#14.#27	java/io/PrintStream:println:(Z)V
-  #29 = Utf8			[Ljava/lang/String;
-  #30 = Class		#29	[Ljava/lang/String;
-  #31 = NameAndType	#9:#10	main:()V
-  #32 = MethodRef	#4.#31	Main:main:()V
-  #33 = Utf8			([Ljava/lang/String;)V
+  #29 = Utf8			([Ljava/lang/String;)V
+  #30 = Utf8			[Ljava/lang/String;
+  #31 = Class		#30	[Ljava/lang/String;
+  #32 = NameAndType	#1:#2	main:()V
+  #33 = MethodRef	#6.#32	Main:main:()V
   #34 = Utf8			java/lang/Object
   #35 = Class		#34	java/lang/Object
 
 {
   fn main {
     descriptor: ()V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 1
-      0: Ldc2W			#1	2034
-      3: InvokeStatic		#8	Main:foo:(J)V
+      0: Ldc2W			#3	2034
+      3: InvokeStatic		#10	Main:foo:(J)V
       6: Return
       StackMapTable:
         Full
@@ -57,7 +57,7 @@ Constant pool:
 
   fn foo {
     descriptor: (J)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 5
        0: LLoad			0
@@ -97,10 +97,10 @@ Constant pool:
 
   fn main {
     descriptor: ([Ljava/lang/String;)V
-    flags: 9
+    flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#32	Main:main:()V
+      0: InvokeStatic		#33	Main:main:()V
       3: Return
       StackMapTable:
         Full

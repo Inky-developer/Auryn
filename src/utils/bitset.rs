@@ -204,7 +204,7 @@ where
 /// Creates an enum with unitary variants that implements the [`BitsetItem`] trait
 #[macro_export]
 macro_rules! bitset_item {
-    ($(#[$meta:meta])* $vis:vis enum $name:ident { $($variants:ident),* $(,)? }) => {
+    {$(#[$meta:meta])* $vis:vis enum $name:ident { $($variants:ident),* $(,)? }} => {
         $(#[$meta])*
         #[repr(u8)]
         $vis enum $name {

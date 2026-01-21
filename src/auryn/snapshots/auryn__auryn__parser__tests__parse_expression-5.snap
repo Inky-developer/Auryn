@@ -1,0 +1,45 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"{a: 1, b: 2 * 3}\")"
+---
+AnnotatedParserOutput {
+    ast: Some(
+        0..16 Root
+        |0..16 Block
+        ||0..16 Statement
+        |||0..16 Expression
+        ||||0..16 Value
+        |||||0..16 StructLiteral
+        ||||||BraceOpen `{`
+        ||||||1..5 StructLiteralField
+        |||||||Identifier `a`
+        |||||||Colon `:`
+        |||||||Whitespace ` `
+        |||||||4..5 Expression
+        ||||||||4..5 Value
+        |||||||||4..5 NumberLiteral
+        ||||||||||NumberLiteral `1`
+        ||||||Comma `,`
+        ||||||Whitespace ` `
+        ||||||7..15 StructLiteralField
+        |||||||Identifier `b`
+        |||||||Colon `:`
+        |||||||Whitespace ` `
+        |||||||10..15 Expression
+        ||||||||10..15 BinaryOperation
+        |||||||||10..12 Expression
+        ||||||||||10..12 Value
+        |||||||||||10..12 NumberLiteral
+        ||||||||||||NumberLiteral `2`
+        ||||||||||||Whitespace ` `
+        |||||||||Times `*`
+        |||||||||Whitespace ` `
+        |||||||||14..15 Expression
+        ||||||||||14..15 Value
+        |||||||||||14..15 NumberLiteral
+        ||||||||||||NumberLiteral `3`
+        ||||||BraceClose `}`
+        ,
+    ),
+    diagnostics: [],
+}
