@@ -1,5 +1,7 @@
 use std::{
+    cell::OnceCell,
     fmt::{Debug, Display, Write},
+    num::NonZeroU16,
     ops::RangeInclusive,
     panic::Location,
 };
@@ -11,11 +13,12 @@ use crate::{
             DisplayOptions, Label,
         },
         file_id::FileId,
+        parser::{Parser, ParserOutput},
         syntax_id::SyntaxId,
         syntax_tree::SyntaxTree,
         tokenizer::TokenSet,
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Debug, Clone)]
@@ -186,24 +189,45 @@ impl FromIterator<Diagnostic> for Diagnostics {
 #[derive(Debug)]
 pub struct InputFile {
     pub name: SmallString,
-    pub source: SmallString,
-    pub syntax_tree: SyntaxTree,
+    pub source: Box<str>,
+    pub file_id: FileId,
+    pub parser_output: OnceCell<ParserOutput>,
 }
 
 impl InputFile {
+    pub fn new(file_id: FileId, name: SmallString, source: Box<str>) -> Self {
+        Self {
+            file_id,
+            name,
+            source,
+            parser_output: OnceCell::new(),
+        }
+    }
+
+    pub fn syntax_tree(&self) -> &SyntaxTree {
+        &self
+            .parser_output
+            .get_or_init(|| Parser::new(self.file_id, &self.source).parse())
+            .syntax_tree
+    }
+
     pub fn compute_span(&self, syntax_id: SyntaxId) -> ComputedSpan {
-        self.syntax_tree.get_span(syntax_id)
+        self.syntax_tree().get_span(syntax_id)
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct InputFiles {
     data: FastMap<FileId, InputFile>,
+    file_id_counter: NonZeroU16,
 }
 
 impl InputFiles {
-    pub fn add(&mut self, file_id: FileId, file: InputFile) {
-        self.data.insert(file_id, file);
+    pub fn add(&mut self, name: SmallString, source: Box<str>) {
+        let file_id = FileId(self.file_id_counter);
+        self.data
+            .insert(file_id, InputFile::new(file_id, name, source));
+        self.file_id_counter = self.file_id_counter.checked_add(1).unwrap();
     }
 
     pub fn get(&self, file_id: FileId) -> &InputFile {
@@ -217,6 +241,15 @@ impl InputFiles {
     pub fn compute_span(&self, syntax_id: SyntaxId) -> ComputedSpan {
         let file_id = syntax_id.file_id().unwrap();
         self.data[&file_id].compute_span(syntax_id)
+    }
+}
+
+impl Default for InputFiles {
+    fn default() -> Self {
+        Self {
+            data: default(),
+            file_id_counter: 1.try_into().unwrap(),
+        }
     }
 }
 

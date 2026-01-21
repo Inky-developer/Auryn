@@ -1,22 +1,19 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"a = 3\")"
+expression: "verify_block(\"a = 3\")"
 ---
-AnnotatedParserOutput {
-    ast: Some(
-        0..5 Root
-        |0..5 Block
-        ||0..5 Statement
-        |||0..5 VariableUpdate
-        ||||Identifier `a`
-        ||||Whitespace ` `
-        ||||Equal `=`
-        ||||Whitespace ` `
-        ||||4..5 Expression
-        |||||4..5 Value
-        ||||||4..5 NumberLiteral
-        |||||||NumberLiteral `3`
-        ,
-    ),
-    diagnostics: [],
-}
+syntax_tree:
+0..5 Root
+|0..5 Block
+||0..5 Statement
+|||0..5 VariableUpdate
+||||Identifier `a`
+||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||4..5 Expression
+|||||4..5 Value
+||||||4..5 NumberLiteral
+|||||||NumberLiteral `3`
+
+diagnostics:

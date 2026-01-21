@@ -14,7 +14,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct ParserOutput {
-    pub syntax_tree: Option<SyntaxTree>,
+    pub syntax_tree: SyntaxTree,
 }
 
 #[derive(Debug)]
@@ -65,13 +65,19 @@ impl<'a> Parser<'a> {
         // Nothing left to recover if there is an error
         self.parse_recoverable(bitset![TokenKind::EndOfInput], parse)
             .expect("Should always recover at the top level");
-        let Some(mut root_node) = self.pop_node(watcher, SyntaxNodeKind::Root) else {
-            return ParserOutput { syntax_tree: None };
+        let mut root_node = match self.pop_node(watcher, SyntaxNodeKind::Root) {
+            Some(root_node) => root_node,
+            None => SyntaxNode {
+                kind: SyntaxNodeKind::Root,
+                id: SyntaxId::new_unset(Some(self.file_id)),
+                len: 0,
+                children: Box::new([]),
+            },
         };
 
         root_node.assign_ids(SyntaxId::NUMBER_RANGE);
         ParserOutput {
-            syntax_tree: Some(SyntaxTree { root_node }),
+            syntax_tree: SyntaxTree { root_node },
         }
     }
 }
@@ -991,54 +997,57 @@ mod tests {
     use std::fmt::Debug;
 
     use crate::auryn::{
-        diagnostic::Diagnostic,
+        diagnostic::{Diagnostic, Diagnostics, InputFiles},
+        diagnostic_display::DisplayOptions,
         file_id::FileId,
         parser::{Parser, ParserOutput},
     };
 
-    struct AnnotatedParserOutput<'a> {
-        output: ParserOutput,
+    struct AnnotatedParserOutput {
         diagnostics: Vec<Diagnostic>,
-        input: &'a str,
+        input_files: InputFiles,
     }
 
-    impl Debug for AnnotatedParserOutput<'_> {
+    impl Debug for AnnotatedParserOutput {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            let ParserOutput { syntax_tree: ast } = &self.output;
-            let diagnostics = &self.diagnostics;
-            f.debug_struct("AnnotatedParserOutput")
-                .field("ast", &ast.as_ref().map(|ast| ast.display(self.input)))
-                .field("diagnostics", diagnostics)
-                .finish()
+            let ast = self.input_files.get(FileId::MAIN_FILE).syntax_tree();
+            let diagnostics: Diagnostics = self.diagnostics.iter().cloned().collect();
+            writeln!(
+                f,
+                "syntax_tree:\n{}\ndiagnostics:\n{}",
+                ast.display(self.input_files.get(FileId::MAIN_FILE).source.as_ref()),
+                diagnostics.to_display(&self.input_files, DisplayOptions::FOR_TESTING)
+            )
+        }
+    }
+
+    fn verify_with(input: &str, parse_fn: impl FnOnce(Parser) -> ParserOutput) -> impl Debug {
+        let mut input_files = InputFiles::default();
+        input_files.add("main".into(), input.into());
+
+        let output = parse_fn(Parser::new(
+            FileId::MAIN_FILE,
+            &input_files.get(FileId::MAIN_FILE).source,
+        ));
+        input_files
+            .get(FileId::MAIN_FILE)
+            .parser_output
+            .set(output)
+            .unwrap();
+        let output = input_files.get(FileId::MAIN_FILE).syntax_tree();
+        let diagnostics = output.collect_diagnostics();
+        AnnotatedParserOutput {
+            input_files,
+            diagnostics,
         }
     }
 
     fn verify_block(input: &str) -> impl Debug {
-        let output = Parser::new(FileId::MAIN_FILE, input).parse_statements();
-        let diagnostics = output
-            .syntax_tree
-            .as_ref()
-            .map(|it| it.collect_diagnostics())
-            .unwrap_or_default();
-        AnnotatedParserOutput {
-            output,
-            input,
-            diagnostics,
-        }
+        verify_with(input, |parser| parser.parse_statements())
     }
 
     fn verify(input: &str) -> impl Debug {
-        let output = Parser::new(FileId::MAIN_FILE, input).parse();
-        let diagnostics = output
-            .syntax_tree
-            .as_ref()
-            .map(|it| it.collect_diagnostics())
-            .unwrap_or_default();
-        AnnotatedParserOutput {
-            output,
-            input,
-            diagnostics,
-        }
+        verify_with(input, |parser| parser.parse())
     }
 
     #[test]

@@ -1,17 +1,14 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"9999999999999\")"
+expression: "verify_block(\"9999999999999\")"
 ---
-AnnotatedParserOutput {
-    ast: Some(
-        0..13 Root
-        |0..13 Block
-        ||0..13 Statement
-        |||0..13 Expression
-        ||||0..13 Value
-        |||||0..13 NumberLiteral
-        ||||||NumberLiteral `9999999999999`
-        ,
-    ),
-    diagnostics: [],
-}
+syntax_tree:
+0..13 Root
+|0..13 Block
+||0..13 Statement
+|||0..13 Expression
+||||0..13 Value
+|||||0..13 NumberLiteral
+||||||NumberLiteral `9999999999999`
+
+diagnostics:

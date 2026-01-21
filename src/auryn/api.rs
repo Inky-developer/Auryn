@@ -5,10 +5,9 @@ use crate::{
         air::query_air,
         ast::query_ast,
         codegen_java::codegen::{CodegenOutput, codegen},
-        diagnostic::{DiagnosticKind, Diagnostics, InputFile, InputFiles},
+        diagnostic::{DiagnosticKind, Diagnostics, InputFiles},
         diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
         file_id::FileId,
-        parser::Parser,
     },
     utils::default,
 };
@@ -29,17 +28,14 @@ impl OwnedDiagnostics {
 }
 
 pub fn compile(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
-    let result = Parser::new(FileId::MAIN_FILE, input).parse();
-    let mut diagnostics = result
-        .syntax_tree
-        .as_ref()
-        .map(|it| it.collect_diagnostics())
-        .unwrap_or_default();
+    let mut input_files = InputFiles::default();
+    input_files.add("main".into(), input.into());
 
-    let syntax_tree = result.syntax_tree.unwrap();
-    // println!("{}", syntax_tree.display(input));
+    let main_file = input_files.get(FileId::MAIN_FILE);
 
-    let ast = query_ast(&syntax_tree).unwrap();
+    let mut diagnostics = main_file.syntax_tree().collect_diagnostics();
+
+    let ast = query_ast(main_file.syntax_tree()).unwrap();
     let air = query_air(ast);
     // dbg!(&air);
     diagnostics.extend(air.diagnostics.take());
@@ -47,15 +43,6 @@ pub fn compile(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
         let should_abort = diagnostics
             .iter()
             .any(|it| matches!(it.kind, DiagnosticKind::Error(_)));
-        let mut input_files = InputFiles::default();
-        input_files.add(
-            FileId::MAIN_FILE,
-            InputFile {
-                name: "main".into(),
-                source: input.into(),
-                syntax_tree,
-            },
-        );
         let diagnostics: Diagnostics = diagnostics.into_iter().collect();
 
         if should_abort {

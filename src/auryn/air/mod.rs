@@ -37,16 +37,12 @@ mod tests {
     #[track_caller]
     fn compile(input: &str) -> AirOutput {
         let output = Parser::new(FileId::MAIN_FILE, input).parse();
-        let diagnostics = output
-            .syntax_tree
-            .as_ref()
-            .map(|it| it.collect_diagnostics())
-            .unwrap_or_default();
+        let diagnostics = output.syntax_tree.collect_diagnostics();
         if !diagnostics.is_empty() {
             panic!("Could not parse input: {diagnostics:?}");
         }
 
-        let tree = output.syntax_tree.unwrap();
+        let tree = output.syntax_tree;
         println!("{}", tree.display(input));
         let ast = query_ast(&tree).unwrap();
         query_air(ast)

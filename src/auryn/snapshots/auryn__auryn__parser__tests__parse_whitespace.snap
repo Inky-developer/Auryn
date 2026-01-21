@@ -2,54 +2,51 @@
 source: src/auryn/parser.rs
 expression: "verify(r#\"\n            // This is the main function\n            fn main() {\n                // We will now initialize a variable called 'a' to 1\n                let a = 1 // this is the assignment\n                // This is the end of the function\n            }\n            \"#)"
 ---
-AnnotatedParserOutput {
-    ast: Some(
-        0..264 Root
-        |0..264 File
-        ||Newline `\n`
-        ||Whitespace `            `
-        ||Comment `// This is the main function`
-        ||Newline `\n`
-        ||Whitespace `            `
-        ||54..251 Item
-        |||54..251 FunctionDefinition
-        ||||KeywordFn `fn`
-        ||||Whitespace ` `
-        ||||Identifier `main`
-        ||||61..64 ParameterList
-        |||||ParensOpen `(`
-        |||||ParensClose `)`
-        |||||Whitespace ` `
-        ||||BraceOpen `{`
-        ||||65..250 Block
-        |||||Newline `\n`
-        |||||Whitespace `                `
-        |||||Comment `// We will now initialize a variable called \'a\' to 1`
-        |||||Newline `\n`
-        |||||Whitespace `                `
-        |||||151..161 Statement
-        ||||||151..161 Assignment
-        |||||||KeywordLet `let`
-        |||||||Whitespace ` `
-        |||||||Identifier `a`
-        |||||||Whitespace ` `
-        |||||||Equal `=`
-        |||||||Whitespace ` `
-        |||||||159..161 Expression
-        ||||||||159..161 Value
-        |||||||||159..161 NumberLiteral
-        ||||||||||NumberLiteral `1`
-        ||||||||||Whitespace ` `
-        |||||Comment `// this is the assignment`
-        |||||Newline `\n`
-        |||||Whitespace `                `
-        |||||Comment `// This is the end of the function`
-        |||||Newline `\n`
-        |||||Whitespace `            `
-        ||||BraceClose `}`
-        ||Newline `\n`
-        ||Whitespace `            `
-        ,
-    ),
-    diagnostics: [],
-}
+syntax_tree:
+0..264 Root
+|0..264 File
+||Newline `\n`
+||Whitespace `            `
+||Comment `// This is the main function`
+||Newline `\n`
+||Whitespace `            `
+||54..251 Item
+|||54..251 FunctionDefinition
+||||KeywordFn `fn`
+||||Whitespace ` `
+||||Identifier `main`
+||||61..64 ParameterList
+|||||ParensOpen `(`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||BraceOpen `{`
+||||65..250 Block
+|||||Newline `\n`
+|||||Whitespace `                `
+|||||Comment `// We will now initialize a variable called \'a\' to 1`
+|||||Newline `\n`
+|||||Whitespace `                `
+|||||151..161 Statement
+||||||151..161 Assignment
+|||||||KeywordLet `let`
+|||||||Whitespace ` `
+|||||||Identifier `a`
+|||||||Whitespace ` `
+|||||||Equal `=`
+|||||||Whitespace ` `
+|||||||159..161 Expression
+||||||||159..161 Value
+|||||||||159..161 NumberLiteral
+||||||||||NumberLiteral `1`
+||||||||||Whitespace ` `
+|||||Comment `// this is the assignment`
+|||||Newline `\n`
+|||||Whitespace `                `
+|||||Comment `// This is the end of the function`
+|||||Newline `\n`
+|||||Whitespace `            `
+||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

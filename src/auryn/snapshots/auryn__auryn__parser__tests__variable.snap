@@ -2,25 +2,22 @@
 source: src/auryn/parser.rs
 expression: "verify_block(\"print(hello)\")"
 ---
-AnnotatedParserOutput {
-    ast: Some(
-        0..12 Root
-        |0..12 Block
-        ||0..12 Statement
-        |||0..12 Expression
-        ||||0..12 PostfixOperation
-        |||||0..5 Value
-        ||||||0..5 Ident
-        |||||||Identifier `print`
-        |||||5..12 PostfixOperator
-        ||||||5..12 ArgumentList
-        |||||||ParensOpen `(`
-        |||||||6..11 Expression
-        ||||||||6..11 Value
-        |||||||||6..11 Ident
-        ||||||||||Identifier `hello`
-        |||||||ParensClose `)`
-        ,
-    ),
-    diagnostics: [],
-}
+syntax_tree:
+0..12 Root
+|0..12 Block
+||0..12 Statement
+|||0..12 Expression
+||||0..12 PostfixOperation
+|||||0..5 Value
+||||||0..5 Ident
+|||||||Identifier `print`
+|||||5..12 PostfixOperator
+||||||5..12 ArgumentList
+|||||||ParensOpen `(`
+|||||||6..11 Expression
+||||||||6..11 Value
+|||||||||6..11 Ident
+||||||||||Identifier `hello`
+|||||||ParensClose `)`
+
+diagnostics:

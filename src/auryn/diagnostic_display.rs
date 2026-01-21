@@ -215,7 +215,7 @@ mod implementation {
             file_id::FileId,
             syntax_id::SyntaxId,
         },
-        utils::{fast_map::FastMap, small_string::SmallString},
+        utils::fast_map::FastMap,
     };
 
     // TODO: some syntax highlighting would be nice.
@@ -296,7 +296,7 @@ mod implementation {
     #[derive(Debug)]
     pub(super) struct InputFilesCache<'a> {
         input_files: &'a InputFiles,
-        data: FastMap<FileId, Source<&'a SmallString>>,
+        data: FastMap<FileId, Source<&'a str>>,
     }
 
     impl<'a> InputFilesCache<'a> {
@@ -305,7 +305,7 @@ mod implementation {
                 input_files,
                 data: input_files
                     .iter()
-                    .map(|(file_id, file)| (file_id, Source::from(&file.source)))
+                    .map(|(file_id, file)| (file_id, Source::from(file.source.as_ref())))
                     .collect(),
             }
         }
@@ -316,7 +316,7 @@ mod implementation {
     }
 
     impl<'a> Cache<FileId> for &InputFilesCache<'a> {
-        type Storage = &'a SmallString;
+        type Storage = &'a str;
 
         fn fetch(&mut self, id: &FileId) -> Result<&Source<Self::Storage>, impl std::fmt::Debug> {
             Result::<_, &str>::Ok(&self.data[id])
