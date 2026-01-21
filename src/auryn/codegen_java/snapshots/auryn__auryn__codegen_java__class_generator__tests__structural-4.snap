@@ -1,0 +1,131 @@
+---
+source: src/auryn/codegen_java/class_generator.rs
+expression: "generate_classes(r#\"\n            fn main() {\n                let val: {a: I32} = {a: 42}\n                print(val.a)\n            }\n            \"#)"
+---
+Main:
+ClassData
+  this_class:		#31	Main
+  super_class:		#35	java/lang/Object
+Constant pool:
+  #01 = Utf8			main
+  #02 = Utf8			()V
+  #03 = Utf8			Structural1$I32
+  #04 = Class		#3	Structural1$I32
+  #05 = Utf8			java/io/PrintStream
+  #06 = Class		#5	java/io/PrintStream
+  #07 = Integer			42
+  #08 = Utf8			<init>
+  #09 = Utf8			(I)V
+  #10 = NameAndType	#8:#9	<init>:(I)V
+  #11 = MethodRef	#4.#10	Structural1$I32:<init>:(I)V
+  #12 = Utf8			java/lang/System
+  #13 = Class		#12	java/lang/System
+  #14 = Utf8			out
+  #15 = Utf8			Ljava/io/PrintStream;
+  #16 = NameAndType	#14:#15	out:Ljava/io/PrintStream;
+  #17 = FieldRef	#13.#16	java/lang/System.out:Ljava/io/PrintStream;
+  #18 = Utf8			a
+  #19 = Utf8			I
+  #20 = NameAndType	#18:#19	a:I
+  #21 = FieldRef	#4.#20	Structural1$I32.a:I
+  #22 = Utf8			println
+  #23 = NameAndType	#22:#9	println:(I)V
+  #24 = MethodRef	#6.#23	java/io/PrintStream:println:(I)V
+  #25 = Utf8			Code
+  #26 = Utf8			StackMapTable
+  #27 = Utf8			([Ljava/lang/String;)V
+  #28 = Utf8			[Ljava/lang/String;
+  #29 = Class		#28	[Ljava/lang/String;
+  #30 = Utf8			Main
+  #31 = Class		#30	Main
+  #32 = NameAndType	#1:#2	main:()V
+  #33 = MethodRef	#31.#32	Main:main:()V
+  #34 = Utf8			java/lang/Object
+  #35 = Class		#34	java/lang/Object
+
+{
+  fn main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 8, locals = 2
+       0: New			#4	Structural1$I32
+       3: Dup
+       4: LoadConstant		#7	42
+       6: InvokeSpecial		#11	Structural1$I32:<init>:(I)V
+       9: AStore			0
+      11: GetStatic		#17	java/lang/System.out:Ljava/io/PrintStream;
+      14: ALoad			0
+      16: GetField		#21	Structural1$I32.a:I
+      19: InvokeVirtual		#24	java/io/PrintStream:println:(I)V
+      22: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 8, locals = 2
+      0: InvokeStatic		#33	Main:main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}
+
+-----
+
+Structural1$I32:
+ClassData
+  this_class:		#4	Structural1$I32
+  super_class:		#6	java/lang/Object
+Constant pool:
+  #01 = Utf8			<init>
+  #02 = Utf8			(I)V
+  #03 = Utf8			Structural1$I32
+  #04 = Class		#3	Structural1$I32
+  #05 = Utf8			java/lang/Object
+  #06 = Class		#5	java/lang/Object
+  #07 = Utf8			()V
+  #08 = NameAndType	#1:#7	<init>:()V
+  #09 = MethodRef	#6.#8	java/lang/Object:<init>:()V
+  #10 = Utf8			a
+  #11 = Utf8			I
+  #12 = NameAndType	#10:#11	a:I
+  #13 = FieldRef	#4.#12	Structural1$I32.a:I
+  #14 = Utf8			Code
+  #15 = Utf8			StackMapTable
+
+{
+  PUBLIC a: I
+
+  fn <init> {
+    descriptor: (I)V
+    flags: PUBLIC
+    Code:
+      stack = 8, locals = 3
+       0: ALoad			0
+       2: Dup
+       3: InvokeSpecial		#9	java/lang/Object:<init>:()V
+       6: ILoad			1
+       8: PutField		#13	Structural1$I32.a:I
+      11: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ UninitializedThis,Integer ]
+          Stack = [  ]
+  }
+
+}
+
+-----

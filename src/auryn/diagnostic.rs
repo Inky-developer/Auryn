@@ -1,4 +1,8 @@
-use std::{fmt::Debug, ops::RangeInclusive, panic::Location};
+use std::{
+    fmt::{Debug, Display, Write},
+    ops::RangeInclusive,
+    panic::Location,
+};
 
 use crate::{
     auryn::{
@@ -9,9 +13,9 @@ use crate::{
         file_id::FileId,
         syntax_id::SyntaxId,
         syntax_tree::SyntaxTree,
-        tokenizer::{TokenKind, TokenSet},
+        tokenizer::TokenSet,
     },
-    utils::{bitset::Bitset, fast_map::FastMap, small_string::SmallString},
+    utils::{fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Debug, Clone)]
@@ -81,6 +85,17 @@ pub enum DiagnosticError {
         expected: usize,
         got: usize,
         parameter_def: Option<SyntaxId>,
+    },
+    // TODO: This and Missing fields could just be a note on TypeMismatch
+    UnexpectedFields {
+        expected_fields: Vec<SmallString>,
+        received_fields: Vec<SmallString>,
+        unexpected_fields: Vec<SmallString>,
+    },
+    MissingFields {
+        expected_fields: Vec<SmallString>,
+        received_fields: Vec<SmallString>,
+        missing_fields: Vec<SmallString>,
     },
     InferenceFailed,
     InvalidCast {
@@ -229,10 +244,7 @@ impl Diagnostic {
                 DiagnosticError::ExpectedExpression { got, valid_tokens } => builder
                     .with_code("Expected expression")
                     .with_message(format!("got {got:?}"))
-                    .with_info(format!(
-                        "Valid tokens: {}",
-                        fmt_expected_tokens(*valid_tokens)
-                    )),
+                    .with_info(format!("Valid tokens: {}", fmt_items(*valid_tokens, "or"))),
                 DiagnosticError::ExpectedNumber { got } => builder
                     .with_code("Expected number")
                     .with_message(format!("got {got:?}")),
@@ -251,7 +263,7 @@ impl Diagnostic {
                 DiagnosticError::UnexpectedToken { expected, got } => builder
                     .with_code("Unexpected token")
                     .with_message(format!("got {got:?}"))
-                    .with_info(format!("Expected {}", fmt_expected_tokens(*expected))),
+                    .with_info(format!("Expected {}", fmt_items(*expected, "or"))),
                 DiagnosticError::ExpectedBinaryOperator { got } => builder
                     .with_code("Expected binary operator")
                     .with_message(format!("got {got:?}")),
@@ -310,11 +322,7 @@ impl Diagnostic {
                         );
                     }
 
-                    let argument_str = if *expected == 1 {
-                        "argument"
-                    } else {
-                        "arguments"
-                    };
+                    let argument_str = pluralize(*expected, "argument", "arguments");
                     builder
                         .with_code("Mismatched argument count")
                         .with_message(format!("Expected {expected} {argument_str}, but got {got}"))
@@ -326,31 +334,61 @@ impl Diagnostic {
                 DiagnosticError::InvalidCast { from, to } => builder
                     .with_code("Invalid cast")
                     .with_message(format!("Can not cast from `{from}` to `{to}`")),
+                DiagnosticError::UnexpectedFields {
+                    expected_fields: _,
+                    received_fields: _,
+                    unexpected_fields,
+                } => builder.with_code("Unexpected fields").with_message(format!(
+                    "Unexpected {}: {}",
+                    pluralize(unexpected_fields.len(), "field", "fields"),
+                    fmt_items(unexpected_fields, "and"),
+                )),
+                DiagnosticError::MissingFields {
+                    expected_fields: _,
+                    received_fields: _,
+                    missing_fields,
+                } => builder.with_code("Missing fields").with_message(format!(
+                    "Missing {}: {}",
+                    pluralize(missing_fields.len(), "field", "fields"),
+                    fmt_items(missing_fields, "and"),
+                )),
             },
         };
     }
 }
 
-fn fmt_expected_tokens(values: Bitset<TokenKind>) -> String {
+fn fmt_items<
+    I: IntoIterator<Item = T, IntoIter = E>,
+    E: ExactSizeIterator<Item = T>,
+    T: Display,
+>(
+    values: I,
+    joiner: &str,
+) -> String {
+    let mut values = values.into_iter();
     match values.len() {
         0 => "nothing".to_string(),
-        1 => format!("`{}`", values.into_iter().next().unwrap().as_str()),
+        1 => format!("`{}`", values.next().unwrap()),
         len => {
             let mut result = String::new();
 
-            for (index, option) in values.into_iter().enumerate() {
-                if index != 0 && index + 1 < len as usize {
+            for (index, option) in values.enumerate() {
+                if index != 0 && index + 1 < len {
                     result.push_str(", ");
-                } else if index + 1 == len as usize {
-                    result.push_str(" or ");
+                } else if index + 1 == len {
+                    write!(result, " {joiner} ").unwrap();
                 }
 
                 result.push('`');
-                result.push_str(option.as_str());
+                write!(result, "{option}").unwrap();
                 result.push('`');
             }
 
             result
         }
     }
+}
+
+fn pluralize<'a>(count: usize, singular: &'a str, plural: &'a str) -> &'a str {
+    if count == 1 { singular } else { plural }
 }

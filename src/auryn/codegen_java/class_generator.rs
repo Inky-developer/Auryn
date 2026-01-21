@@ -325,6 +325,14 @@ mod tests {
         ));
         insta::assert_debug_snapshot!(generate_classes("fn main() { print({a: 1}.a) }"));
         insta::assert_debug_snapshot!(generate_classes(r#"fn main() { print({a: "test"}.a) }"#));
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            fn main() {
+                let val: {a: I32} = {a: 42}
+                print(val.a)
+            }
+            "#
+        ));
     }
 
     #[test]

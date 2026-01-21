@@ -27,6 +27,7 @@ use crate::{
     utils::{
         default,
         fast_map::{FastMap, FastSet},
+        small_string::SmallString,
     },
 };
 
@@ -441,8 +442,39 @@ impl Typechecker {
             }
             AirConstant::String(_) => Type::String,
             AirConstant::Boolean(_) => Type::Bool,
-            // TODO: Add type inference for struct literals
-            AirConstant::StructLiteral(_) => self.infer_constant(constant),
+            AirConstant::StructLiteral(struct_literal) => {
+                let MaybeBounded::Type(Type::Structural(structural_id)) = expected else {
+                    // infer to figure out the received type
+                    let got = self.infer_constant(constant);
+                    self.diagnostics.add(
+                        id,
+                        DiagnosticError::TypeMismatch {
+                            expected: expected.as_view(&self.ty_ctx).to_string(),
+                            got: got.as_view(&self.ty_ctx).to_string(),
+                        },
+                    );
+
+                    return got;
+                };
+
+                let structural = self.ty_ctx.get(structural_id);
+
+                if let Err(()) = check_fields_equal(
+                    &mut self.diagnostics,
+                    id,
+                    structural.fields.iter().map(|(name, _)| name),
+                    struct_literal.iter().map(|(name, _)| name),
+                ) {
+                    return self.infer_constant(constant);
+                }
+
+                let expected_types = structural.fields.iter().cloned().collect::<FastMap<_, _>>();
+                for (name, expression) in struct_literal {
+                    let expected_type = *expected_types.get(name).unwrap();
+                    self.check_expression(expression, MaybeBounded::Type(expected_type));
+                }
+                Type::Structural(structural_id)
+            }
         }
     }
 
@@ -876,4 +908,53 @@ impl Typechecker {
 
         Type::I32
     }
+}
+
+fn check_fields_equal<'a>(
+    diagnostics: &mut Diagnostics,
+    id: SyntaxId,
+    expected: impl Iterator<Item = &'a SmallString> + Clone,
+    received: impl Iterator<Item = &'a SmallString> + Clone,
+) -> Result<(), ()> {
+    let mut did_report_error = false;
+
+    let expected_set = expected.clone().collect::<FastSet<_>>();
+    let received_set = received.clone().collect::<FastSet<_>>();
+    let unexpected_fields = received_set
+        .difference(&expected_set)
+        .map(|it| (*it).clone())
+        .collect::<Vec<_>>();
+    if !unexpected_fields.is_empty() {
+        let expected_fields = expected.clone().cloned().collect::<Vec<_>>();
+        let received_fields = received.clone().cloned().collect::<Vec<_>>();
+        diagnostics.add(
+            id,
+            DiagnosticError::UnexpectedFields {
+                expected_fields,
+                received_fields,
+                unexpected_fields,
+            },
+        );
+        did_report_error = true;
+    }
+
+    let missing_fields = expected_set
+        .difference(&received_set)
+        .map(|it| (*it).clone())
+        .collect::<Vec<_>>();
+    if !missing_fields.is_empty() {
+        let expected_fields = expected.cloned().collect::<Vec<_>>();
+        let received_fields = received.cloned().collect::<Vec<_>>();
+        diagnostics.add(
+            id,
+            DiagnosticError::MissingFields {
+                expected_fields,
+                received_fields,
+                missing_fields,
+            },
+        );
+        did_report_error = true;
+    }
+
+    if did_report_error { Err(()) } else { Ok(()) }
 }

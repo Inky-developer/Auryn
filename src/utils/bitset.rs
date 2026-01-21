@@ -199,7 +199,14 @@ where
 
         Some(item)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size: usize = self.set.set.count_ones().try_into().unwrap();
+        (size, Some(size))
+    }
 }
+
+impl<T> ExactSizeIterator for BitsetIter<T> where T: BitsetItem {}
 
 /// Creates an enum with unitary variants that implements the [`BitsetItem`] trait
 #[macro_export]

@@ -1,0 +1,20 @@
+---
+source: tests/diagnostic_tests.rs
+expression: "fn main() {\n\tlet a: {a: I32} = {a: 50, b: 20, c: 30}\n\tprint(a)\n}\n"
+input_file: tests/inputs/diagnostics/unexpected_fields.au
+---
+Error: Unexpected fields
+   ╭─[ main:2:20 ]
+   │
+ 2 │     let a: {a: I32} = {a: 50, b: 20, c: 30}
+   │                       ──────────┬──────────  
+   │                                 ╰──────────── Unexpected fields: `b` and `c`
+───╯
+
+Error: Type mismatch
+   ╭─[ main:2:20 ]
+   │
+ 2 │     let a: {a: I32} = {a: 50, b: 20, c: 30}
+   │                       ──────────┬──────────  
+   │                                 ╰──────────── Expected `{ a: I32 }`, but got `{ a: 50, b: 20, c: 30 }`
+───╯
