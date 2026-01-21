@@ -45,6 +45,9 @@ pub fn codegen(air: &Air) -> CodegenOutput {
     output.files.insert("Main".into(), main_class);
 
     for (_type_id, structural_repr) in ctx.structural_types {
+        if structural_repr.is_zero_sized() {
+            continue;
+        }
         let class = gen_structural_type_class(&structural_repr);
         output.files.insert(structural_repr.class_name, class);
     }

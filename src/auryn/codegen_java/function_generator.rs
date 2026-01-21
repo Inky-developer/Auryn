@@ -278,6 +278,10 @@ impl FunctionGenerator<'_> {
                 };
                 let info = self.repr_ctx.get_structural_repr(structural).clone();
 
+                if info.is_zero_sized() {
+                    return;
+                }
+
                 self.assembler.add_all([
                     Instruction::New(info.class_name.clone()),
                     Instruction::Dup(TypeCategory::Normal),

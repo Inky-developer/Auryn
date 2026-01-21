@@ -264,6 +264,18 @@ pub struct StructuralRepr {
 }
 
 impl StructuralRepr {
+    pub fn is_zero_sized(&self) -> bool {
+        self.fields.is_empty()
+    }
+
+    fn to_representation(&self) -> Option<Representation> {
+        if self.is_zero_sized() {
+            None
+        } else {
+            Some(Representation::Object(self.class_name.clone()))
+        }
+    }
+
     pub fn init_descriptor(&self) -> MethodDescriptor {
         MethodDescriptor {
             parameters: self
@@ -300,9 +312,9 @@ impl RepresentationCtx {
                 }
             }
             Extern(extern_type) => Some(Representation::Object(extern_type.extern_name.clone())),
-            Structural(structural_type) => Some(Representation::Object(
-                self.get_structural_repr(structural_type).class_name.clone(),
-            )),
+            Structural(structural_type) => self
+                .get_structural_repr(structural_type)
+                .to_representation(),
             Unit | FunctionItem(_) | Intrinsic(_) | Meta(_) => None,
             Error => unreachable!("Called with error type"),
         }

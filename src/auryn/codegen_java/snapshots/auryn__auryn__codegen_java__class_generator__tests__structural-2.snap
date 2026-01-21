@@ -4,43 +4,38 @@ expression: "generate_classes(\"fn main() { print({a: 1}.a) }\")"
 ---
 Main:
 ClassData
-  this_class:		#30	Main
-  super_class:		#34	java/lang/Object
+  this_class:		#25	Main
+  super_class:		#29	java/lang/Object
 Constant pool:
   #01 = Utf8			main
   #02 = Utf8			()V
   #03 = Utf8			java/io/PrintStream
   #04 = Class		#3	java/io/PrintStream
-  #05 = Utf8			Structural1$1
-  #06 = Class		#5	Structural1$1
-  #07 = Utf8			java/lang/String
-  #08 = Class		#7	java/lang/String
-  #09 = Utf8			java/lang/System
-  #10 = Class		#9	java/lang/System
-  #11 = Utf8			out
-  #12 = Utf8			Ljava/io/PrintStream;
-  #13 = NameAndType	#11:#12	out:Ljava/io/PrintStream;
-  #14 = FieldRef	#10.#13	java/lang/System.out:Ljava/io/PrintStream;
-  #15 = Utf8			<init>
-  #16 = NameAndType	#15:#2	<init>:()V
-  #17 = MethodRef	#6.#16	Structural1$1:<init>:()V
-  #18 = Utf8			1
-  #19 = String		#18	1
-  #20 = Utf8			println
-  #21 = Utf8			(Ljava/lang/String;)V
-  #22 = NameAndType	#20:#21	println:(Ljava/lang/String;)V
-  #23 = MethodRef	#4.#22	java/io/PrintStream:println:(Ljava/lang/String;)V
-  #24 = Utf8			Code
-  #25 = Utf8			StackMapTable
-  #26 = Utf8			([Ljava/lang/String;)V
-  #27 = Utf8			[Ljava/lang/String;
-  #28 = Class		#27	[Ljava/lang/String;
-  #29 = Utf8			Main
-  #30 = Class		#29	Main
-  #31 = NameAndType	#1:#2	main:()V
-  #32 = MethodRef	#30.#31	Main:main:()V
-  #33 = Utf8			java/lang/Object
-  #34 = Class		#33	java/lang/Object
+  #05 = Utf8			java/lang/String
+  #06 = Class		#5	java/lang/String
+  #07 = Utf8			java/lang/System
+  #08 = Class		#7	java/lang/System
+  #09 = Utf8			out
+  #10 = Utf8			Ljava/io/PrintStream;
+  #11 = NameAndType	#9:#10	out:Ljava/io/PrintStream;
+  #12 = FieldRef	#8.#11	java/lang/System.out:Ljava/io/PrintStream;
+  #13 = Utf8			1
+  #14 = String		#13	1
+  #15 = Utf8			println
+  #16 = Utf8			(Ljava/lang/String;)V
+  #17 = NameAndType	#15:#16	println:(Ljava/lang/String;)V
+  #18 = MethodRef	#4.#17	java/io/PrintStream:println:(Ljava/lang/String;)V
+  #19 = Utf8			Code
+  #20 = Utf8			StackMapTable
+  #21 = Utf8			([Ljava/lang/String;)V
+  #22 = Utf8			[Ljava/lang/String;
+  #23 = Class		#22	[Ljava/lang/String;
+  #24 = Utf8			Main
+  #25 = Class		#24	Main
+  #26 = NameAndType	#1:#2	main:()V
+  #27 = MethodRef	#25.#26	Main:main:()V
+  #28 = Utf8			java/lang/Object
+  #29 = Class		#28	java/lang/Object
 
 {
   fn main {
@@ -48,14 +43,10 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 1
-       0: GetStatic		#14	java/lang/System.out:Ljava/io/PrintStream;
-       3: New			#6	Structural1$1
-       6: Dup
-       7: InvokeSpecial		#17	Structural1$1:<init>:()V
-      10: Pop
-      11: LoadConstant		#19	1
-      13: InvokeVirtual		#23	java/io/PrintStream:println:(Ljava/lang/String;)V
-      16: Return
+      0: GetStatic		#12	java/lang/System.out:Ljava/io/PrintStream;
+      3: LoadConstant		#14	1
+      5: InvokeVirtual		#18	java/io/PrintStream:println:(Ljava/lang/String;)V
+      8: Return
       StackMapTable:
         Full
           offset_delta = 0
@@ -68,48 +59,12 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#32	Main:main:()V
+      0: InvokeStatic		#27	Main:main:()V
       3: Return
       StackMapTable:
         Full
           offset_delta = 0
           locals = [ Object '[Ljava/lang/String;' ]
-          Stack = [  ]
-  }
-
-}
-
------
-
-Structural1$1:
-ClassData
-  this_class:		#4	Structural1$1
-  super_class:		#6	java/lang/Object
-Constant pool:
-  #01 = Utf8			<init>
-  #02 = Utf8			()V
-  #03 = Utf8			Structural1$1
-  #04 = Class		#3	Structural1$1
-  #05 = Utf8			java/lang/Object
-  #06 = Class		#5	java/lang/Object
-  #07 = NameAndType	#1:#2	<init>:()V
-  #08 = MethodRef	#6.#7	java/lang/Object:<init>:()V
-  #09 = Utf8			Code
-  #10 = Utf8			StackMapTable
-
-{
-  fn <init> {
-    descriptor: ()V
-    flags: PUBLIC
-    Code:
-      stack = 8, locals = 2
-      0: ALoad			0
-      2: InvokeSpecial		#8	java/lang/Object:<init>:()V
-      5: Return
-      StackMapTable:
-        Full
-          offset_delta = 0
-          locals = [ UninitializedThis ]
           Stack = [  ]
   }
 
