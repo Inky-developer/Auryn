@@ -97,4 +97,21 @@ mod tests {
         insta::assert_debug_snapshot!(compile_wrapped("let a: I32 = 1\na = 2"));
         insta::assert_debug_snapshot!(compile_wrapped("let a: I32 = 1\na += 2"));
     }
+
+    #[test]
+    fn test_explicit_unit() {
+        insta::assert_debug_snapshot!(compile(
+            r#"
+                fn main() -> {} {
+                    foo(50)
+                }
+
+                fn foo(val: I32) {
+                    if val > 50 {
+                        return {}
+                    }
+                }
+            "#
+        ));
+    }
 }

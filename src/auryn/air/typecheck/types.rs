@@ -87,8 +87,6 @@ define_types! {
     NumberLiteral(NumberLiteralType),
     Bool,
     String,
-    /// A type without value. Not to be confused with javas void type
-    Unit,
     /// A zero-sized type of a concrete function item
     FunctionItem(FunctionItemType),
     /// A function defined & implemented by the compiler
@@ -112,7 +110,7 @@ impl Type {
         match self {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
-            NumberLiteral(_) | Bool | String | Unit | FunctionItem(_) | Intrinsic(_) | Array(_)
+            NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
             | Extern(_) | Structural(_) | Meta(_) | Error => None,
         }
     }
@@ -260,6 +258,9 @@ impl FromTypeContext for StructuralType {
 }
 
 impl StructuralType {
+    /// The type to be used for functions that return nothing
+    pub const UNIT: Self = StructuralType { fields: Vec::new() };
+
     pub fn get_member(&self, member: &str) -> Option<Type> {
         self.fields
             .iter()
@@ -382,14 +383,20 @@ impl<'a> Display for TypeViewKind<'a, ExternType> {
 
 impl<'a> Display for TypeViewKind<'a, StructuralType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{ ")?;
-        for (index, (ident, ty)) in self.value.fields.iter().enumerate() {
-            write!(f, "{ident}: {}", ty.as_view(self.ctx))?;
-            if index + 1 < self.value.fields.len() {
-                write!(f, ", ")?;
+        // Currently the unit type is represent using a structural type of zero fields.
+        // In the future this formatting can be generalized to all tuple-like structural types
+        if self.value.fields.is_empty() {
+            write!(f, "()")
+        } else {
+            write!(f, "{{ ")?;
+            for (index, (ident, ty)) in self.value.fields.iter().enumerate() {
+                write!(f, "{ident}: {}", ty.as_view(self.ctx))?;
+                if index + 1 < self.value.fields.len() {
+                    write!(f, ", ")?;
+                }
             }
+            write!(f, " }}")
         }
-        write!(f, " }}")
     }
 }
 
@@ -407,7 +414,6 @@ impl Display for TypeView<'_> {
             TypeView::NumberLiteral(data) => write!(f, "{}", data.value.value),
             TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),
-            TypeView::Unit => f.write_str("()"),
             TypeView::FunctionItem(function_type) => Display::fmt(&function_type, f),
             TypeView::Intrinsic(intrinsic) => Debug::fmt(intrinsic.value, f),
             TypeView::Array(array_type) => Display::fmt(&array_type, f),

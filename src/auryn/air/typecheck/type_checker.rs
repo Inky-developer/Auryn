@@ -144,7 +144,7 @@ impl Typechecker {
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         match unresolved {
             UnresolvedType::DefinedType(user_defined_type_id) => user_defined_type_id.to_type(),
-            UnresolvedType::Unit => Type::Unit,
+            UnresolvedType::Unit => self.ty_ctx.unit_type(),
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
@@ -169,7 +169,7 @@ impl Typechecker {
                     .collect();
                 let return_type = return_type
                     .as_ref()
-                    .map_or(Type::Unit, |ty| self.resolve_type(ty));
+                    .map_or(self.ty_ctx.unit_type(), |ty| self.resolve_type(ty));
                 Type::FunctionItem(self.ty_ctx.add_function_item(
                     reference.syntax_id(),
                     FunctionItemType {
@@ -294,7 +294,11 @@ impl Typechecker {
                     self.check_expression(expression, self.function.return_type.as_bounded());
                 }
                 ReturnValue::Null(id) => {
-                    self.expect_type_at(*id, Type::Unit, self.function.return_type.as_bounded());
+                    self.expect_type_at(
+                        *id,
+                        self.ty_ctx.unit_type(),
+                        self.function.return_type.as_bounded(),
+                    );
                 }
             },
             AirBlockFinalizer::Goto(next_id) => on_next_id(*next_id),
@@ -669,10 +673,10 @@ impl Typechecker {
                     parameter_def: None,
                 },
             );
-            return Type::Unit;
+            return self.ty_ctx.unit_type();
         };
         self.infer_expression(first);
-        Type::Unit
+        self.ty_ctx.unit_type()
     }
 
     fn typecheck_intrinsic_transmute(
@@ -883,7 +887,7 @@ impl Typechecker {
 
         self.check_expression(value, element_type.as_bounded());
 
-        Type::Unit
+        self.ty_ctx.unit_type()
     }
 
     fn typecheck_intrinsic_array_len(

@@ -148,7 +148,17 @@ AirOutput {
                                             ),
                                         },
                                         type: Computed(
-                                            Unit,
+                                            Structural(
+                                                TypeId {
+                                                    id: SyntaxId {
+                                                        file_id: None,
+                                                        number: Some(
+                                                            1,
+                                                        ),
+                                                    },
+                                                    kind: "auryn::auryn::air::typecheck::types::StructuralType",
+                                                },
+                                            ),
                                         ),
                                         kind: Call(
                                             Call {
@@ -169,7 +179,7 @@ AirOutput {
                                                                 id: SyntaxId {
                                                                     file_id: None,
                                                                     number: Some(
-                                                                        1,
+                                                                        2,
                                                                     ),
                                                                 },
                                                                 kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
@@ -200,7 +210,7 @@ AirOutput {
                                                                     id: SyntaxId {
                                                                         file_id: None,
                                                                         number: Some(
-                                                                            2,
+                                                                            3,
                                                                         ),
                                                                     },
                                                                     kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
@@ -254,7 +264,17 @@ AirOutput {
                                             ),
                                         },
                                         type: Computed(
-                                            Unit,
+                                            Structural(
+                                                TypeId {
+                                                    id: SyntaxId {
+                                                        file_id: None,
+                                                        number: Some(
+                                                            1,
+                                                        ),
+                                                    },
+                                                    kind: "auryn::auryn::air::typecheck::types::StructuralType",
+                                                },
+                                            ),
                                         ),
                                         kind: Call(
                                             Call {
@@ -275,7 +295,7 @@ AirOutput {
                                                                 id: SyntaxId {
                                                                     file_id: None,
                                                                     number: Some(
-                                                                        1,
+                                                                        2,
                                                                     ),
                                                                 },
                                                                 kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
@@ -306,7 +326,7 @@ AirOutput {
                                                                     id: SyntaxId {
                                                                         file_id: None,
                                                                         number: Some(
-                                                                            3,
+                                                                            4,
                                                                         ),
                                                                     },
                                                                     kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",

@@ -21,6 +21,17 @@ pub trait FromTypeContext: Sized {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
 }
 
+#[derive(Debug)]
+struct SpecialTypes {
+    unit: Type,
+}
+
+impl Default for SpecialTypes {
+    fn default() -> Self {
+        Self { unit: Type::Error }
+    }
+}
+
 /// Keeps track of additional data associated to a [`Type`].
 ///
 /// The [`TypeContext`] differentiates between two kinds of types:
@@ -44,10 +55,15 @@ pub struct TypeContext {
     externs: TypeMap<ExternType>,
     function_items: TypeMap<FunctionItemType>,
     intrinsics: BidirectionalTypeMap<IntrinsicType>,
+    special_types: SpecialTypes,
     next_id: NonZeroU64,
 }
 
 impl TypeContext {
+    pub fn unit_type(&self) -> Type {
+        self.special_types.unit
+    }
+
     pub fn array_bound_of(&mut self, element_bound: Bound) -> Bound {
         Bound::Array(self.add_array_bound(ArrayBound { element_bound }))
     }
@@ -161,7 +177,7 @@ fn add_non_unique_type<T: Eq + Hash + Clone>(
 
 impl Default for TypeContext {
     fn default() -> Self {
-        Self {
+        let mut this = Self {
             array_bounds: default(),
             number_literals: default(),
             arrays: default(),
@@ -170,8 +186,14 @@ impl Default for TypeContext {
             externs: default(),
             function_items: default(),
             intrinsics: default(),
+            special_types: default(),
             next_id: NonZeroU64::new(1).unwrap(),
-        }
+        };
+
+        let unit = this.structural_of(StructuralType::UNIT);
+        this.special_types = SpecialTypes { unit };
+
+        this
     }
 }
 

@@ -315,7 +315,7 @@ impl RepresentationCtx {
             Structural(structural_type) => self
                 .get_structural_repr(structural_type)
                 .to_representation(),
-            Unit | FunctionItem(_) | Intrinsic(_) | Meta(_) => None,
+            FunctionItem(_) | Intrinsic(_) | Meta(_) => None,
             Error => unreachable!("Called with error type"),
         }
     }

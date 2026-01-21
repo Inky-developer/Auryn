@@ -143,7 +143,7 @@ AirOutput {
                                                 id: SyntaxId {
                                                     file_id: None,
                                                     number: Some(
-                                                        1,
+                                                        2,
                                                     ),
                                                 },
                                                 kind: "auryn::auryn::air::typecheck::types::ArrayType",
