@@ -5,8 +5,8 @@ use std::{
 
 use crate::{
     auryn::{
-        diagnostic::InputFiles, diagnostic_display::implementation::InputFilesCache,
-        file_id::FileId, syntax_id::SyntaxId,
+        diagnostic_display::implementation::InputFilesCache, file_id::FileId,
+        input_files::InputFiles, syntax_id::SyntaxId,
     },
     utils::default,
 };
@@ -208,11 +208,11 @@ mod implementation {
 
     use crate::{
         auryn::{
-            diagnostic::InputFiles,
             diagnostic_display::{
                 ComputedSpan, DiagnosticCollectionDisplay, DiagnosticLevel, LabelKind,
             },
             file_id::FileId,
+            input_files::InputFiles,
             syntax_id::SyntaxId,
         },
         utils::fast_map::FastMap,

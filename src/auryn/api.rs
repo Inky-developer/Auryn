@@ -2,12 +2,12 @@ use std::{fs::OpenOptions, path::Path};
 
 use crate::{
     auryn::{
-        air::query_air,
-        ast::query_ast,
         codegen_java::codegen::{CodegenOutput, codegen},
-        diagnostic::{DiagnosticKind, Diagnostics, InputFiles},
+        diagnostic::{DiagnosticKind, Diagnostics},
         diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
-        file_id::FileId,
+        environment::FilesystemEnvironment,
+        input_files::InputFiles,
+        world::World,
     },
     utils::default,
 };
@@ -27,32 +27,26 @@ impl OwnedDiagnostics {
     }
 }
 
-pub fn compile(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
-    let mut input_files = InputFiles::default();
-    input_files.add("main".into(), input.into());
+pub fn compile(input_file_path: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
+    let mut world = World::new(Box::new(FilesystemEnvironment));
+    let file_id = world
+        .file_id_for_module(input_file_path)
+        .expect("Should be able to read input file");
 
-    let main_file = input_files.get(FileId::MAIN_FILE);
-
-    let mut diagnostics = main_file.syntax_tree().collect_diagnostics();
-
-    let ast = query_ast(main_file.syntax_tree()).unwrap();
-    let air = query_air(ast);
-    // dbg!(&air);
-    diagnostics.extend(air.diagnostics.take());
+    let (air, diagnostics) = world.query_air(file_id);
     if !diagnostics.is_empty() {
         let should_abort = diagnostics
             .iter()
             .any(|it| matches!(it.kind, DiagnosticKind::Error(_)));
-        let diagnostics: Diagnostics = diagnostics.into_iter().collect();
 
         if should_abort {
             return Err(OwnedDiagnostics {
-                input_files,
+                input_files: world.input_files(),
                 diagnostics,
             });
         }
     }
-    Ok(codegen(&air.air))
+    Ok(codegen(&air))
 }
 
 pub fn run(codegen_output: CodegenOutput, dir: impl AsRef<Path>) -> String {

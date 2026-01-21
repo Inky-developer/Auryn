@@ -997,9 +997,10 @@ mod tests {
     use std::fmt::Debug;
 
     use crate::auryn::{
-        diagnostic::{Diagnostic, Diagnostics, InputFiles},
+        diagnostic::{Diagnostic, Diagnostics},
         diagnostic_display::DisplayOptions,
         file_id::FileId,
+        input_files::InputFiles,
         parser::{Parser, ParserOutput},
     };
 
