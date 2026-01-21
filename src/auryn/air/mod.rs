@@ -106,7 +106,7 @@ mod tests {
                     foo(50)
                 }
 
-                fn foo(val: I32) {
+                fn foo(val: I32) -> () {
                     if val > 50 {
                         return {}
                     }

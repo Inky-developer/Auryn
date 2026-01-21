@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(r#\"\n                fn main() -> {} {\n                    foo(50)\n                }\n\n                fn foo(val: I32) {\n                    if val > 50 {\n                        return {}\n                    }\n                }\n            \"#)"
+expression: "compile(r#\"\n                fn main() -> {} {\n                    foo(50)\n                }\n\n                fn foo(val: I32) -> () {\n                    if val > 50 {\n                        return {}\n                    }\n                }\n            \"#)"
 ---
 AirOutput {
     air: Air {
@@ -243,7 +243,7 @@ AirOutput {
                             ),
                         ),
                         number: Some(
-                            201053554793321,
+                            199378108503377,
                         ),
                     },
                     parameters: [
@@ -255,13 +255,15 @@ AirOutput {
                                     ),
                                 ),
                                 number: Some(
-                                    203008242131589,
+                                    201088459924363,
                                 ),
                             },
                             "I32",
                         ),
                     ],
-                    return_type: None,
+                    return_type: Some(
+                        Unit,
+                    ),
                     reference: UserDefined(
                         AirFunctionId(
                             AirStaticValueId(
@@ -294,7 +296,7 @@ AirOutput {
                                         ),
                                     ),
                                     number: Some(
-                                        212074268167175,
+                                        212930607382037,
                                     ),
                                 },
                                 type: Computed(
@@ -310,7 +312,7 @@ AirOutput {
                                                     ),
                                                 ),
                                                 number: Some(
-                                                    212074268167179,
+                                                    212930607382041,
                                                 ),
                                             },
                                             type: Computed(
@@ -332,7 +334,7 @@ AirOutput {
                                                     ),
                                                 ),
                                                 number: Some(
-                                                    212185964586503,
+                                                    213028341748949,
                                                 ),
                                             },
                                             type: Computed(
@@ -369,7 +371,7 @@ AirOutput {
                                         ),
                                     ),
                                     number: Some(
-                                        209989268339689,
+                                        211106232532985,
                                     ),
                                 },
                             ),
@@ -389,7 +391,7 @@ AirOutput {
                                             ),
                                         ),
                                         number: Some(
-                                            212451553850241,
+                                            213260732354721,
                                         ),
                                     },
                                     type: Computed(
