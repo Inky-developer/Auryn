@@ -106,7 +106,8 @@ pub fn run(codegen_output: CodegenOutput, dir: impl AsRef<Path>) -> String {
     }
 
     let output = std::process::Command::new("java")
-        .current_dir(path)
+        .arg("-cp")
+        .args(path)
         .arg("Main")
         .output()
         .expect("Java needs to be installed on the system to run a class");
