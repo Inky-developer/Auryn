@@ -5,11 +5,12 @@ use crate::{
         codegen_java::codegen::{CodegenOutput, codegen},
         diagnostic::{DiagnosticKind, Diagnostics},
         diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
-        environment::{Environment, FilesystemEnvironment},
+        environment::{Environment, FilesystemEnvironment, ProjectTree},
+        file_id::FileId,
         input_files::InputFiles,
         world::World,
     },
-    utils::default,
+    utils::{default, fast_map::FastMap},
 };
 
 pub struct OwnedDiagnostics {
@@ -35,41 +36,33 @@ pub fn compile_file(main_file_path: &Path) -> Result<CodegenOutput, OwnedDiagnos
             .expect("Should be a valid file name")
             .strip_suffix(".au")
             .expect("Should be a .au file"),
-        Box::new(FilesystemEnvironment::new(dir.to_path_buf())),
+        &FilesystemEnvironment::new(dir.to_path_buf()),
     )
 }
 
 pub fn compile_str(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
-    struct SingleFileEnvironment {
-        file: Box<str>,
+    struct SingleFileEnvironment<'a> {
+        file: &'a str,
     }
 
-    impl Environment for SingleFileEnvironment {
-        fn load_module(&self, name: &str) -> Option<Box<str>> {
-            if name == "main" {
-                Some(self.file.clone())
-            } else {
-                None
-            }
+    impl Environment for SingleFileEnvironment<'_> {
+        fn load_project(&self) -> ProjectTree {
+            let mut source_files = FastMap::default();
+            source_files.insert("main".into(), self.file.into());
+            ProjectTree { source_files }
         }
     }
 
-    compile(
-        "main",
-        Box::new(SingleFileEnvironment { file: input.into() }),
-    )
+    compile("main", &SingleFileEnvironment { file: input })
 }
 
 fn compile(
     main_file: &str,
-    environment: Box<dyn Environment>,
+    environment: &impl Environment,
 ) -> Result<CodegenOutput, OwnedDiagnostics> {
-    let mut world = World::new(environment);
-    let file_id = world
-        .file_id_for_module(main_file)
-        .expect("Should be able to read input file");
+    let mut world = World::new(environment, main_file);
 
-    let (air, diagnostics) = world.query_air(file_id);
+    let (air, diagnostics) = world.query_air(FileId::MAIN_FILE);
     if !diagnostics.is_empty() {
         let should_abort = diagnostics
             .iter()

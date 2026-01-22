@@ -7,31 +7,26 @@ use crate::{
         file_id::FileId,
         input_files::{InputFile, InputFiles},
     },
-    utils::{default, fast_map::FastMap, small_string::SmallString},
+    utils::{fast_map::FastMap, small_string::SmallString},
 };
 
 pub struct World {
-    environment: Box<dyn Environment>,
     input_files: InputFiles,
-    module_name_to_file_id: FastMap<SmallString, FileId>,
+    _module_name_to_file_id: FastMap<SmallString, FileId>,
 }
 
 impl World {
-    pub fn new(environment: Box<dyn Environment>) -> Self {
-        Self {
-            environment,
-            input_files: default(),
-            module_name_to_file_id: default(),
-        }
-    }
+    pub fn new(environment: &impl Environment, main_file: &str) -> Self {
+        let input_files = InputFiles::new(environment.load_project(), main_file);
+        let _module_name_to_file_id = input_files
+            .iter()
+            .map(|(_, file)| (file.name.clone(), file.file_id))
+            .collect();
 
-    pub fn file_id_for_module(&mut self, path: &str) -> Option<FileId> {
-        if !self.module_name_to_file_id.contains_key(path) {
-            let contents = self.environment.load_module(path)?;
-            let file_id = self.input_files.add(path.into(), contents);
-            self.module_name_to_file_id.insert(path.into(), file_id);
+        Self {
+            input_files,
+            _module_name_to_file_id,
         }
-        self.module_name_to_file_id.get(path).copied()
     }
 
     pub fn file(&self, id: FileId) -> &InputFile {

@@ -3,6 +3,7 @@ use std::{cell::OnceCell, num::NonZeroU16};
 use crate::{
     auryn::{
         diagnostic_display::ComputedSpan,
+        environment::ProjectTree,
         file_id::FileId,
         parser::{Parser, ParserOutput},
         syntax_id::SyntaxId,
@@ -48,6 +49,19 @@ pub struct InputFiles {
 }
 
 impl InputFiles {
+    pub fn new(mut project_tree: ProjectTree, main_file: &str) -> Self {
+        let mut this = Self::default();
+
+        let (main_name, main_contents) = project_tree.source_files.remove_entry(main_file).unwrap();
+        this.add(main_name, main_contents);
+
+        for (name, contents) in project_tree.source_files {
+            this.add(name, contents);
+        }
+
+        this
+    }
+
     pub fn add(&mut self, name: SmallString, source: Box<str>) -> FileId {
         let file_id = FileId(self.file_id_counter);
         self.data
