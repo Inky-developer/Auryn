@@ -55,7 +55,7 @@ impl<'a> ClassGenerator<'a> {
 
 impl ClassGenerator<'_> {
     fn generate_from_air(mut self) -> class::ClassData {
-        for (function_id, function) in &self.air.functions {
+        for (function_id, function) in &self.air.globals.functions {
             let TypeView::FunctionItem(function_type) =
                 function.r#type.computed().as_view(&self.air.ty_ctx)
             else {
@@ -74,7 +74,7 @@ impl ClassGenerator<'_> {
             );
         }
 
-        for (function_id, function) in &self.air.functions {
+        for (function_id, function) in &self.air.globals.functions {
             self.generate_function(*function_id, function);
         }
 

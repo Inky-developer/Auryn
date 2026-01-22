@@ -2,8 +2,8 @@
 source: src/auryn/air/mod.rs
 expression: "compile(r#\"\n                fn main() -> {} {\n                    foo(50)\n                }\n\n                fn foo(val: I32) -> () {\n                    if val > 50 {\n                        return {}\n                    }\n                }\n            \"#)"
 ---
-AirOutput {
-    air: Air {
+(
+    Air {
         functions: {
             AirFunctionId(
                 AirStaticValueId(
@@ -441,7 +441,7 @@ AirOutput {
         },
         ..
     },
-    diagnostics: Diagnostics {
+    Diagnostics {
         diagnostics: [],
     },
-}
+)

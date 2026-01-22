@@ -9,23 +9,30 @@ use crate::{
                 types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
             },
         },
+        file_id::FileId,
         syntax_id::SyntaxId,
         tokenizer::BinaryOperatorToken,
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
 
-#[derive(Default)]
-pub struct Air {
+#[derive(Debug, Default)]
+pub struct Globals {
     pub functions: FastMap<AirFunctionId, AirFunction>,
     pub types: FastMap<UserDefinedTypeId, AirType>,
-    pub ty_ctx: TypeContext,
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
+}
+
+#[derive(Default)]
+pub struct Air {
+    pub globals: Globals,
+    pub ty_ctx: TypeContext,
 }
 
 impl Air {
     pub fn main_function(&self) -> (AirFunctionId, &AirFunction) {
         let mut main_functions = self
+            .globals
             .functions
             .iter()
             .filter(|(_, it)| it.ident.as_ref() == "main");
@@ -40,7 +47,7 @@ impl Air {
 impl Debug for Air {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Air")
-            .field("functions", &self.functions)
+            .field("functions", &self.globals.functions)
             .finish_non_exhaustive()
     }
 }
@@ -49,6 +56,9 @@ impl Debug for Air {
 pub enum AirStaticValue {
     Function(AirFunctionId),
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct AirModuleId(pub FileId);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct AirStaticValueId(pub SyntaxId);

@@ -2,8 +2,8 @@
 source: src/auryn/air/mod.rs
 expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return array }\")"
 ---
-AirOutput {
-    air: Air {
+(
+    Air {
         functions: {
             AirFunctionId(
                 AirStaticValueId(
@@ -269,7 +269,7 @@ AirOutput {
         },
         ..
     },
-    diagnostics: Diagnostics {
+    Diagnostics {
         diagnostics: [],
     },
-}
+)

@@ -2,11 +2,14 @@ use std::{fmt::Debug, hash::Hash, marker::PhantomData, num::NonZeroU64};
 
 use crate::{
     auryn::{
-        air::typecheck::{
-            bounds::{ArrayBound, Bound},
-            types::{
-                ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType,
-                NumberLiteralType, StructuralType, Type,
+        air::{
+            data::AirModuleId,
+            typecheck::{
+                bounds::{ArrayBound, Bound},
+                types::{
+                    ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType, ModuleType,
+                    NumberLiteralType, StructuralType, Type,
+                },
             },
         },
         syntax_id::SyntaxId,
@@ -53,6 +56,7 @@ pub struct TypeContext {
     metas: BidirectionalTypeMap<MetaType>,
     structurals: BidirectionalTypeMap<StructuralType>,
     externs: TypeMap<ExternType>,
+    modules: TypeMap<ModuleType>,
     function_items: TypeMap<FunctionItemType>,
     intrinsics: BidirectionalTypeMap<IntrinsicType>,
     special_types: SpecialTypes,
@@ -133,6 +137,13 @@ impl TypeContext {
         id
     }
 
+    pub fn add_module(&mut self, module_id: AirModuleId, module: ModuleType) -> TypeId<ModuleType> {
+        let id = module_id.into();
+        let prev = self.modules.insert(id, module);
+        assert!(prev.is_none());
+        id
+    }
+
     pub fn get<T: FromTypeContext>(&self, id: TypeId<T>) -> &T {
         T::from_context(id, self)
     }
@@ -148,6 +159,9 @@ impl TypeContext {
     }
     pub(super) fn get_extern(&self, id: TypeId<ExternType>) -> &ExternType {
         &self.externs[&id]
+    }
+    pub(super) fn get_module(&self, id: TypeId<ModuleType>) -> &ModuleType {
+        &self.modules[&id]
     }
     pub(super) fn get_array(&self, id: TypeId<ArrayType>) -> &ArrayType {
         self.arrays.get_by_key(&id).unwrap()
@@ -184,6 +198,7 @@ impl Default for TypeContext {
             structurals: default(),
             metas: default(),
             externs: default(),
+            modules: default(),
             function_items: default(),
             intrinsics: default(),
             special_types: default(),
@@ -233,5 +248,11 @@ impl<T> Eq for TypeId<T> {}
 impl<T> Hash for TypeId<T> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.hash(state);
+    }
+}
+
+impl From<AirModuleId> for TypeId<ModuleType> {
+    fn from(value: AirModuleId) -> Self {
+        TypeId::new(SyntaxId::new_unset(Some(value.0)))
     }
 }

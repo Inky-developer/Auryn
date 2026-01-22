@@ -4,10 +4,10 @@ use crate::{
     auryn::{
         air::{
             data::{
-                self, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirLocalValueId, AirNode, AirNodeKind,
+                self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+                AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
                 AirStaticValue, AirStaticValueId, AirType, AirValueId, Call, ExternFunctionKind,
-                FunctionReference, ReturnValue, UnresolvedExternMember, UnresolvedType,
+                FunctionReference, Globals, ReturnValue, UnresolvedExternMember, UnresolvedType,
             },
             namespace::{Namespace, UserDefinedTypeId},
             typecheck::{type_context::TypeId, types},
@@ -25,32 +25,43 @@ use crate::{
         syntax_tree::SyntaxToken,
         tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Debug)]
-pub struct AirOutput {
-    pub air: Air,
+pub struct TransformerOutput {
+    pub globals: Globals,
     pub diagnostics: Diagnostics,
 }
 
-pub fn transform_ast(ast: Root) -> AirOutput {
-    let mut transformer = AstTransformer::default();
+pub fn query_globals(
+    ast: Root,
+    included_modules: impl IntoIterator<Item = (SmallString, AirModuleId)>,
+) -> TransformerOutput {
+    let mut transformer = AstTransformer::new(Namespace::with_modules(included_modules));
     transformer.transform_root(ast);
-    AirOutput {
-        air: transformer.air,
+    TransformerOutput {
+        globals: transformer.globals,
         diagnostics: transformer.diagnostics,
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct AstTransformer {
-    air: Air,
+    globals: Globals,
     namespace: Namespace,
     diagnostics: Diagnostics,
 }
 
 impl AstTransformer {
+    fn new(namespace: Namespace) -> Self {
+        Self {
+            namespace,
+            globals: default(),
+            diagnostics: default(),
+        }
+    }
+
     pub fn transform_root(&mut self, root: Root) {
         let Ok(file) = root.file() else {
             return;
@@ -158,7 +169,7 @@ impl AstTransformer {
                     extern_name: extern_path,
                     members: extern_members,
                 });
-                self.air.types.insert(def_id, extern_type);
+                self.globals.types.insert(def_id, extern_type);
             }
         }
     }
@@ -308,8 +319,8 @@ impl AstTransformer {
             blocks: function_transformer.finished_blocks,
         };
 
-        self.air.functions.insert(function_id, function);
-        self.air
+        self.globals.functions.insert(function_id, function);
+        self.globals
             .statics
             .insert(function_id.0, AirStaticValue::Function(function_id));
     }

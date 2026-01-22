@@ -94,6 +94,7 @@ define_types! {
     Array(ArrayType),
     Extern(ExternType),
     Structural(StructuralType),
+    Module(ModuleType),
     /// Represents the type of a type, also zero sized, because it is a compile-time only construct.
     Meta(MetaType),
     /// Created when an erraneous program is being compiled.
@@ -111,7 +112,7 @@ impl Type {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Structural(_) | Meta(_) | Error => None,
+            | Extern(_) | Structural(_) | Module(_) | Meta(_) | Error => None,
         }
     }
 }
@@ -269,6 +270,24 @@ impl StructuralType {
     }
 }
 
+#[derive(Debug)]
+pub struct ModuleType {
+    pub name: SmallString,
+    pub members: FastMap<SmallString, Type>,
+}
+
+impl FromTypeContext for ModuleType {
+    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
+        ctx.get_module(id)
+    }
+}
+
+impl ModuleType {
+    pub fn get_member(&self, member: &str) -> Option<Type> {
+        self.members.get(member).copied()
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct MetaType {
     pub inner: Type,
@@ -418,6 +437,7 @@ impl Display for TypeView<'_> {
             TypeView::Intrinsic(intrinsic) => Debug::fmt(intrinsic.value, f),
             TypeView::Array(array_type) => Display::fmt(&array_type, f),
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
+            TypeView::Module(module_type) => write!(f, "module {}", module_type.name),
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Error => f.write_str("<<Error>>"),

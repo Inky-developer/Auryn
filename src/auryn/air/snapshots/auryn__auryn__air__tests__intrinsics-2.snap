@@ -2,8 +2,8 @@
 source: src/auryn/air/mod.rs
 expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
 ---
-AirOutput {
-    air: Air {
+(
+    Air {
         functions: {
             AirFunctionId(
                 AirStaticValueId(
@@ -260,7 +260,7 @@ AirOutput {
         },
         ..
     },
-    diagnostics: Diagnostics {
+    Diagnostics {
         diagnostics: [],
     },
-}
+)

@@ -1,13 +1,13 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type Foo { [\\\"foo\\\"] static let foo: Number } }\")"
+expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type Foo { [\\\"foo\\\"] static let foo: I32 } }\")"
 ---
-AirOutput {
-    air: Air {
+(
+    Air {
         functions: {},
         ..
     },
-    diagnostics: Diagnostics {
+    Diagnostics {
         diagnostics: [],
     },
-}
+)

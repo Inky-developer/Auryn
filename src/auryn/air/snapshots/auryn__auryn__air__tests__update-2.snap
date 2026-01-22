@@ -2,8 +2,8 @@
 source: src/auryn/air/mod.rs
 expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
 ---
-AirOutput {
-    air: Air {
+(
+    Air {
         functions: {
             AirFunctionId(
                 AirStaticValueId(
@@ -229,7 +229,7 @@ AirOutput {
         },
         ..
     },
-    diagnostics: Diagnostics {
+    Diagnostics {
         diagnostics: [],
     },
-}
+)

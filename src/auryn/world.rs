@@ -12,21 +12,25 @@ use crate::{
 
 pub struct World {
     input_files: InputFiles,
-    _module_name_to_file_id: FastMap<SmallString, FileId>,
+    module_name_to_file_id: FastMap<SmallString, FileId>,
 }
 
 impl World {
     pub fn new(environment: &impl Environment, main_file: &str) -> Self {
         let input_files = InputFiles::new(environment.load_project(), main_file);
-        let _module_name_to_file_id = input_files
+        let module_name_to_file_id = input_files
             .iter()
             .map(|(_, file)| (file.name.clone(), file.file_id))
             .collect();
 
         Self {
             input_files,
-            _module_name_to_file_id,
+            module_name_to_file_id,
         }
+    }
+
+    pub fn file_id_for_module(&self, module_name: &str) -> Option<FileId> {
+        self.module_name_to_file_id.get(module_name).copied()
     }
 
     pub fn file(&self, id: FileId) -> &InputFile {
@@ -42,8 +46,8 @@ impl World {
         let mut diagnostics = file.syntax_tree().collect_diagnostics();
 
         let ast = query_ast(file.syntax_tree()).unwrap();
-        let air = query_air(ast);
-        diagnostics.extend(air.diagnostics.take());
-        (air.air, diagnostics.into_iter().collect())
+        let (air, air_diagnostics) = query_air(ast, []);
+        diagnostics.extend(air_diagnostics.take());
+        (air, diagnostics.into_iter().collect())
     }
 }

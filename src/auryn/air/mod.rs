@@ -1,9 +1,14 @@
-use crate::auryn::{
-    air::{
-        ast_transformer::{AirOutput, transform_ast},
-        typecheck::type_checker::typecheck_air,
+use crate::{
+    auryn::{
+        air::{
+            ast_transformer::query_globals,
+            data::{Air, AirModuleId},
+            typecheck::type_checker::typecheck_air,
+        },
+        ast::ast_node,
+        diagnostic::Diagnostics,
     },
-    ast::ast_node,
+    utils::small_string::SmallString,
 };
 
 pub mod ast_transformer;
@@ -11,31 +16,33 @@ pub mod data;
 pub mod namespace;
 pub mod typecheck;
 
-pub fn query_air(ast: ast_node::Root) -> AirOutput {
-    let mut output = transform_ast(ast);
+pub fn query_air(
+    ast: ast_node::Root,
+    included_modules: impl IntoIterator<Item = (SmallString, AirModuleId)>,
+) -> (Air, Diagnostics) {
+    let output = query_globals(ast, included_modules);
 
-    output.diagnostics = typecheck_air(&mut output.air, output.diagnostics);
-
-    output
+    typecheck_air(output.globals, output.diagnostics)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::auryn::{
-        air::{ast_transformer::AirOutput, query_air},
+        air::{data::Air, query_air},
         ast::query_ast,
+        diagnostic::Diagnostics,
         file_id::FileId,
         parser::Parser,
     };
 
     #[track_caller]
-    fn compile_wrapped(input: &str) -> AirOutput {
+    fn compile_wrapped(input: &str) -> (Air, Diagnostics) {
         let wrapped_input = format!("fn main() {{ {input} }}");
         compile(&wrapped_input)
     }
 
     #[track_caller]
-    fn compile(input: &str) -> AirOutput {
+    fn compile(input: &str) -> (Air, Diagnostics) {
         let output = Parser::new(FileId::MAIN_FILE, input).parse();
         let diagnostics = output.syntax_tree.collect_diagnostics();
         if !diagnostics.is_empty() {
@@ -45,7 +52,7 @@ mod tests {
         let tree = output.syntax_tree;
         println!("{}", tree.display(input));
         let ast = query_ast(&tree).unwrap();
-        query_air(ast)
+        query_air(ast, [])
     }
 
     #[test]

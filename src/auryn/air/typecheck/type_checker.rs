@@ -7,10 +7,9 @@ use crate::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
                 AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment,
-                BinaryOperation, Call, Intrinsic, ReturnValue, UnresolvedExternMember,
+                BinaryOperation, Call, Globals, Intrinsic, ReturnValue, UnresolvedExternMember,
                 UnresolvedType,
             },
-            namespace::UserDefinedTypeId,
             typecheck::{
                 bounds::{Bound, BoundView, MaybeBounded},
                 type_context::{TypeContext, TypeId},
@@ -31,8 +30,8 @@ use crate::{
     },
 };
 
-pub fn typecheck_air(air: &mut Air, diagnostics: Diagnostics) -> Diagnostics {
-    Typechecker::new(diagnostics).infer(air)
+pub fn typecheck_air(globals: Globals, diagnostics: Diagnostics) -> (Air, Diagnostics) {
+    Typechecker::new(diagnostics).infer(globals)
 }
 
 #[derive(Debug)]
@@ -87,26 +86,34 @@ impl Typechecker {
         }
     }
 
-    pub fn infer(mut self, air: &mut Air) -> Diagnostics {
-        self.compute_defined_types(&mut air.types);
-        self.statics = air.statics.clone();
+    pub fn infer(mut self, mut globals: Globals) -> (Air, Diagnostics) {
+        self.statics = std::mem::take(&mut globals.statics);
 
-        for (id, function) in &mut air.functions {
-            self.infer_function_signature(*id, function);
-        }
+        self.compute_defined_types(&mut globals);
+        self.infer_functions(&mut globals);
 
-        for function in air.functions.values_mut() {
-            self.infer_function_body(function);
-        }
+        globals.statics = self.statics;
 
-        air.ty_ctx = self.ty_ctx;
-
-        self.diagnostics
+        let air = Air {
+            globals,
+            ty_ctx: self.ty_ctx,
+        };
+        (air, self.diagnostics)
     }
 
-    fn compute_defined_types(&mut self, types: &mut FastMap<UserDefinedTypeId, AirType>) {
-        for r#type in types.values_mut() {
+    fn compute_defined_types(&mut self, globals: &mut Globals) {
+        for r#type in globals.types.values_mut() {
             self.resolve_if_unresolved(r#type);
+        }
+
+        for (id, function) in &mut globals.functions {
+            self.infer_function_signature(*id, function);
+        }
+    }
+
+    fn infer_functions(&mut self, globals: &mut Globals) {
+        for function in globals.functions.values_mut() {
+            self.infer_function_body(function);
         }
     }
 
