@@ -3,7 +3,7 @@ use std::{fmt::Debug, str::FromStr};
 use crate::{
     auryn::{
         air::{
-            namespace::UserDefinedTypeId,
+            namespace::{Namespace, UserDefinedTypeId},
             typecheck::{
                 type_context::{TypeContext, TypeId},
                 types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
@@ -172,7 +172,7 @@ pub struct Assignment {
     pub expression: Box<AirExpression>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum UnresolvedExternMember {
     StaticLet {
         r#type: UnresolvedType,
@@ -212,7 +212,7 @@ pub enum ExternFunctionKind {
 }
 
 /// Represents a type that was written by the user but not resolved yet.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum UnresolvedType {
     /// A type that was defined by the user, identified by its `syntax_id`
     DefinedType(UserDefinedTypeId),
@@ -234,9 +234,14 @@ pub enum UnresolvedType {
         extern_name: SmallString,
         members: FastMap<SmallString, UnresolvedExternMember>,
     },
+    Module {
+        name: SmallString,
+        id: SyntaxId,
+        namespace: Namespace,
+    },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum AirType {
     Inferred,
     Unresolved(UnresolvedType),

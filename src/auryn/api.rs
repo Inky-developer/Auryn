@@ -10,7 +10,7 @@ use crate::{
         input_files::InputFiles,
         world::World,
     },
-    utils::{default, fast_map::FastMap},
+    utils::default,
 };
 
 pub struct OwnedDiagnostics {
@@ -36,29 +36,38 @@ pub fn compile_file(main_file_path: &Path) -> Result<CodegenOutput, OwnedDiagnos
             .expect("Should be a valid file name")
             .strip_suffix(".au")
             .expect("Should be a .au file"),
-        &FilesystemEnvironment::new(dir.to_path_buf()),
+        &mut FilesystemEnvironment::new(dir.to_path_buf()),
     )
 }
 
 pub fn compile_str(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
-    struct SingleFileEnvironment<'a> {
-        file: &'a str,
+    let mut tree = ProjectTree::default();
+    tree.source_files.insert("main".into(), input.into());
+    compile_in_memory(tree)
+}
+
+pub fn compile_in_memory(mut project_tree: ProjectTree) -> Result<CodegenOutput, OwnedDiagnostics> {
+    struct ProjectTreeEnvironment<'a> {
+        project_tree: &'a mut ProjectTree,
     }
 
-    impl Environment for SingleFileEnvironment<'_> {
-        fn load_project(&self) -> ProjectTree {
-            let mut source_files = FastMap::default();
-            source_files.insert("main".into(), self.file.into());
-            ProjectTree { source_files }
+    impl Environment for ProjectTreeEnvironment<'_> {
+        fn load_project(&mut self) -> ProjectTree {
+            std::mem::take(self.project_tree)
         }
     }
 
-    compile("main", &SingleFileEnvironment { file: input })
+    compile(
+        "main",
+        &mut ProjectTreeEnvironment {
+            project_tree: &mut project_tree,
+        },
+    )
 }
 
 fn compile(
     main_file: &str,
-    environment: &impl Environment,
+    environment: &mut impl Environment,
 ) -> Result<CodegenOutput, OwnedDiagnostics> {
     let mut world = World::new(environment, main_file);
 

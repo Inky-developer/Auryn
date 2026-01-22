@@ -5,16 +5,16 @@ use crate::{
         air::{
             data::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment,
-                BinaryOperation, Call, Globals, Intrinsic, ReturnValue, UnresolvedExternMember,
-                UnresolvedType,
+                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirModuleId,
+                AirNode, AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
+                Assignment, BinaryOperation, Call, Globals, Intrinsic, ReturnValue,
+                UnresolvedExternMember, UnresolvedType,
             },
             typecheck::{
                 bounds::{Bound, BoundView, MaybeBounded},
                 type_context::{TypeContext, TypeId},
                 types::{
-                    ExternType, ExternTypeMember, FunctionItemType, FunctionParameters,
+                    ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, ModuleType,
                     StructuralType, Type, TypeView,
                 },
             },
@@ -230,6 +230,37 @@ impl Typechecker {
                         members,
                     },
                 ))
+            }
+            UnresolvedType::Module {
+                name,
+                id,
+                namespace,
+            } => {
+                let mut members = namespace
+                    .types
+                    .iter()
+                    .map(|(k, v)| (k.clone(), self.ty_ctx.meta_of(v.to_type())))
+                    .collect::<FastMap<_, _>>();
+                members.extend(
+                    namespace
+                        .statics
+                        .iter()
+                        .flat_map(|(k, v)| self.statics.get(v).map(|it| (k, it)))
+                        .map(|(k, value)| {
+                            let ty = match value {
+                                AirStaticValue::Function(id) => Type::FunctionItem((*id).into()),
+                            };
+                            (k.clone(), ty)
+                        }),
+                );
+                let module = ModuleType {
+                    name: name.clone(),
+                    members,
+                };
+                Type::Module(
+                    self.ty_ctx
+                        .add_module(AirModuleId(id.file_id().unwrap()), module),
+                )
             }
             UnresolvedType::Structural(structural_type) => {
                 let ty = StructuralType {

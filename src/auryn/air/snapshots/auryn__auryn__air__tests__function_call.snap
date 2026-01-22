@@ -155,7 +155,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                 id: SyntaxId {
                                                                     file_id: None,
                                                                     number: Some(
-                                                                        2,
+                                                                        3,
                                                                     ),
                                                                 },
                                                                 kind: "auryn::auryn::air::typecheck::types::IntrinsicType",

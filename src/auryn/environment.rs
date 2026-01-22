@@ -11,7 +11,7 @@ pub struct ProjectTree {
 /// All interactions with the outside world, like reading files, go through this trait.
 pub trait Environment {
     /// Loads the project file
-    fn load_project(&self) -> ProjectTree;
+    fn load_project(&mut self) -> ProjectTree;
 }
 
 pub struct FilesystemEnvironment {
@@ -27,7 +27,7 @@ impl FilesystemEnvironment {
 }
 
 impl Environment for FilesystemEnvironment {
-    fn load_project(&self) -> ProjectTree {
+    fn load_project(&mut self) -> ProjectTree {
         let mut source_files = FastMap::default();
         for entry in std::fs::read_dir(&self.cwd).unwrap() {
             let entry = entry.unwrap();

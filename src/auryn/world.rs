@@ -15,7 +15,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(environment: &impl Environment, main_file: &str) -> Self {
+    pub fn new(environment: &mut impl Environment, main_file: &str) -> Self {
         let input_files = InputFiles::new(environment.load_project(), main_file);
         let module_name_to_file_id = input_files
             .iter()

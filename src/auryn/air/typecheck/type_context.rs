@@ -3,7 +3,7 @@ use std::{fmt::Debug, hash::Hash, marker::PhantomData, num::NonZeroU64};
 use crate::{
     auryn::{
         air::{
-            data::AirModuleId,
+            data::{AirFunctionId, AirModuleId},
             typecheck::{
                 bounds::{ArrayBound, Bound},
                 types::{
@@ -218,6 +218,10 @@ impl<T> TypeId<T> {
     pub(in crate::auryn::air) fn new(syntax_id: SyntaxId) -> Self {
         Self(syntax_id, PhantomData)
     }
+
+    pub fn syntax_id(&self) -> SyntaxId {
+        self.0
+    }
 }
 
 impl<T> Debug for TypeId<T> {
@@ -253,6 +257,12 @@ impl<T> Hash for TypeId<T> {
 
 impl From<AirModuleId> for TypeId<ModuleType> {
     fn from(value: AirModuleId) -> Self {
-        TypeId::new(SyntaxId::new_unset(Some(value.0)))
+        TypeId::new(SyntaxId::new(Some(value.0), NonZeroU64::new(1).unwrap()))
+    }
+}
+
+impl From<AirFunctionId> for TypeId<FunctionItemType> {
+    fn from(value: AirFunctionId) -> Self {
+        TypeId::new(value.0.0)
     }
 }

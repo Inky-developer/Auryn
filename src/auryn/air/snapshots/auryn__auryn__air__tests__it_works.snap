@@ -127,7 +127,7 @@ expression: "compile_wrapped(\"print(1)\")"
                                                                 id: SyntaxId {
                                                                     file_id: None,
                                                                     number: Some(
-                                                                        2,
+                                                                        3,
                                                                     ),
                                                                 },
                                                                 kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
@@ -158,7 +158,7 @@ expression: "compile_wrapped(\"print(1)\")"
                                                                     id: SyntaxId {
                                                                         file_id: None,
                                                                         number: Some(
-                                                                            3,
+                                                                            4,
                                                                         ),
                                                                     },
                                                                     kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",

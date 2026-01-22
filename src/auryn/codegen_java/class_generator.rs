@@ -166,7 +166,9 @@ impl ClassGenerator<'_> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        auryn::{api::compile_str, codegen_java::codegen::CodegenOutput},
+        auryn::{
+            api::compile_in_memory, codegen_java::codegen::CodegenOutput, environment::ProjectTree,
+        },
         java::class::ClassData,
     };
 
@@ -176,13 +178,24 @@ mod tests {
     }
 
     fn generate_class(input: &str) -> ClassData {
-        let mut output = generate_classes(input);
+        let mut output = generate_classes(&format!("// main\n{input}"));
         assert_eq!(output.files.len(), 1);
         output.files.remove("Main").unwrap()
     }
 
     fn generate_classes(input: &str) -> CodegenOutput {
-        match compile_str(input) {
+        let files = input
+            .split("// ")
+            .filter(|file| !file.is_empty())
+            .map(|file| {
+                let (name, code) = file.split_once("\n").unwrap();
+                (name.into(), code.into())
+            })
+            .collect();
+        let project_tree = ProjectTree {
+            source_files: files,
+        };
+        match compile_in_memory(project_tree) {
             Ok(output) => output,
             Err(diagnostics) => {
                 panic!("Could not compile '{input}':\n{}", diagnostics.to_display())
@@ -337,18 +350,49 @@ mod tests {
     #[test]
     fn test_structural() {
         insta::assert_debug_snapshot!(generate_classes(
-            "fn main() { print({a: true, b: 2, c: false}) }"
+            r#"
+            // main
+            fn main() { print({a: true, b: 2, c: false}) }
+            "#
         ));
-        insta::assert_debug_snapshot!(generate_classes("fn main() { print({a: 1}.a) }"));
-        insta::assert_debug_snapshot!(generate_classes(r#"fn main() { print({a: "test"}.a) }"#));
         insta::assert_debug_snapshot!(generate_classes(
             r#"
+            // main
+            fn main() { print({a: 1}.a) }
+            "#
+        ));
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            // main
+            fn main() { print({a: "test"}.a) }
+            "#
+        ));
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            // main
             fn main() {
                 let val: {a: I32} = {a: 42}
                 print(val.a)
             }
             "#
         ));
+    }
+
+    #[test]
+    fn test_module() {
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            // main
+            fn main() {
+                foo.sayHi()
+            }
+
+            // foo
+            fn sayHi() {
+                print("hi")
+            }
+            "#
+        ))
     }
 
     #[test]

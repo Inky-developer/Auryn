@@ -1,8 +1,9 @@
 use crate::auryn::{
     air::{
         ast_transformer::query_globals,
-        data::{Air, AirModuleId, Globals},
-        typecheck::type_checker::typecheck_air,
+        data::{Air, AirModuleId, AirType, Globals, UnresolvedType},
+        namespace::UserDefinedTypeId,
+        typecheck::{type_checker::typecheck_air, type_context::TypeId},
     },
     ast::query_ast,
     diagnostic::Diagnostics,
@@ -28,6 +29,15 @@ pub fn query_air<'a>(
         let output = query_globals(ast, included_modules.clone());
         diagnostics.extend(output.diagnostics.take());
         globals.merge(output.globals);
+
+        globals.types.insert(
+            UserDefinedTypeId::Module(AirModuleId(input_file.file_id).into()),
+            AirType::Unresolved(UnresolvedType::Module {
+                name: input_file.name.clone(),
+                id: TypeId::from(AirModuleId(input_file.file_id)).syntax_id(),
+                namespace: output.namespace,
+            }),
+        );
     }
 
     typecheck_air(globals, diagnostics.into_iter().collect())

@@ -31,6 +31,7 @@ use crate::{
 #[derive(Debug)]
 pub struct TransformerOutput {
     pub globals: Globals,
+    pub namespace: Namespace,
     pub diagnostics: Diagnostics,
 }
 
@@ -42,6 +43,7 @@ pub fn query_globals(
     transformer.transform_root(ast);
     TransformerOutput {
         globals: transformer.globals,
+        namespace: transformer.namespace,
         diagnostics: transformer.diagnostics,
     }
 }

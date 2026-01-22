@@ -134,6 +134,9 @@ impl<'a> TypeView<'a> {
                     .get_member(ident)
                     .map(|it| it.as_view(extern_type.ctx))
                     .take_if(|it| it.is_static_extern_member()),
+                TypeView::Module(module) => {
+                    module.get_member(ident).map(|it| it.as_view(module.ctx))
+                }
                 _ => None,
             },
             _ => None,
