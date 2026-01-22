@@ -1,10 +1,10 @@
-use std::{fs, path::Path};
+use std::fs;
 
-use auryn::auryn::{api::compile_file, diagnostic_display::DisplayOptions};
+use auryn::auryn::{api::compile_str, diagnostic_display::DisplayOptions};
 use insta::{assert_snapshot, glob};
 
-fn compile_diagnostics(path: &Path) -> String {
-    let Err(diagnostics) = compile_file(path) else {
+fn compile_diagnostics(input: &str) -> String {
+    let Err(diagnostics) = compile_str(input) else {
         panic!("Input compiled successfully, but expected diagnostics!");
     };
 
@@ -19,7 +19,7 @@ fn diagnostic_tests() {
     glob!("inputs/diagnostics/*.au", |path| {
         print!("test {} ... ", path.strip_prefix(&cwd).unwrap().display());
         let input = fs::read_to_string(path).unwrap();
-        assert_snapshot!("ui", compile_diagnostics(path), &input);
+        assert_snapshot!("ui", compile_diagnostics(&input), &input);
         println!("ok");
     });
 }

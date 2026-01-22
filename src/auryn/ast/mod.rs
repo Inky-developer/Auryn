@@ -1,10 +1,7 @@
 pub mod ast_node;
 
-use crate::auryn::{
-    ast::ast_node::{AstError, AstResult},
-    syntax_tree::SyntaxTree,
-};
+use crate::auryn::syntax_tree::SyntaxTree;
 
-pub fn query_ast(syntax_tree: &SyntaxTree) -> AstResult<ast_node::Root<'_>> {
-    ast_node::Root::new(&syntax_tree.root_node).ok_or(AstError)
+pub fn query_ast(syntax_tree: &SyntaxTree) -> ast_node::Root<'_> {
+    ast_node::Root::new(&syntax_tree.root_node).expect("Parser should always emit a root node")
 }

@@ -4,13 +4,13 @@ expression: "fn main() {\n    bar()\n}\n\nfn bar(value: I32) {}\n"
 input_file: tests/inputs/diagnostics/argument_count_mismatch_under.au
 ---
 Error: Mismatched argument count
-   ╭─[ argument_count_mismatch_under:2:5 ]
+   ╭─[ main:2:5 ]
    │
  5 │ fn bar(value: I32) {}
    │       ──────┬──────  
    │             ╰──────── Due to the definition here
    │
-   ├─[ argument_count_mismatch_under:2:5 ]
+   ├─[ main:2:5 ]
    │
  2 │     bar()
    │     ──┬──  

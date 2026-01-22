@@ -4,7 +4,7 @@ expression: "fn main() {\n    bar(\"not a number\")\n}\n\nfn bar(value: I32) {}\
 input_file: tests/inputs/diagnostics/type_mismatch_call.au
 ---
 Error: Type mismatch
-   ╭─[ type_mismatch_call:2:9 ]
+   ╭─[ main:2:9 ]
    │
  2 │     bar("not a number")
    │         ───────┬──────  

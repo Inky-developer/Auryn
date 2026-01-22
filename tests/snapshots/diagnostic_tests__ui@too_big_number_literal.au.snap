@@ -4,7 +4,7 @@ expression: "\nfn main() {\n\tlet a: I32 = 9000000000\n}\n"
 input_file: tests/inputs/diagnostics/too_big_number_literal.au
 ---
 Error: Value outside of valid range
-   ╭─[ too_big_number_literal:3:15 ]
+   ╭─[ main:3:15 ]
    │
  3 │     let a: I32 = 9000000000
    │                  ─────┬────  

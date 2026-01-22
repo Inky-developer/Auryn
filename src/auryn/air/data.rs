@@ -23,6 +23,19 @@ pub struct Globals {
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
 
+impl Globals {
+    pub fn merge(&mut self, other: Self) {
+        let Globals {
+            functions,
+            types,
+            statics,
+        } = other;
+        self.functions.extend(functions);
+        self.types.extend(types);
+        self.statics.extend(statics);
+    }
+}
+
 #[derive(Default)]
 pub struct Air {
     pub globals: Globals,

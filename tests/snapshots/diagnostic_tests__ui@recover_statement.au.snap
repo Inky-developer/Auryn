@@ -4,7 +4,7 @@ expression: "fn main() {\n\tprint(a., 3)\n}\n"
 input_file: tests/inputs/diagnostics/recover_statement.au
 ---
 Error: Unexpected token
-   ╭─[ recover_statement:2:10 ]
+   ╭─[ main:2:10 ]
    │
  2 │     print(a., 3)
    │             │ 

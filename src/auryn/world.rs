@@ -45,8 +45,10 @@ impl World {
         let file = self.file(file);
         let mut diagnostics = file.syntax_tree().collect_diagnostics();
 
-        let ast = query_ast(file.syntax_tree()).unwrap();
-        let (air, air_diagnostics) = query_air(ast, []);
+        let included_modules = self.input_files.iter().map(|(_id, file)| file);
+
+        let ast = query_ast(file.syntax_tree());
+        let (air, air_diagnostics) = query_air(ast, included_modules);
         diagnostics.extend(air_diagnostics.take());
         (air, diagnostics.into_iter().collect())
     }

@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a: {a: I32} = {a: 50, b: 20, c: 30}\n\tprint(a)\
 input_file: tests/inputs/diagnostics/unexpected_fields.au
 ---
 Error: Unexpected fields
-   ╭─[ unexpected_fields:2:20 ]
+   ╭─[ main:2:20 ]
    │
  2 │     let a: {a: I32} = {a: 50, b: 20, c: 30}
    │                       ──────────┬──────────  
@@ -12,7 +12,7 @@ Error: Unexpected fields
 ───╯
 
 Error: Type mismatch
-   ╭─[ unexpected_fields:2:20 ]
+   ╭─[ main:2:20 ]
    │
  2 │     let a: {a: I32} = {a: 50, b: 20, c: 30}
    │                       ──────────┬──────────  

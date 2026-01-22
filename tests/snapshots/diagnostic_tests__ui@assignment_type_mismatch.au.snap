@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a: I32 = print(\"Hello\")\n}\n"
 input_file: tests/inputs/diagnostics/assignment_type_mismatch.au
 ---
 Error: Type mismatch
-   ╭─[ assignment_type_mismatch:2:15 ]
+   ╭─[ main:2:15 ]
    │
  2 │     let a: I32 = print("Hello")
    │                  ───────┬──────  

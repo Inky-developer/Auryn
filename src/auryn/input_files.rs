@@ -74,7 +74,7 @@ impl InputFiles {
         &self.data[&file_id]
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (FileId, &InputFile)> {
+    pub fn iter(&self) -> impl Iterator<Item = (FileId, &InputFile)> + Clone {
         self.data.iter().map(|(file_id, file)| (*file_id, file))
     }
 

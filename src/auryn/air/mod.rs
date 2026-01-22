@@ -1,14 +1,12 @@
-use crate::{
-    auryn::{
-        air::{
-            ast_transformer::query_globals,
-            data::{Air, AirModuleId},
-            typecheck::type_checker::typecheck_air,
-        },
-        ast::ast_node,
-        diagnostic::Diagnostics,
+use crate::auryn::{
+    air::{
+        ast_transformer::query_globals,
+        data::{Air, AirModuleId, Globals},
+        typecheck::type_checker::typecheck_air,
     },
-    utils::small_string::SmallString,
+    ast::{ast_node, query_ast},
+    diagnostic::Diagnostics,
+    input_files::InputFile,
 };
 
 pub mod ast_transformer;
@@ -16,13 +14,24 @@ pub mod data;
 pub mod namespace;
 pub mod typecheck;
 
-pub fn query_air(
-    ast: ast_node::Root,
-    included_modules: impl IntoIterator<Item = (SmallString, AirModuleId)>,
+pub fn query_air<'a>(
+    _ast: ast_node::Root,
+    input_files: impl Iterator<Item = &'a InputFile> + Clone,
 ) -> (Air, Diagnostics) {
-    let output = query_globals(ast, included_modules);
+    let mut diagnostics = Vec::new();
+    let mut globals = Globals::default();
 
-    typecheck_air(output.globals, output.diagnostics)
+    let included_modules = input_files
+        .clone()
+        .map(|file| (file.name.clone(), AirModuleId(file.file_id)));
+    for input_file in input_files.clone() {
+        let ast = query_ast(input_file.syntax_tree());
+        let output = query_globals(ast, included_modules.clone());
+        diagnostics.extend(output.diagnostics.take());
+        globals.merge(output.globals);
+    }
+
+    typecheck_air(globals, diagnostics.into_iter().collect())
 }
 
 #[cfg(test)]
@@ -32,7 +41,7 @@ mod tests {
         ast::query_ast,
         diagnostic::Diagnostics,
         file_id::FileId,
-        parser::Parser,
+        input_files::InputFiles,
     };
 
     #[track_caller]
@@ -43,16 +52,17 @@ mod tests {
 
     #[track_caller]
     fn compile(input: &str) -> (Air, Diagnostics) {
-        let output = Parser::new(FileId::MAIN_FILE, input).parse();
-        let diagnostics = output.syntax_tree.collect_diagnostics();
+        let mut input_files = InputFiles::default();
+        input_files.add("main".into(), input.into());
+        let syntax_tree = input_files.get(FileId::MAIN_FILE).syntax_tree();
+        let diagnostics = syntax_tree.collect_diagnostics();
         if !diagnostics.is_empty() {
             panic!("Could not parse input: {diagnostics:?}");
         }
 
-        let tree = output.syntax_tree;
-        println!("{}", tree.display(input));
-        let ast = query_ast(&tree).unwrap();
-        query_air(ast, [])
+        println!("{}", syntax_tree.display(input));
+        let ast = query_ast(syntax_tree);
+        query_air(ast, input_files.iter().map(|(_, file)| file))
     }
 
     #[test]

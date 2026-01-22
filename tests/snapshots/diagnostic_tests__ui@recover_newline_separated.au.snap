@@ -4,7 +4,7 @@ expression: "unsafe extern \"java\" {\n\t[\"foo\"]\n\ttype Foo {\n\t\t[\"bar\"]\
 input_file: tests/inputs/diagnostics/recover_newline_separated.au
 ---
 Error: Expected extern type body item
-   ╭─[ recover_newline_separated:5:3 ]
+   ╭─[ main:5:3 ]
    │
  5 │        invalid item
    │        │ 

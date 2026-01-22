@@ -4,7 +4,7 @@ expression: "fn main() {\n    let\n}\n\nfn bar() {}"
 input_file: tests/inputs/diagnostics/recover_block.au
 ---
 Error: Unexpected token
-   ╭─[ recover_block:2:8 ]
+   ╭─[ main:2:8 ]
    │
  2 │     let
    │        │ 
