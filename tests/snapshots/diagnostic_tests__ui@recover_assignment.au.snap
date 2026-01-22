@@ -4,7 +4,7 @@ expression: "\nfn main() {\n\tlet a = 0\n\ta ^= 1\n}\n"
 input_file: tests/inputs/diagnostics/recover_assignment.au
 ---
 Error: Unexpected token
-   ╭─[ main:4:4 ]
+   ╭─[ recover_assignment:4:4 ]
    │
  4 │     a ^= 1
    │       │ 

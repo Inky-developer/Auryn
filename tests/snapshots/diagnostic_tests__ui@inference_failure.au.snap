@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a = arrayOfZeros(50)\n}\n"
 input_file: tests/inputs/diagnostics/inference_failure.au
 ---
 Error: Could not infer type
-   ╭─[ main:2:10 ]
+   ╭─[ inference_failure:2:10 ]
    │
  2 │     let a = arrayOfZeros(50)
    │             ────────┬───────  

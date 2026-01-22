@@ -1,6 +1,6 @@
-use std::io::Write;
+use std::{io::Write, path::Path};
 
-use auryn::auryn::api::{compile, run};
+use auryn::auryn::api::{compile_file, compile_str, run};
 
 const BUILD_DIR: &str = "build";
 
@@ -8,8 +8,7 @@ fn main() -> std::io::Result<()> {
     let mut args = std::env::args();
     args.next().unwrap();
     if let Some(filename) = args.next() {
-        let input = std::fs::read_to_string(filename)?;
-        match compile(&input) {
+        match compile_file(Path::new(&filename)) {
             Ok(class) => {
                 if args.next().as_deref() == Some("--print-class") {
                     println!("{class:?}");
@@ -31,7 +30,7 @@ fn repl() {
         input.clear();
         read_user_input(&mut input);
         let input = format!("fn main() {{ {input} }}");
-        match compile(&input) {
+        match compile_str(&input) {
             Ok(class) => {
                 print!("{}", run(class, BUILD_DIR));
             }

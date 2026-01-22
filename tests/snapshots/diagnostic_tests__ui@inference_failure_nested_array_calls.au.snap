@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a = arrayGet(arrayOfZeros(50), 25)\n}\n"
 input_file: tests/inputs/diagnostics/inference_failure_nested_array_calls.au
 ---
 Error: Could not infer type
-   ╭─[ main:2:19 ]
+   ╭─[ inference_failure_nested_array_calls:2:19 ]
    │
  2 │     let a = arrayGet(arrayOfZeros(50), 25)
    │                      ────────┬───────  

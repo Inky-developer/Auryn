@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a = ,\n}\n"
 input_file: tests/inputs/diagnostics/recover_expression.au
 ---
 Error: Expected expression
-   ╭─[ main:2:10 ]
+   ╭─[ recover_expression:2:10 ]
    │
  2 │     let a = ,
    │             │ 

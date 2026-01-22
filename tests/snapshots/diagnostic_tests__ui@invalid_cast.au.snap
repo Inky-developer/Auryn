@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a = print(\"Unit\")\n\tlet b: I32 = cast(a)\n\tp
 input_file: tests/inputs/diagnostics/invalid_cast.au
 ---
 Error: Invalid cast
-   ╭─[ main:3:15 ]
+   ╭─[ invalid_cast:3:15 ]
    │
  3 │     let b: I32 = cast(a)
    │                  ───┬───  

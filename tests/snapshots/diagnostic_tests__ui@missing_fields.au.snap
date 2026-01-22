@@ -4,7 +4,7 @@ expression: "fn main() {\n\tlet a: {a: I32, b: I64, c: String} = {a: 50}\n\tprin
 input_file: tests/inputs/diagnostics/missing_fields.au
 ---
 Error: Missing fields
-   ╭─[ main:2:39 ]
+   ╭─[ missing_fields:2:39 ]
    │
  2 │     let a: {a: I32, b: I64, c: String} = {a: 50}
    │                                          ───┬───  
@@ -12,7 +12,7 @@ Error: Missing fields
 ───╯
 
 Error: Type mismatch
-   ╭─[ main:2:39 ]
+   ╭─[ missing_fields:2:39 ]
    │
  2 │     let a: {a: I32, b: I64, c: String} = {a: 50}
    │                                          ───┬───  

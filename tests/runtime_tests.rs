@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use auryn::auryn::api::{compile, run};
+use auryn::auryn::api::{compile_file, run};
 use insta::glob;
 
 struct TempDir(PathBuf);
@@ -46,7 +46,7 @@ fn runtime_tests() {
         let content = std::fs::read_to_string(path).unwrap();
         let expected_output = parse_expected_output(&content);
 
-        let output = match compile(&content) {
+        let output = match compile_file(path) {
             Ok(output) => output,
             Err(diagnostics) => {
                 diagnostics.to_display().eprint();

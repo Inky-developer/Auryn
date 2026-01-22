@@ -5,7 +5,7 @@ use crate::{
         codegen_java::codegen::{CodegenOutput, codegen},
         diagnostic::{DiagnosticKind, Diagnostics},
         diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
-        environment::FilesystemEnvironment,
+        environment::{Environment, FilesystemEnvironment},
         input_files::InputFiles,
         world::World,
     },
@@ -27,10 +27,46 @@ impl OwnedDiagnostics {
     }
 }
 
-pub fn compile(input_file_path: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
-    let mut world = World::new(Box::new(FilesystemEnvironment));
+pub fn compile_file(main_file_path: &Path) -> Result<CodegenOutput, OwnedDiagnostics> {
+    let dir = main_file_path.parent().expect("Should be a valid path");
+    let main = main_file_path.file_name().expect("Should be a valid path");
+    compile(
+        main.to_str()
+            .expect("Should be a valid file name")
+            .strip_suffix(".au")
+            .expect("Should be a .au file"),
+        Box::new(FilesystemEnvironment::new(dir.to_path_buf())),
+    )
+}
+
+pub fn compile_str(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
+    struct SingleFileEnvironment {
+        file: Box<str>,
+    }
+
+    impl Environment for SingleFileEnvironment {
+        fn load_module(&self, name: &str) -> Option<Box<str>> {
+            if name == "main" {
+                Some(self.file.clone())
+            } else {
+                None
+            }
+        }
+    }
+
+    compile(
+        "main",
+        Box::new(SingleFileEnvironment { file: input.into() }),
+    )
+}
+
+fn compile(
+    main_file: &str,
+    environment: Box<dyn Environment>,
+) -> Result<CodegenOutput, OwnedDiagnostics> {
+    let mut world = World::new(environment);
     let file_id = world
-        .file_id_for_module(input_file_path)
+        .file_id_for_module(main_file)
         .expect("Should be able to read input file");
 
     let (air, diagnostics) = world.query_air(file_id);

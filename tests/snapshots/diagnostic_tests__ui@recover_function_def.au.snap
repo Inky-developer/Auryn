@@ -4,7 +4,7 @@ expression: "fn main( {\n    print(\"Hi\")\n}\n"
 input_file: tests/inputs/diagnostics/recover_function_def.au
 ---
 Error: Unexpected token
-   ╭─[ main:1:10 ]
+   ╭─[ recover_function_def:1:10 ]
    │
  1 │ fn main( {
    │          │ 

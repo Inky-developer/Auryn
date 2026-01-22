@@ -150,7 +150,7 @@ impl ClassGenerator<'_> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        auryn::{api::compile, codegen_java::codegen::CodegenOutput},
+        auryn::{api::compile_str, codegen_java::codegen::CodegenOutput},
         java::class::ClassData,
     };
 
@@ -166,7 +166,7 @@ mod tests {
     }
 
     fn generate_classes(input: &str) -> CodegenOutput {
-        match compile(input) {
+        match compile_str(input) {
             Ok(output) => output,
             Err(diagnostics) => {
                 panic!("Could not compile '{input}':\n{}", diagnostics.to_display())

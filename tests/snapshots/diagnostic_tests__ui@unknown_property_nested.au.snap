@@ -4,7 +4,7 @@ expression: "unsafe extern \"java\" {\n\t[\"foo\"]\n\ttype Foo {\n\t\t[\"bar\"]\
 input_file: tests/inputs/diagnostics/unknown_property_nested.au
 ---
 Error: Undefined property
-    ╭─[ main:16:16 ]
+    ╭─[ unknown_property_nested:16:16 ]
     │
  16 │     print(Foo.bar.oops)
     │           ───┬─── ──┬─  
