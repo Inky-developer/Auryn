@@ -3,10 +3,10 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"let a: I32 = 1\\nprint(a)\")"
 ---
 ClassData
-  this_class:		#22	Main
-  super_class:		#26	java/lang/Object
+  this_class:		#23	Main
+  super_class:		#27	java/lang/Object
 Constant pool:
-  #01 = Utf8			main
+  #01 = Utf8			main$main
   #02 = Utf8			()V
   #03 = Utf8			java/io/PrintStream
   #04 = Class		#3	java/io/PrintStream
@@ -23,18 +23,19 @@ Constant pool:
   #15 = MethodRef	#4.#14	java/io/PrintStream:println:(I)V
   #16 = Utf8			Code
   #17 = Utf8			StackMapTable
-  #18 = Utf8			([Ljava/lang/String;)V
-  #19 = Utf8			[Ljava/lang/String;
-  #20 = Class		#19	[Ljava/lang/String;
-  #21 = Utf8			Main
-  #22 = Class		#21	Main
-  #23 = NameAndType	#1:#2	main:()V
-  #24 = MethodRef	#22.#23	Main:main:()V
-  #25 = Utf8			java/lang/Object
-  #26 = Class		#25	java/lang/Object
+  #18 = Utf8			main
+  #19 = Utf8			([Ljava/lang/String;)V
+  #20 = Utf8			[Ljava/lang/String;
+  #21 = Class		#20	[Ljava/lang/String;
+  #22 = Utf8			Main
+  #23 = Class		#22	Main
+  #24 = NameAndType	#1:#2	main$main:()V
+  #25 = MethodRef	#23.#24	Main:main$main:()V
+  #26 = Utf8			java/lang/Object
+  #27 = Class		#26	java/lang/Object
 
 {
-  fn main {
+  fn main$main {
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
@@ -57,7 +58,7 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#24	Main:main:()V
+      0: InvokeStatic		#25	Main:main$main:()V
       3: Return
       StackMapTable:
         Full

@@ -8,6 +8,7 @@ use crate::{
                 ReturnDescriptor, StructuralRepr,
             },
         },
+        input_files::InputFiles,
     },
     java::{
         class::{ClassData, Field, FieldAccessFlags, Method, TypeCategory},
@@ -37,9 +38,9 @@ impl std::fmt::Debug for CodegenOutput {
     }
 }
 
-pub fn codegen(air: &Air) -> CodegenOutput {
+pub fn codegen(input_files: &InputFiles, air: &Air) -> CodegenOutput {
     let mut ctx = RepresentationCtx::default();
-    let main_class = generate_main_class(air, &mut ctx);
+    let main_class = generate_main_class(air, &mut ctx, input_files);
 
     let mut output = CodegenOutput::default();
     output.files.insert("Main".into(), main_class);

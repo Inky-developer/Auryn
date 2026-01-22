@@ -1,7 +1,6 @@
 use crate::{
     auryn::{
         air::{data::Air, query_air},
-        ast::query_ast,
         diagnostic::Diagnostics,
         environment::Environment,
         file_id::FileId,
@@ -37,7 +36,11 @@ impl World {
         self.input_files.get(id)
     }
 
-    pub fn input_files(self) -> InputFiles {
+    pub fn input_files(&self) -> &InputFiles {
+        &self.input_files
+    }
+
+    pub fn into_input_files(self) -> InputFiles {
         self.input_files
     }
 
@@ -47,8 +50,7 @@ impl World {
 
         let included_modules = self.input_files.iter().map(|(_id, file)| file);
 
-        let ast = query_ast(file.syntax_tree());
-        let (air, air_diagnostics) = query_air(ast, included_modules);
+        let (air, air_diagnostics) = query_air(included_modules);
         diagnostics.extend(air_diagnostics.take());
         (air, diagnostics.into_iter().collect())
     }

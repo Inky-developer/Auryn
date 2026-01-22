@@ -11,6 +11,7 @@ use crate::{
                 ReturnDescriptor,
             },
         },
+        input_files::InputFiles,
     },
     java::{
         class,
@@ -20,8 +21,12 @@ use crate::{
     utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
-pub(super) fn generate_main_class(air: &Air, repr_ctx: &mut RepresentationCtx) -> class::ClassData {
-    let generator = ClassGenerator::new("Main".into(), air, repr_ctx);
+pub(super) fn generate_main_class<'a>(
+    air: &Air,
+    repr_ctx: &'a mut RepresentationCtx,
+    input_files: &'a InputFiles,
+) -> class::ClassData {
+    let generator = ClassGenerator::new("Main".into(), air, repr_ctx, input_files);
     generator.generate_from_air()
 }
 
@@ -32,6 +37,7 @@ pub struct GeneratedMethodData {
 }
 
 pub struct ClassGenerator<'a> {
+    input_files: &'a InputFiles,
     pub(super) air: &'a Air,
     pub(super) repr_ctx: &'a mut RepresentationCtx,
     pub(super) class_name: SmallString,
@@ -41,8 +47,14 @@ pub struct ClassGenerator<'a> {
 }
 
 impl<'a> ClassGenerator<'a> {
-    fn new(class_name: SmallString, air: &'a Air, repr_ctx: &'a mut RepresentationCtx) -> Self {
+    fn new(
+        class_name: SmallString,
+        air: &'a Air,
+        repr_ctx: &'a mut RepresentationCtx,
+        input_files: &'a InputFiles,
+    ) -> Self {
         Self {
+            input_files,
             air,
             class_name,
             repr_ctx,
@@ -63,7 +75,11 @@ impl ClassGenerator<'_> {
             };
             let method_descriptor = self.repr_ctx.get_function_representation(function_type);
 
-            let mangled_name = function.ident.clone();
+            let module_name = &self
+                .input_files
+                .get(function_id.0.0.file_id().unwrap())
+                .name;
+            let mangled_name = format!("{module_name}${}", &function.ident).into();
 
             self.generated_methods.insert(
                 *function_id,

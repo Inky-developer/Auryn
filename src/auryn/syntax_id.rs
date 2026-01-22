@@ -14,6 +14,7 @@ impl SyntaxId {
     pub const MAX_NUMBER: NonZeroU64 = NonZeroU64::new((1 << Self::NUMBER_BITS) - 1).unwrap();
     pub const NUMBER_RANGE: Range<NonZeroU64> = NonZeroU64::new(1).unwrap()..Self::MAX_NUMBER;
 
+    // TODO: Make file_id required
     pub fn new(file_id: Option<FileId>, number: NonZeroU64) -> Self {
         Self::new_internal(file_id, number.get())
     }

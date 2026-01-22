@@ -4,7 +4,7 @@ use crate::auryn::{
         data::{Air, AirModuleId, Globals},
         typecheck::type_checker::typecheck_air,
     },
-    ast::{ast_node, query_ast},
+    ast::query_ast,
     diagnostic::Diagnostics,
     input_files::InputFile,
 };
@@ -15,7 +15,6 @@ pub mod namespace;
 pub mod typecheck;
 
 pub fn query_air<'a>(
-    _ast: ast_node::Root,
     input_files: impl Iterator<Item = &'a InputFile> + Clone,
 ) -> (Air, Diagnostics) {
     let mut diagnostics = Vec::new();
@@ -38,7 +37,6 @@ pub fn query_air<'a>(
 mod tests {
     use crate::auryn::{
         air::{data::Air, query_air},
-        ast::query_ast,
         diagnostic::Diagnostics,
         file_id::FileId,
         input_files::InputFiles,
@@ -61,8 +59,7 @@ mod tests {
         }
 
         println!("{}", syntax_tree.display(input));
-        let ast = query_ast(syntax_tree);
-        query_air(ast, input_files.iter().map(|(_, file)| file))
+        query_air(input_files.iter().map(|(_, file)| file))
     }
 
     #[test]

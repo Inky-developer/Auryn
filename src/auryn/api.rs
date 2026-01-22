@@ -70,12 +70,12 @@ fn compile(
 
         if should_abort {
             return Err(OwnedDiagnostics {
-                input_files: world.input_files(),
+                input_files: world.into_input_files(),
                 diagnostics,
             });
         }
     }
-    Ok(codegen(&air))
+    Ok(codegen(world.input_files(), &air))
 }
 
 pub fn run(codegen_output: CodegenOutput, dir: impl AsRef<Path>) -> String {

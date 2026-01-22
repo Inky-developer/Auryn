@@ -4,10 +4,10 @@ expression: "generate_classes(r#\"\n            fn main() {\n                let
 ---
 Main:
 ClassData
-  this_class:		#31	Main
-  super_class:		#35	java/lang/Object
+  this_class:		#32	Main
+  super_class:		#36	java/lang/Object
 Constant pool:
-  #01 = Utf8			main
+  #01 = Utf8			main$main
   #02 = Utf8			()V
   #03 = Utf8			Structural1$I32
   #04 = Class		#3	Structural1$I32
@@ -33,18 +33,19 @@ Constant pool:
   #24 = MethodRef	#6.#23	java/io/PrintStream:println:(I)V
   #25 = Utf8			Code
   #26 = Utf8			StackMapTable
-  #27 = Utf8			([Ljava/lang/String;)V
-  #28 = Utf8			[Ljava/lang/String;
-  #29 = Class		#28	[Ljava/lang/String;
-  #30 = Utf8			Main
-  #31 = Class		#30	Main
-  #32 = NameAndType	#1:#2	main:()V
-  #33 = MethodRef	#31.#32	Main:main:()V
-  #34 = Utf8			java/lang/Object
-  #35 = Class		#34	java/lang/Object
+  #27 = Utf8			main
+  #28 = Utf8			([Ljava/lang/String;)V
+  #29 = Utf8			[Ljava/lang/String;
+  #30 = Class		#29	[Ljava/lang/String;
+  #31 = Utf8			Main
+  #32 = Class		#31	Main
+  #33 = NameAndType	#1:#2	main$main:()V
+  #34 = MethodRef	#32.#33	Main:main$main:()V
+  #35 = Utf8			java/lang/Object
+  #36 = Class		#35	java/lang/Object
 
 {
-  fn main {
+  fn main$main {
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
@@ -71,7 +72,7 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#33	Main:main:()V
+      0: InvokeStatic		#34	Main:main$main:()V
       3: Return
       StackMapTable:
         Full

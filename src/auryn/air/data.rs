@@ -35,8 +35,6 @@ impl Globals {
         self.statics.extend(statics);
     }
 }
-
-#[derive(Default)]
 pub struct Air {
     pub globals: Globals,
     pub ty_ctx: TypeContext,
@@ -48,6 +46,7 @@ impl Air {
             .globals
             .functions
             .iter()
+            .filter(|(id, _)| id.0.0.file_id() == Some(FileId::MAIN_FILE))
             .filter(|(_, it)| it.ident.as_ref() == "main");
         let (id, function) = main_functions
             .next()

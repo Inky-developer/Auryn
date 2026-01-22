@@ -4,17 +4,17 @@ expression: "generate_class(r#\"\n            fn main() {\n                foo(2
 ---
 ClassData
   this_class:		#6	Main
-  super_class:		#35	java/lang/Object
+  super_class:		#36	java/lang/Object
 Constant pool:
-  #01 = Utf8			main
+  #01 = Utf8			main$main
   #02 = Utf8			()V
   #03 = Long			2034
   #05 = Utf8			Main
   #06 = Class		#5	Main
-  #07 = Utf8			foo
+  #07 = Utf8			main$foo
   #08 = Utf8			(J)V
-  #09 = NameAndType	#7:#8	foo:(J)V
-  #10 = MethodRef	#6.#9	Main:foo:(J)V
+  #09 = NameAndType	#7:#8	main$foo:(J)V
+  #10 = MethodRef	#6.#9	Main:main$foo:(J)V
   #11 = Utf8			Code
   #12 = Utf8			StackMapTable
   #13 = Utf8			java/io/PrintStream
@@ -31,22 +31,23 @@ Constant pool:
   #26 = Utf8			(Z)V
   #27 = NameAndType	#25:#26	println:(Z)V
   #28 = MethodRef	#14.#27	java/io/PrintStream:println:(Z)V
-  #29 = Utf8			([Ljava/lang/String;)V
-  #30 = Utf8			[Ljava/lang/String;
-  #31 = Class		#30	[Ljava/lang/String;
-  #32 = NameAndType	#1:#2	main:()V
-  #33 = MethodRef	#6.#32	Main:main:()V
-  #34 = Utf8			java/lang/Object
-  #35 = Class		#34	java/lang/Object
+  #29 = Utf8			main
+  #30 = Utf8			([Ljava/lang/String;)V
+  #31 = Utf8			[Ljava/lang/String;
+  #32 = Class		#31	[Ljava/lang/String;
+  #33 = NameAndType	#1:#2	main$main:()V
+  #34 = MethodRef	#6.#33	Main:main$main:()V
+  #35 = Utf8			java/lang/Object
+  #36 = Class		#35	java/lang/Object
 
 {
-  fn main {
+  fn main$main {
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 1
       0: Ldc2W			#3	2034
-      3: InvokeStatic		#10	Main:foo:(J)V
+      3: InvokeStatic		#10	Main:main$foo:(J)V
       6: Return
       StackMapTable:
         Full
@@ -55,7 +56,7 @@ Constant pool:
           Stack = [  ]
   }
 
-  fn foo {
+  fn main$foo {
     descriptor: (J)V
     flags: PUBLIC | STATIC
     Code:
@@ -100,7 +101,7 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 8, locals = 2
-      0: InvokeStatic		#33	Main:main:()V
+      0: InvokeStatic		#34	Main:main$main:()V
       3: Return
       StackMapTable:
         Full
