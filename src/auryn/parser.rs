@@ -308,6 +308,29 @@ impl<'a> Parser<'a> {
 
         Ok(())
     }
+
+    fn parse_separated(
+        &mut self,
+        end_set: impl Into<TokenSet>,
+        separator_tokens: impl Into<TokenSet>,
+        mut parse_fn: impl FnMut(&mut Self) -> ParseResult,
+    ) -> ParseResult {
+        let end_set = end_set.into();
+        let separator_tokens = separator_tokens.into();
+        self.parse_recoverable(end_set, |parser| {
+            loop {
+                if end_set.contains(parser.peek().kind) {
+                    break;
+                }
+                parser.parse_recoverable(end_set.union(&separator_tokens), &mut parse_fn)?;
+                if !separator_tokens.contains(parser.peek().kind) {
+                    break;
+                }
+                parser.expect(separator_tokens)?;
+            }
+            Ok(())
+        })
+    }
 }
 
 /// Parsing methods
@@ -499,19 +522,11 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::ParensOpen)?;
-        self.parse_recoverable(bitset![TokenKind::ParensClose], |parser| {
-            loop {
-                if parser.peek().kind == TokenKind::ParensClose {
-                    break;
-                }
-                parser.parse_parameter_definition()?;
-                if parser.peek().kind != TokenKind::Comma {
-                    break;
-                }
-                parser.expect(TokenKind::Comma)?;
-            }
-            Ok(())
-        })?;
+        self.parse_separated(
+            TokenKind::ParensClose,
+            TokenKind::Comma,
+            Self::parse_parameter_definition,
+        )?;
         self.expect(TokenKind::ParensClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ParameterList);
@@ -563,19 +578,11 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::BraceOpen)?;
-        loop {
-            if self.peek().kind == TokenKind::BraceClose {
-                break;
-            }
-            self.parse_recoverable(
-                bitset![TokenKind::Comma, TokenKind::BraceClose],
-                Self::parse_structural_type_field,
-            )?;
-            if self.peek().kind != TokenKind::Comma {
-                break;
-            }
-            self.expect(TokenKind::Comma)?;
-        }
+        self.parse_separated(
+            TokenKind::BraceClose,
+            TokenKind::Comma,
+            Self::parse_structural_type_field,
+        )?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::StructuralType);
@@ -902,19 +909,11 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::ParensOpen)?;
-        loop {
-            if self.peek().kind == TokenKind::ParensClose {
-                break;
-            }
-            self.parse_recoverable(
-                bitset![TokenKind::Comma, TokenKind::ParensClose],
-                Self::parse_expression,
-            )?;
-            if self.peek().kind != TokenKind::Comma {
-                break;
-            }
-            self.expect(TokenKind::Comma)?;
-        }
+        self.parse_separated(
+            TokenKind::ParensClose,
+            TokenKind::Comma,
+            Self::parse_expression,
+        )?;
         self.expect(TokenKind::ParensClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ArgumentList);
@@ -961,19 +960,11 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::BraceOpen)?;
-        self.parse_recoverable(bitset![TokenKind::BraceClose], |parser| {
-            loop {
-                if parser.peek().kind == TokenKind::BraceClose {
-                    break;
-                }
-                parser.parse_struct_literal_field()?;
-                if parser.peek().kind != TokenKind::Comma {
-                    break;
-                }
-                parser.expect(TokenKind::Comma)?;
-            }
-            Ok(())
-        })?;
+        self.parse_separated(
+            TokenKind::BraceClose,
+            TokenKind::Comma,
+            Self::parse_struct_literal_field,
+        )?;
         self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::StructLiteral);
