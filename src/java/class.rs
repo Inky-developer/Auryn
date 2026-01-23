@@ -11,7 +11,7 @@ use crate::{
         constant_pool_builder::ConstantPoolBuilder,
         display::{
             ConstantPoolDisplay, ConstantPoolEntryDisplay, FieldDisplay, InstructionDisplay,
-            MethodDisplay,
+            MethodDisplay, VerificationTypeInfoDisplay,
         },
     },
     utils::small_string::SmallString,
@@ -265,6 +265,12 @@ pub enum Instruction {
     /// Stores an int into an int array
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.iastore>
     IAStore,
+    /// Loads a byte or boolean from a byte or boolean array
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.baload>
+    BALoad,
+    /// Stores a byte or boolean into a byte or boolean array
+    /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.bastore>
+    BAStore,
     /// Loads a long from a long array
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.laload>
     LALoad,
@@ -416,6 +422,8 @@ impl Instruction {
             Instruction::AAStore => buf.write_all(&[0x53])?,
             Instruction::IALoad => buf.write_all(&[0x2e])?,
             Instruction::IAStore => buf.write_all(&[0x4f])?,
+            Instruction::BALoad => buf.write_all(&[0x33])?,
+            Instruction::BAStore => buf.write_all(&[0x54])?,
             Instruction::LALoad => buf.write_all(&[0x2f])?,
             Instruction::LAStore => buf.write_all(&[0x50])?,
             Instruction::Ldc(index) => {
@@ -678,6 +686,10 @@ impl VerificationTypeInfo {
             VerificationTypeInfo::Long => buf.write_all(&[0x4]),
             VerificationTypeInfo::Double => buf.write_all(&[0x3]),
         }
+    }
+
+    pub fn display<'a>(&'a self, pool: &'a ConstantPool) -> impl Display + use<'a> {
+        VerificationTypeInfoDisplay { info: self, pool }
     }
 }
 

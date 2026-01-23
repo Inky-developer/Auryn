@@ -121,12 +121,9 @@ impl FieldDescriptor {
 
     pub fn into_primitive(self) -> Representation {
         match self {
-            FieldDescriptor::Byte
-            | FieldDescriptor::Char
-            | FieldDescriptor::Integer
-            | FieldDescriptor::Short
-            | FieldDescriptor::Boolean => Representation::Integer,
+            FieldDescriptor::Integer => Representation::Integer,
             FieldDescriptor::Long => Representation::Long,
+            FieldDescriptor::Boolean => Representation::Boolean,
             FieldDescriptor::Object(name) => Representation::Object(name),
             FieldDescriptor::Array {
                 dimension_count,

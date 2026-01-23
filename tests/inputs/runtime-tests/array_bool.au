@@ -1,0 +1,14 @@
+// expect-output:
+// 3
+// false
+// false
+// true
+
+fn main() {
+	let arr: []Bool = arrayOfZeros(3)
+	print(arrayLen(arr))
+	print(arrayGet(arr, 1))
+	arraySet(arr, 1, true)
+	print(arrayGet(arr, 0))
+	print(arrayGet(arr, 1))
+}

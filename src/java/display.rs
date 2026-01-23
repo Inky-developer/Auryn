@@ -285,6 +285,8 @@ impl Display for InstructionDisplay<'_> {
             AAStore => write!(f, "AAStore"),
             IALoad => write!(f, "IALoad"),
             IAStore => write!(f, "IAStore"),
+            BALoad => write!(f, "BALoad"),
+            BAStore => write!(f, "BAStore"),
             ALoad(index) => write!(f, "ALoad\t\t\t{index}"),
             AStore(index) => write!(f, "AStore\t\t\t{index}"),
             IConst(value) => write!(f, "IConst\t\t\t{value}"),
@@ -385,14 +387,7 @@ impl Display for StackMapTableAttributeDisplay<'_> {
                 print_indent(f, indent)?;
                 write!(f, "locals = [ ")?;
                 for (index, local) in locals.iter().enumerate() {
-                    write!(
-                        f,
-                        "{}",
-                        VerificationTypeInfoDisplay {
-                            info: local,
-                            pool: self.pool
-                        }
-                    )?;
+                    write!(f, "{}", local.display(self.pool))?;
                     if index + 1 < locals.len() {
                         write!(f, ",")?;
                     }
@@ -404,14 +399,7 @@ impl Display for StackMapTableAttributeDisplay<'_> {
                 print_indent(f, indent)?;
                 write!(f, "Stack = [ ")?;
                 for (index, entry) in stack.iter().enumerate() {
-                    write!(
-                        f,
-                        "{}",
-                        VerificationTypeInfoDisplay {
-                            info: entry,
-                            pool: self.pool
-                        }
-                    )?;
+                    write!(f, "{}", entry.display(self.pool))?;
                     if index + 1 < stack.len() {
                         write!(f, ",")?;
                     }
@@ -424,9 +412,9 @@ impl Display for StackMapTableAttributeDisplay<'_> {
     }
 }
 
-struct VerificationTypeInfoDisplay<'a> {
-    info: &'a VerificationTypeInfo,
-    pool: &'a ConstantPool,
+pub(crate) struct VerificationTypeInfoDisplay<'a> {
+    pub info: &'a VerificationTypeInfo,
+    pub pool: &'a ConstantPool,
 }
 
 impl Display for VerificationTypeInfoDisplay<'_> {

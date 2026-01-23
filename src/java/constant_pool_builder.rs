@@ -6,7 +6,7 @@ use crate::{
     utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConstantPoolBuilder {
     cache: FastMap<ConstantPoolEntry, ConstantPoolIndex>,
     entries: Vec<Option<ConstantPoolEntry>>,

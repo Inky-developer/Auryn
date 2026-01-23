@@ -345,6 +345,9 @@ impl AssemblyContext<'_> {
                     PrimitiveOrObject::Primitive(PrimitiveType::Long) => {
                         class::Instruction::LAStore
                     }
+                    PrimitiveOrObject::Primitive(PrimitiveType::Boolean | PrimitiveType::Byte) => {
+                        class::Instruction::BAStore
+                    }
                     PrimitiveOrObject::Primitive(other) => {
                         todo!("Add instruction for stroring into {other:?} arrays")
                     }
@@ -355,6 +358,9 @@ impl AssemblyContext<'_> {
                 on_instruction(match element_type.clone().to_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => class::Instruction::IALoad,
                     PrimitiveOrObject::Primitive(PrimitiveType::Long) => class::Instruction::LALoad,
+                    PrimitiveOrObject::Primitive(PrimitiveType::Boolean | PrimitiveType::Byte) => {
+                        class::Instruction::BALoad
+                    }
                     PrimitiveOrObject::Primitive(other) => {
                         todo!("Add instruction for loading from {other:?} arrays")
                     }
