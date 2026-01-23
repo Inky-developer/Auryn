@@ -1,6 +1,6 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(\"fn foo(a: Int, b: []String, c: ()) -> Null { print(9000) }\")"
+expression: "verify(\"fn foo(a: Int,\\nb: []String, c: ()) -> Null { print(9000) }\")"
 ---
 syntax_tree:
 0..58 Root
@@ -20,7 +20,7 @@ syntax_tree:
 |||||||10..13 Ident
 ||||||||Identifier `Int`
 |||||Comma `,`
-|||||Whitespace ` `
+|||||Newline `\n`
 |||||15..26 ParameterDefinition
 ||||||Identifier `b`
 ||||||Colon `:`

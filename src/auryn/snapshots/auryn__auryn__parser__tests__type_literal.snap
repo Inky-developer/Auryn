@@ -1,73 +1,83 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify_block(r#\"\n            let a: {a: I32, b: I64} = {a: 10, b: 20 * 2}\n            \"#)"
+expression: "verify_block(r#\"\n            let a: {\n                a: I32,\n                b: I64\n            } = {\n                a: 10,\n                b: 20 * 2\n            }\n            \"#)"
 ---
 syntax_tree:
-0..70 Root
-|0..70 Block
+0..162 Root
+|0..162 Block
 ||Newline `\n`
 ||Whitespace `            `
-||13..57 Statement
-|||13..57 Assignment
+||13..149 Statement
+|||13..149 Assignment
 ||||KeywordLet `let`
 ||||Whitespace ` `
 ||||Identifier `a`
 ||||Colon `:`
 ||||Whitespace ` `
-||||20..37 Type
-|||||20..37 StructuralType
+||||20..83 Type
+|||||20..83 StructuralType
 ||||||BraceOpen `{`
-||||||21..27 StructuralTypeField
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||38..44 StructuralTypeField
 |||||||Identifier `a`
 |||||||Colon `:`
 |||||||Whitespace ` `
-|||||||24..27 Type
-||||||||24..27 Ident
+|||||||41..44 Type
+||||||||41..44 Ident
 |||||||||Identifier `I32`
 ||||||Comma `,`
-||||||Whitespace ` `
-||||||29..35 StructuralTypeField
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||62..81 StructuralTypeField
 |||||||Identifier `b`
 |||||||Colon `:`
 |||||||Whitespace ` `
-|||||||32..35 Type
-||||||||32..35 Ident
+|||||||65..81 Type
+||||||||65..81 Ident
 |||||||||Identifier `I64`
+|||||||||Newline `\n`
+|||||||||Whitespace `            `
 ||||||BraceClose `}`
 ||||||Whitespace ` `
 ||||Equal `=`
 ||||Whitespace ` `
-||||39..57 Expression
-|||||39..57 Value
-||||||39..57 StructLiteral
+||||85..149 Expression
+|||||85..149 Value
+||||||85..149 StructLiteral
 |||||||BraceOpen `{`
-|||||||40..45 StructLiteralField
+|||||||Newline `\n`
+|||||||Whitespace `                `
+|||||||103..108 StructLiteralField
 ||||||||Identifier `a`
 ||||||||Colon `:`
 ||||||||Whitespace ` `
-||||||||43..45 Expression
-|||||||||43..45 Value
-||||||||||43..45 NumberLiteral
+||||||||106..108 Expression
+|||||||||106..108 Value
+||||||||||106..108 NumberLiteral
 |||||||||||NumberLiteral `10`
 |||||||Comma `,`
-|||||||Whitespace ` `
-|||||||47..56 StructLiteralField
+|||||||Newline `\n`
+|||||||Whitespace `                `
+|||||||126..148 StructLiteralField
 ||||||||Identifier `b`
 ||||||||Colon `:`
 ||||||||Whitespace ` `
-||||||||50..56 Expression
-|||||||||50..56 BinaryOperation
-||||||||||50..53 Expression
-|||||||||||50..53 Value
-||||||||||||50..53 NumberLiteral
+||||||||129..148 Expression
+|||||||||129..148 BinaryOperation
+||||||||||129..132 Expression
+|||||||||||129..132 Value
+||||||||||||129..132 NumberLiteral
 |||||||||||||NumberLiteral `20`
 |||||||||||||Whitespace ` `
 ||||||||||Times `*`
 ||||||||||Whitespace ` `
-||||||||||55..56 Expression
-|||||||||||55..56 Value
-||||||||||||55..56 NumberLiteral
+||||||||||134..148 Expression
+|||||||||||134..148 Value
+||||||||||||134..148 NumberLiteral
 |||||||||||||NumberLiteral `2`
+|||||||||||||Newline `\n`
+|||||||||||||Whitespace `            `
 |||||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `

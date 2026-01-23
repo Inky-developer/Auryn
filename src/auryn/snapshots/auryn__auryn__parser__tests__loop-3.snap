@@ -13,11 +13,11 @@ syntax_tree:
 ||||Whitespace ` `
 ||||BraceOpen `{`
 ||||Whitespace `\t`
-||||9..24 Block
-|||||Newline `\n`
-|||||Whitespace `\t`
-|||||Newline `\n`
-|||||Whitespace `\t`
+||||Newline `\n`
+||||Whitespace `\t`
+||||Newline `\n`
+||||Whitespace `\t`
+||||13..24 Block
 |||||13..22 Statement
 ||||||13..22 Expression
 |||||||13..22 PostfixOperation

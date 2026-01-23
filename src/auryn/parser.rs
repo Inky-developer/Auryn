@@ -17,6 +17,11 @@ pub struct ParserOutput {
     pub syntax_tree: SyntaxTree,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+struct ParseOptions {
+    newlines_are_whitespace: bool,
+}
+
 #[derive(Debug)]
 struct ParserStackNode {
     children: Vec<SyntaxItem>,
@@ -34,6 +39,7 @@ pub struct Parser<'a> {
     file_id: FileId,
     index: usize,
     node_stack: Vec<ParserStackNode>,
+    option_stack: Vec<(usize, ParseOptions)>,
     recovery_stack: Vec<TokenSet>,
 }
 
@@ -46,6 +52,7 @@ impl<'a> Parser<'a> {
             file_id,
             index: 0,
             node_stack: default(),
+            option_stack: default(),
             recovery_stack: default(),
         }
     }
@@ -154,7 +161,12 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_whitespace(&mut self) {
-        if self.peek().kind == TokenKind::Whitespace {
+        let allowed_whitespace = if self.options().newlines_are_whitespace {
+            Self::WHITESPACE_LIKE
+        } else {
+            bitset![TokenKind::Whitespace]
+        };
+        while allowed_whitespace.contains(self.peek().kind) {
             self.consume_single();
         }
     }
@@ -197,6 +209,21 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn options(&self) -> ParseOptions {
+        self.option_stack
+            .last()
+            .map_or(ParseOptions::default(), |it| it.1)
+    }
+
+    fn push_options(&mut self, options: ParseOptions) {
+        let level = self.current_stack_level().stack_level;
+        self.option_stack.push((level, options))
+    }
+
+    fn pop_options(&mut self) {
+        self.option_stack.pop().unwrap();
+    }
+
     #[must_use]
     fn push_node(&mut self) -> ParserFrameWatcher {
         let stack_level = self.node_stack.len();
@@ -233,13 +260,20 @@ impl<'a> Parser<'a> {
         self.consume_whitespace();
     }
 
-    /// Restores the node stack to the expected depth, closing all unclosed nodes as errors
+    /// Restores the node stack to the expected depth, closing all unclosed nodes as errors.
+    /// Also makes sure to restore the options stack to the expected level.
     fn pop_to_level(&mut self, watcher: ParserFrameWatcher) {
         while self.node_stack.len() > watcher.stack_level + 1 {
             let watcher = ParserFrameWatcher {
                 stack_level: self.node_stack.len() - 1,
             };
             self.finish_node(watcher, SyntaxNodeKind::Error);
+        }
+
+        while let Some((level, _)) = self.option_stack.last()
+            && *level > watcher.stack_level
+        {
+            self.option_stack.pop().unwrap();
         }
     }
 
@@ -292,9 +326,13 @@ impl<'a> Parser<'a> {
 
     fn parse_newline_separated(
         &mut self,
-        end_set: TokenSet,
+        end_set: impl Into<TokenSet>,
         parse: impl Fn(&mut Self) -> ParseResult,
     ) -> ParseResult {
+        let end_set = end_set.into();
+        self.push_options(ParseOptions {
+            newlines_are_whitespace: false,
+        });
         loop {
             self.consume_whitespace_and_newlines();
             if end_set.contains(self.peek().kind) {
@@ -305,10 +343,12 @@ impl<'a> Parser<'a> {
                 self.push_error(DiagnosticError::ExpectedNewline);
             }
         }
+        self.pop_options();
 
         Ok(())
     }
 
+    #[track_caller]
     fn parse_separated(
         &mut self,
         end_set: impl Into<TokenSet>,
@@ -330,6 +370,23 @@ impl<'a> Parser<'a> {
             }
             Ok(())
         })
+    }
+
+    #[track_caller]
+    fn parse_surrounded(
+        &mut self,
+        start: TokenKind,
+        end: TokenKind,
+        parse_fn: impl FnOnce(&mut Self) -> ParseResult,
+    ) -> ParseResult {
+        self.push_options(ParseOptions {
+            newlines_are_whitespace: true,
+        });
+        self.expect(start)?;
+        self.parse_recoverable(end.into(), parse_fn)?;
+        self.pop_options();
+        self.expect(end)?;
+        Ok(())
     }
 }
 
@@ -368,12 +425,9 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordExtern)?;
         self.expect(TokenKind::StringLiteral)?;
 
-        self.expect(TokenKind::BraceOpen)?;
-        let end_tokens = bitset![TokenKind::BraceClose];
-        self.parse_recoverable(end_tokens, |parser| {
-            parser.parse_newline_separated(end_tokens, Self::parse_extern_item)
+        self.parse_surrounded(TokenKind::BraceOpen, TokenKind::BraceClose, |parser| {
+            parser.parse_newline_separated(TokenKind::BraceClose, Self::parse_extern_item)
         })?;
-        self.expect(TokenKind::BraceClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::ExternBlock);
         Ok(())
@@ -418,12 +472,9 @@ impl Parser<'_> {
     fn parse_extern_type_body(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::BraceOpen)?;
-        self.parse_newline_separated(
-            bitset![TokenKind::BraceClose],
-            Self::parse_extern_type_body_item,
-        )?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_surrounded(TokenKind::BraceOpen, TokenKind::BraceClose, |parser| {
+            parser.parse_newline_separated(TokenKind::BraceClose, Self::parse_extern_type_body_item)
+        })?;
 
         self.finish_node(watcher, SyntaxNodeKind::ExternTypeBody);
         Ok(())
@@ -521,13 +572,13 @@ impl Parser<'_> {
     fn parse_parameter_list(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::ParensOpen)?;
-        self.parse_separated(
-            TokenKind::ParensClose,
-            TokenKind::Comma,
-            Self::parse_parameter_definition,
-        )?;
-        self.expect(TokenKind::ParensClose)?;
+        self.parse_surrounded(TokenKind::ParensOpen, TokenKind::ParensClose, |parser| {
+            parser.parse_separated(
+                TokenKind::ParensClose,
+                TokenKind::Comma,
+                Self::parse_parameter_definition,
+            )
+        })?;
 
         self.finish_node(watcher, SyntaxNodeKind::ParameterList);
         Ok(())
@@ -577,13 +628,13 @@ impl Parser<'_> {
     fn parse_structural_type(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::BraceOpen)?;
-        self.parse_separated(
-            TokenKind::BraceClose,
-            TokenKind::Comma,
-            Self::parse_structural_type_field,
-        )?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_surrounded(TokenKind::BraceOpen, TokenKind::BraceClose, |parser| {
+            parser.parse_separated(
+                TokenKind::BraceClose,
+                TokenKind::Comma,
+                Self::parse_structural_type_field,
+            )
+        })?;
 
         self.finish_node(watcher, SyntaxNodeKind::StructuralType);
         Ok(())
@@ -633,9 +684,9 @@ impl Parser<'_> {
     }
 
     fn parse_braced_block(&mut self) -> ParseResult {
-        self.expect(TokenKind::BraceOpen)?;
-        self.parse_block(bitset![TokenKind::BraceClose])?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_surrounded(TokenKind::BraceOpen, TokenKind::BraceClose, |parser| {
+            parser.parse_block(TokenKind::BraceClose.into())
+        })?;
 
         Ok(())
     }
@@ -908,13 +959,13 @@ impl Parser<'_> {
     fn parse_argument_list(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::ParensOpen)?;
-        self.parse_separated(
-            TokenKind::ParensClose,
-            TokenKind::Comma,
-            Self::parse_expression,
-        )?;
-        self.expect(TokenKind::ParensClose)?;
+        self.parse_surrounded(TokenKind::ParensOpen, TokenKind::ParensClose, |parser| {
+            parser.parse_separated(
+                TokenKind::ParensClose,
+                TokenKind::Comma,
+                Self::parse_expression,
+            )
+        })?;
 
         self.finish_node(watcher, SyntaxNodeKind::ArgumentList);
         Ok(())
@@ -949,23 +1000,24 @@ impl Parser<'_> {
 
     fn parse_parenthesis(&mut self) -> ParseResult {
         let watcher = self.push_node();
-        self.expect(TokenKind::ParensOpen)?;
-        self.parse_expression()?;
-        self.expect(TokenKind::ParensClose)?;
+        self.parse_surrounded(
+            TokenKind::ParensOpen,
+            TokenKind::ParensClose,
+            Self::parse_expression,
+        )?;
         self.finish_node(watcher, SyntaxNodeKind::Parenthesis);
         Ok(())
     }
 
     fn parse_struct_literal(&mut self) -> ParseResult {
         let watcher = self.push_node();
-
-        self.expect(TokenKind::BraceOpen)?;
-        self.parse_separated(
-            TokenKind::BraceClose,
-            TokenKind::Comma,
-            Self::parse_struct_literal_field,
-        )?;
-        self.expect(TokenKind::BraceClose)?;
+        self.parse_surrounded(TokenKind::BraceOpen, TokenKind::BraceClose, |parser| {
+            parser.parse_separated(
+                TokenKind::BraceClose,
+                TokenKind::Comma,
+                Self::parse_struct_literal_field,
+            )
+        })?;
 
         self.finish_node(watcher, SyntaxNodeKind::StructLiteral);
         Ok(())
@@ -1048,7 +1100,7 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("1 * 2 + 3"));
         insta::assert_debug_snapshot!(verify_block("1 * \"test\""));
         insta::assert_debug_snapshot!(verify_block("1 + 1 == 2 or true and false"));
-        insta::assert_debug_snapshot!(verify_block("{a: 1, b: 2 * 3}"));
+        insta::assert_debug_snapshot!(verify_block("{a: 1,\nb: 2 * 3}"));
     }
 
     #[test]
@@ -1067,13 +1119,13 @@ mod tests {
     fn test_parse_parenthesis() {
         insta::assert_debug_snapshot!(verify_block("(3)"));
         insta::assert_debug_snapshot!(verify_block("((3))"));
-        insta::assert_debug_snapshot!(verify_block("1 + (2 + 3)"));
+        insta::assert_debug_snapshot!(verify_block("1 + (\n2\n+\n3\n)"));
         insta::assert_debug_snapshot!(verify_block("1 * (2 + 3)"));
     }
 
     #[test]
     fn test_parse_function_call() {
-        insta::assert_debug_snapshot!(verify_block("print(1)"));
+        insta::assert_debug_snapshot!(verify_block("print(\n1)"));
         insta::assert_debug_snapshot!(verify_block("print(1)\n"));
         insta::assert_debug_snapshot!(verify_block("print()"));
     }
@@ -1121,7 +1173,7 @@ mod tests {
     #[test]
     fn test_function() {
         insta::assert_debug_snapshot!(verify(
-            "fn foo(a: Int, b: []String, c: ()) -> Null { print(9000) }"
+            "fn foo(a: Int,\nb: []String, c: ()) -> Null { print(9000) }"
         ));
     }
 
@@ -1143,11 +1195,18 @@ mod tests {
             unsafe extern "java" {
                 ["java/lang/Foo"]
                 type Foo {
-                    ["bar"] static let bar: Int
+                    ["bar"]
+                    static let bar: Int
 
                     ["baz"] fn baz(value: Int) -> String
 
                     ["static"] static fn slkfdj()
+                }
+
+                ["java/lang/System"]
+                type System {
+                    ["out"]
+                    static let out: Foo
                 }
             }
             "#
@@ -1172,7 +1231,13 @@ mod tests {
     fn test_type_literal() {
         insta::assert_debug_snapshot!(verify_block(
             r#"
-            let a: {a: I32, b: I64} = {a: 10, b: 20 * 2}
+            let a: {
+                a: I32,
+                b: I64
+            } = {
+                a: 10,
+                b: 20 * 2
+            }
             "#
         ));
         insta::assert_debug_snapshot!(verify_block(

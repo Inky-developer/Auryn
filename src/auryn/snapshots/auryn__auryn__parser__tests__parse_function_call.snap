@@ -1,22 +1,23 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify_block(\"print(1)\")"
+expression: "verify_block(\"print(\\n1)\")"
 ---
 syntax_tree:
-0..8 Root
-|0..8 Block
-||0..8 Statement
-|||0..8 Expression
-||||0..8 PostfixOperation
+0..9 Root
+|0..9 Block
+||0..9 Statement
+|||0..9 Expression
+||||0..9 PostfixOperation
 |||||0..5 Value
 ||||||0..5 Ident
 |||||||Identifier `print`
-|||||5..8 PostfixOperator
-||||||5..8 ArgumentList
+|||||5..9 PostfixOperator
+||||||5..9 ArgumentList
 |||||||ParensOpen `(`
-|||||||6..7 Expression
-||||||||6..7 Value
-|||||||||6..7 NumberLiteral
+|||||||Newline `\n`
+|||||||7..8 Expression
+||||||||7..8 Value
+|||||||||7..8 NumberLiteral
 ||||||||||NumberLiteral `1`
 |||||||ParensClose `)`
 

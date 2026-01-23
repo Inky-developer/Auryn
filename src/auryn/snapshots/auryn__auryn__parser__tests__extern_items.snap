@@ -1,14 +1,14 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/Foo\"]\n                type Foo {\n                    [\"bar\"] static let bar: Int\n\n                    [\"baz\"] fn baz(value: Int) -> String\n\n                    [\"static\"] static fn slkfdj()\n                }\n            }\n            \"#)"
+expression: "verify(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/Foo\"]\n                type Foo {\n                    [\"bar\"]\n                    static let bar: Int\n\n                    [\"baz\"] fn baz(value: Int) -> String\n\n                    [\"static\"] static fn slkfdj()\n                }\n\n                [\"java/lang/System\"]\n                type System {\n                    [\"out\"]\n                    static let out: Foo\n                }\n            }\n            \"#)"
 ---
 syntax_tree:
-0..298 Root
-|0..298 File
+0..472 Root
+|0..472 File
 ||Newline `\n`
 ||Whitespace `            `
-||13..285 Item
-|||13..285 ExternBlock
+||13..459 Item
+|||13..459 ExternBlock
 ||||KeywordUnsafe `unsafe`
 ||||Whitespace ` `
 ||||KeywordExtern `extern`
@@ -18,31 +18,32 @@ syntax_tree:
 ||||BraceOpen `{`
 ||||Newline `\n`
 ||||Whitespace `                `
-||||52..271 ExternBlockItem
+||||52..291 ExternBlockItem
 |||||52..69 ItemMetadata
 ||||||BracketOpen `[`
 ||||||StringLiteral `\"java/lang/Foo\"`
 ||||||BracketClose `]`
 |||||Newline `\n`
 |||||Whitespace `                `
-|||||86..271 ExternBlockItemKind
-||||||86..271 ExternType
+|||||86..291 ExternBlockItemKind
+||||||86..291 ExternType
 |||||||KeywordType `type`
 |||||||Whitespace ` `
 |||||||Identifier `Foo`
 |||||||Whitespace ` `
-|||||||95..271 ExternTypeBody
+|||||||95..291 ExternTypeBody
 ||||||||BraceOpen `{`
 ||||||||Newline `\n`
 ||||||||Whitespace `                    `
-||||||||117..144 ExternTypeBodyItem
-|||||||||117..125 ItemMetadata
+||||||||117..164 ExternTypeBodyItem
+|||||||||117..124 ItemMetadata
 ||||||||||BracketOpen `[`
 ||||||||||StringLiteral `\"bar\"`
 ||||||||||BracketClose `]`
-||||||||||Whitespace ` `
-|||||||||125..144 ExternTypeBodyItemKind
-||||||||||125..144 ExternTypeStaticLet
+|||||||||Newline `\n`
+|||||||||Whitespace `                    `
+|||||||||145..164 ExternTypeBodyItemKind
+||||||||||145..164 ExternTypeStaticLet
 |||||||||||KeywordStatic `static`
 |||||||||||Whitespace ` `
 |||||||||||KeywordLet `let`
@@ -50,59 +51,101 @@ syntax_tree:
 |||||||||||Identifier `bar`
 |||||||||||Colon `:`
 |||||||||||Whitespace ` `
-|||||||||||141..144 Type
-||||||||||||141..144 Ident
+|||||||||||161..164 Type
+||||||||||||161..164 Ident
 |||||||||||||Identifier `Int`
 ||||||||Newline `\n`
 ||||||||Newline `\n`
 ||||||||Whitespace `                    `
-||||||||166..202 ExternTypeBodyItem
-|||||||||166..174 ItemMetadata
+||||||||186..222 ExternTypeBodyItem
+|||||||||186..194 ItemMetadata
 ||||||||||BracketOpen `[`
 ||||||||||StringLiteral `\"baz\"`
 ||||||||||BracketClose `]`
 ||||||||||Whitespace ` `
-|||||||||174..202 ExternTypeBodyItemKind
-||||||||||174..202 ExternTypeFunction
+|||||||||194..222 ExternTypeBodyItemKind
+||||||||||194..222 ExternTypeFunction
 |||||||||||KeywordFn `fn`
 |||||||||||Whitespace ` `
 |||||||||||Identifier `baz`
-|||||||||||180..193 ParameterList
+|||||||||||200..213 ParameterList
 ||||||||||||ParensOpen `(`
-||||||||||||181..191 ParameterDefinition
+||||||||||||201..211 ParameterDefinition
 |||||||||||||Identifier `value`
 |||||||||||||Colon `:`
 |||||||||||||Whitespace ` `
-|||||||||||||188..191 Type
-||||||||||||||188..191 Ident
+|||||||||||||208..211 Type
+||||||||||||||208..211 Ident
 |||||||||||||||Identifier `Int`
 ||||||||||||ParensClose `)`
 ||||||||||||Whitespace ` `
-|||||||||||193..202 ReturnType
+|||||||||||213..222 ReturnType
 ||||||||||||Arrow `->`
 ||||||||||||Whitespace ` `
-||||||||||||196..202 Type
-|||||||||||||196..202 Ident
+||||||||||||216..222 Type
+|||||||||||||216..222 Ident
 ||||||||||||||Identifier `String`
 ||||||||Newline `\n`
 ||||||||Newline `\n`
 ||||||||Whitespace `                    `
-||||||||224..253 ExternTypeBodyItem
-|||||||||224..235 ItemMetadata
+||||||||244..273 ExternTypeBodyItem
+|||||||||244..255 ItemMetadata
 ||||||||||BracketOpen `[`
 ||||||||||StringLiteral `\"static\"`
 ||||||||||BracketClose `]`
 ||||||||||Whitespace ` `
-|||||||||235..253 ExternTypeBodyItemKind
-||||||||||235..253 ExternTypeFunction
+|||||||||255..273 ExternTypeBodyItemKind
+||||||||||255..273 ExternTypeFunction
 |||||||||||KeywordStatic `static`
 |||||||||||Whitespace ` `
 |||||||||||KeywordFn `fn`
 |||||||||||Whitespace ` `
 |||||||||||Identifier `slkfdj`
-|||||||||||251..253 ParameterList
+|||||||||||271..273 ParameterList
 ||||||||||||ParensOpen `(`
 ||||||||||||ParensClose `)`
+||||||||Newline `\n`
+||||||||Whitespace `                `
+||||||||BraceClose `}`
+||||Newline `\n`
+||||Newline `\n`
+||||Whitespace `                `
+||||309..445 ExternBlockItem
+|||||309..329 ItemMetadata
+||||||BracketOpen `[`
+||||||StringLiteral `\"java/lang/System\"`
+||||||BracketClose `]`
+|||||Newline `\n`
+|||||Whitespace `                `
+|||||346..445 ExternBlockItemKind
+||||||346..445 ExternType
+|||||||KeywordType `type`
+|||||||Whitespace ` `
+|||||||Identifier `System`
+|||||||Whitespace ` `
+|||||||358..445 ExternTypeBody
+||||||||BraceOpen `{`
+||||||||Newline `\n`
+||||||||Whitespace `                    `
+||||||||380..427 ExternTypeBodyItem
+|||||||||380..387 ItemMetadata
+||||||||||BracketOpen `[`
+||||||||||StringLiteral `\"out\"`
+||||||||||BracketClose `]`
+|||||||||Newline `\n`
+|||||||||Whitespace `                    `
+|||||||||408..427 ExternTypeBodyItemKind
+||||||||||408..427 ExternTypeStaticLet
+|||||||||||KeywordStatic `static`
+|||||||||||Whitespace ` `
+|||||||||||KeywordLet `let`
+|||||||||||Whitespace ` `
+|||||||||||Identifier `out`
+|||||||||||Colon `:`
+|||||||||||Whitespace ` `
+|||||||||||424..427 Type
+||||||||||||424..427 Ident
+|||||||||||||Identifier `Foo`
 ||||||||Newline `\n`
 ||||||||Whitespace `                `
 ||||||||BraceClose `}`

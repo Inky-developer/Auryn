@@ -1,6 +1,6 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify_block(\"{a: 1, b: 2 * 3}\")"
+expression: "verify_block(\"{a: 1,\\nb: 2 * 3}\")"
 ---
 syntax_tree:
 0..16 Root
@@ -19,7 +19,7 @@ syntax_tree:
 |||||||||4..5 NumberLiteral
 ||||||||||NumberLiteral `1`
 ||||||Comma `,`
-||||||Whitespace ` `
+||||||Newline `\n`
 ||||||7..15 StructLiteralField
 |||||||Identifier `b`
 |||||||Colon `:`

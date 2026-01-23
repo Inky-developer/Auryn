@@ -1,13 +1,13 @@
 ---
 source: src/auryn/parser.rs
-expression: "verify_block(\"1 + (2 + 3)\")"
+expression: "verify_block(\"1 + (\\n2\\n+\\n3\\n)\")"
 ---
 syntax_tree:
-0..11 Root
-|0..11 Block
-||0..11 Statement
-|||0..11 Expression
-||||0..11 BinaryOperation
+0..13 Root
+|0..13 Block
+||0..13 Statement
+|||0..13 Expression
+||||0..13 BinaryOperation
 |||||0..2 Expression
 ||||||0..2 Value
 |||||||0..2 NumberLiteral
@@ -15,23 +15,25 @@ syntax_tree:
 ||||||||Whitespace ` `
 |||||Plus `+`
 |||||Whitespace ` `
-|||||4..11 Expression
-||||||4..11 Value
-|||||||4..11 Parenthesis
+|||||4..13 Expression
+||||||4..13 Value
+|||||||4..13 Parenthesis
 ||||||||ParensOpen `(`
-||||||||5..10 Expression
-|||||||||5..10 BinaryOperation
-||||||||||5..7 Expression
-|||||||||||5..7 Value
-||||||||||||5..7 NumberLiteral
+||||||||Newline `\n`
+||||||||6..12 Expression
+|||||||||6..12 BinaryOperation
+||||||||||6..8 Expression
+|||||||||||6..8 Value
+||||||||||||6..8 NumberLiteral
 |||||||||||||NumberLiteral `2`
-|||||||||||||Whitespace ` `
+|||||||||||||Newline `\n`
 ||||||||||Plus `+`
-||||||||||Whitespace ` `
-||||||||||9..10 Expression
-|||||||||||9..10 Value
-||||||||||||9..10 NumberLiteral
+||||||||||Newline `\n`
+||||||||||10..12 Expression
+|||||||||||10..12 Value
+||||||||||||10..12 NumberLiteral
 |||||||||||||NumberLiteral `3`
+|||||||||||||Newline `\n`
 ||||||||ParensClose `)`
 
 diagnostics:

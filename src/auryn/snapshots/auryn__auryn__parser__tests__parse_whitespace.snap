@@ -20,12 +20,12 @@ syntax_tree:
 |||||ParensClose `)`
 |||||Whitespace ` `
 ||||BraceOpen `{`
-||||65..250 Block
-|||||Newline `\n`
-|||||Whitespace `                `
-|||||Comment `// We will now initialize a variable called \'a\' to 1`
-|||||Newline `\n`
-|||||Whitespace `                `
+||||Newline `\n`
+||||Whitespace `                `
+||||Comment `// We will now initialize a variable called \'a\' to 1`
+||||Newline `\n`
+||||Whitespace `                `
+||||151..250 Block
 |||||151..161 Statement
 ||||||151..161 Assignment
 |||||||KeywordLet `let`
