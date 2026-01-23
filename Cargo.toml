@@ -11,6 +11,12 @@ rustc-hash = "2.1.1"
 [dev-dependencies]
 insta = { version = "1.44.3", features = ["glob"] }
 
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+
 [lints.clippy]
 # This simplifies module management imho
 pub_use = "warn"
