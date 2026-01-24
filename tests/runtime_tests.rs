@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Stdio};
 
 use auryn::auryn::api::{compile_str, run};
 use insta::glob;
@@ -55,7 +55,7 @@ fn runtime_tests() {
         };
 
         let dir = TempDir::new();
-        let stdout = run(output, &dir.0);
+        let stdout = run(output, &dir.0, Stdio::piped());
         assert_eq!(stdout, expected_output);
         println!("ok");
     });

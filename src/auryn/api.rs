@@ -1,4 +1,4 @@
-use std::{fs::OpenOptions, path::Path};
+use std::{fs::OpenOptions, path::Path, process::Stdio};
 
 use crate::{
     auryn::{
@@ -87,7 +87,13 @@ fn compile(
     Ok(codegen(world.input_files(), &air))
 }
 
-pub fn run(codegen_output: CodegenOutput, dir: impl AsRef<Path>) -> String {
+/// Runs a program and returns its output.
+/// The output is only collected when it is not redirected.
+pub fn run(
+    codegen_output: CodegenOutput,
+    dir: impl AsRef<Path>,
+    output: impl Into<Stdio>,
+) -> String {
     let path = dir.as_ref();
     assert!(
         codegen_output.files.contains_key("Main"),
@@ -109,6 +115,7 @@ pub fn run(codegen_output: CodegenOutput, dir: impl AsRef<Path>) -> String {
         .arg("-cp")
         .arg(path)
         .arg("Main")
+        .stdout(output)
         .output()
         .expect("Java needs to be installed on the system to run a class");
     let mut result: String = output.stdout.try_into().unwrap();

@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path};
+use std::{io::Write, path::Path, process::Stdio};
 
 use auryn::auryn::api::{compile_file, compile_str, run};
 use yansi::Paint;
@@ -15,7 +15,7 @@ fn main() -> std::io::Result<()> {
                 if args.next().as_deref() == Some("--print-class") {
                     println!("{class:?}");
                 }
-                print!("{}", run(class, BUILD_DIR));
+                print!("{}", run(class, BUILD_DIR, Stdio::inherit()));
             }
             Err(diagnostics) => diagnostics.to_display().eprint(),
         }
@@ -34,7 +34,7 @@ fn repl() {
         let input = format!("fn main() {{ {input} }}");
         match compile_str(&input) {
             Ok(class) => {
-                print!("{}", run(class, BUILD_DIR));
+                print!("{}", run(class, BUILD_DIR, Stdio::inherit()));
             }
             Err(diagnostics) => diagnostics.to_display().eprint(),
         }
