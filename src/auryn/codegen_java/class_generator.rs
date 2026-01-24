@@ -231,8 +231,21 @@ mod tests {
     }
 
     #[test]
-    fn test_weird() {
+    fn test_loop() {
         insta::assert_debug_snapshot!(generate_class_wrapped("loop { loop {} }"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("loop { break }"));
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            r#"
+            loop {
+                if true {
+                    continue
+                }
+                if false {
+                    break
+                }
+            }
+            "#
+        ));
     }
 
     #[test]

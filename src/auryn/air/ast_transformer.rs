@@ -14,11 +14,12 @@ use crate::{
         },
         ast::ast_node::{
             Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
-            BreakStatement, Expression, ExternBlock, ExternBlockItem, ExternBlockItemKind,
-            ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident, IfStatement,
-            IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, PostfixOperation,
-            PostfixOperator, ReturnStatement, Root, Statement, StringLiteral, StructLiteral,
-            StructLiteralField, StructuralTypeField, Type, Value, ValueOrPostfix, VariableUpdate,
+            BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
+            ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
+            IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis,
+            PostfixOperation, PostfixOperator, ReturnStatement, Root, Statement, StringLiteral,
+            StructLiteral, StructLiteralField, StructuralTypeField, Type, Value, ValueOrPostfix,
+            VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -336,7 +337,7 @@ struct BlockBuilder {
 
 #[derive(Debug)]
 pub struct LoopInfo {
-    _continue_target: AirBlockId,
+    continue_target: AirBlockId,
     break_target: AirBlockId,
 }
 
@@ -453,6 +454,9 @@ impl FunctionTransformer<'_> {
             Statement::BreakStatement(break_statement) => {
                 self.transform_break_statement(break_statement)
             }
+            Statement::ContinueStatement(continue_statement) => {
+                self.transform_continue_statement(continue_statement)
+            }
             Statement::ReturnStatement(return_statement) => {
                 self.transform_return_statement(return_statement)
             }
@@ -541,7 +545,7 @@ impl FunctionTransformer<'_> {
         self.finish_block(loop_body, AirBlockFinalizer::Goto(loop_body));
         self.loops.push(LoopInfo {
             break_target: next_block_id,
-            _continue_target: loop_body,
+            continue_target: loop_body,
         });
         self.transform_block(block);
         self.loops.pop().expect("Should have something to pop");
@@ -558,6 +562,18 @@ impl FunctionTransformer<'_> {
 
         let dead_code_block = self.add_block();
         self.finish_block(dead_code_block, AirBlockFinalizer::Goto(break_target));
+    }
+
+    fn transform_continue_statement(&mut self, r#continue: ContinueStatement) {
+        let Some(loop_info) = self.loops.last() else {
+            self.diagnostics
+                .add(r#continue.id(), DiagnosticError::ContinueOutsideLoop);
+            return;
+        };
+        let continue_target = loop_info.continue_target;
+
+        let dead_code_block = self.add_block();
+        self.finish_block(dead_code_block, AirBlockFinalizer::Goto(continue_target));
     }
 
     fn transform_return_statement(&mut self, r#return: ReturnStatement) {

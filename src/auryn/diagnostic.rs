@@ -57,6 +57,7 @@ pub enum DiagnosticError {
         ident: SmallString,
     },
     BreakOutsideLoop,
+    ContinueOutsideLoop,
     UndefinedVariable {
         ident: SmallString,
     },
@@ -254,6 +255,7 @@ impl Diagnostic {
                     .with_message(format!("Variable `{ident}` was redefined"))
                     .with_info("A variable may only be defined once"),
                 DiagnosticError::BreakOutsideLoop => builder.with_code("Break outside loop"),
+                DiagnosticError::ContinueOutsideLoop => builder.with_code("Continue outside loop"),
                 DiagnosticError::UndefinedVariable { ident } => builder
                     .with_code("Undefined variable")
                     .with_message(format!("Undefined variable `{ident}`")),

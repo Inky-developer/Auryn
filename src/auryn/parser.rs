@@ -699,6 +699,7 @@ impl Parser<'_> {
             TokenKind::KeywordIf => self.parse_if_statement()?,
             TokenKind::KeywordLoop => self.parse_loop()?,
             TokenKind::KeywordBreak => self.parse_break()?,
+            TokenKind::KeywordContinue => self.parse_continue()?,
             TokenKind::KeywordReturn => self.parse_return()?,
             _ => {
                 if let [TokenKind::Identifier, op] = self.multipeek()
@@ -781,6 +782,15 @@ impl Parser<'_> {
         self.expect(TokenKind::KeywordBreak)?;
 
         self.finish_node(watcher, SyntaxNodeKind::Break);
+        Ok(())
+    }
+
+    fn parse_continue(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordContinue)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Continue);
         Ok(())
     }
 
@@ -1167,7 +1177,8 @@ mod tests {
     fn test_loop() {
         insta::assert_debug_snapshot!(verify_block("loop { 1 + 2 }"));
         insta::assert_debug_snapshot!(verify_block("loop { break }"));
-        insta::assert_debug_snapshot!(verify_block("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"))
+        insta::assert_debug_snapshot!(verify_block("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"));
+        insta::assert_debug_snapshot!(verify_block("loop { continue}"));
     }
 
     #[test]

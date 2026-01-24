@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"loop let some_text = if true { false } else { break return } fn [foo.bar]\")"
+expression: "tokenize(\"loop let some_text = if true { false } else { break continue return } fn [foo.bar]\")"
 ---
 [
     Token {
@@ -94,6 +94,14 @@ expression: "tokenize(\"loop let some_text = if true { false } else { break retu
     Token {
         kind: KeywordBreak,
         text: "break",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordContinue,
+        text: "continue",
     },
     Token {
         kind: Whitespace,

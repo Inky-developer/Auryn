@@ -233,6 +233,7 @@ ast_node! {
         | SyntaxNodeKind::IfStatement as IfStatement
         | SyntaxNodeKind::Loop as LoopStatement
         | SyntaxNodeKind::Break as BreakStatement
+        | SyntaxNodeKind::Continue as ContinueStatement
         | SyntaxNodeKind::Return as ReturnStatement
         | SyntaxNodeKind::VariableUpdate as VariableUpdate
         | SyntaxNodeKind::Expression as Expression
@@ -258,6 +259,10 @@ ast_node! {
 
 ast_node! {
     pub struct BreakStatement = SyntaxNodeKind::Break as {}
+}
+
+ast_node! {
+    pub struct ContinueStatement = SyntaxNodeKind::Continue as {}
 }
 
 ast_node! {
