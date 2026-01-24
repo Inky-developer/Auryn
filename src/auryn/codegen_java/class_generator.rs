@@ -179,7 +179,11 @@ mod tests {
 
     fn generate_class(input: &str) -> ClassData {
         let mut output = generate_classes(&format!("// main\n{input}"));
-        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            output.files.len(),
+            1,
+            "Should use `generate_classes` for multi file test output"
+        );
         output.files.remove("Main").unwrap()
     }
 
@@ -264,6 +268,14 @@ mod tests {
     fn test_arrays() {
         insta::assert_debug_snapshot!(generate_class_wrapped("let a: []I32 = arrayOfZeros(5)"));
         insta::assert_debug_snapshot!(generate_class_wrapped("let a: [][]I32 = arrayOfZeros(5)"));
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            // main
+            fn main() {
+                let a: []{a: I32, b: I32} = arrayOf({a: 5, b: 6})
+            }
+            "#
+        ));
     }
 
     #[test]

@@ -141,7 +141,10 @@ impl SymbolicEvaluator {
                         .into_verification_type(pool);
                     assert_eq!(self.stack.pop(), Some(verification_type));
                 }
-                if matches!(instruction, Instruction::InvokeVirtual { .. }) {
+                if matches!(
+                    instruction,
+                    Instruction::InvokeVirtual { .. } | Instruction::InvokeSpecial { .. }
+                ) {
                     self.stack
                         .pop()
                         .expect("Should supply objectref when calling a method");
