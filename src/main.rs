@@ -1,6 +1,7 @@
 use std::{io::Write, path::Path};
 
 use auryn::auryn::api::{compile_file, compile_str, run};
+use yansi::Paint;
 
 const BUILD_DIR: &str = "build";
 
@@ -10,6 +11,7 @@ fn main() -> std::io::Result<()> {
     if let Some(filename) = args.next() {
         match compile_file(Path::new(&filename)) {
             Ok(class) => {
+                println!("Compilation completed {}!", "successfully".green());
                 if args.next().as_deref() == Some("--print-class") {
                     println!("{class:?}");
                 }
@@ -27,7 +29,7 @@ fn main() -> std::io::Result<()> {
 fn repl() {
     let mut input = String::new();
     loop {
-        input.clear();
+        String::clear(&mut input);
         read_user_input(&mut input);
         let input = format!("fn main() {{ {input} }}");
         match compile_str(&input) {

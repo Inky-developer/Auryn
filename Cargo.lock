@@ -29,6 +29,7 @@ dependencies = [
  "indexmap",
  "insta",
  "rustc-hash",
+ "yansi",
 ]
 
 [[package]]

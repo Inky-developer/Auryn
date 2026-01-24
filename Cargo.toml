@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 ariadne = "0.6.0"
+# Should just resolve to whatever version ariadne uses
+yansi = "*"
 indexmap = "2.12.1"
 rustc-hash = "2.1.1"
 
