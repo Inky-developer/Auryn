@@ -112,6 +112,29 @@ impl SourceGraph {
         constant_pool: &'_ mut ConstantPoolBuilder,
         parameters: Vec<VerificationTypeInfo>,
     ) -> (Vec<class::Instruction>, StackMapTableAttribute) {
+        fn compute_offsets(
+            context: &mut AssemblyContext<'_>,
+            graph: &Graph<BasicBlockId, BasicBlock>,
+            block_order: &[BasicBlockId],
+        ) -> FastMap<BasicBlockId, u16> {
+            let mut offsets: FastMap<BasicBlockId, u16> = FastMap::default();
+            let mut current_offset: u16 = 0;
+            for (index, block_id) in block_order.iter().copied().enumerate() {
+                offsets.insert(block_id, current_offset);
+
+                let block = graph.get_vertex(block_id).expect("Should exist");
+                current_offset += context.measure_len(&block.instructions);
+
+                context.convert_finalizer_instruction(
+                    &block.finalizer,
+                    block_order.get(index + 1).copied(),
+                    |_| JumpPoint(0),
+                    |instruction| current_offset += instruction.len_bytes(),
+                )
+            }
+            offsets
+        }
+
         let mut context = AssemblyContext(constant_pool);
         let mut graph = build_graph(self.graph);
         let mut block_order = graph.order_topologically([BasicBlockId(0)]);
@@ -121,22 +144,7 @@ impl SourceGraph {
         graph.invert_edges();
 
         let mut frames = context.compute_frames(&graph, &block_order, parameters);
-
-        let mut block_to_byte_offset: FastMap<BasicBlockId, u16> = FastMap::default();
-        let mut current_offset: u16 = 0;
-        for (index, block_id) in block_order.iter().copied().enumerate() {
-            block_to_byte_offset.insert(block_id, current_offset);
-
-            let block = graph.get_vertex(block_id).expect("Should exist");
-            current_offset += context.measure_len(&block.instructions);
-
-            context.convert_finalizer_instruction(
-                &block.finalizer,
-                block_order.get(index + 1).copied(),
-                |_| JumpPoint(0),
-                |instruction| current_offset += instruction.len_bytes(),
-            )
-        }
+        let block_to_byte_offsets = compute_offsets(&mut context, &graph, &block_order);
 
         let mut code = Vec::new();
         for (index, block_id) in block_order.iter().copied().enumerate() {
@@ -150,7 +158,7 @@ impl SourceGraph {
                 next_block_id,
                 |block_id| {
                     JumpPoint(
-                        *block_to_byte_offset
+                        *block_to_byte_offsets
                             .get(&block_id)
                             .expect("Offset should be computed"),
                     )
@@ -164,7 +172,7 @@ impl SourceGraph {
             .copied()
             .map(|id| {
                 (
-                    *block_to_byte_offset
+                    *block_to_byte_offsets
                         .get(&id)
                         .expect("Offset should be computed"),
                     frames.remove(&id).expect("Frame should exist"),
@@ -544,16 +552,26 @@ fn build_graph(blocks: Vec<BasicBlock>) -> Graph<BasicBlockId, BasicBlock> {
 }
 
 /// Convertes a list of frames and their byte offsets into the final [`StackMapTableAttribute`]
-fn convert_verification_frames(verification_frames: Vec<(u16, Frame)>) -> StackMapTableAttribute {
+fn convert_verification_frames(
+    mut verification_frames: Vec<(u16, Frame)>,
+) -> StackMapTableAttribute {
+    // Blocks have implicit fall-through behavior.
+    // For example, if the code of block b is implicitly included after all the code of block a,
+    // then a finalizer instruction `goto b` of block a can be turned into a no-op.
+    // This means that multiple verification frames can belong to the same byte offset.
+    // To resolve these conflicts, it should be valid to only include the last verification frame for a given byte offset,
+    // as that should include all the relevant information from the prior verification frames + the data from other jump targets.
+    // The other verification frames that belong to this index can then just be deleted.
+    verification_frames.reverse();
+    verification_frames.dedup_by_key(|(offset, _)| *offset);
+    verification_frames.reverse();
+
     let mut current_offset = 0u16;
     StackMapTableAttribute {
         entries: verification_frames
             .into_iter()
             .enumerate()
-            .filter_map(move |(index, (offset, Frame { locals, stack }))| {
-                if offset == current_offset && index != 0 {
-                    return None;
-                }
+            .map(move |(index, (offset, Frame { locals, stack }))| {
                 // An offset of 0 indicates that the frame applies to the next instruction, so we need to subtract 1 here, unless this is the first frame
                 // In which case this must not be done according to spec.
                 let offset_to_last: u16 = if index == 0 {
@@ -562,11 +580,11 @@ fn convert_verification_frames(verification_frames: Vec<(u16, Frame)>) -> StackM
                     offset - current_offset - 1
                 };
                 current_offset = offset;
-                Some(class::StackMapFrame::Full {
+                class::StackMapFrame::Full {
                     offset_delta: offset_to_last,
                     locals,
                     stack,
-                })
+                }
             })
             .collect(),
     }

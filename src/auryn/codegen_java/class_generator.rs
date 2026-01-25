@@ -257,6 +257,21 @@ mod tests {
         insta::assert_debug_snapshot!(generate_class_wrapped(
             "loop {\nif true {\nprint(42)\n}\nprint(100)\n}"
         ));
+
+        // Tests that stack map frames are correctly deduplicated, see `convert_verification_frames` in `source_graph.rs`
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            r#"
+        	loop {
+        		loop {
+        			if true {
+        				let val: I32 = 0
+        				if false {
+        				}
+        			}
+        		}
+        	}
+            "#
+        ));
     }
 
     #[test]
