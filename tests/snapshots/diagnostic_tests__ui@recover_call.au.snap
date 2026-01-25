@@ -16,13 +16,11 @@ Error: Unexpected token
 Error: Mismatched argument count
    ╭─[ main:3:5 ]
    │
- 6 │ fn bar(a: I32, b: I32) {
-   │       ────────┬────────  
-   │               ╰────────── Due to the definition here
-   │
-   ├─[ main:3:5 ]
-   │
  3 │     bar(a., 2)
    │     ─────┬────  
    │          ╰────── Expected 2 arguments, but got 1
+   │ 
+ 6 │ fn bar(a: I32, b: I32) {
+   │       ────────┬────────  
+   │               ╰────────── Due to the definition here
 ───╯

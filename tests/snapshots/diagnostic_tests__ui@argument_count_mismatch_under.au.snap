@@ -6,13 +6,11 @@ input_file: tests/inputs/diagnostics/argument_count_mismatch_under.au
 Error: Mismatched argument count
    ╭─[ main:2:5 ]
    │
- 5 │ fn bar(value: I32) {}
-   │       ──────┬──────  
-   │             ╰──────── Due to the definition here
-   │
-   ├─[ main:2:5 ]
-   │
  2 │     bar()
    │     ──┬──  
    │       ╰──── Expected 1 argument, but got 0
+   │ 
+ 5 │ fn bar(value: I32) {}
+   │       ──────┬──────  
+   │             ╰──────── Due to the definition here
 ───╯

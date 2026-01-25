@@ -6,13 +6,10 @@ input_file: tests/inputs/diagnostics/circular_alias.au
 Error: Circular type alias
    ╭─[ main:1:6 ]
    │
- 2 │ type B = []A
-   │      ┬  
-   │      ╰── Because it includes this type, which causes the circular reference
-   │
-   ├─[ main:1:6 ]
-   │
  1 │ type A = B
    │      ┬  
    │      ╰── A type alias must not refer to itself
+ 2 │ type B = []A
+   │      ┬  
+   │      ╰── Because it includes this type, which causes the circular reference
 ───╯

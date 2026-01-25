@@ -8,7 +8,7 @@ Error: Undefined property
     │
  16 │     print(Foo.bar.oops)
     │           ───┬─── ──┬─  
-    │              │      ╰─── Unknown property `oops`
-    │              │          
     │              ╰────────── Value has type `extern('bar')`
+    │                     │   
+    │                     ╰─── Unknown property `oops`
 ────╯

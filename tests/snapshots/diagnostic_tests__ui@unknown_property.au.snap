@@ -8,7 +8,7 @@ Error: Undefined property
    │
  2 │     "foo".bar
    │     ──┬── ─┬─  
-   │       │    ╰─── Unknown property `bar`
-   │       │        
    │       ╰──────── Value has type `String`
+   │            │   
+   │            ╰─── Unknown property `bar`
 ───╯
