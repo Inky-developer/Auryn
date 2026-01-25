@@ -31,6 +31,7 @@ pub enum SyntaxNodeKind {
     ParameterList,
     ParameterDefinition,
     ReturnType,
+    TypeAlias,
     Type,
     StructuralType,
     StructuralTypeField,

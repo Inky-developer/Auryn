@@ -170,7 +170,7 @@ impl FromTypeContext for NumberLiteralType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct FunctionItemType {
     pub parameters: FunctionParameters,
     pub return_type: Type,

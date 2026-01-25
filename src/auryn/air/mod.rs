@@ -1,9 +1,10 @@
 use crate::auryn::{
     air::{
         ast_transformer::query_globals,
-        data::{Air, AirModuleId, AirType, Globals, UnresolvedType},
+        data::{Air, AirModuleId, AirType, Globals},
         namespace::UserDefinedTypeId,
         typecheck::{type_checker::typecheck_air, type_context::TypeId},
+        unresolved_type::UnresolvedType,
     },
     ast::query_ast,
     diagnostic::Diagnostics,
@@ -14,6 +15,7 @@ pub mod ast_transformer;
 pub mod data;
 pub mod namespace;
 pub mod typecheck;
+pub mod unresolved_type;
 
 pub fn query_air<'a>(
     input_files: impl Iterator<Item = &'a InputFile> + Clone,

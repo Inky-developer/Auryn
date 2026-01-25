@@ -405,8 +405,9 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         match self.multipeek() {
-            [TokenKind::KeywordFn, _] => self.parse_function_definition()?,
             [TokenKind::KeywordUnsafe, TokenKind::KeywordExtern] => self.parse_extern_block()?,
+            [TokenKind::KeywordFn, ..] => self.parse_function_definition()?,
+            [TokenKind::KeywordType, ..] => self.parse_type_alias()?,
             [..] => {
                 let got = self.peek().text.into();
                 self.push_error(DiagnosticError::ExpectedItem { got });
@@ -602,6 +603,18 @@ impl Parser<'_> {
         self.parse_type()?;
 
         self.finish_node(watcher, SyntaxNodeKind::ParameterDefinition);
+        Ok(())
+    }
+
+    fn parse_type_alias(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordType)?;
+        self.expect(TokenKind::Identifier)?;
+        self.expect(TokenKind::Equal)?;
+        self.parse_type()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::TypeAlias);
         Ok(())
     }
 
@@ -1254,6 +1267,15 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block(
             r#"
             let a = {a: false, }
+            "#
+        ));
+    }
+
+    #[test]
+    fn test_type_alias() {
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            type Alias = {a: I32, b: Bool}
             "#
         ));
     }

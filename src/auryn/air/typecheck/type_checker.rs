@@ -5,19 +5,18 @@ use crate::{
         air::{
             data::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirModuleId,
-                AirNode, AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
-                Assignment, BinaryOperation, Call, Globals, Intrinsic, ReturnValue,
-                UnresolvedExternMember, UnresolvedType,
+                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
+                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment,
+                BinaryOperation, Call, Globals, Intrinsic, ReturnValue, TypeAliasId,
             },
+            namespace::UserDefinedTypeId,
             typecheck::{
                 bounds::{Bound, BoundView, MaybeBounded},
+                resolver::{self, Resolver, ResolverError, ResolverResult},
                 type_context::{TypeContext, TypeId},
-                types::{
-                    ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, ModuleType,
-                    StructuralType, Type, TypeView,
-                },
+                types::{FunctionItemType, FunctionParameters, StructuralType, Type, TypeView},
             },
+            unresolved_type::UnresolvedType,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -26,6 +25,7 @@ use crate::{
     utils::{
         default,
         fast_map::{FastMap, FastSet},
+        graph::Graph,
         small_string::SmallString,
     },
 };
@@ -71,6 +71,8 @@ pub struct Typechecker {
     functions: FastMap<AirFunctionId, TypeId<FunctionItemType>>,
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
+    type_aliasses: FastMap<TypeAliasId, AirType>,
+    resolver: Resolver,
     ty_ctx: TypeContext,
     diagnostics: Diagnostics,
 }
@@ -81,7 +83,9 @@ impl Typechecker {
             functions: default(),
             function: default(),
             statics: default(),
+            type_aliasses: default(),
             ty_ctx: default(),
+            resolver: default(),
             diagnostics,
         }
     }
@@ -89,10 +93,35 @@ impl Typechecker {
     pub fn infer(mut self, mut globals: Globals) -> (Air, Diagnostics) {
         self.statics = std::mem::take(&mut globals.statics);
 
+        {
+            let type_aliasses = std::mem::take(&mut globals.type_aliases);
+            let alias_order = order_aliasses(&type_aliasses);
+            self.type_aliasses = type_aliasses;
+            for alias_id in alias_order {
+                let mut air_ty = self.type_aliasses.remove(&alias_id).unwrap();
+                if let AirType::Unresolved(unresolved) = &air_ty {
+                    let ty = match self.try_resolve_type(unresolved) {
+                        Ok(ty) => ty,
+                        Err(ResolverError::CircularTypeAlias(circular_type_id)) => {
+                            self.diagnostics.add(
+                                alias_id.0,
+                                DiagnosticError::CircularTypeAlias {
+                                    circular_type_alias: circular_type_id,
+                                },
+                            );
+                            Type::Error
+                        }
+                    };
+                    air_ty = AirType::Computed(ty);
+                }
+                self.type_aliasses.insert(alias_id, air_ty);
+            }
+        }
         self.compute_defined_types(&mut globals);
         self.infer_functions(&mut globals);
 
         globals.statics = self.statics;
+        globals.type_aliases = self.type_aliasses;
 
         let air = Air {
             globals,
@@ -137,6 +166,20 @@ impl Typechecker {
 }
 
 impl Typechecker {
+    fn try_resolve_type(&mut self, unresolved: &UnresolvedType) -> ResolverResult {
+        let mut ctx = resolver::Context {
+            ty_ctx: &mut self.ty_ctx,
+            diagnostics: &mut self.diagnostics,
+            statics: &self.statics,
+            type_aliasses: &self.type_aliasses,
+        };
+        self.resolver.resolve_type(&mut ctx, unresolved)
+    }
+
+    fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
+        self.try_resolve_type(unresolved).expect("Should not fail")
+    }
+
     fn resolve_if_unresolved(&mut self, air_type: &mut AirType) {
         match air_type {
             AirType::Inferred => unreachable!("Cannot infer type of a type definition"),
@@ -146,132 +189,6 @@ impl Typechecker {
             }
             AirType::Computed(_) => {}
         };
-    }
-
-    fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
-        match unresolved {
-            UnresolvedType::DefinedType(user_defined_type_id) => user_defined_type_id.to_type(),
-            UnresolvedType::Unit => self.ty_ctx.unit_type(),
-            UnresolvedType::Ident(id, ident) => match ident.parse() {
-                Ok(r#type) => r#type,
-                Err(_) => {
-                    self.diagnostics.add(
-                        *id,
-                        DiagnosticError::UndefinedVariable {
-                            ident: ident.clone(),
-                        },
-                    );
-                    Type::Error
-                }
-            },
-            UnresolvedType::Function {
-                parameters_reference,
-                parameters,
-                return_type,
-                reference,
-            } => {
-                let parameters = parameters
-                    .iter()
-                    .map(|param| self.resolve_type(param))
-                    .collect();
-                let return_type = return_type
-                    .as_ref()
-                    .map_or(self.ty_ctx.unit_type(), |ty| self.resolve_type(ty));
-                Type::FunctionItem(self.ty_ctx.add_function_item(
-                    reference.syntax_id(),
-                    FunctionItemType {
-                        parameters: FunctionParameters::Constrained {
-                            parameters,
-                            parameters_reference: *parameters_reference,
-                        },
-                        return_type,
-                        reference: reference.clone(),
-                    },
-                ))
-            }
-            UnresolvedType::Array(_id, inner) => {
-                let element_type = self.resolve_type(inner);
-                self.ty_ctx.array_of(element_type)
-            }
-            // TODO: Prevent infinite recursion and handle recursive definitions
-            UnresolvedType::Extern {
-                id,
-                extern_name,
-                members,
-            } => {
-                let members = members
-                    .iter()
-                    .map(|(ident, member)| {
-                        let member = match member {
-                            UnresolvedExternMember::StaticLet {
-                                r#type,
-                                extern_name,
-                                ..
-                            } => ExternTypeMember {
-                                extern_name: extern_name.clone(),
-                                r#type: self.resolve_type(r#type),
-                            },
-                            UnresolvedExternMember::Function {
-                                unresolved_type,
-                                extern_name,
-                                ..
-                            } => ExternTypeMember {
-                                r#type: self.resolve_type(unresolved_type),
-                                extern_name: extern_name.clone(),
-                            },
-                        };
-                        (ident.clone(), member)
-                    })
-                    .collect();
-                Type::Extern(self.ty_ctx.add_extern(
-                    *id,
-                    ExternType {
-                        extern_name: extern_name.clone(),
-                        members,
-                    },
-                ))
-            }
-            UnresolvedType::Module {
-                name,
-                id,
-                namespace,
-            } => {
-                let mut members = namespace
-                    .types
-                    .iter()
-                    .map(|(k, v)| (k.clone(), self.ty_ctx.meta_of(v.to_type())))
-                    .collect::<FastMap<_, _>>();
-                members.extend(
-                    namespace
-                        .statics
-                        .iter()
-                        .flat_map(|(k, v)| self.statics.get(v).map(|it| (k, it)))
-                        .map(|(k, value)| {
-                            let ty = match value {
-                                AirStaticValue::Function(id) => Type::FunctionItem((*id).into()),
-                            };
-                            (k.clone(), ty)
-                        }),
-                );
-                let module = ModuleType {
-                    name: name.clone(),
-                    members,
-                };
-                Type::Module(
-                    self.ty_ctx
-                        .add_module(AirModuleId(id.file_id().unwrap()), module),
-                )
-            }
-            UnresolvedType::Structural(structural_type) => {
-                let ty = StructuralType {
-                    fields: structural_type
-                        .iter()
-                        .map(|(ident, field)| (ident.clone(), self.resolve_type(field)))
-                        .collect(),
-                };
-                self.ty_ctx.structural_of(ty)
-            }
-        }
     }
 
     fn infer_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
@@ -382,7 +299,10 @@ impl Typechecker {
                 self.infer_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(value) => self.infer_value(value),
-            AirExpressionKind::Type(r#type) => self.ty_ctx.meta_of(*r#type),
+            AirExpressionKind::Type(r#type) => {
+                self.resolve_if_unresolved(r#type);
+                self.ty_ctx.meta_of(r#type.computed())
+            }
             AirExpressionKind::Accessor(accessor) => self.infer_accessor(accessor),
             AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call, None),
             AirExpressionKind::Error => Type::Error,
@@ -400,7 +320,10 @@ impl Typechecker {
                 self.infer_binary_operator(binary_operator)
             }
             AirExpressionKind::Variable(variable) => self.infer_value(variable),
-            AirExpressionKind::Type(r#type) => self.ty_ctx.meta_of(*r#type),
+            AirExpressionKind::Type(r#type) => {
+                self.resolve_if_unresolved(r#type);
+                self.ty_ctx.meta_of(r#type.computed())
+            }
             AirExpressionKind::Accessor(accessor) => self.infer_accessor(accessor),
             AirExpressionKind::Call(call) => {
                 self.typecheck_call(expression.id, call, Some(expected))
@@ -950,6 +873,25 @@ impl Typechecker {
 
         Type::I32
     }
+}
+
+/// Because type aliasses can depend on each other (but not recursively),
+/// they need to be sorted and then evaluated in an order that they can depend on each other.
+fn order_aliasses(aliasses: &FastMap<TypeAliasId, AirType>) -> Vec<TypeAliasId> {
+    let mut graph = Graph::default();
+    for (id, ty) in aliasses {
+        if let AirType::Unresolved(unresolved) = &ty {
+            unresolved.visit_contained_types(&mut |ty| {
+                if let UnresolvedType::DefinedType(UserDefinedTypeId::TypeAlias(alias)) = ty {
+                    graph.connect(*id, *alias);
+                }
+            });
+        }
+
+        graph.insert(*id, ty);
+    }
+
+    graph.order_topologically(graph.keys())
 }
 
 fn check_fields_equal<'a>(

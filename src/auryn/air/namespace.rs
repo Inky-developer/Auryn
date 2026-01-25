@@ -1,9 +1,9 @@
 use crate::{
     auryn::air::{
-        data::{AirFunctionId, AirModuleId, AirStaticValueId},
+        data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
         typecheck::{
             type_context::TypeId,
-            types::{ExternType, ModuleType, Type},
+            types::{ExternType, ModuleType},
         },
     },
     utils::{default, fast_map::FastMap, small_string::SmallString},
@@ -17,15 +17,7 @@ use crate::{
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),
     Module(TypeId<ModuleType>),
-}
-
-impl UserDefinedTypeId {
-    pub fn to_type(self) -> Type {
-        match self {
-            UserDefinedTypeId::Extern(type_id) => Type::Extern(type_id),
-            UserDefinedTypeId::Module(module_id) => Type::Module(module_id),
-        }
-    }
+    TypeAlias(TypeAliasId),
 }
 
 /// This type stores the mapping from identifiers to the corresponding air item ids.

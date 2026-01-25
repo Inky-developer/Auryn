@@ -7,10 +7,11 @@ use crate::{
                 self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
                 AirStaticValue, AirStaticValueId, AirType, AirValueId, Call, ExternFunctionKind,
-                FunctionReference, Globals, ReturnValue, UnresolvedExternMember, UnresolvedType,
+                FunctionReference, Globals, ReturnValue, TypeAliasId, UnresolvedExternMember,
             },
             namespace::{Namespace, UserDefinedTypeId},
             typecheck::{type_context::TypeId, types},
+            unresolved_type::UnresolvedType,
         },
         ast::ast_node::{
             Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
@@ -18,8 +19,8 @@ use crate::{
             ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
             IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis,
             PostfixOperation, PostfixOperator, ReturnStatement, Root, Statement, StringLiteral,
-            StructLiteral, StructLiteralField, StructuralTypeField, Type, Value, ValueOrPostfix,
-            VariableUpdate,
+            StructLiteral, StructLiteralField, StructuralTypeField, Type, TypeAlias, Value,
+            ValueOrPostfix, VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -85,6 +86,7 @@ impl AstTransformer {
                 self.register_function(function_definition)
             }
             Item::ExternBlock(block) => self.register_extern_block(block),
+            Item::TypeAlias(type_alias) => self.register_type_alias(type_alias),
         }
     }
 
@@ -124,11 +126,22 @@ impl AstTransformer {
         }
     }
 
+    fn register_type_alias(&mut self, type_alias: TypeAlias) {
+        let Ok(ident) = type_alias.ident() else {
+            return;
+        };
+        self.namespace.types.insert(
+            ident.text.clone(),
+            UserDefinedTypeId::TypeAlias(TypeAliasId(ident.id)),
+        );
+    }
+
     fn transform_item(&mut self, item: Item) {
         match item {
             Item::FunctionDefinition(function_definition) => {
                 self.transform_function(function_definition)
             }
+            Item::TypeAlias(type_alias) => self.transform_type_alias(type_alias),
             Item::ExternBlock(block) => self.transform_extern_block(block),
         }
     }
@@ -256,7 +269,9 @@ impl AstTransformer {
                             reference: FunctionReference::Extern {
                                 extern_name: extern_name.clone(),
                                 kind,
-                                parent: def_id.to_type(),
+                                parent: Box::new(AirType::Unresolved(UnresolvedType::DefinedType(
+                                    def_id,
+                                ))),
                                 syntax_id,
                             },
                         },
@@ -270,6 +285,22 @@ impl AstTransformer {
         }
 
         result
+    }
+
+    fn transform_type_alias(&mut self, type_alias: TypeAlias) {
+        let Ok(ident) = type_alias.ident() else {
+            return;
+        };
+        let Ok(r#type) = type_alias.r#type() else {
+            return;
+        };
+
+        let Ok(r#type) = transform_to_unresolved(&self.namespace, r#type) else {
+            return;
+        };
+        self.globals
+            .type_aliases
+            .insert(TypeAliasId(ident.id), AirType::Unresolved(r#type));
     }
 
     fn transform_function(&mut self, function_definition: FunctionDefinition) {
@@ -838,11 +869,17 @@ impl FunctionTransformer<'_> {
         };
 
         if let Some(type_id) = self.namespace.types.get(&ident.text) {
-            return AirExpression::new(ident.id, AirExpressionKind::Type(type_id.to_type()));
+            return AirExpression::new(
+                ident.id,
+                AirExpressionKind::Type(AirType::Unresolved(UnresolvedType::DefinedType(*type_id))),
+            );
         }
 
         if let Ok(intrinsic_type) = types::Type::from_str(&ident.text) {
-            return AirExpression::new(ident.id, AirExpressionKind::Type(intrinsic_type));
+            return AirExpression::new(
+                ident.id,
+                AirExpressionKind::Type(AirType::Computed(intrinsic_type)),
+            );
         }
 
         self.diagnostics.add(

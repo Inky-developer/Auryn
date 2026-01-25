@@ -125,6 +125,7 @@ ast_node! {
     pub enum Item = SyntaxNodeKind::Item as
         | SyntaxNodeKind::ExternBlock as ExternBlock
         | SyntaxNodeKind::FunctionDefinition as FunctionDefinition
+        | SyntaxNodeKind::TypeAlias as TypeAlias
 }
 
 ast_node! {
@@ -197,6 +198,10 @@ ast_node! {
 
 ast_node! {
     pub struct ReturnType = SyntaxNodeKind::ReturnType as { r#type: Type, }
+}
+
+ast_node! {
+    pub struct TypeAlias = SyntaxNodeKind::TypeAlias as { token ident: TokenKind::Identifier, r#type: Type, }
 }
 
 ast_node! {

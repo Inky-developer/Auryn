@@ -28,8 +28,12 @@ where
         self.vertices.insert(key, value)
     }
 
-    pub fn get_vertex(&self, key: K) -> Option<&V> {
-        self.vertices.get(&key)
+    pub fn vertex(&self, key: K) -> &V {
+        self.vertices.get(&key).unwrap()
+    }
+
+    pub fn vertex_mut(&mut self, key: K) -> &mut V {
+        self.vertices.get_mut(&key).unwrap()
     }
 
     pub fn edges(&self, key: K) -> impl Iterator<Item = K> {
@@ -76,6 +80,14 @@ where
             }
         }
         buf
+    }
+
+    pub fn keys(&self) -> impl Iterator<Item = K> {
+        self.vertices.keys().copied()
+    }
+
+    pub fn into_vertices(self) -> FastMap<K, V> {
+        self.vertices
     }
 }
 

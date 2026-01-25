@@ -122,7 +122,7 @@ impl SourceGraph {
             for (index, block_id) in block_order.iter().copied().enumerate() {
                 offsets.insert(block_id, current_offset);
 
-                let block = graph.get_vertex(block_id).expect("Should exist");
+                let block = graph.vertex(block_id);
                 current_offset += context.measure_len(&block.instructions);
 
                 context.convert_finalizer_instruction(
@@ -149,7 +149,7 @@ impl SourceGraph {
         let mut code = Vec::new();
         for (index, block_id) in block_order.iter().copied().enumerate() {
             let next_block_id = block_order.get(index + 1).copied();
-            let block = graph.get_vertex(block_id).expect("Should exist");
+            let block = graph.vertex(block_id);
             for instruction in &block.instructions {
                 context.convert_instruction(instruction, |i| code.push(i));
             }
@@ -225,7 +225,7 @@ impl AssemblyContext<'_> {
             };
 
             let mut evaluator = SymbolicEvaluator::from(frame_at_start_of_block.clone());
-            let block = graph.get_vertex(id).unwrap();
+            let block = graph.vertex(id);
             evaluator.eval_block(block, self.0);
             let frame_at_end_of_block = Frame {
                 locals: evaluator.locals,

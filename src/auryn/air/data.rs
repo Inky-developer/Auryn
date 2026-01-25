@@ -3,11 +3,12 @@ use std::{fmt::Debug, str::FromStr};
 use crate::{
     auryn::{
         air::{
-            namespace::{Namespace, UserDefinedTypeId},
+            namespace::UserDefinedTypeId,
             typecheck::{
                 type_context::{TypeContext, TypeId},
                 types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
             },
+            unresolved_type::UnresolvedType,
         },
         file_id::FileId,
         syntax_id::SyntaxId,
@@ -20,6 +21,7 @@ use crate::{
 pub struct Globals {
     pub functions: FastMap<AirFunctionId, AirFunction>,
     pub types: FastMap<UserDefinedTypeId, AirType>,
+    pub type_aliases: FastMap<TypeAliasId, AirType>,
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
 
@@ -28,10 +30,12 @@ impl Globals {
         let Globals {
             functions,
             types,
+            type_aliases,
             statics,
         } = other;
         self.functions.extend(functions);
         self.types.extend(types);
+        self.type_aliases.extend(type_aliases);
         self.statics.extend(statics);
     }
 }
@@ -68,6 +72,9 @@ impl Debug for Air {
 pub enum AirStaticValue {
     Function(AirFunctionId),
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TypeAliasId(pub SyntaxId);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct AirModuleId(pub FileId);
@@ -185,11 +192,11 @@ pub enum UnresolvedExternMember {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum FunctionReference {
     UserDefined(AirFunctionId),
     Extern {
-        parent: Type,
+        parent: Box<AirType>,
         kind: ExternFunctionKind,
         extern_name: SmallString,
         syntax_id: SyntaxId,
@@ -209,36 +216,6 @@ impl FunctionReference {
 pub enum ExternFunctionKind {
     Static,
     Method,
-}
-
-/// Represents a type that was written by the user but not resolved yet.
-#[derive(Debug)]
-pub enum UnresolvedType {
-    /// A type that was defined by the user, identified by its `syntax_id`
-    DefinedType(UserDefinedTypeId),
-    /// A type not defined by the user (so probably built-in, like `String`)
-    Ident(SyntaxId, SmallString),
-    Array(SyntaxId, Box<UnresolvedType>),
-    /// A structural type like {a: I32, b: I64}
-    Structural(Vec<(SmallString, UnresolvedType)>),
-    Unit,
-    /// A function type
-    Function {
-        parameters_reference: SyntaxId,
-        parameters: Vec<UnresolvedType>,
-        return_type: Option<Box<UnresolvedType>>,
-        reference: FunctionReference,
-    },
-    Extern {
-        id: SyntaxId,
-        extern_name: SmallString,
-        members: FastMap<SmallString, UnresolvedExternMember>,
-    },
-    Module {
-        name: SmallString,
-        id: SyntaxId,
-        namespace: Namespace,
-    },
 }
 
 #[derive(Debug)]
@@ -289,7 +266,7 @@ pub enum AirExpressionKind {
     BinaryOperator(BinaryOperation),
     Variable(AirValueId),
     /// Loads a type as a value
-    Type(Type),
+    Type(AirType),
     Accessor(Accessor),
     Call(Call),
     Error,

@@ -1,0 +1,11 @@
+// expect-output:
+// 1
+
+type Scalar = I32
+type Coord = {x: Scalar, y: Scalar}
+
+fn main() { 
+	let coords: []Coord = arrayOf({x: 1, y: 2}, {x: 4, y: 5})
+	print(arrayGet(coords, 0).x)
+}
+

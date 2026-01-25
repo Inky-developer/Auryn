@@ -101,6 +101,9 @@ pub enum DiagnosticError {
         from: String,
         to: String,
     },
+    CircularTypeAlias {
+        circular_type_alias: SyntaxId,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -323,6 +326,14 @@ impl Diagnostic {
                     pluralize(missing_fields.len(), "field", "fields"),
                     fmt_items(missing_fields, "and"),
                 )),
+                DiagnosticError::CircularTypeAlias {
+                    circular_type_alias,
+                } => builder
+                    .with_code("Circular type alias")
+                    .with_message("A type alias must not refer to itself")
+                    .with_label(Label::new(*circular_type_alias).with_message(
+                        "Because it includes this type, which causes the circular reference",
+                    )),
             },
         };
     }
