@@ -275,7 +275,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct VariableUpdate = SyntaxNodeKind::VariableUpdate as { token ident: TokenKind::Identifier, expression: Expression, }
+    pub struct VariableUpdate = SyntaxNodeKind::VariableUpdate as { path: Path, expression: Expression, }
 }
 
 impl VariableUpdate<'_> {
@@ -285,6 +285,10 @@ impl VariableUpdate<'_> {
             .find_map(|it| it.kind.to_assignment_operator())
             .ok_or(AstError)
     }
+}
+
+ast_node! {
+    pub struct Path = SyntaxNodeKind::Path as { expression: Expression, }
 }
 
 ast_node! {

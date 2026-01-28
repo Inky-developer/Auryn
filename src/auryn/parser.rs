@@ -29,6 +29,7 @@ struct ParserStackNode {
 
 /// Type to keep track of current frames in the parser that automatically marks them as exited with error, in case
 /// an error happened.
+#[must_use]
 #[derive(Debug)]
 struct ParserFrameWatcher {
     stack_level: usize,
@@ -224,7 +225,6 @@ impl<'a> Parser<'a> {
         self.option_stack.pop().unwrap();
     }
 
-    #[must_use]
     fn push_node(&mut self) -> ParserFrameWatcher {
         let stack_level = self.node_stack.len();
         self.node_stack.push(ParserStackNode {
@@ -714,24 +714,7 @@ impl Parser<'_> {
             TokenKind::KeywordBreak => self.parse_break()?,
             TokenKind::KeywordContinue => self.parse_continue()?,
             TokenKind::KeywordReturn => self.parse_return()?,
-            _ => {
-                if let [TokenKind::Identifier, op] = self.multipeek()
-                    && UpdateOperatorToken::TOKEN_SET.contains(op)
-                {
-                    self.parse_variable_update()?;
-                } else if let [TokenKind::Identifier, _, TokenKind::Equal] = self.multipeek() {
-                    // This branch is just for better error messages in case the user typed a update operator token
-                    // that does not exist
-                    self.consume();
-                    self.push_error(DiagnosticError::UnexpectedToken {
-                        expected: UpdateOperatorToken::TOKEN_SET,
-                        got: self.peek().text.into(),
-                    });
-                    return Err(());
-                } else {
-                    self.parse_expression()?
-                }
-            }
+            _ => self.parse_expression_or_update()?,
         }
 
         self.finish_node(watcher, SyntaxNodeKind::Statement);
@@ -819,14 +802,45 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_variable_update(&mut self) -> ParseResult {
+    fn parse_expression_or_update(&mut self) -> ParseResult {
+        if !Self::EXPRESSION_START.contains(self.peek().kind) {
+            self.push_error(DiagnosticError::ExpectedExpression {
+                got: self.peek().text.into(),
+                valid_tokens: Self::EXPRESSION_START,
+            });
+            return Err(());
+        }
+
         let watcher = self.push_node();
+        let watcher = self.parse_expression_pratt_inner(watcher, 0)?;
 
-        self.expect(TokenKind::Identifier)?;
-        self.expect(UpdateOperatorToken::TOKEN_SET)?;
-        self.parse_expression()?;
+        if self.peek().kind.to_assignment_operator().is_some() {
+            let expression_node = self
+                .pop_node(watcher, SyntaxNodeKind::Expression)
+                .expect("Node was started");
+            let watcher = self.push_node();
+            let accessor_watcher = self.push_node();
+            let parent = self.node_stack.last_mut().expect("Was just pushed");
+            parent.children.push(SyntaxItem::Node(expression_node));
+            self.finish_node(accessor_watcher, SyntaxNodeKind::Path);
 
-        self.finish_node(watcher, SyntaxNodeKind::VariableUpdate);
+            self.consume();
+            self.parse_expression()?;
+
+            self.finish_node(watcher, SyntaxNodeKind::VariableUpdate);
+        } else if let [_, TokenKind::Equal] = self.multipeek() {
+            self.push_error(DiagnosticError::UnexpectedToken {
+                expected: UpdateOperatorToken::TOKEN_SET,
+                got: self.peek().text.into(),
+            });
+            // This branch is just for better error messages in case the user typed a update operator token
+            // that does not exist
+            self.consume();
+            return Err(());
+        } else {
+            self.finish_node(watcher, SyntaxNodeKind::Expression);
+        }
+
         Ok(())
     }
 
@@ -838,51 +852,52 @@ impl Parser<'_> {
             });
             return Err(());
         }
+
         self.parse_expression_pratt(0)
     }
 
     fn parse_expression_pratt(&mut self, min_binding_power: u32) -> ParseResult {
-        fn inner(
-            this: &mut Parser<'_>,
-            mut watcher: ParserFrameWatcher,
-            min_binding_power: u32,
-        ) -> ParseResult<ParserFrameWatcher> {
-            this.parse_value_or_postfix()?;
-
-            loop {
-                let Some(operator) = this.peek().kind.to_binary_operator() else {
-                    break;
-                };
-                let binding_power = operator.binding_power();
-                if binding_power <= min_binding_power {
-                    break;
-                }
-
-                let node = this
-                    .pop_node(watcher, SyntaxNodeKind::Expression)
-                    .expect("Node was started");
-                watcher = this.push_node();
-                let parent = this.node_stack.last_mut().expect("Was just pushed");
-                parent.children.push(SyntaxItem::Node(node));
-
-                this.parse_binary_operator_token()?;
-                this.parse_expression_pratt(binding_power)?;
-
-                let node = this
-                    .pop_node(watcher, SyntaxNodeKind::BinaryOperation)
-                    .expect("Node was started");
-                watcher = this.push_node();
-                let parent = this.node_stack.last_mut().expect("Was just pushed");
-                parent.children.push(SyntaxItem::Node(node));
-            }
-
-            Ok(watcher)
-        }
-
         let watcher = self.push_node();
-        let watcher = inner(self, watcher, min_binding_power)?;
+        let watcher = self.parse_expression_pratt_inner(watcher, min_binding_power)?;
         self.finish_node(watcher, SyntaxNodeKind::Expression);
         Ok(())
+    }
+
+    fn parse_expression_pratt_inner(
+        &mut self,
+        mut watcher: ParserFrameWatcher,
+        min_binding_power: u32,
+    ) -> ParseResult<ParserFrameWatcher> {
+        self.parse_value_or_postfix()?;
+
+        loop {
+            let Some(operator) = self.peek().kind.to_binary_operator() else {
+                break;
+            };
+            let binding_power = operator.binding_power();
+            if binding_power <= min_binding_power {
+                break;
+            }
+
+            let node = self
+                .pop_node(watcher, SyntaxNodeKind::Expression)
+                .expect("Node was started");
+            watcher = self.push_node();
+            let parent = self.node_stack.last_mut().expect("Was just pushed");
+            parent.children.push(SyntaxItem::Node(node));
+
+            self.parse_binary_operator_token()?;
+            self.parse_expression_pratt(binding_power)?;
+
+            let node = self
+                .pop_node(watcher, SyntaxNodeKind::BinaryOperation)
+                .expect("Node was started");
+            watcher = self.push_node();
+            let parent = self.node_stack.last_mut().expect("Was just pushed");
+            parent.children.push(SyntaxItem::Node(node));
+        }
+
+        Ok(watcher)
     }
 
     fn parse_binary_operator_token(&mut self) -> ParseResult {
@@ -1168,6 +1183,7 @@ mod tests {
     fn test_variable_update() {
         insta::assert_debug_snapshot!(verify_block("a = 3"));
         insta::assert_debug_snapshot!(verify_block("a *= 3"));
+        insta::assert_debug_snapshot!(verify_block("print(test).a *= 3"));
     }
 
     #[test]

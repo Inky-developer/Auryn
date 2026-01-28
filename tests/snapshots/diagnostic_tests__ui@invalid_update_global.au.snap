@@ -1,0 +1,12 @@
+---
+source: tests/diagnostic_tests.rs
+expression: "fn main() {\n\tfoo = 4\n}\n\nfn foo() {}\n"
+input_file: tests/inputs/diagnostics/invalid_update_global.au
+---
+Error: Immutable variable
+   ╭─[ main:2:2 ]
+   │
+ 2 │     foo = 4
+   │     ──┬─  
+   │       ╰─── Cannot write to an immutable variable
+───╯

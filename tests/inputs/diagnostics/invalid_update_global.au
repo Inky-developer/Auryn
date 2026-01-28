@@ -1,0 +1,5 @@
+fn main() {
+	foo = 4
+}
+
+fn foo() {}

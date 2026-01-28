@@ -12,7 +12,7 @@ use crate::{
         },
         file_id::FileId,
         syntax_id::SyntaxId,
-        tokenizer::BinaryOperatorToken,
+        tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
     },
     utils::{fast_map::FastMap, small_string::SmallString},
 };
@@ -169,6 +169,7 @@ pub struct AirNode {
 #[derive(Debug)]
 pub enum AirNodeKind {
     Assignment(Assignment),
+    Update(Update),
     Expression(Box<AirExpression>),
 }
 
@@ -176,6 +177,13 @@ pub enum AirNodeKind {
 pub struct Assignment {
     pub target: AirLocalValueId,
     pub expected_type: Option<UnresolvedType>,
+    pub expression: Box<AirExpression>,
+}
+
+#[derive(Debug)]
+pub struct Update {
+    pub target: AirPlace,
+    pub operator: UpdateOperatorToken,
     pub expression: Box<AirExpression>,
 }
 
@@ -269,7 +277,23 @@ pub enum AirExpressionKind {
     Type(AirType),
     Accessor(Accessor),
     Call(Call),
+    /// Only used internally during typechecking, never emitted
+    Synthetic,
     Error,
+}
+
+/// A place is a location that can be written to or read from
+#[derive(Debug)]
+pub struct AirPlace {
+    pub id: SyntaxId,
+    pub r#type: AirType,
+    pub kind: AirPlaceKind,
+}
+
+#[derive(Debug)]
+pub enum AirPlaceKind {
+    Variable(AirLocalValueId),
+    Accessor(Accessor),
 }
 
 #[derive(Debug)]

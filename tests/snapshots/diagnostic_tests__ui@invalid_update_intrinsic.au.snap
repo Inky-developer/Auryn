@@ -1,0 +1,12 @@
+---
+source: tests/diagnostic_tests.rs
+expression: "fn main() {\n\tprint = 1\n}\n"
+input_file: tests/inputs/diagnostics/invalid_update_intrinsic.au
+---
+Error: Immutable variable
+   ╭─[ main:2:2 ]
+   │
+ 2 │     print = 1
+   │     ───┬──  
+   │        ╰──── Cannot write to an immutable variable
+───╯

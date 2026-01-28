@@ -56,6 +56,8 @@ pub enum DiagnosticError {
     RedefinedVariable {
         ident: SmallString,
     },
+    ImmutableVariableUpdate,
+    InvalidPlace,
     BreakOutsideLoop,
     ContinueOutsideLoop,
     UndefinedVariable {
@@ -257,6 +259,14 @@ impl Diagnostic {
                     .with_code("Redefined variable")
                     .with_message(format!("Variable `{ident}` was redefined"))
                     .with_info("A variable may only be defined once"),
+                DiagnosticError::ImmutableVariableUpdate => builder
+                    .with_code("Immutable variable")
+                    .with_message("Cannot write to an immutable variable"),
+                // TODO: improve replace `expression` with the actual expression in help text
+                DiagnosticError::InvalidPlace => builder
+                    .with_code("Invalid place")
+                    .with_message("Cannot write to this expression")
+                    .with_help("Add an identifier you want to access: `expression.identifier`"),
                 DiagnosticError::BreakOutsideLoop => builder.with_code("Break outside loop"),
                 DiagnosticError::ContinueOutsideLoop => builder.with_code("Continue outside loop"),
                 DiagnosticError::UndefinedVariable { ident } => builder

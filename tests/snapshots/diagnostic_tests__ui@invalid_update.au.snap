@@ -1,0 +1,14 @@
+---
+source: tests/diagnostic_tests.rs
+expression: "fn main() {\n\tgetRandomNumber() = 5\n}\n\nfn getRandomNumber() -> I32 {\n\t// chosen by a fair dice roll\n\treturn 4\n}\n"
+input_file: tests/inputs/diagnostics/invalid_update.au
+---
+Error: Invalid place
+   ╭─[ main:2:2 ]
+   │
+ 2 │     getRandomNumber() = 5
+   │     ─────────┬────────  
+   │              ╰────────── Cannot write to this expression
+   │ 
+   │ Help: Add an identifier you want to access: `expression.identifier`
+───╯

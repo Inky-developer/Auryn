@@ -39,6 +39,7 @@ pub enum SyntaxNodeKind {
     UnitType,
     Block,
     Statement,
+    Path,
     Expression,
     Value,
     NumberLiteral,

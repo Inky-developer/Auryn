@@ -6,8 +6,8 @@ use crate::{
             data::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment,
-                BinaryOperation, Call, Globals, Intrinsic, ReturnValue, TypeAliasId,
+                AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
+                Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId, Update,
             },
             namespace::UserDefinedTypeId,
             typecheck::{
@@ -272,32 +272,51 @@ impl Typechecker {
     fn infer_node(&mut self, node: &mut AirNode) {
         match &mut node.kind {
             AirNodeKind::Assignment(assignment) => self.infer_assignment(assignment),
+            AirNodeKind::Update(update) => self.infer_update(update),
             AirNodeKind::Expression(expression) => self.infer_expression(expression),
         }
     }
 
     fn infer_assignment(&mut self, assignment: &mut Assignment) {
-        if let Some(expected_type) = self.function.variables.get(&assignment.target) {
+        if let Some(expected_type) = &assignment.expected_type {
+            let expected_type = self.resolve_type(expected_type);
             self.check_expression(&mut assignment.expression, expected_type.as_bounded());
         } else {
-            if let Some(expected_type) = &assignment.expected_type {
-                let expected_type = self.resolve_type(expected_type);
-                self.check_expression(&mut assignment.expression, expected_type.as_bounded());
-            } else {
-                self.infer_expression(&mut assignment.expression);
-            }
-            self.function
-                .variables
-                .insert(assignment.target, assignment.expression.r#type.computed());
+            self.infer_expression(&mut assignment.expression);
+        }
+        self.function
+            .variables
+            .insert(assignment.target, assignment.expression.r#type.computed());
+    }
+
+    fn infer_update(&mut self, update: &mut Update) {
+        let expected_type = match &mut update.target.kind {
+            AirPlaceKind::Variable(id) => *self.function.variables.get(&*id).unwrap(),
+            AirPlaceKind::Accessor(accessor) => self.infer_accessor(accessor),
+        };
+        update.target.r#type = AirType::Computed(expected_type);
+        self.check_expression(&mut update.expression, expected_type.as_bounded());
+        if let Some(op) = update.operator.to_binary_operator() {
+            self.infer_binary_operator(
+                &mut AirExpression {
+                    id: update.target.id,
+                    r#type: AirType::Computed(expected_type),
+                    kind: AirExpressionKind::Synthetic,
+                },
+                &mut update.expression,
+                op,
+            );
         }
     }
 
     fn infer_expression(&mut self, expression: &mut AirExpression) {
         let expression_type = match &mut expression.kind {
             AirExpressionKind::Constant(constant) => self.infer_constant(constant),
-            AirExpressionKind::BinaryOperator(binary_operator) => {
-                self.infer_binary_operator(binary_operator)
-            }
+            AirExpressionKind::BinaryOperator(binary_operator) => self.infer_binary_operator(
+                &mut binary_operator.lhs,
+                &mut binary_operator.rhs,
+                binary_operator.operator,
+            ),
             AirExpressionKind::Variable(value) => self.infer_value(value),
             AirExpressionKind::Type(r#type) => {
                 self.resolve_if_unresolved(r#type);
@@ -305,6 +324,8 @@ impl Typechecker {
             }
             AirExpressionKind::Accessor(accessor) => self.infer_accessor(accessor),
             AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call, None),
+            // Synthetic expressions are only generated during type checking and already have their type computed
+            AirExpressionKind::Synthetic => expression.r#type.computed(),
             AirExpressionKind::Error => Type::Error,
         };
 
@@ -316,9 +337,11 @@ impl Typechecker {
             AirExpressionKind::Constant(constant) => {
                 self.check_constant(expression.id, constant, expected)
             }
-            AirExpressionKind::BinaryOperator(binary_operator) => {
-                self.infer_binary_operator(binary_operator)
-            }
+            AirExpressionKind::BinaryOperator(binary_operator) => self.infer_binary_operator(
+                &mut binary_operator.lhs,
+                &mut binary_operator.rhs,
+                binary_operator.operator,
+            ),
             AirExpressionKind::Variable(variable) => self.infer_value(variable),
             AirExpressionKind::Type(r#type) => {
                 self.resolve_if_unresolved(r#type);
@@ -328,6 +351,8 @@ impl Typechecker {
             AirExpressionKind::Call(call) => {
                 self.typecheck_call(expression.id, call, Some(expected))
             }
+            // Synthetic expressions are only generated during type checking and already have their type computed
+            AirExpressionKind::Synthetic => expression.r#type.computed(),
             AirExpressionKind::Error => Type::Error,
         };
         self.expect_type_at(expression.id, inferred_type, expected);
@@ -443,8 +468,13 @@ impl Typechecker {
         }
     }
 
-    fn infer_binary_operator(&mut self, binary_operator: &mut BinaryOperation) -> Type {
-        let parameter_bound = match binary_operator.operator {
+    fn infer_binary_operator(
+        &mut self,
+        lhs: &mut AirExpression,
+        rhs: &mut AirExpression,
+        operator: BinaryOperatorToken,
+    ) -> Type {
+        let parameter_bound = match operator {
             BinaryOperatorToken::Plus
             | BinaryOperatorToken::Minus
             | BinaryOperatorToken::Times
@@ -459,24 +489,21 @@ impl Typechecker {
             BinaryOperatorToken::And | BinaryOperatorToken::Or => Type::Bool.as_bounded(),
         };
 
-        self.check_expression(&mut binary_operator.lhs, parameter_bound);
-        self.check_expression(
-            &mut binary_operator.rhs,
-            binary_operator.lhs.r#type.computed().as_bounded(),
-        );
+        self.check_expression(lhs, parameter_bound);
+        self.check_expression(rhs, lhs.r#type.computed().as_bounded());
 
-        match binary_operator.operator {
+        match operator {
             BinaryOperatorToken::Plus
             | BinaryOperatorToken::Minus
             | BinaryOperatorToken::Times
             | BinaryOperatorToken::Divide
             | BinaryOperatorToken::Remainder => {
-                let result_type = binary_operator.lhs.r#type.computed();
+                let result_type = lhs.r#type.computed();
                 if matches!(result_type, Type::NumberLiteral(_)) {
                     self.diagnostics.add(
-                        binary_operator.lhs.id,
+                        lhs.id,
                         DiagnosticError::UnsupportedOperationWithType {
-                            operation: binary_operator.operator.to_token_kind().as_str().into(),
+                            operation: operator.to_token_kind().as_str().into(),
                             r#type: result_type.as_view(&self.ty_ctx).to_string(),
                         },
                     );

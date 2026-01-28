@@ -1,0 +1,8 @@
+fn main() {
+	getRandomNumber() = 5
+}
+
+fn getRandomNumber() -> I32 {
+	// chosen by a fair dice roll
+	return 4
+}

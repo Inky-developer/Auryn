@@ -76,6 +76,18 @@ impl UpdateOperatorToken {
         }
     }
 
+    pub const fn to_binary_operator(self) -> Option<BinaryOperatorToken> {
+        use UpdateOperatorToken::*;
+        match self {
+            Assign => None,
+            PlusAssign => Some(BinaryOperatorToken::Plus),
+            MinusAssign => Some(BinaryOperatorToken::Minus),
+            TimesAssign => Some(BinaryOperatorToken::Times),
+            DivideAssign => Some(BinaryOperatorToken::Divide),
+            RemainderAssign => Some(BinaryOperatorToken::Remainder),
+        }
+    }
+
     pub const TOKEN_SET: TokenSet = Self::bitset();
 
     pub const fn bitset() -> TokenSet {

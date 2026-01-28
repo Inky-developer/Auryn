@@ -137,12 +137,29 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                         234562480592213,
                                     ),
                                 },
-                                kind: Assignment(
-                                    Assignment {
-                                        target: AirLocalValueId(
-                                            0,
-                                        ),
-                                        expected_type: None,
+                                kind: Update(
+                                    Update {
+                                        target: AirPlace {
+                                            id: SyntaxId {
+                                                file_id: Some(
+                                                    FileId(
+                                                        1,
+                                                    ),
+                                                ),
+                                                number: Some(
+                                                    234562480592214,
+                                                ),
+                                            },
+                                            type: Computed(
+                                                I32,
+                                            ),
+                                            kind: Variable(
+                                                AirLocalValueId(
+                                                    0,
+                                                ),
+                                            ),
+                                        },
+                                        operator: PlusAssign,
                                         expression: AirExpression {
                                             id: SyntaxId {
                                                 file_id: Some(
@@ -151,58 +168,16 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                     ),
                                                 ),
                                                 number: Some(
-                                                    234562480592213,
+                                                    243358573614422,
                                                 ),
                                             },
                                             type: Computed(
                                                 I32,
                                             ),
-                                            kind: BinaryOperator(
-                                                BinaryOperation {
-                                                    lhs: AirExpression {
-                                                        id: SyntaxId {
-                                                            file_id: Some(
-                                                                FileId(
-                                                                    1,
-                                                                ),
-                                                            ),
-                                                            number: Some(
-                                                                234562480592214,
-                                                            ),
-                                                        },
-                                                        type: Computed(
-                                                            I32,
-                                                        ),
-                                                        kind: Variable(
-                                                            Local(
-                                                                AirLocalValueId(
-                                                                    0,
-                                                                ),
-                                                            ),
-                                                        ),
-                                                    },
-                                                    rhs: AirExpression {
-                                                        id: SyntaxId {
-                                                            file_id: Some(
-                                                                FileId(
-                                                                    1,
-                                                                ),
-                                                            ),
-                                                            number: Some(
-                                                                243944979815900,
-                                                            ),
-                                                        },
-                                                        type: Computed(
-                                                            I32,
-                                                        ),
-                                                        kind: Constant(
-                                                            Number(
-                                                                2,
-                                                            ),
-                                                        ),
-                                                    },
-                                                    operator: Plus,
-                                                },
+                                            kind: Constant(
+                                                Number(
+                                                    2,
+                                                ),
                                             ),
                                         },
                                     },

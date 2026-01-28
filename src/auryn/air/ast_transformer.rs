@@ -6,8 +6,9 @@ use crate::{
             data::{
                 self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
-                AirStaticValue, AirStaticValueId, AirType, AirValueId, Call, ExternFunctionKind,
-                FunctionReference, Globals, ReturnValue, TypeAliasId, UnresolvedExternMember,
+                AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
+                Call, ExternFunctionKind, FunctionReference, Globals, ReturnValue, TypeAliasId,
+                UnresolvedExternMember,
             },
             namespace::{Namespace, UserDefinedTypeId},
             typecheck::{type_context::TypeId, types},
@@ -17,7 +18,7 @@ use crate::{
             Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
             BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
             ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
-            IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis,
+            IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
             PostfixOperation, PostfixOperator, ReturnStatement, Root, Statement, StringLiteral,
             StructLiteral, StructLiteralField, StructuralTypeField, Type, TypeAlias, Value,
             ValueOrPostfix, VariableUpdate,
@@ -25,7 +26,6 @@ use crate::{
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
         syntax_tree::SyntaxToken,
-        tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
     },
     utils::{default, fast_map::FastMap, small_string::SmallString},
 };
@@ -625,34 +625,6 @@ impl FunctionTransformer<'_> {
     }
 
     fn transform_variable_update(&mut self, variable_update: VariableUpdate) {
-        /// Desugars updates like `a *= 2` into `a = a * 2`
-        fn desugar_update(
-            id: SyntaxId,
-            ident_id: SyntaxId,
-            variable_id: AirValueId,
-            expression: AirExpression,
-            token: UpdateOperatorToken,
-        ) -> AirExpression {
-            let operator = match token {
-                UpdateOperatorToken::Assign => return expression,
-                UpdateOperatorToken::PlusAssign => BinaryOperatorToken::Plus,
-                UpdateOperatorToken::MinusAssign => BinaryOperatorToken::Minus,
-                UpdateOperatorToken::TimesAssign => BinaryOperatorToken::Times,
-                UpdateOperatorToken::DivideAssign => BinaryOperatorToken::Divide,
-                UpdateOperatorToken::RemainderAssign => BinaryOperatorToken::Remainder,
-            };
-
-            let lhs = Box::new(AirExpression::new(
-                ident_id,
-                AirExpressionKind::Variable(variable_id),
-            ));
-            let rhs = Box::new(expression);
-            AirExpression::new(
-                id,
-                AirExpressionKind::BinaryOperator(data::BinaryOperation { lhs, rhs, operator }),
-            )
-        }
-
         let Ok(expression) = variable_update.expression() else {
             return;
         };
@@ -662,35 +634,45 @@ impl FunctionTransformer<'_> {
             return;
         };
 
-        let Ok(ident) = variable_update.ident() else {
+        let Ok(path) = variable_update.path() else {
             return;
         };
-        let Some(&variable_id) = self.variables.get(&ident.text) else {
-            self.diagnostics.add(
-                ident.id,
-                DiagnosticError::UndefinedVariable {
-                    ident: ident.text.clone(),
-                },
-            );
+        let Ok(path) = self.transform_path(path) else {
             return;
         };
-
-        let expression = desugar_update(
-            variable_update.id(),
-            ident.id,
-            AirValueId::Local(variable_id),
-            expression,
-            token,
-        );
 
         self.add_node(AirNode {
             id: variable_update.id(),
-            kind: AirNodeKind::Assignment(data::Assignment {
-                target: variable_id,
-                expected_type: None,
+            kind: AirNodeKind::Update(data::Update {
+                target: path,
+                operator: token,
                 expression: Box::new(expression),
             }),
         });
+    }
+
+    fn transform_path(&mut self, path: Path) -> Result<AirPlace, AstError> {
+        let expression = path.expression()?;
+        let expression = self.transform_expression(expression);
+        let kind = match expression.kind {
+            AirExpressionKind::Variable(id) => match id {
+                AirValueId::Local(local_id) => AirPlaceKind::Variable(local_id),
+                AirValueId::Global(_) | AirValueId::Intrinsic(_) => {
+                    self.diagnostics.add(path.id(), DiagnosticError::ImmutableVariableUpdate);
+                    return Err(AstError);
+                },
+            },
+            AirExpressionKind::Accessor(accessor) => AirPlaceKind::Accessor(accessor),
+            _ => {
+                self.diagnostics.add(path.id(), DiagnosticError::InvalidPlace);
+                return Err(AstError);
+            },
+        };
+        Ok(AirPlace {
+            id: path.id(),
+            kind,
+            r#type: AirType::Inferred,
+        })
     }
 
     fn transform_expression(&mut self, expression: Expression) -> AirExpression {

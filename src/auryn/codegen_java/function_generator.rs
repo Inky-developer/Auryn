@@ -4,8 +4,8 @@ use crate::{
             data::{
                 Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirValueId, Assignment, BinaryOperation, Call, CallKind,
-                ExternFunctionKind, FunctionReference, Intrinsic,
+                AirNodeKind, AirPlace, AirPlaceKind, AirValueId, Assignment, BinaryOperation, Call,
+                CallKind, ExternFunctionKind, FunctionReference, Intrinsic, Update,
             },
             typecheck::{type_context::TypeContext, types::TypeView},
         },
@@ -182,6 +182,7 @@ impl FunctionGenerator<'_> {
     fn generate_node(&mut self, node: &AirNode) {
         match &node.kind {
             AirNodeKind::Assignment(assignment) => self.generate_assignment(assignment),
+            AirNodeKind::Update(update) => self.generate_update(update),
             AirNodeKind::Expression(expression) => {
                 let leftover = self.generate_expression(expression);
                 if let Some(leftover) = leftover {
@@ -213,6 +214,104 @@ impl FunctionGenerator<'_> {
         }
     }
 
+    fn generate_update(&mut self, update: &Update) {
+        let place = self.generate_place(&update.target);
+
+        let repr = if let Some(op) = update.operator.to_binary_operator() {
+            self.generate_binary_operation_inner(
+                |this| this.generate_place_load(place.clone()),
+                |this| this.generate_expression(&update.expression),
+                op,
+            )
+        } else {
+            self.generate_expression(&update.expression)
+        };
+
+        self.generate_place_store(place, repr);
+    }
+
+    fn generate_place(&mut self, place: &AirPlace) -> Place {
+        match &place.kind {
+            AirPlaceKind::Variable(var) => {
+                if let Some(id) = self.variable_map.get(var) {
+                    Place::Variable(id.clone())
+                } else {
+                    Place::Empty
+                }
+            }
+            AirPlaceKind::Accessor(accessor) => {
+                let object_repr = self.generate_expression(&accessor.value);
+                let target_repr = self
+                    .repr_ctx
+                    .get_representation(place.r#type.as_view(&self.ty_ctx));
+                if let (Some(object_repr), Some(target_repr)) = (object_repr, target_repr) {
+                    match object_repr {
+                        Representation::Object(name) => Place::Stack {
+                            name,
+                            field: accessor.ident.clone(),
+                            field_repr: target_repr,
+                        },
+                        other => panic!("Cannot access field on {other:?}"),
+                    }
+                } else {
+                    Place::Empty
+                }
+            }
+        }
+    }
+
+    /// Loads a place, without consuming its stack value
+    /// Stack: `.., place -> .., place, value`
+    fn generate_place_load(&mut self, place: Place) -> Option<Representation> {
+        match place {
+            Place::Variable(var) => {
+                let repr = var.r#type.clone();
+                self.assembler.add(Instruction::Load(var));
+                Some(repr)
+            }
+            Place::Stack {
+                name,
+                field,
+                field_repr,
+            } => {
+                self.assembler.add(Instruction::Dup(TypeCategory::Normal));
+                let field_descriptor = field_repr.clone().into_field_descriptor();
+                self.assembler.add(Instruction::GetField {
+                    class_name: name,
+                    name: field,
+                    field_descriptor,
+                });
+                Some(field_repr)
+            }
+            Place::Empty => None,
+        }
+    }
+
+    /// Stores a value into the place.
+    /// Stack: `.., place, value -> ..`
+    fn generate_place_store(&mut self, place: Place, value_repr: Option<Representation>) {
+        match place {
+            Place::Variable(var) => self.assembler.add(Instruction::Store(var)),
+            Place::Stack {
+                name,
+                field,
+                field_repr,
+            } => {
+                let field_descriptor = field_repr.into_field_descriptor();
+                self.assembler.add(Instruction::PutField {
+                    class_name: name,
+                    name: field,
+                    field_descriptor,
+                });
+            }
+            Place::Empty => {
+                if let Some(repr) = value_repr {
+                    self.assembler.add(Instruction::Pop(repr.category()));
+                }
+            }
+        }
+    }
+
     /// The return value indicates the stack usage
     fn generate_expression(&mut self, expression: &AirExpression) -> Option<Representation> {
         let result_type = expression.r#type.as_view(self.ty_ctx);
@@ -225,7 +324,9 @@ impl FunctionGenerator<'_> {
             AirExpressionKind::BinaryOperator(binary_operator) => {
                 self.generate_binary_operation(binary_operator)
             }
-            AirExpressionKind::Variable(variable) => self.generate_variable(repr.clone(), variable),
+            AirExpressionKind::Variable(variable) => {
+                self.generate_variable(repr.clone(), variable);
+            }
             AirExpressionKind::Type(_) => {
                 // Nothing needs to be done, since types are compile time constructs
             }
@@ -233,7 +334,9 @@ impl FunctionGenerator<'_> {
             AirExpressionKind::Call(call) => {
                 self.generate_call(call, expression.r#type.computed().as_view(self.ty_ctx))
             }
-            AirExpressionKind::Error => unreachable!("Codegen was started with invalid air"),
+            AirExpressionKind::Synthetic | AirExpressionKind::Error => {
+                unreachable!("Codegen was started with invalid air")
+            }
         };
         repr
     }
@@ -301,21 +404,33 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_binary_operation(&mut self, operation: &BinaryOperation) {
-        match operation.operator {
+        self.generate_binary_operation_inner(
+            |this| this.generate_expression(&operation.lhs),
+            |this| this.generate_expression(&operation.rhs),
+            operation.operator,
+        );
+    }
+
+    fn generate_binary_operation_inner(
+        &mut self,
+        lhs: impl FnOnce(&mut Self) -> Option<Representation>,
+        rhs: impl FnOnce(&mut Self) -> Option<Representation>,
+        operator: BinaryOperatorToken,
+    ) -> Option<Representation> {
+        match operator {
             BinaryOperatorToken::Plus
             | BinaryOperatorToken::Minus
             | BinaryOperatorToken::Times
             | BinaryOperatorToken::Divide
             | BinaryOperatorToken::Remainder => {
-                let PrimitiveOrObject::Primitive(primitive) = self
-                    .generate_expression(&operation.lhs)
-                    .unwrap()
-                    .to_primitive_type_or_object()
+                let repr = lhs(self);
+                let PrimitiveOrObject::Primitive(primitive) =
+                    repr.clone().unwrap().to_primitive_type_or_object()
                 else {
                     panic!("Can only perform operation on primitives");
                 };
-                self.generate_expression(&operation.rhs);
-                let instruction = match operation.operator {
+                rhs(self);
+                let instruction = match operator {
                     BinaryOperatorToken::Plus => Instruction::Add(primitive),
                     BinaryOperatorToken::Minus => Instruction::Sub(primitive),
                     BinaryOperatorToken::Times => Instruction::Mul(primitive),
@@ -324,44 +439,38 @@ impl FunctionGenerator<'_> {
                     _ => unreachable!(),
                 };
                 self.assembler.add(instruction);
+                repr
             }
-            BinaryOperatorToken::Equal => {
-                self.generate_comparison(Comparison::Equal, &operation.lhs, &operation.rhs)
-            }
+            BinaryOperatorToken::Equal => self.generate_comparison(Comparison::Equal, lhs, rhs),
             BinaryOperatorToken::NotEqual => {
-                self.generate_comparison(Comparison::NotEqual, &operation.lhs, &operation.rhs)
+                self.generate_comparison(Comparison::NotEqual, lhs, rhs)
             }
-            BinaryOperatorToken::Greater => {
-                self.generate_comparison(Comparison::Greater, &operation.lhs, &operation.rhs)
-            }
+            BinaryOperatorToken::Greater => self.generate_comparison(Comparison::Greater, lhs, rhs),
             BinaryOperatorToken::GreaterOrEqual => {
-                self.generate_comparison(Comparison::GreaterOrEqual, &operation.lhs, &operation.rhs)
+                self.generate_comparison(Comparison::GreaterOrEqual, lhs, rhs)
             }
-            BinaryOperatorToken::Less => {
-                self.generate_comparison(Comparison::Less, &operation.lhs, &operation.rhs)
-            }
+            BinaryOperatorToken::Less => self.generate_comparison(Comparison::Less, lhs, rhs),
             BinaryOperatorToken::LessOrEqual => {
-                self.generate_comparison(Comparison::LessOrEqual, &operation.lhs, &operation.rhs)
+                self.generate_comparison(Comparison::LessOrEqual, lhs, rhs)
             }
-            BinaryOperatorToken::And => self.generate_and(&operation.lhs, &operation.rhs),
-            BinaryOperatorToken::Or => self.generate_or(&operation.lhs, &operation.rhs),
-        };
+            BinaryOperatorToken::And => self.generate_and(lhs, rhs),
+            BinaryOperatorToken::Or => self.generate_or(lhs, rhs),
+        }
     }
 
     fn generate_comparison(
         &mut self,
         comparison: Comparison,
-        lhs: &AirExpression,
-        rhs: &AirExpression,
-    ) {
-        let PrimitiveOrObject::Primitive(primitive) = self
-            .generate_expression(lhs)
-            .unwrap()
-            .to_primitive_type_or_object()
+        lhs: impl FnOnce(&mut Self) -> Option<Representation>,
+        rhs: impl FnOnce(&mut Self) -> Option<Representation>,
+    ) -> Option<Representation> {
+        let repr = lhs(self);
+        let PrimitiveOrObject::Primitive(primitive) =
+            repr.clone().unwrap().to_primitive_type_or_object()
         else {
             panic!("Can only compare primitives")
         };
-        self.generate_expression(rhs);
+        rhs(self);
         let pos_block_id = self.assembler.add_block();
         let neg_block_id = self.assembler.add_block();
         let next_block_id = self.assembler.add_block();
@@ -385,14 +494,20 @@ impl FunctionGenerator<'_> {
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block_id);
 
         self.assembler.set_current_block_id(next_block_id);
+
+        repr
     }
 
-    fn generate_and(&mut self, lhs: &AirExpression, rhs: &AirExpression) {
+    fn generate_and(
+        &mut self,
+        lhs: impl FnOnce(&mut Self) -> Option<Representation>,
+        rhs: impl FnOnce(&mut Self) -> Option<Representation>,
+    ) -> Option<Representation> {
         let first_true_block = self.assembler.add_block();
         let false_block = self.assembler.add_block();
         let next_block = self.assembler.add_block();
 
-        self.generate_expression(lhs);
+        let repr = lhs(self);
         self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
             comparison: Comparison::NotEqual,
             positive_block: first_true_block,
@@ -400,7 +515,7 @@ impl FunctionGenerator<'_> {
         };
 
         self.assembler.set_current_block_id(first_true_block);
-        self.generate_expression(rhs);
+        rhs(self);
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
 
         self.assembler.set_current_block_id(false_block);
@@ -410,14 +525,20 @@ impl FunctionGenerator<'_> {
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
 
         self.assembler.set_current_block_id(next_block);
+
+        repr
     }
 
-    fn generate_or(&mut self, lhs: &AirExpression, rhs: &AirExpression) {
+    fn generate_or(
+        &mut self,
+        lhs: impl FnOnce(&mut Self) -> Option<Representation>,
+        rhs: impl FnOnce(&mut Self) -> Option<Representation>,
+    ) -> Option<Representation> {
         let first_false_block = self.assembler.add_block();
         let true_block = self.assembler.add_block();
         let next_block = self.assembler.add_block();
 
-        self.generate_expression(lhs);
+        let repr = lhs(self);
         self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
             comparison: Comparison::Equal,
             positive_block: first_false_block,
@@ -425,7 +546,7 @@ impl FunctionGenerator<'_> {
         };
 
         self.assembler.set_current_block_id(first_false_block);
-        self.generate_expression(rhs);
+        rhs(self);
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
 
         self.assembler.set_current_block_id(true_block);
@@ -435,9 +556,15 @@ impl FunctionGenerator<'_> {
         self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
 
         self.assembler.set_current_block_id(next_block);
+
+        repr
     }
 
-    fn generate_variable(&mut self, result_repr: Option<Representation>, variable: &AirValueId) {
+    fn generate_variable(
+        &mut self,
+        result_repr: Option<Representation>,
+        variable: &AirValueId,
+    ) -> Option<Representation> {
         match variable {
             AirValueId::Local(local_variable_id) => {
                 if result_repr.is_some() {
@@ -449,7 +576,8 @@ impl FunctionGenerator<'_> {
                 // Intrinsic functions and globals have no run time representation
                 // so nothing needs to be loaded
             }
-        }
+        };
+        result_repr
     }
 
     fn generate_accessor(&mut self, accessor: &Accessor, result_repr: Option<Representation>) {
@@ -769,4 +897,15 @@ impl FunctionGenerator<'_> {
         self.generate_expression(array);
         self.assembler.add(Instruction::ArrayLength);
     }
+}
+
+#[derive(Debug, Clone)]
+enum Place {
+    Variable(VariableId),
+    Stack {
+        name: SmallString,
+        field: SmallString,
+        field_repr: Representation,
+    },
+    Empty,
 }
