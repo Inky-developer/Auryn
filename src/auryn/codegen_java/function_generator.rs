@@ -5,7 +5,7 @@ use crate::{
                 Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
                 AirNodeKind, AirPlace, AirPlaceKind, AirValueId, Assignment, BinaryOperation, Call,
-                CallKind, ExternFunctionKind, FunctionReference, Intrinsic, Update,
+                CallKind, ExternFunctionKind, FunctionReference, Intrinsic, UnaryOperator, Update,
             },
             typecheck::{type_context::TypeContext, types::TypeView},
         },
@@ -324,6 +324,9 @@ impl FunctionGenerator<'_> {
             AirExpressionKind::BinaryOperator(binary_operator) => {
                 self.generate_binary_operation(binary_operator)
             }
+            AirExpressionKind::UnaryOperator(unary_operator) => {
+                self.generate_unary_operation(&unary_operator.expression, unary_operator.operator)
+            }
             AirExpressionKind::Variable(variable) => {
                 self.generate_variable(repr.clone(), variable);
             }
@@ -558,6 +561,45 @@ impl FunctionGenerator<'_> {
         self.assembler.set_current_block_id(next_block);
 
         repr
+    }
+
+    fn branch_bool(&mut self, on_true: impl FnOnce(&mut Self), on_false: impl FnOnce(&mut Self)) {
+        let true_block = self.assembler.add_block();
+        let false_block = self.assembler.add_block();
+        let next_block = self.assembler.add_block();
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::BranchInteger {
+            comparison: Comparison::Equal,
+            positive_block: true_block,
+            negative_block: false_block,
+        };
+
+        self.assembler.set_current_block_id(false_block);
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+        on_true(self);
+
+        self.assembler.set_current_block_id(true_block);
+        self.assembler.current_block_mut().finalizer = BlockFinalizer::Goto(next_block);
+        on_false(self);
+
+        self.assembler.set_current_block_id(next_block);
+    }
+
+    fn generate_unary_operation(&mut self, expression: &AirExpression, op: UnaryOperator) {
+        let UnaryOperator::Not = op;
+
+        self.generate_expression(expression);
+        self.branch_bool(
+            |this| {
+                this.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Boolean(false),
+                })
+            },
+            |this| {
+                this.assembler.add(Instruction::LoadConstant {
+                    value: ConstantValue::Boolean(true),
+                })
+            },
+        );
     }
 
     fn generate_variable(

@@ -8,7 +8,7 @@ use crate::{
                 AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
                 AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
                 Call, ExternFunctionKind, FunctionReference, Globals, ReturnValue, TypeAliasId,
-                UnresolvedExternMember,
+                UnaryOperation, UnaryOperator, UnresolvedExternMember,
             },
             namespace::{Namespace, UserDefinedTypeId},
             typecheck::{type_context::TypeId, types},
@@ -19,9 +19,9 @@ use crate::{
             BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
             ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
             IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
-            PostfixOperation, PostfixOperator, ReturnStatement, Root, Statement, StringLiteral,
-            StructLiteral, StructLiteralField, StructuralTypeField, Type, TypeAlias, Value,
-            ValueOrPostfix, VariableUpdate,
+            PostfixOperation, PostfixOperator, PrefixNot, ReturnStatement, Root, Statement,
+            StringLiteral, StructLiteral, StructLiteralField, StructuralTypeField, Type, TypeAlias,
+            Value, ValueOrPostfix, VariableUpdate,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -783,6 +783,7 @@ impl FunctionTransformer<'_> {
         match value {
             Value::NumberLiteral(number) => self.transform_number(number),
             Value::StringLiteral(string) => self.transform_string(string),
+            Value::PrefixNot(not) => self.transform_prefix_not(not),
             Value::BooleanLiteral(boolean) => self.transform_boolean(boolean),
             Value::Ident(ident) => self.transform_ident(ident),
             Value::Parenthesis(parenthesis) => self.transform_parenthesis(parenthesis),
@@ -816,6 +817,20 @@ impl FunctionTransformer<'_> {
         AirExpression::new(
             token.id,
             AirExpressionKind::Constant(AirConstant::String(text)),
+        )
+    }
+
+    fn transform_prefix_not(&mut self, not: PrefixNot) -> AirExpression {
+        let Ok(value) = not.value() else {
+            return AirExpression::error(not.id());
+        };
+        let expression = Box::new(self.transform_value(value));
+        AirExpression::new(
+            not.id(),
+            AirExpressionKind::UnaryOperator(UnaryOperation {
+                operator: UnaryOperator::Not,
+                expression,
+            }),
         )
     }
 

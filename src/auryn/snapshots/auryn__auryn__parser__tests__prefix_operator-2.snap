@@ -1,0 +1,27 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"not true or false\")"
+---
+syntax_tree:
+0..17 Root
+|0..17 Block
+||0..17 Statement
+|||0..17 Expression
+||||0..17 BinaryOperation
+|||||0..9 Expression
+||||||0..9 Value
+|||||||0..9 PrefixNot
+||||||||KeywordNot `not`
+||||||||Whitespace ` `
+||||||||4..9 Value
+|||||||||4..9 BooleanLiteral
+||||||||||KeywordTrue `true`
+||||||||||Whitespace ` `
+|||||KeywordOr `or`
+|||||Whitespace ` `
+|||||12..17 Expression
+||||||12..17 Value
+|||||||12..17 BooleanLiteral
+||||||||KeywordFalse `false`
+
+diagnostics:

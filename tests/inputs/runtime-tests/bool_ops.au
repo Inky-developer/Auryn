@@ -1,0 +1,22 @@
+// expect-output:
+// true
+// false
+// true
+// false
+// false
+// true
+// false
+// true
+
+fn main() {
+	let a = true
+	print(a)
+	let b = false
+	print(b)
+	print(a or b)
+	print(a and b)
+	print(not a)
+	print(not b)
+	print(not a and not b)
+	print(not a or not b)
+}

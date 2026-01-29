@@ -272,6 +272,7 @@ impl AirExpression {
 pub enum AirExpressionKind {
     Constant(AirConstant),
     BinaryOperator(BinaryOperation),
+    UnaryOperator(UnaryOperation),
     Variable(AirValueId),
     /// Loads a type as a value
     Type(AirType),
@@ -301,6 +302,17 @@ pub struct BinaryOperation {
     pub lhs: Box<AirExpression>,
     pub rhs: Box<AirExpression>,
     pub operator: BinaryOperatorToken,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnaryOperator {
+    Not,
+}
+
+#[derive(Debug)]
+pub struct UnaryOperation {
+    pub expression: Box<AirExpression>,
+    pub operator: UnaryOperator,
 }
 
 #[derive(Debug)]

@@ -232,6 +232,9 @@ mod tests {
     fn test_logic() {
         insta::assert_debug_snapshot!(generate_class_wrapped("false and true"));
         insta::assert_debug_snapshot!(generate_class_wrapped("false or true"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("not false"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("not false and true"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("not true"));
     }
 
     #[test]

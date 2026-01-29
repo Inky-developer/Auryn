@@ -915,6 +915,7 @@ impl Parser<'_> {
         TokenKind::BraceOpen,
         TokenKind::KeywordTrue,
         TokenKind::KeywordFalse,
+        TokenKind::KeywordNot,
     ];
     fn parse_value_or_postfix(&mut self) -> ParseResult {
         let mut watcher = self.push_node();
@@ -926,6 +927,7 @@ impl Parser<'_> {
             TokenKind::ParensOpen => self.parse_parenthesis()?,
             TokenKind::BraceOpen => self.parse_struct_literal()?,
             TokenKind::KeywordTrue | TokenKind::KeywordFalse => self.parse_boolean_literal()?,
+            TokenKind::KeywordNot => self.parse_not()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedValue {
                     got: self.peek().text.into(),
@@ -1071,6 +1073,16 @@ impl Parser<'_> {
         self.finish_node(watcher, SyntaxNodeKind::StructLiteralField);
         Ok(())
     }
+
+    fn parse_not(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordNot)?;
+        self.parse_value_or_postfix()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::PrefixNot);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -1146,6 +1158,12 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("a()"));
         insta::assert_debug_snapshot!(verify_block("a.b"));
         insta::assert_debug_snapshot!(verify_block("a.b()()"));
+    }
+
+    #[test]
+    fn test_prefix_operator() {
+        insta::assert_debug_snapshot!(verify_block("not true"));
+        insta::assert_debug_snapshot!(verify_block("not true or false"));
     }
 
     #[test]

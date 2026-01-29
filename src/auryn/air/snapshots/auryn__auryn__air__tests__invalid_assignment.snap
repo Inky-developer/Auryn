@@ -438,8 +438,8 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                 },
                 kind: Error(
                     TypeMismatch {
-                        expected: "Number",
-                        got: "()",
+                        expected: "()",
+                        got: "Number",
                     },
                 ),
                 ..

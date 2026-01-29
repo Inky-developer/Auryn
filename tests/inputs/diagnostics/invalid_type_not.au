@@ -1,0 +1,4 @@
+fn main() {
+	let a = not 5
+	print(a)
+}

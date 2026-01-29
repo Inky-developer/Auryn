@@ -365,6 +365,7 @@ ast_node! {
     pub enum Value = SyntaxNodeKind::Value as
         | SyntaxNodeKind::NumberLiteral as NumberLiteral
         | SyntaxNodeKind::StringLiteral as StringLiteral
+        | SyntaxNodeKind::PrefixNot as PrefixNot
         | SyntaxNodeKind::BooleanLiteral as BooleanLiteral
         | SyntaxNodeKind::Ident as Ident
         | SyntaxNodeKind::Parenthesis as Parenthesis
@@ -377,6 +378,10 @@ ast_node! {
 
 ast_node! {
     pub struct StringLiteral = SyntaxNodeKind::StringLiteral as { token value: TokenKind::StringLiteral, }
+}
+
+ast_node! {
+    pub struct PrefixNot = SyntaxNodeKind::PrefixNot as { value: Value, }
 }
 
 ast_node! {

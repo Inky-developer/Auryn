@@ -148,6 +148,7 @@ bitset_item! {
         KeywordAnd,
         KeywordOr,
         KeywordFalse,
+        KeywordNot,
         Whitespace,
         Newline,
         Comment,
@@ -216,6 +217,7 @@ impl TokenKind {
             TokenKind::LessOrEqual => "<=",
             TokenKind::KeywordAnd => "and",
             TokenKind::KeywordOr => "or",
+            TokenKind::KeywordNot => "not",
             TokenKind::ParensOpen => "(",
             TokenKind::ParensClose => ")",
             TokenKind::BraceOpen => "{",
@@ -517,6 +519,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("if"),
                 });
             }
+            'n' if self.starts_with_keyword("not") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordNot,
+                    text: self.consume_text("not"),
+                });
+            }
             'o' if self.starts_with_keyword("or") => {
                 return Some(Token {
                     kind: TokenKind::KeywordOr,
@@ -599,7 +607,7 @@ mod tests {
             "loop let some_text = if true { false } else { break continue return } fn [foo.bar]"
         ));
         insta::assert_debug_snapshot!(tokenize(
-            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 and true or false -> a"
+            "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 and true or not false -> a"
         ));
         insta::assert_debug_snapshot!(tokenize("( \"Hello, World!\" ) && \"test\""));
         insta::assert_debug_snapshot!(tokenize("unsafe extern type Foo { static let bar }"));

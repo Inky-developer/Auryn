@@ -49,6 +49,7 @@ pub enum SyntaxNodeKind {
     /// Constains value and the postfix operator
     PostfixOperation,
     PostfixOperator,
+    PrefixNot,
     Error,
     Parenthesis,
     StructLiteral,

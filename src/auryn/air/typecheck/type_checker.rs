@@ -7,7 +7,8 @@ use crate::{
                 Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
                 AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
-                Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId, Update,
+                Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId, UnaryOperator,
+                Update,
             },
             namespace::UserDefinedTypeId,
             typecheck::{
@@ -317,6 +318,9 @@ impl Typechecker {
                 &mut binary_operator.rhs,
                 binary_operator.operator,
             ),
+            AirExpressionKind::UnaryOperator(unary_operator) => {
+                self.infer_unary_operator(&mut unary_operator.expression, unary_operator.operator)
+            }
             AirExpressionKind::Variable(value) => self.infer_value(value),
             AirExpressionKind::Type(r#type) => {
                 self.resolve_if_unresolved(r#type);
@@ -342,6 +346,9 @@ impl Typechecker {
                 &mut binary_operator.rhs,
                 binary_operator.operator,
             ),
+            AirExpressionKind::UnaryOperator(unary_operator) => {
+                self.infer_unary_operator(&mut unary_operator.expression, unary_operator.operator)
+            }
             AirExpressionKind::Variable(variable) => self.infer_value(variable),
             AirExpressionKind::Type(r#type) => {
                 self.resolve_if_unresolved(r#type);
@@ -398,8 +405,8 @@ impl Typechecker {
                     self.diagnostics.add(
                         id,
                         DiagnosticError::TypeMismatch {
-                            expected: BoundView::Number.to_string(),
-                            got: expected.as_view(&self.ty_ctx).to_string(),
+                            got: BoundView::Number.to_string(),
+                            expected: expected.as_view(&self.ty_ctx).to_string(),
                         },
                     );
                 }
@@ -519,6 +526,12 @@ impl Typechecker {
             | BinaryOperatorToken::And
             | BinaryOperatorToken::Or => Type::Bool,
         }
+    }
+
+    fn infer_unary_operator(&mut self, expression: &mut AirExpression, op: UnaryOperator) -> Type {
+        let UnaryOperator::Not = op;
+        self.check_expression(expression, Type::Bool.as_bounded());
+        Type::Bool
     }
 
     fn infer_value(&mut self, value: &AirValueId) -> Type {
