@@ -134,6 +134,7 @@ bitset_item! {
         BracketClose,
         KeywordLet,
         KeywordLoop,
+        KeywordWhile,
         KeywordBreak,
         KeywordContinue,
         KeywordIf,
@@ -226,6 +227,7 @@ impl TokenKind {
             TokenKind::BracketClose => "]",
             TokenKind::KeywordLet => "let",
             TokenKind::KeywordLoop => "loop",
+            TokenKind::KeywordWhile => "while",
             TokenKind::KeywordBreak => "break",
             TokenKind::KeywordContinue => "continue",
             TokenKind::KeywordIf => "if",
@@ -561,6 +563,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("unsafe"),
                 });
             }
+            'w' if self.starts_with_keyword("while") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordWhile,
+                    text: self.consume_text("while"),
+                });
+            }
             '"' => return Some(self.consume_string_literal()),
             'a'..='z' | 'A'..='Z' | '_' => return self.consume_identifier(),
             char if char.is_ascii_whitespace() => return self.consume_whitespace(),
@@ -604,7 +612,7 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 1 -2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
         insta::assert_debug_snapshot!(tokenize(
-            "loop let some_text = if true { false } else { break continue return } fn [foo.bar]"
+            "loop while let some_text = if true { false } else { break continue return } fn [foo.bar]"
         ));
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 and true or not false -> a"

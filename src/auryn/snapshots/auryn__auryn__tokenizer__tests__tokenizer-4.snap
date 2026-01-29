@@ -1,11 +1,19 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"loop let some_text = if true { false } else { break continue return } fn [foo.bar]\")"
+expression: "tokenize(\"loop while let some_text = if true { false } else { break continue return } fn [foo.bar]\")"
 ---
 [
     Token {
         kind: KeywordLoop,
         text: "loop",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordWhile,
+        text: "while",
     },
     Token {
         kind: Whitespace,

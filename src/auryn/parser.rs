@@ -708,14 +708,15 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         match self.peek().kind {
-            TokenKind::KeywordLet => self.parse_assignment()?,
-            TokenKind::KeywordIf => self.parse_if_statement()?,
-            TokenKind::KeywordLoop => self.parse_loop()?,
-            TokenKind::KeywordBreak => self.parse_break()?,
-            TokenKind::KeywordContinue => self.parse_continue()?,
-            TokenKind::KeywordReturn => self.parse_return()?,
-            _ => self.parse_expression_or_update()?,
-        }
+            TokenKind::KeywordLet => self.parse_assignment(),
+            TokenKind::KeywordIf => self.parse_if_statement(),
+            TokenKind::KeywordLoop => self.parse_loop(),
+            TokenKind::KeywordWhile => self.parse_while(),
+            TokenKind::KeywordBreak => self.parse_break(),
+            TokenKind::KeywordContinue => self.parse_continue(),
+            TokenKind::KeywordReturn => self.parse_return(),
+            _ => self.parse_expression_or_update(),
+        }?;
 
         self.finish_node(watcher, SyntaxNodeKind::Statement);
         Ok(())
@@ -769,6 +770,17 @@ impl Parser<'_> {
         self.parse_braced_block()?;
 
         self.finish_node(watcher, SyntaxNodeKind::Loop);
+        Ok(())
+    }
+
+    fn parse_while(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordWhile)?;
+        self.parse_recoverable(TokenKind::BraceOpen.into(), Self::parse_expression)?;
+        self.parse_braced_block()?;
+
+        self.finish_node(watcher, SyntaxNodeKind::WhileLoop);
         Ok(())
     }
 
@@ -1226,6 +1238,11 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("loop { break }"));
         insta::assert_debug_snapshot!(verify_block("\t\nloop {\t\n\t\n\tprint(1)\t\n\t}\t\n\t"));
         insta::assert_debug_snapshot!(verify_block("loop { continue}"));
+    }
+
+    #[test]
+    fn test_whilel() {
+        insta::assert_debug_snapshot!(verify_block("while 1 > 1 { print(1) }"));
     }
 
     #[test]

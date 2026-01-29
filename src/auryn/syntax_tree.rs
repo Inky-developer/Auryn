@@ -63,6 +63,7 @@ pub enum SyntaxNodeKind {
     IfStatement,
     IfStatementElse,
     Loop,
+    WhileLoop,
     Break,
     Continue,
     Return,

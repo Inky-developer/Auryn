@@ -1,0 +1,46 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(\"while 1 > 1 { print(1) }\")"
+---
+syntax_tree:
+0..24 Root
+|0..24 Block
+||0..24 Statement
+|||0..24 WhileLoop
+||||KeywordWhile `while`
+||||Whitespace ` `
+||||6..12 Expression
+|||||6..12 BinaryOperation
+||||||6..8 Expression
+|||||||6..8 Value
+||||||||6..8 NumberLiteral
+|||||||||NumberLiteral `1`
+|||||||||Whitespace ` `
+||||||Greater `>`
+||||||Whitespace ` `
+||||||10..12 Expression
+|||||||10..12 Value
+||||||||10..12 NumberLiteral
+|||||||||NumberLiteral `1`
+|||||||||Whitespace ` `
+||||BraceOpen `{`
+||||Whitespace ` `
+||||14..23 Block
+|||||14..23 Statement
+||||||14..23 Expression
+|||||||14..23 PostfixOperation
+||||||||14..19 Value
+|||||||||14..19 Ident
+||||||||||Identifier `print`
+||||||||19..23 PostfixOperator
+|||||||||19..23 ArgumentList
+||||||||||ParensOpen `(`
+||||||||||20..21 Expression
+|||||||||||20..21 Value
+||||||||||||20..21 NumberLiteral
+|||||||||||||NumberLiteral `1`
+||||||||||ParensClose `)`
+||||||||||Whitespace ` `
+||||BraceClose `}`
+
+diagnostics:

@@ -237,6 +237,7 @@ ast_node! {
         | SyntaxNodeKind::Assignment as Assignment
         | SyntaxNodeKind::IfStatement as IfStatement
         | SyntaxNodeKind::Loop as LoopStatement
+        | SyntaxNodeKind::WhileLoop as WhileStatement
         | SyntaxNodeKind::Break as BreakStatement
         | SyntaxNodeKind::Continue as ContinueStatement
         | SyntaxNodeKind::Return as ReturnStatement
@@ -260,6 +261,10 @@ ast_node! {
 
 ast_node! {
     pub struct LoopStatement = SyntaxNodeKind::Loop as { block: Block, }
+}
+
+ast_node! {
+    pub struct WhileStatement = SyntaxNodeKind::WhileLoop as { expression: Expression, block: Block, }
 }
 
 ast_node! {

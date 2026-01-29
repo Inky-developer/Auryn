@@ -21,7 +21,7 @@ use crate::{
             IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
             PostfixOperation, PostfixOperator, PrefixNot, ReturnStatement, Root, Statement,
             StringLiteral, StructLiteral, StructLiteralField, StructuralTypeField, Type, TypeAlias,
-            Value, ValueOrPostfix, VariableUpdate,
+            Value, ValueOrPostfix, VariableUpdate, WhileStatement,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -482,6 +482,9 @@ impl FunctionTransformer<'_> {
             Statement::LoopStatement(loop_statement) => {
                 self.transform_loop_statement(loop_statement)
             }
+            Statement::WhileStatement(while_statement) => {
+                self.transform_while_statement(while_statement)
+            }
             Statement::BreakStatement(break_statement) => {
                 self.transform_break_statement(break_statement)
             }
@@ -581,6 +584,39 @@ impl FunctionTransformer<'_> {
         self.transform_block(block);
         self.loops.pop().expect("Should have something to pop");
         self.finish_block(next_block_id, AirBlockFinalizer::Goto(loop_body));
+    }
+
+    fn transform_while_statement(&mut self, while_statement: WhileStatement) {
+        let Ok(condition) = while_statement.expression() else {
+            return;
+        };
+        let condition = self.transform_expression(condition);
+        let Ok(block) = while_statement.block() else {
+            return;
+        };
+
+        let body_block = self.add_block();
+        let main_body_block = self.add_block();
+        let next_block = self.add_block();
+
+        self.finish_block(body_block, AirBlockFinalizer::Goto(body_block));
+        self.loops.push(LoopInfo {
+            continue_target: body_block,
+            break_target: next_block,
+        });
+
+        self.finish_block(
+            main_body_block,
+            AirBlockFinalizer::Branch {
+                value: Box::new(condition),
+                pos_block: main_body_block,
+                neg_block: next_block,
+            },
+        );
+
+        self.transform_block(block);
+        self.loops.pop().expect("Should have something to pop");
+        self.finish_block(next_block, AirBlockFinalizer::Goto(body_block));
     }
 
     fn transform_break_statement(&mut self, r#break: BreakStatement) {

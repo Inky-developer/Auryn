@@ -256,6 +256,25 @@ mod tests {
     }
 
     #[test]
+    fn test_while_loop() {
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            r#"
+            while true { }
+            "#
+        ));
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            r#"
+            let i: I32 = 0
+            while i < 5 {
+                print(i)
+                i += 1
+            }
+            print("Done")
+            "#
+        ));
+    }
+
+    #[test]
     fn test_stack_map_table_generation() {
         insta::assert_debug_snapshot!(generate_class_wrapped(
             "loop {\nif true {\nprint(42)\n}\nprint(100)\n}"
