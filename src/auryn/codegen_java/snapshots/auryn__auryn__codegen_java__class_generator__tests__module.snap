@@ -46,7 +46,7 @@ Constant pool:
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 1
+      stack = 0, locals = 1
       0: InvokeStatic		#7	Main:foo$sayHi:()V
       3: Return
       StackMapTable:
@@ -60,7 +60,7 @@ Constant pool:
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 1
+      stack = 2, locals = 1
       0: GetStatic		#19	java/lang/System.out:Ljava/io/PrintStream;
       3: LoadConstant		#21	hi
       5: InvokeVirtual		#25	java/io/PrintStream:println:(Ljava/lang/String;)V
@@ -76,7 +76,7 @@ Constant pool:
     descriptor: ([Ljava/lang/String;)V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 2
+      stack = 0, locals = 2
       0: InvokeStatic		#31	Main:main$main:()V
       3: Return
       StackMapTable:

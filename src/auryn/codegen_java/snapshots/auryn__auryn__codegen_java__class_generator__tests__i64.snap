@@ -58,7 +58,7 @@ Constant pool:
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 7
+      stack = 5, locals = 7
        0: Ldc2W			#9	35
        3: LStore		0
        5: Ldc2W			#11	65
@@ -126,7 +126,7 @@ Constant pool:
     descriptor: ([J)V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 3
+      stack = 3, locals = 3
        0: LoadConstant		#28	0
        2: IStore			1
        4: ILoad			1
@@ -183,7 +183,7 @@ Constant pool:
     descriptor: ([Ljava/lang/String;)V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 2
+      stack = 0, locals = 2
       0: InvokeStatic		#47	Main:main$main:()V
       3: Return
       StackMapTable:

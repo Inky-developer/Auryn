@@ -111,7 +111,7 @@ impl SourceGraph {
         self,
         constant_pool: &'_ mut ConstantPoolBuilder,
         parameters: Vec<VerificationTypeInfo>,
-    ) -> (Vec<class::Instruction>, StackMapTableAttribute) {
+    ) -> (Vec<class::Instruction>, StackMapTableAttribute, u16) {
         fn compute_offsets(
             context: &mut AssemblyContext<'_>,
             graph: &Graph<BasicBlockId, BasicBlock>,
@@ -143,7 +143,8 @@ impl SourceGraph {
         // but now we want to query the blocks from which a block can be reached, so the graph must be inverted.
         graph.invert_edges();
 
-        let mut frames = context.compute_frames(&graph, &block_order, parameters);
+        let (mut frames, max_stack_usage) =
+            context.compute_frames(&graph, &block_order, parameters);
         let block_to_byte_offsets = compute_offsets(&mut context, &graph, &block_order);
 
         let mut code = Vec::new();
@@ -180,7 +181,11 @@ impl SourceGraph {
             })
             .collect();
 
-        (code, convert_verification_frames(verification_frames))
+        (
+            code,
+            convert_verification_frames(verification_frames),
+            max_stack_usage,
+        )
     }
 }
 
@@ -192,7 +197,7 @@ impl AssemblyContext<'_> {
         graph: &Graph<BasicBlockId, BasicBlock>,
         block_order: &[BasicBlockId],
         function_parameters: Vec<VerificationTypeInfo>,
-    ) -> FastMap<BasicBlockId, Frame> {
+    ) -> (FastMap<BasicBlockId, Frame>, u16) {
         struct BlockFrames {
             at_start: Frame,
             at_end: Frame,
@@ -203,6 +208,7 @@ impl AssemblyContext<'_> {
         // Theoretically we probably need a fixpoint iteration for loops, but lets just see for how long
         // just assuming that loops don't change works
         let mut visited_blocks: FastMap<BasicBlockId, BlockFrames> = FastMap::default();
+        let mut max_stack_usage: u16 = 0;
         for id in block_order.iter().copied() {
             let calling_blocks = graph.edges(id);
             let mut caller_frames =
@@ -226,7 +232,8 @@ impl AssemblyContext<'_> {
 
             let mut evaluator = SymbolicEvaluator::from(frame_at_start_of_block.clone());
             let block = graph.vertex(id);
-            evaluator.eval_block(block, self.0);
+            let stack_usage = evaluator.eval_block(block, self.0);
+            max_stack_usage = u16::max(max_stack_usage, stack_usage);
             let frame_at_end_of_block = Frame {
                 locals: evaluator.locals,
                 stack: evaluator.stack,
@@ -241,10 +248,13 @@ impl AssemblyContext<'_> {
             );
         }
 
-        visited_blocks
-            .into_iter()
-            .map(|(k, v)| (k, v.at_start))
-            .collect()
+        (
+            visited_blocks
+                .into_iter()
+                .map(|(k, v)| (k, v.at_start))
+                .collect(),
+            max_stack_usage,
+        )
     }
 
     /// Returns the length of the instructions compiled into bytecode

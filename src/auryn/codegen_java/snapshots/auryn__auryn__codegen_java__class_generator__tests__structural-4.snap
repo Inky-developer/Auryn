@@ -1,6 +1,6 @@
 ---
 source: src/auryn/codegen_java/class_generator.rs
-expression: "generate_classes(r#\"\n            fn main() {\n                let val: {a: I32} = {a: 42}\n                print(val.a)\n            }\n            \"#)"
+expression: "generate_classes(r#\"\n            // main\n            fn main() {\n                let val: {a: I32} = {a: 42}\n                print(val.a)\n            }\n            \"#)"
 ---
 Main:
 ClassData
@@ -49,7 +49,7 @@ Constant pool:
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 2
+      stack = 3, locals = 2
        0: New			#4	Structural1$I32
        3: Dup
        4: LoadConstant		#7	42
@@ -71,7 +71,7 @@ Constant pool:
     descriptor: ([Ljava/lang/String;)V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 2
+      stack = 0, locals = 2
       0: InvokeStatic		#34	Main:main$main:()V
       3: Return
       StackMapTable:
@@ -113,7 +113,7 @@ Constant pool:
     descriptor: (I)V
     flags: PUBLIC
     Code:
-      stack = 8, locals = 3
+      stack = 2, locals = 3
        0: ALoad			0
        2: Dup
        3: InvokeSpecial		#9	java/lang/Object:<init>:()V

@@ -159,7 +159,7 @@ impl<'a> FunctionAssembler<'a> {
             }),
         )
         .collect();
-        let (class_instructions, stack_map_frame) = self
+        let (class_instructions, stack_map_frame, max_stack) = self
             .blocks
             .assemble(self.constant_pool, function_parameters);
 
@@ -182,8 +182,7 @@ impl<'a> FunctionAssembler<'a> {
                 name_index: code_name_index,
                 attribute: class::Attribute::Code(class::CodeAttribute {
                     max_locals,
-                    // TODO calculate that
-                    max_stack: 8,
+                    max_stack,
                     code: class_instructions,
                     attributes: vec![class::AttributeInfo {
                         name_index: self.constant_pool.add_utf8("StackMapTable".into()),

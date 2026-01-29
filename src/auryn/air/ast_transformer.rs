@@ -658,15 +658,17 @@ impl FunctionTransformer<'_> {
             AirExpressionKind::Variable(id) => match id {
                 AirValueId::Local(local_id) => AirPlaceKind::Variable(local_id),
                 AirValueId::Global(_) | AirValueId::Intrinsic(_) => {
-                    self.diagnostics.add(path.id(), DiagnosticError::ImmutableVariableUpdate);
+                    self.diagnostics
+                        .add(path.id(), DiagnosticError::ImmutableVariableUpdate);
                     return Err(AstError);
-                },
+                }
             },
             AirExpressionKind::Accessor(accessor) => AirPlaceKind::Accessor(accessor),
             _ => {
-                self.diagnostics.add(path.id(), DiagnosticError::InvalidPlace);
+                self.diagnostics
+                    .add(path.id(), DiagnosticError::InvalidPlace);
                 return Err(AstError);
-            },
+            }
         };
         Ok(AirPlace {
             id: path.id(),

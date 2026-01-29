@@ -283,7 +283,7 @@ expression: "(pool, method)"
                 attribute: Code(
                     CodeAttribute {
                         max_locals: 1,
-                        max_stack: 8,
+                        max_stack: 2,
                         code: [
                             GetStatic(
                                 ConstantPoolIndex(

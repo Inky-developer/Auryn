@@ -34,7 +34,7 @@ Constant pool:
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 1
+      stack = 1, locals = 1
       0: GetStatic		#10	java/lang/System.out:Ljava/io/PrintStream;
       3: Pop
       4: Return
@@ -49,7 +49,7 @@ Constant pool:
     descriptor: ([Ljava/lang/String;)V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 2
+      stack = 0, locals = 2
       0: InvokeStatic		#20	Main:main$main:()V
       3: Return
       StackMapTable:

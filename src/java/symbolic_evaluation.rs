@@ -25,12 +25,16 @@ impl SymbolicEvaluator {
         }
     }
 
-    pub fn eval_block(&mut self, block: &BasicBlock, pool: &mut ConstantPoolBuilder) {
+    /// Evaluates the block and returns the highest recorded stack usage
+    pub fn eval_block(&mut self, block: &BasicBlock, pool: &mut ConstantPoolBuilder) -> u16 {
+        let mut highest_stack_usage = self.stack_usage();
         for instruction in &block.instructions {
             self.eval(instruction, pool);
+            highest_stack_usage = u16::max(highest_stack_usage, self.stack_usage());
         }
 
         self.eval_finalizer(&block.finalizer, pool);
+        u16::max(highest_stack_usage, self.stack_usage())
     }
 
     pub fn eval_finalizer(&mut self, finalizer: &BlockFinalizer, _pool: &mut ConstantPoolBuilder) {
@@ -67,6 +71,10 @@ impl SymbolicEvaluator {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Long));
             }
         }
+    }
+
+    pub fn stack_usage(&self) -> u16 {
+        self.stack.iter().map(|it| it.category().stack_size()).sum()
     }
 
     pub fn eval(&mut self, instruction: &Instruction, pool: &mut ConstantPoolBuilder) {

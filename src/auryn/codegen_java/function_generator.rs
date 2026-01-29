@@ -243,7 +243,7 @@ impl FunctionGenerator<'_> {
                 let object_repr = self.generate_expression(&accessor.value);
                 let target_repr = self
                     .repr_ctx
-                    .get_representation(place.r#type.as_view(&self.ty_ctx));
+                    .get_representation(place.r#type.as_view(self.ty_ctx));
                 if let (Some(object_repr), Some(target_repr)) = (object_repr, target_repr) {
                     match object_repr {
                         Representation::Object(name) => Place::Stack {

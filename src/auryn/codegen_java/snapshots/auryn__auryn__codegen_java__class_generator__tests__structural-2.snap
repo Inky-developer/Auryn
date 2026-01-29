@@ -1,6 +1,6 @@
 ---
 source: src/auryn/codegen_java/class_generator.rs
-expression: "generate_classes(\"fn main() { print({a: 1}.a) }\")"
+expression: "generate_classes(r#\"\n            // main\n            fn main() { print({a: 1}.a) }\n            \"#)"
 ---
 Main:
 ClassData
@@ -43,7 +43,7 @@ Constant pool:
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 1
+      stack = 2, locals = 1
       0: GetStatic		#12	java/lang/System.out:Ljava/io/PrintStream;
       3: LoadConstant		#14	1
       5: InvokeVirtual		#18	java/io/PrintStream:println:(Ljava/lang/String;)V
@@ -59,7 +59,7 @@ Constant pool:
     descriptor: ([Ljava/lang/String;)V
     flags: PUBLIC | STATIC
     Code:
-      stack = 8, locals = 2
+      stack = 0, locals = 2
       0: InvokeStatic		#28	Main:main$main:()V
       3: Return
       StackMapTable:
