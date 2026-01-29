@@ -3,6 +3,10 @@ use std::{path::PathBuf, process::Stdio};
 use auryn::auryn::api::{compile_str, run};
 use insta::glob;
 
+use crate::common::log_test;
+
+mod common;
+
 struct TempDir(PathBuf);
 
 impl TempDir {
@@ -42,7 +46,7 @@ fn parse_expected_output(source: &str) -> String {
 fn runtime_tests() {
     let cwd = std::env::current_dir().unwrap();
     glob!("inputs/runtime-tests/*.au", |path| {
-        print!("test {} ... ", path.strip_prefix(&cwd).unwrap().display());
+        let _logger = log_test(path.strip_prefix(&cwd).unwrap().display());
         let content = std::fs::read_to_string(path).unwrap();
         let expected_output = parse_expected_output(&content);
 
@@ -57,6 +61,5 @@ fn runtime_tests() {
         let dir = TempDir::new();
         let stdout = run(output, &dir.0, Stdio::piped());
         assert_eq!(stdout, expected_output);
-        println!("ok");
     });
 }
