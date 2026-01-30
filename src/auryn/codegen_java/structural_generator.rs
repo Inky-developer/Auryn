@@ -1,7 +1,10 @@
 use crate::{
-    auryn::codegen_java::representation::{
-        FieldDescriptor, ImplicitArgs, MethodDescriptor, Representation, ReturnDescriptor,
-        StructuralRepr,
+    auryn::codegen_java::{
+        print_utils::make_value_printable,
+        representation::{
+            FieldDescriptor, ImplicitArgs, MethodDescriptor, Representation, ReturnDescriptor,
+            StructuralRepr,
+        },
     },
     java::{
         class::{ClassData, Field, FieldAccessFlags, Method, TypeCategory},
@@ -113,35 +116,31 @@ fn gen_to_string_method(info: &StructuralRepr, pool: &mut ConstantPoolBuilder) -
         field_name: SmallString,
         repr: &Representation,
     ) {
-        match repr {
-            _ if repr.is_printable() => {
-                let field_descriptor = match repr.clone().into_field_descriptor() {
-                    FieldDescriptor::Object(_) => FieldDescriptor::object(),
-                    other => other,
-                };
-                assembler.add_all([
-                    Instruction::Load(VariableId {
-                        index: 0,
-                        r#type: class_repr.unwrap(),
-                    }),
-                    Instruction::GetField {
-                        class_name,
-                        name: field_name,
-                        field_descriptor: repr.clone().into_field_descriptor(),
-                    },
-                    Instruction::InvokeVirtual {
-                        class_name: STRING_BUILDER.into(),
-                        name: "append".into(),
-                        method_descriptor: MethodDescriptor {
-                            parameters: vec![field_descriptor],
-                            return_type: ReturnDescriptor::Value(FieldDescriptor::Object(
-                                STRING_BUILDER.into(),
-                            )),
-                        },
-                    },
-                ]);
-            }
-            _ => write_str(assembler, &field_name),
+        let field_descriptor = make_value_printable(assembler, Some(repr.clone()), |assembler| {
+            assembler.add_all([
+                Instruction::Load(VariableId {
+                    index: 0,
+                    r#type: class_repr.unwrap(),
+                }),
+                Instruction::GetField {
+                    class_name,
+                    name: field_name.clone(),
+                    field_descriptor: repr.clone().into_field_descriptor(),
+                },
+            ])
+        });
+        match field_descriptor {
+            Ok(field_descriptor) => assembler.add(Instruction::InvokeVirtual {
+                class_name: STRING_BUILDER.into(),
+                name: "append".into(),
+                method_descriptor: MethodDescriptor {
+                    parameters: vec![field_descriptor],
+                    return_type: ReturnDescriptor::Value(FieldDescriptor::Object(
+                        STRING_BUILDER.into(),
+                    )),
+                },
+            }),
+            Err(_) => write_str(assembler, &field_name),
         }
     }
 

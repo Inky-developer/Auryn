@@ -11,6 +11,7 @@ use crate::{
         },
         codegen_java::{
             class_generator::{ClassGenerator, GeneratedMethodData},
+            print_utils::make_value_printable,
             representation::{
                 FieldDescriptor, ImplicitArgs, MethodDescriptor, PrimitiveOrObject, Representation,
                 RepresentationCtx, ReturnDescriptor,
@@ -764,11 +765,9 @@ impl FunctionGenerator<'_> {
             field_descriptor: FieldDescriptor::print_stream(),
         });
         let repr = self.generate_expression(&arguments[0]);
-        let field_descriptor = match repr {
-            Some(Representation::Object(_)) => FieldDescriptor::object(),
-            Some(repr) if repr.is_printable() => repr.into_field_descriptor(),
-            other => {
-                if let Some(other) = other {
+        let field_descriptor = make_value_printable(&mut self.assembler, repr, |_| {})
+            .unwrap_or_else(|repr| {
+                if let Some(other) = repr {
                     self.assembler.add(Instruction::Pop(other.category()));
                 }
                 let ty = arguments[0].r#type.computed().as_view(self.ty_ctx);
@@ -776,8 +775,7 @@ impl FunctionGenerator<'_> {
                     value: ConstantValue::String(ty.to_string().into()),
                 });
                 FieldDescriptor::string()
-            }
-        };
+            });
         self.assembler.add(Instruction::InvokeVirtual {
             class_name: "java/io/PrintStream".into(),
             name: "println".into(),

@@ -1,7 +1,20 @@
 // expect-output:
 // { a: 40, b: 5, c: false, d: Hi, e: { a: 0, b: 1 } }
+// { array: [1, 2, 3, 4] }
+// [[0], [1], [2], [3], [4]]
 
 fn main() {
 	let a: {a: I32, b: I32, c: Bool, d: String, e: {a: I64, b: I64}} = {a: 40, b: 5, c: false, d: "Hi", e: {a: 0, b: 1}} 
 	print(a)
+
+	let array: []I32 = arrayOf(1, 2, 3, 4)
+	print({array: array})
+
+	let nested_array: [][]I32 = arrayOfZeros(5)
+	let i: I32 = 0
+	while i < arrayLen(nested_array) {
+		arraySet(nested_array, i, arrayOf(i))
+		i += 1
+	}
+	print(nested_array)
 }

@@ -88,10 +88,7 @@ impl Representation {
     pub fn is_printable(&self) -> bool {
         matches!(
             self,
-            Representation::Integer
-                | Representation::Boolean
-                | Representation::Long
-                | Representation::Object(_)
+            Representation::Integer | Representation::Boolean | Representation::Long
         )
     }
 }
@@ -131,6 +128,13 @@ impl FieldDescriptor {
 
     pub fn print_stream() -> Self {
         FieldDescriptor::Object("java/io/PrintStream".into())
+    }
+
+    pub fn into_base_object_or_primitive(self) -> Self {
+        match self {
+            FieldDescriptor::Object(_) => FieldDescriptor::object(),
+            other => other,
+        }
     }
 
     pub fn into_primitive(self) -> Representation {
