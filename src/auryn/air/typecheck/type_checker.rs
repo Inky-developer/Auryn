@@ -330,7 +330,7 @@ impl Typechecker {
             AirExpressionKind::Call(call) => self.typecheck_call(expression.id, call, None),
             // Synthetic expressions are only generated during type checking and already have their type computed
             AirExpressionKind::Synthetic => expression.r#type.computed(),
-            AirExpressionKind::Error => Type::Error,
+            AirExpressionKind::Error(_) => Type::Error,
         };
 
         expression.r#type = AirType::Computed(expression_type);
@@ -360,7 +360,7 @@ impl Typechecker {
             }
             // Synthetic expressions are only generated during type checking and already have their type computed
             AirExpressionKind::Synthetic => expression.r#type.computed(),
-            AirExpressionKind::Error => Type::Error,
+            AirExpressionKind::Error(_) => Type::Error,
         };
         self.expect_type_at(expression.id, inferred_type, expected);
         expression.r#type = AirType::Computed(inferred_type);

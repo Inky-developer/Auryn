@@ -339,8 +339,8 @@ impl FunctionGenerator<'_> {
             AirExpressionKind::Call(call) => {
                 self.generate_call(call, expression.r#type.computed().as_view(self.ty_ctx))
             }
-            AirExpressionKind::Synthetic | AirExpressionKind::Error => {
-                unreachable!("Codegen was started with invalid air")
+            expr @ (AirExpressionKind::Synthetic | AirExpressionKind::Error(_)) => {
+                unreachable!("Codegen was started with invalid air: {expr:?}")
             }
         };
         repr

@@ -1,4 +1,4 @@
-use std::{fmt::Debug, str::FromStr};
+use std::{fmt::Debug, panic::Location, str::FromStr};
 
 use crate::{
     auryn::{
@@ -263,8 +263,9 @@ impl AirExpression {
         }
     }
 
+    #[track_caller]
     pub const fn error(id: SyntaxId) -> Self {
-        Self::new(id, AirExpressionKind::Error)
+        Self::new(id, AirExpressionKind::Error(Location::caller()))
     }
 }
 
@@ -280,7 +281,7 @@ pub enum AirExpressionKind {
     Call(Call),
     /// Only used internally during typechecking, never emitted
     Synthetic,
-    Error,
+    Error(&'static Location<'static>),
 }
 
 /// A place is a location that can be written to or read from
