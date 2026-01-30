@@ -1,6 +1,7 @@
 use crate::{
     auryn::{
         air::{data::Air, query_air},
+        api::AurynError,
         diagnostic::Diagnostics,
         environment::Environment,
         file_id::FileId,
@@ -15,17 +16,17 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(environment: &mut impl Environment, main_file: &str) -> Self {
-        let input_files = InputFiles::new(environment.load_project(), main_file);
+    pub fn new(environment: &mut impl Environment, main_file: &str) -> Result<Self, AurynError> {
+        let input_files = InputFiles::new(environment.load_project(), main_file)?;
         let module_name_to_file_id = input_files
             .iter()
             .map(|(_, file)| (file.name.clone(), file.file_id))
             .collect();
 
-        Self {
+        Ok(Self {
             input_files,
             module_name_to_file_id,
-        }
+        })
     }
 
     pub fn file_id_for_module(&self, module_name: &str) -> Option<FileId> {

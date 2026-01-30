@@ -52,8 +52,8 @@ fn runtime_tests() {
 
         let output = match compile_str(&content) {
             Ok(output) => output,
-            Err(diagnostics) => {
-                diagnostics.to_display().eprint();
+            Err(error) => {
+                eprintln!("{error}");
                 panic!("Could not compile {path:?}");
             }
         };

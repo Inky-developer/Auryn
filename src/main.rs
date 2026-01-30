@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
                 }
                 print!("{}", run(class, BUILD_DIR, Stdio::inherit()));
             }
-            Err(diagnostics) => diagnostics.to_display().eprint(),
+            Err(err) => eprintln!("{err}"),
         }
     } else {
         repl();
@@ -36,7 +36,7 @@ fn repl() {
             Ok(class) => {
                 print!("{}", run(class, BUILD_DIR, Stdio::inherit()));
             }
-            Err(diagnostics) => diagnostics.to_display().eprint(),
+            Err(err) => eprintln!("{err}"),
         }
     }
 }

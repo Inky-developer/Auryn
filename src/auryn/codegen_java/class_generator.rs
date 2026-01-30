@@ -201,8 +201,8 @@ mod tests {
         };
         match compile_in_memory(project_tree) {
             Ok(output) => output,
-            Err(diagnostics) => {
-                panic!("Could not compile '{input}':\n{}", diagnostics.to_display())
+            Err(err) => {
+                panic!("Could not compile '{input}':\n{err}")
             }
         }
     }

@@ -1,6 +1,9 @@
 use std::fs;
 
-use auryn::auryn::{api::compile_str, diagnostic_display::DisplayOptions};
+use auryn::auryn::{
+    api::{AurynError, compile_str},
+    diagnostic_display::DisplayOptions,
+};
 use insta::{assert_snapshot, glob};
 
 use crate::common::log_test;
@@ -8,7 +11,7 @@ use crate::common::log_test;
 mod common;
 
 fn compile_diagnostics(input: &str) -> String {
-    let Err(diagnostics) = compile_str(input) else {
+    let Err(AurynError::CompilerError(diagnostics)) = compile_str(input) else {
         panic!("Input compiled successfully, but expected diagnostics!");
     };
 

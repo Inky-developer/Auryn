@@ -1,4 +1,9 @@
-use std::{fs::OpenOptions, path::Path, process::Stdio};
+use std::{
+    fmt::{Debug, Display},
+    fs::OpenOptions,
+    path::{Path, PathBuf},
+    process::Stdio,
+};
 
 use crate::{
     auryn::{
@@ -12,6 +17,38 @@ use crate::{
     },
     utils::default,
 };
+
+#[derive(Debug)]
+pub enum AurynError {
+    CompilerError(OwnedDiagnostics),
+    MainFileDoesNotExist(String),
+    InvalidInputDir(PathBuf),
+    InvalidInputFile(PathBuf),
+}
+
+impl From<OwnedDiagnostics> for AurynError {
+    fn from(value: OwnedDiagnostics) -> Self {
+        Self::CompilerError(value)
+    }
+}
+
+impl Display for AurynError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use AurynError::*;
+        match self {
+            CompilerError(owned_diagnostics) => Display::fmt(owned_diagnostics, f),
+            MainFileDoesNotExist(main) => write!(f, "Could not find main file {main}.au"),
+            InvalidInputDir(path_buf) => {
+                write!(f, "Input is not a valid directory: {}", path_buf.display())
+            }
+            InvalidInputFile(path_buf) => {
+                write!(f, "Input is not a valid file: {}", path_buf.display())
+            }
+        }
+    }
+}
+
+impl std::error::Error for AurynError {}
 
 pub struct OwnedDiagnostics {
     pub input_files: InputFiles,
@@ -28,25 +65,44 @@ impl OwnedDiagnostics {
     }
 }
 
-pub fn compile_file(main_file_path: &Path) -> Result<CodegenOutput, OwnedDiagnostics> {
-    let dir = main_file_path.parent().expect("Should be a valid path");
-    let main = main_file_path.file_name().expect("Should be a valid path");
-    compile(
-        main.to_str()
-            .expect("Should be a valid file name")
-            .strip_suffix(".au")
-            .expect("Should be a .au file"),
-        &mut FilesystemEnvironment::new(dir.to_path_buf()),
-    )
+impl Debug for OwnedDiagnostics {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.to_display_with_opts(DisplayOptions {
+                use_color: false,
+                ..default()
+            })
+        )
+    }
 }
 
-pub fn compile_str(input: &str) -> Result<CodegenOutput, OwnedDiagnostics> {
+impl Display for OwnedDiagnostics {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_display())
+    }
+}
+
+pub fn compile_file(main_file_path: &Path) -> Result<CodegenOutput, AurynError> {
+    let dir = main_file_path
+        .parent()
+        .ok_or_else(|| AurynError::InvalidInputDir(main_file_path.to_path_buf()))?;
+    let main = main_file_path
+        .file_name()
+        .and_then(|it| it.to_str())
+        .and_then(|it| it.strip_suffix(".au"))
+        .ok_or_else(|| AurynError::InvalidInputFile(main_file_path.to_path_buf()))?;
+    compile(main, &mut FilesystemEnvironment::new(dir.to_path_buf()))
+}
+
+pub fn compile_str(input: &str) -> Result<CodegenOutput, AurynError> {
     let mut tree = ProjectTree::default();
     tree.source_files.insert("main".into(), input.into());
     compile_in_memory(tree)
 }
 
-pub fn compile_in_memory(mut project_tree: ProjectTree) -> Result<CodegenOutput, OwnedDiagnostics> {
+pub fn compile_in_memory(mut project_tree: ProjectTree) -> Result<CodegenOutput, AurynError> {
     struct ProjectTreeEnvironment<'a> {
         project_tree: &'a mut ProjectTree,
     }
@@ -68,8 +124,8 @@ pub fn compile_in_memory(mut project_tree: ProjectTree) -> Result<CodegenOutput,
 fn compile(
     main_file: &str,
     environment: &mut impl Environment,
-) -> Result<CodegenOutput, OwnedDiagnostics> {
-    let mut world = World::new(environment, main_file);
+) -> Result<CodegenOutput, AurynError> {
+    let mut world = World::new(environment, main_file)?;
 
     let (air, diagnostics) = world.query_air(FileId::MAIN_FILE);
     if !diagnostics.is_empty() {
@@ -81,7 +137,8 @@ fn compile(
             return Err(OwnedDiagnostics {
                 input_files: world.into_input_files(),
                 diagnostics,
-            });
+            }
+            .into());
         }
     }
     Ok(codegen(world.input_files(), &air))

@@ -2,6 +2,7 @@ use std::{cell::OnceCell, num::NonZeroU16};
 
 use crate::{
     auryn::{
+        api::AurynError,
         diagnostic_display::ComputedSpan,
         environment::ProjectTree,
         file_id::FileId,
@@ -49,17 +50,20 @@ pub struct InputFiles {
 }
 
 impl InputFiles {
-    pub fn new(mut project_tree: ProjectTree, main_file: &str) -> Self {
+    pub fn new(mut project_tree: ProjectTree, main_file: &str) -> Result<Self, AurynError> {
         let mut this = Self::default();
 
-        let (main_name, main_contents) = project_tree.source_files.remove_entry(main_file).unwrap();
+        let (main_name, main_contents) = project_tree
+            .source_files
+            .remove_entry(main_file)
+            .ok_or_else(|| AurynError::MainFileDoesNotExist(main_file.to_string()))?;
         this.add(main_name, main_contents);
 
         for (name, contents) in project_tree.source_files {
             this.add(name, contents);
         }
 
-        this
+        Ok(this)
     }
 
     pub fn add(&mut self, name: SmallString, source: Box<str>) -> FileId {
