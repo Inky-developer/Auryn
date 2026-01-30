@@ -427,8 +427,14 @@ impl Instruction {
             Instruction::LALoad => buf.write_all(&[0x2f])?,
             Instruction::LAStore => buf.write_all(&[0x50])?,
             Instruction::Ldc(index) => {
-                let index: u8 = index.0.get().try_into().expect("TODO: implement wide load");
-                buf.write_all(&[0x12, index])?;
+                let index = index.0.get();
+                let small_index: Option<u8> = index.try_into().ok();
+                if let Some(small_index) = small_index {
+                    buf.write_all(&[0x12, small_index])?;
+                } else {
+                    buf.write_all(&[0x13])?;
+                    buf.write_all(&index.to_be_bytes())?;
+                }
             }
             Instruction::Ldc2W(index) => {
                 buf.write_all(&[0x14])?;
