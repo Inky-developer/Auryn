@@ -1176,6 +1176,7 @@ mod tests {
     fn test_prefix_operator() {
         insta::assert_debug_snapshot!(verify_block("not true"));
         insta::assert_debug_snapshot!(verify_block("not true or false"));
+        insta::assert_debug_snapshot!(verify_block("not some_function()"));
     }
 
     #[test]

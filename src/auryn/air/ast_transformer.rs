@@ -873,7 +873,7 @@ impl FunctionTransformer<'_> {
         let Ok(value) = not.value() else {
             return AirExpression::error(not.id());
         };
-        let expression = Box::new(self.transform_value(value));
+        let expression = Box::new(self.transform_value_or_postfix_operation(value));
         AirExpression::new(
             not.id(),
             AirExpressionKind::UnaryOperator(UnaryOperation {

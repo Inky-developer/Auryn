@@ -386,7 +386,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct PrefixNot = SyntaxNodeKind::PrefixNot as { value: Value, }
+    pub struct PrefixNot = SyntaxNodeKind::PrefixNot as { value: ValueOrPostfix, }
 }
 
 ast_node! {
