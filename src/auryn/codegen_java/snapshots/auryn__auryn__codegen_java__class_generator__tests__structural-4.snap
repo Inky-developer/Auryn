@@ -9,15 +9,15 @@ ClassData
 Constant pool:
   #01 = Utf8			main$main
   #02 = Utf8			()V
-  #03 = Utf8			Structural1$I32
-  #04 = Class		#3	Structural1$I32
+  #03 = Utf8			Structural$1I
+  #04 = Class		#3	Structural$1I
   #05 = Utf8			java/io/PrintStream
   #06 = Class		#5	java/io/PrintStream
   #07 = Integer			42
   #08 = Utf8			<init>
   #09 = Utf8			(I)V
   #10 = NameAndType	#8:#9	<init>:(I)V
-  #11 = MethodRef	#4.#10	Structural1$I32:<init>:(I)V
+  #11 = MethodRef	#4.#10	Structural$1I:<init>:(I)V
   #12 = Utf8			java/lang/System
   #13 = Class		#12	java/lang/System
   #14 = Utf8			out
@@ -27,7 +27,7 @@ Constant pool:
   #18 = Utf8			a
   #19 = Utf8			I
   #20 = NameAndType	#18:#19	a:I
-  #21 = FieldRef	#4.#20	Structural1$I32.a:I
+  #21 = FieldRef	#4.#20	Structural$1I.a:I
   #22 = Utf8			println
   #23 = NameAndType	#22:#9	println:(I)V
   #24 = MethodRef	#6.#23	java/io/PrintStream:println:(I)V
@@ -50,14 +50,14 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 3, locals = 2
-       0: New			#4	Structural1$I32
+       0: New			#4	Structural$1I
        3: Dup
        4: LoadConstant		#7	42
-       6: InvokeSpecial		#11	Structural1$I32:<init>:(I)V
+       6: InvokeSpecial		#11	Structural$1I:<init>:(I)V
        9: AStore			0
       11: GetStatic		#17	java/lang/System.out:Ljava/io/PrintStream;
       14: ALoad			0
-      16: GetField		#21	Structural1$I32.a:I
+      16: GetField		#21	Structural$1I.a:I
       19: InvokeVirtual		#24	java/io/PrintStream:println:(I)V
       22: Return
       StackMapTable:
@@ -85,15 +85,15 @@ Constant pool:
 
 -----
 
-Structural1$I32:
+Structural$1I:
 ClassData
-  this_class:		#4	Structural1$I32
+  this_class:		#4	Structural$1I
   super_class:		#6	java/lang/Object
 Constant pool:
   #01 = Utf8			<init>
   #02 = Utf8			(I)V
-  #03 = Utf8			Structural1$I32
-  #04 = Class		#3	Structural1$I32
+  #03 = Utf8			Structural$1I
+  #04 = Class		#3	Structural$1I
   #05 = Utf8			java/lang/Object
   #06 = Class		#5	java/lang/Object
   #07 = Utf8			()V
@@ -102,7 +102,7 @@ Constant pool:
   #10 = Utf8			a
   #11 = Utf8			I
   #12 = NameAndType	#10:#11	a:I
-  #13 = FieldRef	#4.#12	Structural1$I32.a:I
+  #13 = FieldRef	#4.#12	Structural$1I.a:I
   #14 = Utf8			Code
   #15 = Utf8			StackMapTable
 
@@ -118,7 +118,7 @@ Constant pool:
        2: Dup
        3: InvokeSpecial		#9	java/lang/Object:<init>:()V
        6: ILoad			1
-       8: PutField		#13	Structural1$I32.a:I
+       8: PutField		#13	Structural$1I.a:I
       11: Return
       StackMapTable:
         Full

@@ -9,10 +9,10 @@ ClassData
 Constant pool:
   #01 = Utf8			main$main
   #02 = Utf8			()V
-  #03 = Utf8			[LStructural2$I32$I32;
-  #04 = Class		#3	[LStructural2$I32$I32;
-  #05 = Utf8			Structural2$I32$I32
-  #06 = Class		#5	Structural2$I32$I32
+  #03 = Utf8			[LStructural$2II;
+  #04 = Class		#3	[LStructural$2II;
+  #05 = Utf8			Structural$2II
+  #06 = Class		#5	Structural$2II
   #07 = Integer			1
   #08 = Integer			0
   #09 = Integer			5
@@ -20,7 +20,7 @@ Constant pool:
   #11 = Utf8			<init>
   #12 = Utf8			(II)V
   #13 = NameAndType	#11:#12	<init>:(II)V
-  #14 = MethodRef	#6.#13	Structural2$I32$I32:<init>:(II)V
+  #14 = MethodRef	#6.#13	Structural$2II:<init>:(II)V
   #15 = Utf8			Code
   #16 = Utf8			StackMapTable
   #17 = Utf8			main
@@ -41,14 +41,14 @@ Constant pool:
     Code:
       stack = 7, locals = 2
        0: LoadConstant		#7	1
-       2: ANewArray		#6	Structural2$I32$I32
+       2: ANewArray		#6	Structural$2II
        5: Dup
        6: LoadConstant		#8	0
-       8: New			#6	Structural2$I32$I32
+       8: New			#6	Structural$2II
       11: Dup
       12: LoadConstant		#9	5
       14: LoadConstant		#10	6
-      16: InvokeSpecial		#14	Structural2$I32$I32:<init>:(II)V
+      16: InvokeSpecial		#14	Structural$2II:<init>:(II)V
       19: AAStore
       20: AStore			0
       22: Return
@@ -77,15 +77,15 @@ Constant pool:
 
 -----
 
-Structural2$I32$I32:
+Structural$2II:
 ClassData
-  this_class:		#4	Structural2$I32$I32
+  this_class:		#4	Structural$2II
   super_class:		#6	java/lang/Object
 Constant pool:
   #01 = Utf8			<init>
   #02 = Utf8			(II)V
-  #03 = Utf8			Structural2$I32$I32
-  #04 = Class		#3	Structural2$I32$I32
+  #03 = Utf8			Structural$2II
+  #04 = Class		#3	Structural$2II
   #05 = Utf8			java/lang/Object
   #06 = Class		#5	java/lang/Object
   #07 = Utf8			()V
@@ -94,10 +94,10 @@ Constant pool:
   #10 = Utf8			a
   #11 = Utf8			I
   #12 = NameAndType	#10:#11	a:I
-  #13 = FieldRef	#4.#12	Structural2$I32$I32.a:I
+  #13 = FieldRef	#4.#12	Structural$2II.a:I
   #14 = Utf8			b
   #15 = NameAndType	#14:#11	b:I
-  #16 = FieldRef	#4.#15	Structural2$I32$I32.b:I
+  #16 = FieldRef	#4.#15	Structural$2II.b:I
   #17 = Utf8			Code
   #18 = Utf8			StackMapTable
 
@@ -116,9 +116,9 @@ Constant pool:
        3: InvokeSpecial		#9	java/lang/Object:<init>:()V
        6: Dup
        7: ILoad			1
-       9: PutField		#13	Structural2$I32$I32.a:I
+       9: PutField		#13	Structural$2II.a:I
       12: ILoad			2
-      14: PutField		#16	Structural2$I32$I32.b:I
+      14: PutField		#16	Structural$2II.b:I
       17: Return
       StackMapTable:
         Full

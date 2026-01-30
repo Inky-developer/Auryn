@@ -135,6 +135,43 @@ impl FieldDescriptor {
             other => todo!("No primitive for {other} yet"),
         }
     }
+
+    /// Returns a valid jvm class name, so that unique names for structural types can be generated
+    pub fn mangled_name(&self) -> impl Display {
+        fn mangle_class_name(name: &str) -> impl Display {
+            std::fmt::from_fn(|f| {
+                for char in name.chars() {
+                    match char {
+                        '/' => f.write_char('$')?,
+                        _ => f.write_char(char)?,
+                    }
+                }
+
+                Ok(())
+            })
+        }
+        std::fmt::from_fn(move |f| match self {
+            FieldDescriptor::Byte => write!(f, "B"),
+            FieldDescriptor::Char => write!(f, "C"),
+            FieldDescriptor::Double => write!(f, "D"),
+            FieldDescriptor::Float => write!(f, "F"),
+            FieldDescriptor::Integer => write!(f, "I"),
+            FieldDescriptor::Long => write!(f, "J"),
+            FieldDescriptor::Object(class_name) => write!(f, "L{}", mangle_class_name(class_name)),
+            FieldDescriptor::Short => write!(f, "S"),
+            FieldDescriptor::Boolean => write!(f, "Z"),
+            FieldDescriptor::Array {
+                dimension_count,
+                descriptor,
+            } => {
+                for _ in 0..*dimension_count {
+                    write!(f, "A")?;
+                }
+                write!(f, "{}", descriptor.mangled_name())?;
+                Ok(())
+            }
+        })
+    }
 }
 
 impl Display for FieldDescriptor {
@@ -350,10 +387,16 @@ impl RepresentationCtx {
 
     pub fn get_structural_repr(&mut self, ty: TypeViewKind<'_, StructuralType>) -> &StructuralRepr {
         if !self.structural_types.contains_key(&ty.id) {
-            let mut name = format!("Structural{}", ty.value.fields.len());
+            let mut name = format!("Structural${}", ty.value.fields.len());
             for (_, ty) in ty.fields() {
-                name.push('$');
-                write!(name, "{ty}").unwrap();
+                let ty_name = self
+                    .get_representation(ty)
+                    .map(|repr| repr.into_field_descriptor());
+                if let Some(ty_name) = ty_name.as_ref() {
+                    write!(name, "{}", ty_name.mangled_name()).unwrap();
+                } else {
+                    write!(name, "0").unwrap();
+                }
             }
 
             let fields = ty

@@ -11,8 +11,8 @@ Constant pool:
   #02 = Utf8			()V
   #03 = Utf8			java/io/PrintStream
   #04 = Class		#3	java/io/PrintStream
-  #05 = Utf8			Structural3$Bool$2$Bool
-  #06 = Class		#5	Structural3$Bool$2$Bool
+  #05 = Utf8			Structural$3Z0Z
+  #06 = Class		#5	Structural$3Z0Z
   #07 = Utf8			java/lang/String
   #08 = Class		#7	java/lang/String
   #09 = Utf8			java/lang/System
@@ -24,7 +24,7 @@ Constant pool:
   #15 = Utf8			<init>
   #16 = Utf8			(ZZ)V
   #17 = NameAndType	#15:#16	<init>:(ZZ)V
-  #18 = MethodRef	#6.#17	Structural3$Bool$2$Bool:<init>:(ZZ)V
+  #18 = MethodRef	#6.#17	Structural$3Z0Z:<init>:(ZZ)V
   #19 = Utf8			{ a: Bool, b: 2, c: Bool }
   #20 = String		#19	{ a: Bool, b: 2, c: Bool }
   #21 = Utf8			println
@@ -51,11 +51,11 @@ Constant pool:
     Code:
       stack = 5, locals = 1
        0: GetStatic		#14	java/lang/System.out:Ljava/io/PrintStream;
-       3: New			#6	Structural3$Bool$2$Bool
+       3: New			#6	Structural$3Z0Z
        6: Dup
        7: IConst			1
        8: IConst			0
-       9: InvokeSpecial		#18	Structural3$Bool$2$Bool:<init>:(ZZ)V
+       9: InvokeSpecial		#18	Structural$3Z0Z:<init>:(ZZ)V
       12: Pop
       13: LoadConstant		#20	{ a: Bool, b: 2, c: Bool }
       15: InvokeVirtual		#24	java/io/PrintStream:println:(Ljava/lang/String;)V
@@ -85,15 +85,15 @@ Constant pool:
 
 -----
 
-Structural3$Bool$2$Bool:
+Structural$3Z0Z:
 ClassData
-  this_class:		#4	Structural3$Bool$2$Bool
+  this_class:		#4	Structural$3Z0Z
   super_class:		#6	java/lang/Object
 Constant pool:
   #01 = Utf8			<init>
   #02 = Utf8			(ZZ)V
-  #03 = Utf8			Structural3$Bool$2$Bool
-  #04 = Class		#3	Structural3$Bool$2$Bool
+  #03 = Utf8			Structural$3Z0Z
+  #04 = Class		#3	Structural$3Z0Z
   #05 = Utf8			java/lang/Object
   #06 = Class		#5	java/lang/Object
   #07 = Utf8			()V
@@ -102,10 +102,10 @@ Constant pool:
   #10 = Utf8			a
   #11 = Utf8			Z
   #12 = NameAndType	#10:#11	a:Z
-  #13 = FieldRef	#4.#12	Structural3$Bool$2$Bool.a:Z
+  #13 = FieldRef	#4.#12	Structural$3Z0Z.a:Z
   #14 = Utf8			c
   #15 = NameAndType	#14:#11	c:Z
-  #16 = FieldRef	#4.#15	Structural3$Bool$2$Bool.c:Z
+  #16 = FieldRef	#4.#15	Structural$3Z0Z.c:Z
   #17 = Utf8			Code
   #18 = Utf8			StackMapTable
 
@@ -124,9 +124,9 @@ Constant pool:
        3: InvokeSpecial		#9	java/lang/Object:<init>:()V
        6: Dup
        7: ILoad			1
-       9: PutField		#13	Structural3$Bool$2$Bool.a:Z
+       9: PutField		#13	Structural$3Z0Z.a:Z
       12: ILoad			2
-      14: PutField		#16	Structural3$Bool$2$Bool.c:Z
+      14: PutField		#16	Structural$3Z0Z.c:Z
       17: Return
       StackMapTable:
         Full
