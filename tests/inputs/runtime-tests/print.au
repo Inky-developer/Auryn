@@ -1,0 +1,7 @@
+// expect-output:
+// { a: 40, b: 5, c: false, d: Hi, e: { a: 0, b: 1 } }
+
+fn main() {
+	let a: {a: I32, b: I32, c: Bool, d: String, e: {a: I64, b: I64}} = {a: 40, b: 5, c: false, d: "Hi", e: {a: 0, b: 1}} 
+	print(a)
+}

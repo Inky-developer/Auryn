@@ -80,6 +80,7 @@ impl<'a> FunctionGenerator<'a> {
         }
 
         let assembler = FunctionAssembler::new(
+            parent.constant_pool.add_class(parent.class_name.clone()),
             name,
             method_descriptor,
             ImplicitArgs::None,
@@ -757,14 +758,6 @@ impl FunctionGenerator<'_> {
     }
 
     fn generate_intrinsic_print(&mut self, arguments: &[AirExpression]) {
-        fn is_printable(repr: &Representation) -> bool {
-            match repr {
-                Representation::Integer | Representation::Boolean | Representation::Long => true,
-                Representation::Object(path) if path.as_ref() == "java/lang/String" => true,
-                _ => false,
-            }
-        }
-
         self.assembler.add(Instruction::GetStatic {
             class_name: "java/lang/System".into(),
             name: "out".into(),
@@ -772,7 +765,8 @@ impl FunctionGenerator<'_> {
         });
         let repr = self.generate_expression(&arguments[0]);
         let field_descriptor = match repr {
-            Some(repr) if is_printable(&repr) => repr.into_field_descriptor(),
+            Some(Representation::Object(_)) => FieldDescriptor::object(),
+            Some(repr) if repr.is_printable() => repr.into_field_descriptor(),
             other => {
                 if let Some(other) = other {
                     self.assembler.add(Instruction::Pop(other.category()));

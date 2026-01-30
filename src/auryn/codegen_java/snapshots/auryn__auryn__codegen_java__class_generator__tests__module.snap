@@ -4,16 +4,16 @@ expression: "generate_classes(r#\"\n            // main\n            fn main() {
 ---
 Main:
 ClassData
-  this_class:		#4	Main
+  this_class:		#2	Main
   super_class:		#33	java/lang/Object
 Constant pool:
-  #01 = Utf8			main$main
-  #02 = Utf8			()V
-  #03 = Utf8			Main
-  #04 = Class		#3	Main
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
   #05 = Utf8			foo$sayHi
-  #06 = NameAndType	#5:#2	foo$sayHi:()V
-  #07 = MethodRef	#4.#6	Main:foo$sayHi:()V
+  #06 = NameAndType	#5:#4	foo$sayHi:()V
+  #07 = MethodRef	#2.#6	Main:foo$sayHi:()V
   #08 = Utf8			Code
   #09 = Utf8			StackMapTable
   #10 = Utf8			java/io/PrintStream
@@ -29,15 +29,15 @@ Constant pool:
   #20 = Utf8			hi
   #21 = String		#20	hi
   #22 = Utf8			println
-  #23 = Utf8			(Ljava/lang/String;)V
-  #24 = NameAndType	#22:#23	println:(Ljava/lang/String;)V
-  #25 = MethodRef	#11.#24	java/io/PrintStream:println:(Ljava/lang/String;)V
+  #23 = Utf8			(Ljava/lang/Object;)V
+  #24 = NameAndType	#22:#23	println:(Ljava/lang/Object;)V
+  #25 = MethodRef	#11.#24	java/io/PrintStream:println:(Ljava/lang/Object;)V
   #26 = Utf8			main
   #27 = Utf8			([Ljava/lang/String;)V
   #28 = Utf8			[Ljava/lang/String;
   #29 = Class		#28	[Ljava/lang/String;
-  #30 = NameAndType	#1:#2	main$main:()V
-  #31 = MethodRef	#4.#30	Main:main$main:()V
+  #30 = NameAndType	#3:#4	main$main:()V
+  #31 = MethodRef	#2.#30	Main:main$main:()V
   #32 = Utf8			java/lang/Object
   #33 = Class		#32	java/lang/Object
 
@@ -63,7 +63,7 @@ Constant pool:
       stack = 2, locals = 1
       0: GetStatic		#19	java/lang/System.out:Ljava/io/PrintStream;
       3: LoadConstant		#21	hi
-      5: InvokeVirtual		#25	java/io/PrintStream:println:(Ljava/lang/String;)V
+      5: InvokeVirtual		#25	java/io/PrintStream:println:(Ljava/lang/Object;)V
       8: Return
       StackMapTable:
         Full

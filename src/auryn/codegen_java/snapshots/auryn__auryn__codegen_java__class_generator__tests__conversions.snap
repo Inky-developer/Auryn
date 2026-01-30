@@ -3,22 +3,22 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"let a: I32 = 5\\nlet b: I64 = cast(a)\")"
 ---
 ClassData
-  this_class:		#11	Main
+  this_class:		#2	Main
   super_class:		#15	java/lang/Object
 Constant pool:
-  #01 = Utf8			main$main
-  #02 = Utf8			()V
-  #03 = Integer			5
-  #04 = Utf8			Code
-  #05 = Utf8			StackMapTable
-  #06 = Utf8			main
-  #07 = Utf8			([Ljava/lang/String;)V
-  #08 = Utf8			[Ljava/lang/String;
-  #09 = Class		#8	[Ljava/lang/String;
-  #10 = Utf8			Main
-  #11 = Class		#10	Main
-  #12 = NameAndType	#1:#2	main$main:()V
-  #13 = MethodRef	#11.#12	Main:main$main:()V
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Integer			5
+  #06 = Utf8			Code
+  #07 = Utf8			StackMapTable
+  #08 = Utf8			main
+  #09 = Utf8			([Ljava/lang/String;)V
+  #10 = Utf8			[Ljava/lang/String;
+  #11 = Class		#10	[Ljava/lang/String;
+  #12 = NameAndType	#3:#4	main$main:()V
+  #13 = MethodRef	#2.#12	Main:main$main:()V
   #14 = Utf8			java/lang/Object
   #15 = Class		#14	java/lang/Object
 
@@ -28,7 +28,7 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 2, locals = 4
-       0: LoadConstant		#3	5
+       0: LoadConstant		#5	5
        2: IStore			0
        4: ILoad			0
        6: I2L

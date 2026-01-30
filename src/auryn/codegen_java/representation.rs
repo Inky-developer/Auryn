@@ -84,6 +84,16 @@ impl Representation {
     pub fn stack_size(&self) -> u16 {
         self.category().stack_size()
     }
+
+    pub fn is_printable(&self) -> bool {
+        matches!(
+            self,
+            Representation::Integer
+                | Representation::Boolean
+                | Representation::Long
+                | Representation::Object(_)
+        )
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +123,10 @@ pub enum FieldDescriptor {
 impl FieldDescriptor {
     pub fn string() -> Self {
         FieldDescriptor::Object("java/lang/String".into())
+    }
+
+    pub fn object() -> Self {
+        FieldDescriptor::Object("java/lang/Object".into())
     }
 
     pub fn print_stream() -> Self {
@@ -267,6 +281,11 @@ pub struct MethodDescriptor {
 }
 
 impl MethodDescriptor {
+    pub const VOID: Self = MethodDescriptor {
+        parameters: Vec::new(),
+        return_type: ReturnDescriptor::Void,
+    };
+
     /// Returns the index of the first valid local variable of this method
     pub fn first_variable_index(&self, implicit_args: ImplicitArgs) -> u16 {
         implicit_args.stack_size()
@@ -302,7 +321,7 @@ impl StructuralRepr {
         self.fields.is_empty()
     }
 
-    fn to_representation(&self) -> Option<Representation> {
+    pub fn to_representation(&self) -> Option<Representation> {
         if self.is_zero_sized() {
             None
         } else {

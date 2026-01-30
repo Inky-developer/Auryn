@@ -3,7 +3,7 @@ use crate::{
         FieldDescriptor, ImplicitArgs, MethodDescriptor, Representation,
     },
     java::{
-        class::{self, PrimitiveType, TypeCategory, VerificationTypeInfo},
+        class::{self, ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
         source_graph::{BasicBlock, BasicBlockId, SourceGraph},
     },
@@ -120,6 +120,7 @@ pub struct VariableId {
 
 #[derive(Debug)]
 pub struct FunctionAssembler<'a> {
+    class_index: ConstantPoolIndex,
     pub function_name: SmallString,
     pub descriptor: MethodDescriptor,
     pub constant_pool: &'a mut ConstantPoolBuilder,
@@ -130,12 +131,14 @@ pub struct FunctionAssembler<'a> {
 
 impl<'a> FunctionAssembler<'a> {
     pub fn new(
+        class_index: ConstantPoolIndex,
         name: SmallString,
         descriptor: MethodDescriptor,
         implicit_args: ImplicitArgs,
         constant_pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
         Self {
+            class_index,
             function_name: name,
             next_variable_index: descriptor.first_variable_index(implicit_args),
             implicit_args,
@@ -150,7 +153,7 @@ impl<'a> FunctionAssembler<'a> {
         let descriptor_index = self
             .constant_pool
             .add_utf8(self.descriptor.to_string().into());
-        let this_type = self.implicit_args.as_verification_type(name_index);
+        let this_type = self.implicit_args.as_verification_type(self.class_index);
         let function_parameters = std::iter::chain(
             this_type,
             self.descriptor.parameters.clone().into_iter().map(|it| {
@@ -242,6 +245,7 @@ mod tests {
     fn test_hello_world() {
         let mut pool = ConstantPoolBuilder::default();
         let mut assembler = FunctionAssembler::new(
+            pool.add_class("Main".into()),
             "main".into(),
             MethodDescriptor {
                 parameters: vec![],

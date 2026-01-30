@@ -142,12 +142,10 @@ impl SymbolicEvaluator {
             | Instruction::InvokeSpecial {
                 method_descriptor, ..
             } => {
-                for argument in method_descriptor.parameters.iter().rev() {
-                    let verification_type = argument
-                        .clone()
-                        .into_primitive()
-                        .into_verification_type(pool);
-                    assert_eq!(self.stack.pop(), Some(verification_type));
+                for _ in method_descriptor.parameters.iter().rev() {
+                    // Can't compare with the argument due to java subtyping rules
+                    // E.g. String can be passed to a method that expects Object
+                    assert!(self.stack.pop().is_some());
                 }
                 if matches!(
                     instruction,

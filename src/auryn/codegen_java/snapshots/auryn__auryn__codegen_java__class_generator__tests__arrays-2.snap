@@ -3,26 +3,26 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"let a: [][]I32 = arrayOfZeros(5)\")"
 ---
 ClassData
-  this_class:		#15	Main
+  this_class:		#2	Main
   super_class:		#19	java/lang/Object
 Constant pool:
-  #01 = Utf8			main$main
-  #02 = Utf8			()V
-  #03 = Utf8			[[I
-  #04 = Class		#3	[[I
-  #05 = Integer			5
-  #06 = Utf8			[I
-  #07 = Class		#6	[I
-  #08 = Utf8			Code
-  #09 = Utf8			StackMapTable
-  #10 = Utf8			main
-  #11 = Utf8			([Ljava/lang/String;)V
-  #12 = Utf8			[Ljava/lang/String;
-  #13 = Class		#12	[Ljava/lang/String;
-  #14 = Utf8			Main
-  #15 = Class		#14	Main
-  #16 = NameAndType	#1:#2	main$main:()V
-  #17 = MethodRef	#15.#16	Main:main$main:()V
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			[[I
+  #06 = Class		#5	[[I
+  #07 = Integer			5
+  #08 = Utf8			[I
+  #09 = Class		#8	[I
+  #10 = Utf8			Code
+  #11 = Utf8			StackMapTable
+  #12 = Utf8			main
+  #13 = Utf8			([Ljava/lang/String;)V
+  #14 = Utf8			[Ljava/lang/String;
+  #15 = Class		#14	[Ljava/lang/String;
+  #16 = NameAndType	#3:#4	main$main:()V
+  #17 = MethodRef	#2.#16	Main:main$main:()V
   #18 = Utf8			java/lang/Object
   #19 = Class		#18	java/lang/Object
 
@@ -32,8 +32,8 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 1, locals = 2
-      0: LoadConstant		#5	5
-      2: ANewArray		#7	[I
+      0: LoadConstant		#7	5
+      2: ANewArray		#9	[I
       5: AStore			0
       7: Return
       StackMapTable:

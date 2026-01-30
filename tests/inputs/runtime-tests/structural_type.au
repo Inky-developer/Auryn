@@ -1,6 +1,6 @@
 // expect-output:
 // { a: 1, b: 2, c: 3 }
-// { a: Bool, b: Bool, c: String }
+// { a: true, b: false, c: Hi }
 
 fn main() {
 	print({a: 1, b: 2, c: 3})

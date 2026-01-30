@@ -3,43 +3,43 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(r#\"\n            let i: I32 = 0\n            while i < 5 {\n                print(i)\n                i += 1\n            }\n            print(\"Done\")\n            \"#)"
 ---
 ClassData
-  this_class:		#32	Main
+  this_class:		#2	Main
   super_class:		#36	java/lang/Object
 Constant pool:
-  #01 = Utf8			main$main
-  #02 = Utf8			()V
-  #03 = Utf8			java/io/PrintStream
-  #04 = Class		#3	java/io/PrintStream
-  #05 = Utf8			java/lang/String
-  #06 = Class		#5	java/lang/String
-  #07 = Integer			0
-  #08 = Integer			5
-  #09 = Utf8			java/lang/System
-  #10 = Class		#9	java/lang/System
-  #11 = Utf8			out
-  #12 = Utf8			Ljava/io/PrintStream;
-  #13 = NameAndType	#11:#12	out:Ljava/io/PrintStream;
-  #14 = FieldRef	#10.#13	java/lang/System.out:Ljava/io/PrintStream;
-  #15 = Utf8			println
-  #16 = Utf8			(I)V
-  #17 = NameAndType	#15:#16	println:(I)V
-  #18 = MethodRef	#4.#17	java/io/PrintStream:println:(I)V
-  #19 = Integer			1
-  #20 = Utf8			Done
-  #21 = String		#20	Done
-  #22 = Utf8			(Ljava/lang/String;)V
-  #23 = NameAndType	#15:#22	println:(Ljava/lang/String;)V
-  #24 = MethodRef	#4.#23	java/io/PrintStream:println:(Ljava/lang/String;)V
-  #25 = Utf8			Code
-  #26 = Utf8			StackMapTable
-  #27 = Utf8			main
-  #28 = Utf8			([Ljava/lang/String;)V
-  #29 = Utf8			[Ljava/lang/String;
-  #30 = Class		#29	[Ljava/lang/String;
-  #31 = Utf8			Main
-  #32 = Class		#31	Main
-  #33 = NameAndType	#1:#2	main$main:()V
-  #34 = MethodRef	#32.#33	Main:main$main:()V
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			java/io/PrintStream
+  #06 = Class		#5	java/io/PrintStream
+  #07 = Utf8			java/lang/String
+  #08 = Class		#7	java/lang/String
+  #09 = Integer			0
+  #10 = Integer			5
+  #11 = Utf8			java/lang/System
+  #12 = Class		#11	java/lang/System
+  #13 = Utf8			out
+  #14 = Utf8			Ljava/io/PrintStream;
+  #15 = NameAndType	#13:#14	out:Ljava/io/PrintStream;
+  #16 = FieldRef	#12.#15	java/lang/System.out:Ljava/io/PrintStream;
+  #17 = Utf8			println
+  #18 = Utf8			(I)V
+  #19 = NameAndType	#17:#18	println:(I)V
+  #20 = MethodRef	#6.#19	java/io/PrintStream:println:(I)V
+  #21 = Integer			1
+  #22 = Utf8			Done
+  #23 = String		#22	Done
+  #24 = Utf8			(Ljava/lang/Object;)V
+  #25 = NameAndType	#17:#24	println:(Ljava/lang/Object;)V
+  #26 = MethodRef	#6.#25	java/io/PrintStream:println:(Ljava/lang/Object;)V
+  #27 = Utf8			Code
+  #28 = Utf8			StackMapTable
+  #29 = Utf8			main
+  #30 = Utf8			([Ljava/lang/String;)V
+  #31 = Utf8			[Ljava/lang/String;
+  #32 = Class		#31	[Ljava/lang/String;
+  #33 = NameAndType	#3:#4	main$main:()V
+  #34 = MethodRef	#2.#33	Main:main$main:()V
   #35 = Utf8			java/lang/Object
   #36 = Class		#35	java/lang/Object
 
@@ -49,26 +49,26 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 2, locals = 2
-       0: LoadConstant		#7	0
+       0: LoadConstant		#9	0
        2: IStore			0
        4: ILoad			0
-       6: LoadConstant		#8	5
+       6: LoadConstant		#10	5
        8: IfICmp <		15
       11: IConst			0
       12: Goto				16
       15: IConst			1
       16: IfI ==		37
-      19: GetStatic		#14	java/lang/System.out:Ljava/io/PrintStream;
+      19: GetStatic		#16	java/lang/System.out:Ljava/io/PrintStream;
       22: ILoad			0
-      24: InvokeVirtual		#18	java/io/PrintStream:println:(I)V
+      24: InvokeVirtual		#20	java/io/PrintStream:println:(I)V
       27: ILoad			0
-      29: LoadConstant		#19	1
+      29: LoadConstant		#21	1
       31: IAdd
       32: IStore			0
       34: Goto				4
-      37: GetStatic		#14	java/lang/System.out:Ljava/io/PrintStream;
-      40: LoadConstant		#21	Done
-      42: InvokeVirtual		#24	java/io/PrintStream:println:(Ljava/lang/String;)V
+      37: GetStatic		#16	java/lang/System.out:Ljava/io/PrintStream;
+      40: LoadConstant		#23	Done
+      42: InvokeVirtual		#26	java/io/PrintStream:println:(Ljava/lang/Object;)V
       45: Return
       StackMapTable:
         Full

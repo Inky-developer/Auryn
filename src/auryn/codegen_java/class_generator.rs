@@ -146,6 +146,7 @@ impl ClassGenerator<'_> {
         );
 
         let mut assembler = FunctionAssembler::new(
+            self.constant_pool.add_class(self.class_name.clone()),
             "main".into(),
             main_descriptor,
             ImplicitArgs::None,

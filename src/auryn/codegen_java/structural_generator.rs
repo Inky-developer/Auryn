@@ -1,19 +1,22 @@
 use crate::{
     auryn::codegen_java::representation::{
-        ImplicitArgs, MethodDescriptor, Representation, ReturnDescriptor, StructuralRepr,
+        FieldDescriptor, ImplicitArgs, MethodDescriptor, Representation, ReturnDescriptor,
+        StructuralRepr,
     },
     java::{
         class::{ClassData, Field, FieldAccessFlags, Method, TypeCategory},
         constant_pool_builder::ConstantPoolBuilder,
-        function_assembler::{FunctionAssembler, Instruction, VariableId},
+        function_assembler::{ConstantValue, FunctionAssembler, Instruction, VariableId},
+        source_graph::BlockFinalizer,
     },
     utils::small_string::SmallString,
 };
 
-pub(super) fn gen_structural_type_class(repr: &StructuralRepr) -> ClassData {
+pub(super) fn gen_structural_type_class(info: &StructuralRepr) -> ClassData {
     let mut pool = ConstantPoolBuilder::default();
-    let init_method = gen_init_method(repr, &mut pool);
-    let fields = repr
+    let init_method = gen_init_method(info, &mut pool);
+    let to_string_method = gen_to_string_method(info, &mut pool);
+    let fields = info
         .fields
         .iter()
         .map(|(name, repr)| Field {
@@ -24,7 +27,12 @@ pub(super) fn gen_structural_type_class(repr: &StructuralRepr) -> ClassData {
             attributes: Vec::new(),
         })
         .collect();
-    ClassData::new(repr.class_name.clone(), pool, fields, vec![init_method])
+    ClassData::new(
+        info.class_name.clone(),
+        pool,
+        fields,
+        vec![init_method, to_string_method],
+    )
 }
 
 /// The init method of a structural type consume all its fields as parameters and sets
@@ -33,6 +41,7 @@ fn gen_init_method(repr: &StructuralRepr, pool: &mut ConstantPoolBuilder) -> Met
     let method_name: SmallString = "<init>".into();
     let descriptor = repr.init_descriptor();
     let mut assembler = FunctionAssembler::new(
+        pool.add_class(repr.class_name.clone()),
         method_name,
         descriptor.clone(),
         ImplicitArgs::UninitializedThis,
@@ -49,10 +58,7 @@ fn gen_init_method(repr: &StructuralRepr, pool: &mut ConstantPoolBuilder) -> Met
     assembler.add(Instruction::InvokeSpecial {
         class_name: "java/lang/Object".into(),
         name: "<init>".into(),
-        method_descriptor: MethodDescriptor {
-            parameters: vec![],
-            return_type: ReturnDescriptor::Void,
-        },
+        method_descriptor: MethodDescriptor::VOID,
     });
 
     let mut variable_id = 1u16;
@@ -76,5 +82,118 @@ fn gen_init_method(repr: &StructuralRepr, pool: &mut ConstantPoolBuilder) -> Met
         variable_id += size;
     }
 
+    assembler.assemble()
+}
+
+fn gen_to_string_method(info: &StructuralRepr, pool: &mut ConstantPoolBuilder) -> Method {
+    const STRING_BUILDER: &str = "java/lang/StringBuilder";
+
+    fn write_str(assembler: &mut FunctionAssembler, text: &str) {
+        assembler.add_all([
+            Instruction::LoadConstant {
+                value: ConstantValue::String(text.into()),
+            },
+            Instruction::InvokeVirtual {
+                class_name: STRING_BUILDER.into(),
+                name: "append".into(),
+                method_descriptor: MethodDescriptor {
+                    parameters: vec![FieldDescriptor::string()],
+                    return_type: ReturnDescriptor::Value(FieldDescriptor::Object(
+                        STRING_BUILDER.into(),
+                    )),
+                },
+            },
+        ]);
+    }
+
+    fn write_field(
+        assembler: &mut FunctionAssembler,
+        class_name: SmallString,
+        class_repr: Option<Representation>,
+        field_name: SmallString,
+        repr: &Representation,
+    ) {
+        match repr {
+            _ if repr.is_printable() => {
+                let field_descriptor = match repr.clone().into_field_descriptor() {
+                    FieldDescriptor::Object(_) => FieldDescriptor::object(),
+                    other => other,
+                };
+                assembler.add_all([
+                    Instruction::Load(VariableId {
+                        index: 0,
+                        r#type: class_repr.unwrap(),
+                    }),
+                    Instruction::GetField {
+                        class_name,
+                        name: field_name,
+                        field_descriptor: repr.clone().into_field_descriptor(),
+                    },
+                    Instruction::InvokeVirtual {
+                        class_name: STRING_BUILDER.into(),
+                        name: "append".into(),
+                        method_descriptor: MethodDescriptor {
+                            parameters: vec![field_descriptor],
+                            return_type: ReturnDescriptor::Value(FieldDescriptor::Object(
+                                STRING_BUILDER.into(),
+                            )),
+                        },
+                    },
+                ]);
+            }
+            _ => write_str(assembler, &field_name),
+        }
+    }
+
+    let method_name: SmallString = "toString".into();
+    let descriptor = MethodDescriptor {
+        parameters: Vec::new(),
+        return_type: ReturnDescriptor::Value(FieldDescriptor::string()),
+    };
+    let mut assembler = FunctionAssembler::new(
+        pool.add_class(info.class_name.clone()),
+        method_name,
+        descriptor.clone(),
+        ImplicitArgs::This,
+        pool,
+    );
+
+    assembler.add_all([
+        Instruction::New(STRING_BUILDER.into()),
+        Instruction::Dup(TypeCategory::Normal),
+        Instruction::InvokeSpecial {
+            class_name: STRING_BUILDER.into(),
+            name: "<init>".into(),
+            method_descriptor: MethodDescriptor::VOID,
+        },
+    ]);
+    write_str(&mut assembler, "{ ");
+
+    for (index, (name, repr)) in info.fields.iter().enumerate() {
+        if index != 0 {
+            write_str(&mut assembler, &format!(", {name}: "));
+        } else {
+            write_str(&mut assembler, &format!("{name}: "));
+        }
+
+        write_field(
+            &mut assembler,
+            info.class_name.clone(),
+            info.to_representation(),
+            name.clone(),
+            repr,
+        );
+    }
+
+    write_str(&mut assembler, " }");
+    assembler.add_all([Instruction::InvokeVirtual {
+        class_name: STRING_BUILDER.into(),
+        name: "toString".into(),
+        method_descriptor: MethodDescriptor {
+            parameters: Vec::new(),
+            return_type: FieldDescriptor::string().into(),
+        },
+    }]);
+    assembler.current_block_mut().finalizer = BlockFinalizer::ReturnObject;
     assembler.assemble()
 }

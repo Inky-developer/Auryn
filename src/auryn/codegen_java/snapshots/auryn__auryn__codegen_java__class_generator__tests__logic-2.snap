@@ -3,21 +3,21 @@ source: src/auryn/codegen_java/class_generator.rs
 expression: "generate_class_wrapped(\"false or true\")"
 ---
 ClassData
-  this_class:		#10	Main
+  this_class:		#2	Main
   super_class:		#14	java/lang/Object
 Constant pool:
-  #01 = Utf8			main$main
-  #02 = Utf8			()V
-  #03 = Utf8			Code
-  #04 = Utf8			StackMapTable
-  #05 = Utf8			main
-  #06 = Utf8			([Ljava/lang/String;)V
-  #07 = Utf8			[Ljava/lang/String;
-  #08 = Class		#7	[Ljava/lang/String;
-  #09 = Utf8			Main
-  #10 = Class		#9	Main
-  #11 = NameAndType	#1:#2	main$main:()V
-  #12 = MethodRef	#10.#11	Main:main$main:()V
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			Code
+  #06 = Utf8			StackMapTable
+  #07 = Utf8			main
+  #08 = Utf8			([Ljava/lang/String;)V
+  #09 = Utf8			[Ljava/lang/String;
+  #10 = Class		#9	[Ljava/lang/String;
+  #11 = NameAndType	#3:#4	main$main:()V
+  #12 = MethodRef	#2.#11	Main:main$main:()V
   #13 = Utf8			java/lang/Object
   #14 = Class		#13	java/lang/Object
 
