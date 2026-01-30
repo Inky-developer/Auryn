@@ -336,9 +336,9 @@ impl AstTransformer {
             .filter_map(|param| param.ident().ok().map(|ident| ident.text.clone()))
             .collect::<Vec<_>>();
 
-        let mut function_transformer =
+        let function_transformer =
             FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
-        function_transformer.transform_function_body(block);
+        let blocks = function_transformer.transform_function_body(block);
 
         let function_id = self.namespace.unwrap_function(&ident);
         let function = AirFunction {
@@ -350,7 +350,7 @@ impl AstTransformer {
                 reference: FunctionReference::UserDefined(function_id),
             },
             ident,
-            blocks: function_transformer.finished_blocks,
+            blocks,
         };
 
         self.globals.functions.insert(function_id, function);
@@ -360,10 +360,25 @@ impl AstTransformer {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Scope {
+    pub variables: FastMap<SmallString, AirLocalValueId>,
+}
+
 /// Represents an unfinished [`AirBlock`]
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct BlockBuilder {
     nodes: Vec<AirNode>,
+    scope: Scope,
+}
+
+impl BlockBuilder {
+    fn new(scope: Scope) -> Self {
+        Self {
+            nodes: default(),
+            scope,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -379,7 +394,6 @@ struct FunctionTransformer<'a> {
     finished_blocks: FastMap<AirBlockId, AirBlock>,
     next_value_id: usize,
     diagnostics: &'a mut Diagnostics,
-    variables: FastMap<SmallString, AirLocalValueId>,
     namespace: &'a Namespace,
     loops: Vec<LoopInfo>,
 }
@@ -395,22 +409,29 @@ impl<'a> FunctionTransformer<'a> {
             .enumerate()
             .map(|(index, ident)| (ident, AirLocalValueId(index)))
             .collect::<FastMap<_, _>>();
+        let next_value_id = variables.len();
+        let mut block_builders = FastMap::default();
+        block_builders.insert(AirBlockId(0), BlockBuilder::new(Scope { variables }));
         Self {
-            block_builders: FastMap::default(),
+            block_builders,
             current_builder: AirBlockId(0),
             finished_blocks: FastMap::default(),
-            next_value_id: variables.len(),
-            variables,
+            next_value_id,
             diagnostics,
             namespace,
             loops: Vec::new(),
         }
     }
 
+    fn current_block_mut(&mut self) -> &mut BlockBuilder {
+        self.block_builders.get_mut(&self.current_builder).unwrap()
+    }
+
     fn add_block(&mut self) -> AirBlockId {
         let block_id = AirBlockId(self.finished_blocks.len() + self.block_builders.len());
+        let scope = self.current_block_mut().scope.clone();
         self.block_builders
-            .insert(block_id, BlockBuilder::default());
+            .insert(block_id, BlockBuilder::new(scope));
         block_id
     }
 
@@ -431,23 +452,14 @@ impl<'a> FunctionTransformer<'a> {
     }
 
     fn add_node(&mut self, node: AirNode) {
-        self.block_builders
-            .get_mut(&self.current_builder)
-            .unwrap()
-            .nodes
-            .push(node);
+        self.current_block_mut().nodes.push(node);
     }
 
     fn create_variable(&mut self, token: &SyntaxToken, value_id: AirLocalValueId) {
-        if self.variables.contains_key(&token.text) {
-            self.diagnostics.add(
-                token.id,
-                DiagnosticError::RedefinedVariable {
-                    ident: token.text.clone(),
-                },
-            )
-        }
-        self.variables.insert(token.text.clone(), value_id);
+        self.current_block_mut()
+            .scope
+            .variables
+            .insert(token.text.clone(), value_id);
     }
 
     fn create_value(&mut self) -> AirLocalValueId {
@@ -458,8 +470,8 @@ impl<'a> FunctionTransformer<'a> {
 }
 
 impl FunctionTransformer<'_> {
-    fn transform_function_body(&mut self, block: Block) {
-        let block_id = self.add_block();
+    fn transform_function_body(mut self, block: Block) -> FastMap<AirBlockId, AirBlock> {
+        let block_id = AirBlockId(0);
         self.transform_block(block);
         // The Return(None) is just a placeholder, could also be replaced with an actual error variant
         self.finish_block(
@@ -467,6 +479,7 @@ impl FunctionTransformer<'_> {
             AirBlockFinalizer::Return(data::ReturnValue::Null(block.id())),
         );
         assert!(self.block_builders.is_empty());
+        self.finished_blocks
     }
 
     fn transform_block(&mut self, block: Block) {
@@ -882,7 +895,7 @@ impl FunctionTransformer<'_> {
             return AirExpression::error(ident.id());
         };
 
-        if let Some(&variable_id) = self.variables.get(&ident.text) {
+        if let Some(&variable_id) = self.current_block_mut().scope.variables.get(&ident.text) {
             return AirExpression::new(
                 ident.id,
                 AirExpressionKind::Variable(AirValueId::Local(variable_id)),

@@ -1,0 +1,29 @@
+// expect-output:
+// 3
+// 4
+// 5
+// 4
+// 1
+// 4
+
+fn main() {
+	let a: I32 = 3
+	print(a)
+	let a: I32 = 4
+	print(a)
+	if true {
+		let a: I32 = 5
+		print(a)
+	} else {
+		let a: I32  = 6
+		print(a)
+	}
+	print(a)
+	foo()
+	print(a)
+}
+
+fn foo() {
+	let a: I32 = 1
+	print(a)
+}

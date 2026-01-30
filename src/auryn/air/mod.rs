@@ -121,6 +121,19 @@ mod tests {
     }
 
     #[test]
+    fn test_reassignment() {
+        insta::assert_debug_snapshot!(compile_wrapped(
+            r#"
+            let a: I32 = 0
+            if true {
+                let a: I32 = 1
+            }
+            a
+            "#
+        ))
+    }
+
+    #[test]
     fn test_explicit_unit() {
         insta::assert_debug_snapshot!(compile(
             r#"

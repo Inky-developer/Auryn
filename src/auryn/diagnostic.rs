@@ -53,9 +53,6 @@ pub enum DiagnosticError {
     // Generated during air
     UnexpectedExternTarget,
     ExternTypeRequiresMetadata,
-    RedefinedVariable {
-        ident: SmallString,
-    },
     ImmutableVariableUpdate,
     InvalidPlace,
     BreakOutsideLoop,
@@ -255,10 +252,6 @@ impl Diagnostic {
                     .with_help(
                         "Add metadata before to declare its extern name: `[\"extern_name\"]`",
                     ),
-                DiagnosticError::RedefinedVariable { ident } => builder
-                    .with_code("Redefined variable")
-                    .with_message(format!("Variable `{ident}` was redefined"))
-                    .with_info("A variable may only be defined once"),
                 DiagnosticError::ImmutableVariableUpdate => builder
                     .with_code("Immutable variable")
                     .with_message("Cannot write to an immutable variable"),
