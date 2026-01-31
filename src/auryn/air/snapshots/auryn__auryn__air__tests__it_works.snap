@@ -4,8 +4,234 @@ expression: "compile_wrapped(\"print(1)\")"
 ---
 (
     Air {
-        functions: {
-            AirFunctionId(
+        globals: Globals {
+            functions: {
+                AirFunctionId(
+                    AirStaticValueId(
+                        SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                4,
+                            ),
+                        },
+                    ),
+                ): AirFunction {
+                    type: Computed(
+                        FunctionItem(
+                            TypeId {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        4,
+                                    ),
+                                },
+                                kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                            },
+                        ),
+                    ),
+                    unresolved_type: Function {
+                        parameters_reference: SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                105553116266498,
+                            ),
+                        },
+                        parameters: [],
+                        return_type: None,
+                        reference: UserDefined(
+                            AirFunctionId(
+                                AirStaticValueId(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            4,
+                                        ),
+                                    },
+                                ),
+                            ),
+                        ),
+                    },
+                    ident: "main",
+                    blocks: {
+                        AirBlockId(
+                            0,
+                        ): AirBlock {
+                            nodes: [
+                                AirNode {
+                                    id: SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            211106232532994,
+                                        ),
+                                    },
+                                    kind: Expression(
+                                        AirExpression {
+                                            id: SyntaxId {
+                                                file_id: Some(
+                                                    FileId(
+                                                        1,
+                                                    ),
+                                                ),
+                                                number: Some(
+                                                    211106232532994,
+                                                ),
+                                            },
+                                            type: Computed(
+                                                Structural(
+                                                    TypeId {
+                                                        id: SyntaxId {
+                                                            file_id: None,
+                                                            number: Some(
+                                                                1,
+                                                            ),
+                                                        },
+                                                        kind: "auryn::auryn::air::typecheck::types::StructuralType",
+                                                    },
+                                                ),
+                                            ),
+                                            kind: Call(
+                                                Call {
+                                                    function: AirExpression {
+                                                        id: SyntaxId {
+                                                            file_id: Some(
+                                                                FileId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                            number: Some(
+                                                                211106232532997,
+                                                            ),
+                                                        },
+                                                        type: Computed(
+                                                            Intrinsic(
+                                                                TypeId {
+                                                                    id: SyntaxId {
+                                                                        file_id: None,
+                                                                        number: Some(
+                                                                            3,
+                                                                        ),
+                                                                    },
+                                                                    kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
+                                                                },
+                                                            ),
+                                                        ),
+                                                        kind: Variable(
+                                                            Intrinsic(
+                                                                Print,
+                                                            ),
+                                                        ),
+                                                    },
+                                                    arguments: [
+                                                        AirExpression {
+                                                            id: SyntaxId {
+                                                                file_id: Some(
+                                                                    FileId(
+                                                                        1,
+                                                                    ),
+                                                                ),
+                                                                number: Some(
+                                                                    233096465088514,
+                                                                ),
+                                                            },
+                                                            type: Computed(
+                                                                NumberLiteral(
+                                                                    TypeId {
+                                                                        id: SyntaxId {
+                                                                            file_id: None,
+                                                                            number: Some(
+                                                                                4,
+                                                                            ),
+                                                                        },
+                                                                        kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
+                                                                    },
+                                                                ),
+                                                            ),
+                                                            kind: Constant(
+                                                                Number(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ],
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                            ],
+                            finalizer: Return(
+                                Null(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            211106232532991,
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    },
+                },
+            },
+            types: {
+                Module(
+                    TypeId {
+                        id: SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                1,
+                            ),
+                        },
+                        kind: "auryn::auryn::air::typecheck::types::ModuleType",
+                    },
+                ): Computed(
+                    Module(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    1,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::ModuleType",
+                        },
+                    ),
+                ),
+            },
+            type_aliases: {},
+            statics: {
                 AirStaticValueId(
                     SyntaxId {
                         file_id: Some(
@@ -17,12 +243,10 @@ expression: "compile_wrapped(\"print(1)\")"
                             4,
                         ),
                     },
-                ),
-            ): AirFunction {
-                type: Computed(
-                    FunctionItem(
-                        TypeId {
-                            id: SyntaxId {
+                ): Function(
+                    AirFunctionId(
+                        AirStaticValueId(
+                            SyntaxId {
                                 file_id: Some(
                                     FileId(
                                         1,
@@ -32,23 +256,140 @@ expression: "compile_wrapped(\"print(1)\")"
                                     4,
                                 ),
                             },
-                            kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
-                        },
+                        ),
                     ),
                 ),
-                unresolved_type: Function {
-                    parameters_reference: SyntaxId {
+            },
+        },
+        ty_ctx: TypeContext {
+            array_bounds: {},
+            number_literals: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: None,
+                        number: Some(
+                            4,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
+                }: NumberLiteralType {
+                    value: 1,
+                },
+            },
+            arrays: {},
+            metas: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: None,
+                        number: Some(
+                            2,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::MetaType",
+                }: MetaType {
+                    inner: Module(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    1,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::ModuleType",
+                        },
+                    ),
+                },
+            },
+            structurals: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: None,
+                        number: Some(
+                            1,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::StructuralType",
+                }: StructuralType {
+                    fields: [],
+                },
+            },
+            externs: {},
+            modules: {
+                TypeId {
+                    id: SyntaxId {
                         file_id: Some(
                             FileId(
                                 1,
                             ),
                         ),
                         number: Some(
-                            105553116266498,
+                            1,
                         ),
                     },
-                    parameters: [],
-                    return_type: None,
+                    kind: "auryn::auryn::air::typecheck::types::ModuleType",
+                }: ModuleType {
+                    name: "main",
+                    members: {
+                        "main": FunctionItem(
+                            TypeId {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        4,
+                                    ),
+                                },
+                                kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                            },
+                        ),
+                    },
+                },
+            },
+            function_items: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            4,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                }: FunctionItemType {
+                    parameters: Constrained {
+                        parameters: [],
+                        parameters_reference: SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                105553116266498,
+                            ),
+                        },
+                    },
+                    return_type: Structural(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: None,
+                                number: Some(
+                                    1,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::StructuralType",
+                        },
+                    ),
                     reference: UserDefined(
                         AirFunctionId(
                             AirStaticValueId(
@@ -66,137 +407,35 @@ expression: "compile_wrapped(\"print(1)\")"
                         ),
                     ),
                 },
-                ident: "main",
-                blocks: {
-                    AirBlockId(
-                        0,
-                    ): AirBlock {
-                        nodes: [
-                            AirNode {
-                                id: SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        211106232532994,
-                                    ),
-                                },
-                                kind: Expression(
-                                    AirExpression {
-                                        id: SyntaxId {
-                                            file_id: Some(
-                                                FileId(
-                                                    1,
-                                                ),
-                                            ),
-                                            number: Some(
-                                                211106232532994,
-                                            ),
-                                        },
-                                        type: Computed(
-                                            Structural(
-                                                TypeId {
-                                                    id: SyntaxId {
-                                                        file_id: None,
-                                                        number: Some(
-                                                            1,
-                                                        ),
-                                                    },
-                                                    kind: "auryn::auryn::air::typecheck::types::StructuralType",
-                                                },
-                                            ),
-                                        ),
-                                        kind: Call(
-                                            Call {
-                                                function: AirExpression {
-                                                    id: SyntaxId {
-                                                        file_id: Some(
-                                                            FileId(
-                                                                1,
-                                                            ),
-                                                        ),
-                                                        number: Some(
-                                                            211106232532997,
-                                                        ),
-                                                    },
-                                                    type: Computed(
-                                                        Intrinsic(
-                                                            TypeId {
-                                                                id: SyntaxId {
-                                                                    file_id: None,
-                                                                    number: Some(
-                                                                        3,
-                                                                    ),
-                                                                },
-                                                                kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
-                                                            },
-                                                        ),
-                                                    ),
-                                                    kind: Variable(
-                                                        Intrinsic(
-                                                            Print,
-                                                        ),
-                                                    ),
-                                                },
-                                                arguments: [
-                                                    AirExpression {
-                                                        id: SyntaxId {
-                                                            file_id: Some(
-                                                                FileId(
-                                                                    1,
-                                                                ),
-                                                            ),
-                                                            number: Some(
-                                                                233096465088514,
-                                                            ),
-                                                        },
-                                                        type: Computed(
-                                                            NumberLiteral(
-                                                                TypeId {
-                                                                    id: SyntaxId {
-                                                                        file_id: None,
-                                                                        number: Some(
-                                                                            4,
-                                                                        ),
-                                                                    },
-                                                                    kind: "auryn::auryn::air::typecheck::types::NumberLiteralType",
-                                                                },
-                                                            ),
-                                                        ),
-                                                        kind: Constant(
-                                                            Number(
-                                                                1,
-                                                            ),
-                                                        ),
-                                                    },
-                                                ],
-                                            },
-                                        ),
-                                    },
-                                ),
-                            },
-                        ],
-                        finalizer: Return(
-                            Null(
-                                SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        211106232532991,
-                                    ),
-                                },
-                            ),
+            },
+            intrinsics: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: None,
+                        number: Some(
+                            3,
                         ),
                     },
+                    kind: "auryn::auryn::air::typecheck::types::IntrinsicType",
+                }: IntrinsicType {
+                    intrinsic: Print,
                 },
             },
+            special_types: SpecialTypes {
+                unit: Structural(
+                    TypeId {
+                        id: SyntaxId {
+                            file_id: None,
+                            number: Some(
+                                1,
+                            ),
+                        },
+                        kind: "auryn::auryn::air::typecheck::types::StructuralType",
+                    },
+                ),
+            },
+            next_id: 5,
         },
-        ..
     },
     Diagnostics {
         diagnostics: [],

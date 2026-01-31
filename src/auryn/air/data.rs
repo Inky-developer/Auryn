@@ -39,6 +39,8 @@ impl Globals {
         self.statics.extend(statics);
     }
 }
+
+#[derive(Debug)]
 pub struct Air {
     pub globals: Globals,
     pub ty_ctx: TypeContext,
@@ -57,14 +59,6 @@ impl Air {
             .expect("There should be a main function");
         assert!(main_functions.next().is_none());
         (*id, function)
-    }
-}
-
-impl Debug for Air {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Air")
-            .field("functions", &self.globals.functions)
-            .finish_non_exhaustive()
     }
 }
 
