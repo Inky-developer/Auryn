@@ -10,11 +10,3 @@ Error: Unexpected fields
    │                       ──────────┬──────────  
    │                                 ╰──────────── Unexpected fields: `b` and `c`
 ───╯
-
-Error: Type mismatch
-   ╭─[ main:2:20 ]
-   │
- 2 │     let a: {a: I32} = {a: 50, b: 20, c: 30}
-   │                       ──────────┬──────────  
-   │                                 ╰──────────── Expected `{ a: I32 }`, but got `{ a: 50, b: 20, c: 30 }`
-───╯

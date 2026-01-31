@@ -440,7 +440,8 @@ impl Typechecker {
             AirConstant::String(_) => Type::String,
             AirConstant::Boolean(_) => Type::Bool,
             AirConstant::StructLiteral(struct_literal) => {
-                let MaybeBounded::Type(Type::Structural(structural_id)) = expected else {
+                let MaybeBounded::Type(expected_type @ Type::Structural(structural_id)) = expected
+                else {
                     // infer to figure out the received type
                     let got = self.infer_constant(constant);
                     self.diagnostics.add(
@@ -462,7 +463,7 @@ impl Typechecker {
                     structural.fields.iter().map(|(name, _)| name),
                     struct_literal.iter().map(|(name, _)| name),
                 ) {
-                    return self.infer_constant(constant);
+                    return expected_type;
                 }
 
                 let expected_types = structural.fields.iter().cloned().collect::<FastMap<_, _>>();

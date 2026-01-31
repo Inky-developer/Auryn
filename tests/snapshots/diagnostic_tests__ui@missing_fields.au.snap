@@ -10,11 +10,3 @@ Error: Missing fields
    │                                          ───┬───  
    │                                             ╰───── Missing fields: `b` and `c`
 ───╯
-
-Error: Type mismatch
-   ╭─[ main:2:39 ]
-   │
- 2 │     let a: {a: I32, b: I64, c: String} = {a: 50}
-   │                                          ───┬───  
-   │                                             ╰───── Expected `{ a: I32, b: I64, c: String }`, but got `{ a: 50 }`
-───╯
