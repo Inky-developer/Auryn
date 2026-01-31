@@ -351,6 +351,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOfZeros(3)\")"
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

@@ -126,6 +126,7 @@ ast_node! {
         | SyntaxNodeKind::ExternBlock as ExternBlock
         | SyntaxNodeKind::FunctionDefinition as FunctionDefinition
         | SyntaxNodeKind::TypeAlias as TypeAlias
+        | SyntaxNodeKind::Struct as Struct
 }
 
 ast_node! {
@@ -202,6 +203,14 @@ ast_node! {
 
 ast_node! {
     pub struct TypeAlias = SyntaxNodeKind::TypeAlias as { token ident: TokenKind::Identifier, r#type: Type, }
+}
+
+ast_node! {
+    pub struct Struct = SyntaxNodeKind::Struct as { token ident: TokenKind::Identifier, body: StructBody, }
+}
+
+ast_node! {
+    pub struct StructBody = SyntaxNodeKind::StructBody as { ...fields: StructuralTypeField }
 }
 
 ast_node! {

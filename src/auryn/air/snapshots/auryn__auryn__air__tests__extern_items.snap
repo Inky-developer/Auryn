@@ -142,6 +142,7 @@ expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type
                     fields: [],
                 },
             },
+            structs: {},
             externs: {
                 TypeId {
                     id: SyntaxId {

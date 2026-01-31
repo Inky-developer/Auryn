@@ -1,0 +1,180 @@
+---
+source: src/auryn/codegen_java/class_generator.rs
+expression: "generate_classes(r#\"\n            // main\n            struct Foo {\n                a: I32,\n                b: []Foo\n            }\n            fn main() {\n                let a: []Foo = arrayOf()\n            }\n            \"#)"
+---
+Foo:
+ClassData
+  this_class:		#2	Foo
+  super_class:		#8	java/lang/Object
+Constant pool:
+  #01 = Utf8			Foo
+  #02 = Class		#1	Foo
+  #03 = Utf8			<init>
+  #04 = Utf8			(I[LFoo;)V
+  #05 = Utf8			[LFoo;
+  #06 = Class		#5	[LFoo;
+  #07 = Utf8			java/lang/Object
+  #08 = Class		#7	java/lang/Object
+  #09 = Utf8			()V
+  #10 = NameAndType	#3:#9	<init>:()V
+  #11 = MethodRef	#8.#10	java/lang/Object:<init>:()V
+  #12 = Utf8			a
+  #13 = Utf8			I
+  #14 = NameAndType	#12:#13	a:I
+  #15 = FieldRef	#2.#14	Foo.a:I
+  #16 = Utf8			b
+  #17 = NameAndType	#16:#5	b:[LFoo;
+  #18 = FieldRef	#2.#17	Foo.b:[LFoo;
+  #19 = Utf8			Code
+  #20 = Utf8			StackMapTable
+  #21 = Utf8			toString
+  #22 = Utf8			()Ljava/lang/String;
+  #23 = Utf8			java/lang/StringBuilder
+  #24 = Class		#23	java/lang/StringBuilder
+  #25 = Utf8			java/lang/String
+  #26 = Class		#25	java/lang/String
+  #27 = MethodRef	#24.#10	java/lang/StringBuilder:<init>:()V
+  #28 = Utf8			{ 
+  #29 = String		#28	{ 
+  #30 = Utf8			append
+  #31 = Utf8			(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #32 = NameAndType	#30:#31	append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #33 = MethodRef	#24.#32	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #34 = Utf8			a: 
+  #35 = String		#34	a: 
+  #36 = Utf8			(I)Ljava/lang/StringBuilder;
+  #37 = NameAndType	#30:#36	append:(I)Ljava/lang/StringBuilder;
+  #38 = MethodRef	#24.#37	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
+  #39 = Utf8			, b: 
+  #40 = String		#39	, b: 
+  #41 = Utf8			java/util/Arrays
+  #42 = Class		#41	java/util/Arrays
+  #43 = Utf8			([Ljava/lang/Object;)Ljava/lang/String;
+  #44 = NameAndType	#21:#43	toString:([Ljava/lang/Object;)Ljava/lang/String;
+  #45 = MethodRef	#42.#44	java/util/Arrays:toString:([Ljava/lang/Object;)Ljava/lang/String;
+  #46 = Utf8			 }
+  #47 = String		#46	 }
+  #48 = NameAndType	#21:#22	toString:()Ljava/lang/String;
+  #49 = MethodRef	#24.#48	java/lang/StringBuilder:toString:()Ljava/lang/String;
+
+{
+  PUBLIC a: I
+
+  PUBLIC b: [LFoo;
+
+  fn <init> {
+    descriptor: (I[LFoo;)V
+    flags: PUBLIC
+    Code:
+      stack = 3, locals = 4
+       0: ALoad			0
+       2: Dup
+       3: InvokeSpecial		#11	java/lang/Object:<init>:()V
+       6: Dup
+       7: ILoad			1
+       9: PutField		#15	Foo.a:I
+      12: ALoad			2
+      14: PutField		#18	Foo.b:[LFoo;
+      17: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ UninitializedThis,Integer,Object '[LFoo;' ]
+          Stack = [  ]
+  }
+
+  fn toString {
+    descriptor: ()Ljava/lang/String;
+    flags: PUBLIC
+    Code:
+      stack = 2, locals = 2
+       0: New			#24	java/lang/StringBuilder
+       3: Dup
+       4: InvokeSpecial		#27	java/lang/StringBuilder:<init>:()V
+       7: LoadConstant		#29	{ 
+       9: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      12: LoadConstant		#35	a: 
+      14: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      17: ALoad			0
+      19: GetField		#15	Foo.a:I
+      22: InvokeVirtual		#38	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
+      25: LoadConstant		#40	, b: 
+      27: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      30: ALoad			0
+      32: GetField		#18	Foo.b:[LFoo;
+      35: InvokeStatic		#45	java/util/Arrays:toString:([Ljava/lang/Object;)Ljava/lang/String;
+      38: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      41: LoadConstant		#47	 }
+      43: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      46: InvokeVirtual		#49	java/lang/StringBuilder:toString:()Ljava/lang/String;
+      49: AReturn
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object 'Foo' ]
+          Stack = [  ]
+  }
+
+}
+
+-----
+
+Main:
+ClassData
+  this_class:		#2	Main
+  super_class:		#19	java/lang/Object
+Constant pool:
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			[LFoo;
+  #06 = Class		#5	[LFoo;
+  #07 = Integer			0
+  #08 = Utf8			Foo
+  #09 = Class		#8	Foo
+  #10 = Utf8			Code
+  #11 = Utf8			StackMapTable
+  #12 = Utf8			main
+  #13 = Utf8			([Ljava/lang/String;)V
+  #14 = Utf8			[Ljava/lang/String;
+  #15 = Class		#14	[Ljava/lang/String;
+  #16 = NameAndType	#3:#4	main$main:()V
+  #17 = MethodRef	#2.#16	Main:main$main:()V
+  #18 = Utf8			java/lang/Object
+  #19 = Class		#18	java/lang/Object
+
+{
+  fn main$main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 1, locals = 2
+      0: LoadConstant		#7	0
+      2: ANewArray		#9	Foo
+      5: AStore			0
+      7: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 2
+      0: InvokeStatic		#17	Main:main$main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}
+
+-----

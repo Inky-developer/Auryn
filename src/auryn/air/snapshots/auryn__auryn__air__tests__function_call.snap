@@ -537,6 +537,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

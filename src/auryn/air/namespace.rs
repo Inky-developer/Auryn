@@ -3,7 +3,7 @@ use crate::{
         data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
         typecheck::{
             type_context::TypeId,
-            types::{ExternType, ModuleType},
+            types::{ExternType, ModuleType, StructType},
         },
     },
     utils::{default, fast_map::FastMap, small_string::SmallString},
@@ -17,6 +17,7 @@ use crate::{
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),
     Module(TypeId<ModuleType>),
+    Struct(TypeId<StructType>),
     TypeAlias(TypeAliasId),
 }
 

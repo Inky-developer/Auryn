@@ -442,6 +442,22 @@ mod tests {
     }
 
     #[test]
+    fn test_struct() {
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            // main
+            struct Foo {
+                a: I32,
+                b: []Foo
+            }
+            fn main() {
+                let a: []Foo = arrayOf()
+            }
+            "#
+        ));
+    }
+
+    #[test]
     fn test_module() {
         insta::assert_debug_snapshot!(generate_classes(
             r#"

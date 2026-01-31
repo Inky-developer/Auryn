@@ -20,8 +20,9 @@ use crate::{
             ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
             IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
             PostfixOperation, PostfixOperator, PrefixNot, ReturnStatement, Root, Statement,
-            StringLiteral, StructLiteral, StructLiteralField, StructuralTypeField, Type, TypeAlias,
-            Value, ValueOrPostfix, VariableUpdate, WhileStatement,
+            StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField,
+            StructuralTypeField, Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate,
+            WhileStatement,
         },
         diagnostic::{DiagnosticError, Diagnostics},
         syntax_id::SyntaxId,
@@ -87,6 +88,7 @@ impl AstTransformer {
             }
             Item::ExternBlock(block) => self.register_extern_block(block),
             Item::TypeAlias(type_alias) => self.register_type_alias(type_alias),
+            Item::Struct(struct_definition) => self.register_struct(struct_definition),
         }
     }
 
@@ -136,12 +138,23 @@ impl AstTransformer {
         );
     }
 
+    fn register_struct(&mut self, struct_def: Struct) {
+        let Ok(ident) = struct_def.ident() else {
+            return;
+        };
+        self.namespace.types.insert(
+            ident.text.clone(),
+            UserDefinedTypeId::Struct(TypeId::new(ident.id)),
+        );
+    }
+
     fn transform_item(&mut self, item: Item) {
         match item {
             Item::FunctionDefinition(function_definition) => {
                 self.transform_function(function_definition)
             }
             Item::TypeAlias(type_alias) => self.transform_type_alias(type_alias),
+            Item::Struct(struct_def) => self.transform_struct(struct_def),
             Item::ExternBlock(block) => self.transform_extern_block(block),
         }
     }
@@ -301,6 +314,38 @@ impl AstTransformer {
         self.globals
             .type_aliases
             .insert(TypeAliasId(ident.id), AirType::Unresolved(r#type));
+    }
+
+    fn transform_struct(&mut self, struct_def: Struct) {
+        let Ok(ident) = struct_def.ident() else {
+            return;
+        };
+        let id = TypeId::new(ident.id);
+        let Ok(body) = struct_def.body() else {
+            return;
+        };
+        let Ok(fields) = self.transform_struct_body(body) else {
+            return;
+        };
+        self.globals.types.insert(
+            UserDefinedTypeId::Struct(id),
+            AirType::Unresolved(UnresolvedType::Struct {
+                id: id.syntax_id(),
+                ident: ident.text.clone(),
+                fields,
+            }),
+        );
+    }
+
+    fn transform_struct_body(
+        &self,
+        body: StructBody,
+    ) -> Result<Vec<(SmallString, UnresolvedType)>, AstError> {
+        let fields = body
+            .fields()
+            .map(|field| transform_field_to_unresolved(&self.namespace, field))
+            .collect::<Result<_, _>>()?;
+        Ok(fields)
     }
 
     fn transform_function(&mut self, function_definition: FunctionDefinition) {

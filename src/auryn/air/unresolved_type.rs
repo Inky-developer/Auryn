@@ -19,6 +19,12 @@ pub enum UnresolvedType {
     Array(SyntaxId, Box<UnresolvedType>),
     /// A structural type like {a: I32, b: I64}
     Structural(Vec<(SmallString, UnresolvedType)>),
+    /// A nominal (named) structural type
+    Struct {
+        id: SyntaxId,
+        ident: SmallString,
+        fields: Vec<(SmallString, UnresolvedType)>,
+    },
     Unit,
     /// A function type
     Function {
@@ -55,8 +61,13 @@ impl UnresolvedType {
                 namespace: _,
             } => {}
             Array(_, unresolved_type) => unresolved_type.visit_contained_types(visitor),
-            Structural(items) => {
-                for (_, ty) in items {
+            Struct {
+                fields,
+                id: _,
+                ident: _,
+            }
+            | Structural(fields) => {
+                for (_, ty) in fields {
                     ty.visit_contained_types(visitor);
                 }
             }

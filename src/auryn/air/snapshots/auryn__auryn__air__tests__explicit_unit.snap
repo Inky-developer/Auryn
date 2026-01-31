@@ -575,6 +575,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

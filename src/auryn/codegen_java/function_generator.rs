@@ -386,7 +386,7 @@ impl FunctionGenerator<'_> {
                 };
                 let info = self.repr_ctx.get_structural_repr(structural).clone();
 
-                if info.is_zero_sized() {
+                if info.is_zero_sized {
                     return;
                 }
 

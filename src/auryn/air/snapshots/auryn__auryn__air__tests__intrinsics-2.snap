@@ -379,6 +379,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

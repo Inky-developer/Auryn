@@ -10,7 +10,7 @@ use crate::{
                 type_context::TypeContext,
                 types::{
                     ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, ModuleType,
-                    StructuralType, Type,
+                    StructType, StructuralType, Type,
                 },
             },
             unresolved_type::UnresolvedType,
@@ -48,6 +48,7 @@ impl Resolver {
             UnresolvedType::DefinedType(user_defined_type_id) => match user_defined_type_id {
                 UserDefinedTypeId::Extern(type_id) => Type::Extern(*type_id),
                 UserDefinedTypeId::Module(type_id) => Type::Module(*type_id),
+                UserDefinedTypeId::Struct(type_id) => Type::Struct(*type_id),
                 UserDefinedTypeId::TypeAlias(id) => match &ctx.type_aliasses[id] {
                     AirType::Inferred => unreachable!(),
                     AirType::Unresolved(_) => {
@@ -179,6 +180,19 @@ impl Resolver {
                         .collect::<Result<_, _>>()?,
                 };
                 ctx.ty_ctx.structural_of(ty)
+            }
+            UnresolvedType::Struct { id, ident, fields } => {
+                let structural = StructuralType {
+                    fields: fields
+                        .iter()
+                        .map(|(ident, field)| Ok((ident.clone(), self.resolve_type(ctx, field)?)))
+                        .collect::<Result<_, _>>()?,
+                };
+                let r#struct = StructType {
+                    ident: ident.clone(),
+                    structural,
+                };
+                Type::Struct(ctx.ty_ctx.add_struct(*id, r#struct))
             }
         })
     }

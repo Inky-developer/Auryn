@@ -8,7 +8,7 @@ use crate::{
                 bounds::{ArrayBound, Bound},
                 types::{
                     ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType, ModuleType,
-                    NumberLiteralType, StructuralType, Type,
+                    NumberLiteralType, StructType, StructuralType, Type,
                 },
             },
         },
@@ -55,6 +55,7 @@ pub struct TypeContext {
     arrays: BidirectionalTypeMap<ArrayType>,
     metas: BidirectionalTypeMap<MetaType>,
     structurals: BidirectionalTypeMap<StructuralType>,
+    structs: TypeMap<StructType>,
     externs: TypeMap<ExternType>,
     modules: TypeMap<ModuleType>,
     function_items: TypeMap<FunctionItemType>,
@@ -109,6 +110,13 @@ impl TypeContext {
 
     pub fn add_structural(&mut self, structural: StructuralType) -> TypeId<StructuralType> {
         add_non_unique_type(&mut self.next_id, structural, &mut self.structurals)
+    }
+
+    pub fn add_struct(&mut self, syntax_id: SyntaxId, r#struct: StructType) -> TypeId<StructType> {
+        let id = TypeId::new(syntax_id);
+        let prev = self.structs.insert(id, r#struct);
+        assert!(prev.is_none());
+        id
     }
 
     pub fn add_meta(&mut self, meta: MetaType) -> TypeId<MetaType> {
@@ -169,6 +177,9 @@ impl TypeContext {
     pub(super) fn get_structural(&self, id: TypeId<StructuralType>) -> &StructuralType {
         self.structurals.get_by_key(&id).unwrap()
     }
+    pub(super) fn get_struct(&self, id: TypeId<StructType>) -> &StructType {
+        self.structs.get(&id).unwrap()
+    }
     pub(super) fn get_meta(&self, id: TypeId<MetaType>) -> &MetaType {
         self.metas.get_by_key(&id).unwrap()
     }
@@ -196,6 +207,7 @@ impl Default for TypeContext {
             number_literals: default(),
             arrays: default(),
             structurals: default(),
+            structs: default(),
             metas: default(),
             externs: default(),
             modules: default(),

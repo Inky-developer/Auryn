@@ -415,6 +415,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

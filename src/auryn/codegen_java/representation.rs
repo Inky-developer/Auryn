@@ -2,8 +2,8 @@ use std::fmt::{Display, Write};
 
 use crate::{
     auryn::air::typecheck::{
-        type_context::TypeId,
-        types::{FunctionItemType, StructuralType, TypeView, TypeViewKind},
+        type_context::{TypeContext, TypeId},
+        types::{FunctionItemType, StructType, StructuralType, TypeView, TypeViewKind},
     },
     java::{
         class::{ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
@@ -318,15 +318,12 @@ impl Display for MethodDescriptor {
 pub struct StructuralRepr {
     pub fields: Vec<(SmallString, Representation)>,
     pub class_name: SmallString,
+    pub is_zero_sized: bool,
 }
 
 impl StructuralRepr {
-    pub fn is_zero_sized(&self) -> bool {
-        self.fields.is_empty()
-    }
-
     pub fn to_representation(&self) -> Option<Representation> {
-        if self.is_zero_sized() {
+        if self.is_zero_sized {
             None
         } else {
             Some(Representation::Object(self.class_name.clone()))
@@ -348,6 +345,7 @@ impl StructuralRepr {
 #[derive(Debug, Default)]
 pub struct RepresentationCtx {
     pub(super) structural_types: FastMap<TypeId<StructuralType>, StructuralRepr>,
+    pub(super) struct_types: FastMap<TypeId<StructType>, StructuralRepr>,
 }
 
 impl RepresentationCtx {
@@ -372,6 +370,7 @@ impl RepresentationCtx {
             Structural(structural_type) => self
                 .get_structural_repr(structural_type)
                 .to_representation(),
+            Struct(struct_type) => self.get_struct_repr(struct_type).to_representation(),
             FunctionItem(_) | Intrinsic(_) | Meta(_) | Module(_) => None,
             Error => unreachable!("Called with error type"),
         }
@@ -410,33 +409,73 @@ impl RepresentationCtx {
 
     pub fn get_structural_repr(&mut self, ty: TypeViewKind<'_, StructuralType>) -> &StructuralRepr {
         if !self.structural_types.contains_key(&ty.id) {
-            let mut name = format!("Structural${}", ty.value.fields.len());
-            for (_, ty) in ty.fields() {
-                let ty_name = self
-                    .get_representation(ty)
-                    .map(|repr| repr.into_field_descriptor());
-                if let Some(ty_name) = ty_name.as_ref() {
-                    write!(name, "{}", ty_name.mangled_name()).unwrap();
-                } else {
-                    write!(name, "0").unwrap();
-                }
-            }
+            let repr = self.compute_structural_repr(ty.ctx, ty.value);
+            self.structural_types.insert(ty.id, repr);
+        }
+        self.structural_types.get(&ty.id).unwrap()
+    }
 
+    pub fn get_struct_repr(&mut self, ty: TypeViewKind<'_, StructType>) -> &StructuralRepr {
+        if !self.struct_types.contains_key(&ty.id) {
+            let class_name = ty.ident.clone();
+            // We need to already insert something to prevent infinite recursion
+            // It is fine that the fields are empty, since they are not needed to compute the repr
+            self.struct_types.insert(
+                ty.id,
+                StructuralRepr {
+                    fields: Vec::new(),
+                    class_name: class_name.clone(),
+                    is_zero_sized: false,
+                },
+            );
             let fields = ty
                 .fields()
                 .flat_map(|(ident, ty)| {
                     self.get_representation(ty)
                         .map(|repr| (ident.clone(), repr))
                 })
-                .collect();
-
+                .collect::<Vec<_>>();
             let repr = StructuralRepr {
+                is_zero_sized: fields.is_empty(),
                 fields,
-                class_name: name.into(),
+                class_name,
             };
-
-            self.structural_types.insert(ty.id, repr);
+            self.struct_types.insert(ty.id, repr);
         }
-        self.structural_types.get(&ty.id).unwrap()
+        self.struct_types.get(&ty.id).unwrap()
+    }
+
+    fn compute_structural_repr(
+        &mut self,
+        ty_ctx: &TypeContext,
+        ty: &StructuralType,
+    ) -> StructuralRepr {
+        let mut name = format!("Structural${}", ty.fields.len());
+        for (_, ty) in &ty.fields {
+            let ty = ty.as_view(ty_ctx);
+            let ty_name = self
+                .get_representation(ty)
+                .map(|repr| repr.into_field_descriptor());
+            if let Some(ty_name) = ty_name.as_ref() {
+                write!(name, "{}", ty_name.mangled_name()).unwrap();
+            } else {
+                write!(name, "0").unwrap();
+            }
+        }
+
+        let fields = ty
+            .fields
+            .iter()
+            .flat_map(|(ident, ty)| {
+                self.get_representation(ty.as_view(ty_ctx))
+                    .map(|repr| (ident.clone(), repr))
+            })
+            .collect::<Vec<_>>();
+
+        StructuralRepr {
+            is_zero_sized: fields.is_empty(),
+            fields,
+            class_name: name.into(),
+        }
     }
 }

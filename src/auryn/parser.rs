@@ -408,6 +408,7 @@ impl Parser<'_> {
             [TokenKind::KeywordUnsafe, TokenKind::KeywordExtern] => self.parse_extern_block()?,
             [TokenKind::KeywordFn, ..] => self.parse_function_definition()?,
             [TokenKind::KeywordType, ..] => self.parse_type_alias()?,
+            [TokenKind::KeywordStruct, ..] => self.parse_struct()?,
             [..] => {
                 let got = self.peek().text.into();
                 self.push_error(DiagnosticError::ExpectedItem { got });
@@ -615,6 +616,34 @@ impl Parser<'_> {
         self.parse_type()?;
 
         self.finish_node(watcher, SyntaxNodeKind::TypeAlias);
+        Ok(())
+    }
+
+    fn parse_struct(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::KeywordStruct)?;
+        self.expect(TokenKind::Identifier)?;
+        self.parse_surrounded(
+            TokenKind::BraceOpen,
+            TokenKind::BraceClose,
+            Self::parse_struct_body,
+        )?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Struct);
+        Ok(())
+    }
+
+    fn parse_struct_body(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.parse_separated(
+            TokenKind::BraceClose,
+            TokenKind::Comma,
+            Self::parse_structural_type_field,
+        )?;
+
+        self.finish_node(watcher, SyntaxNodeKind::StructBody);
         Ok(())
     }
 
@@ -1328,6 +1357,18 @@ mod tests {
         insta::assert_debug_snapshot!(verify(
             r#"
             type Alias = {a: I32, b: Bool}
+            "#
+        ));
+    }
+
+    #[test]
+    fn test_struct() {
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            struct Foo {
+                some_value: I32,
+                b: ldaksjf
+            }
             "#
         ));
     }

@@ -317,6 +317,7 @@ expression: "compile_wrapped(\"print(1)\")"
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

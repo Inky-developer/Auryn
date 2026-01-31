@@ -37,6 +37,8 @@ pub enum SyntaxNodeKind {
     StructuralTypeField,
     ArrayType,
     UnitType,
+    Struct,
+    StructBody,
     Block,
     Statement,
     Path,

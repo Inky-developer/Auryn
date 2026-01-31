@@ -487,6 +487,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {

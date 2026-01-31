@@ -1,6 +1,6 @@
 ---
 source: src/auryn/tokenizer.rs
-expression: "tokenize(\"loop while let some_text = if true { false } else { break continue return } fn [foo.bar]\")"
+expression: "tokenize(\"loop while let some_text = if true { false } else { break continue return } fn [foo.bar] struct\")"
 ---
 [
     Token {
@@ -158,5 +158,13 @@ expression: "tokenize(\"loop while let some_text = if true { false } else { brea
     Token {
         kind: BracketClose,
         text: "]",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordStruct,
+        text: "struct",
     },
 ]

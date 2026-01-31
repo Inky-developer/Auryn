@@ -38,8 +38,12 @@ pub fn codegen(input_files: &InputFiles, air: &Air) -> CodegenOutput {
     let mut output = CodegenOutput::default();
     output.files.insert("Main".into(), main_class);
 
-    for (_type_id, structural_repr) in ctx.structural_types {
-        if structural_repr.is_zero_sized() {
+    let structurals = ctx
+        .structural_types
+        .into_values()
+        .chain(ctx.struct_types.into_values());
+    for structural_repr in structurals {
+        if structural_repr.is_zero_sized {
             continue;
         }
         let class = gen_structural_type_class(&structural_repr);

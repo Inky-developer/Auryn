@@ -145,6 +145,7 @@ bitset_item! {
         KeywordExtern,
         KeywordStatic,
         KeywordType,
+        KeywordStruct,
         KeywordTrue,
         KeywordAnd,
         KeywordOr,
@@ -238,6 +239,7 @@ impl TokenKind {
             TokenKind::KeywordExtern => "extern",
             TokenKind::KeywordStatic => "static",
             TokenKind::KeywordType => "type",
+            TokenKind::KeywordStruct => "struct",
             TokenKind::KeywordTrue => "true",
             TokenKind::KeywordFalse => "false",
             TokenKind::Whitespace => "<whitespace>",
@@ -545,6 +547,12 @@ impl<'a> Iterator for Tokenizer<'a> {
                     text: self.consume_text("static"),
                 });
             }
+            's' if self.starts_with_keyword("struct") => {
+                return Some(Token {
+                    kind: TokenKind::KeywordStruct,
+                    text: self.consume_text("struct"),
+                });
+            }
             't' if self.starts_with_keyword("type") => {
                 return Some(Token {
                     kind: TokenKind::KeywordType,
@@ -612,7 +620,7 @@ mod tests {
         insta::assert_debug_snapshot!(tokenize(" hello_World(1 + 1, 1 -2)"));
         insta::assert_debug_snapshot!(tokenize(" \n \t\n "));
         insta::assert_debug_snapshot!(tokenize(
-            "loop while let some_text = if true { false } else { break continue return } fn [foo.bar]"
+            "loop while let some_text = if true { false } else { break continue return } fn [foo.bar] struct"
         ));
         insta::assert_debug_snapshot!(tokenize(
             "comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 and true or not false -> a"

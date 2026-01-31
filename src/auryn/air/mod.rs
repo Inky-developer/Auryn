@@ -149,4 +149,18 @@ mod tests {
             "#
         ));
     }
+
+    #[test]
+    fn test_struct() {
+        insta::assert_debug_snapshot!(compile(
+            r#"
+            struct Foo {
+                a: I32,
+                b: []Foo
+            }
+
+            fn main() {}
+            "#
+        ));
+    }
 }

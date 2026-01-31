@@ -1,6 +1,6 @@
 ---
 source: src/auryn/air/mod.rs
-expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
+expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n                b: []Foo\n            }\n\n            fn main() {}\n            \"#)"
 ---
 (
     Air {
@@ -15,7 +15,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                 ),
                             ),
                             number: Some(
-                                4,
+                                187649984473768,
                             ),
                         },
                     ),
@@ -30,7 +30,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                         ),
                                     ),
                                     number: Some(
-                                        4,
+                                        187649984473768,
                                     ),
                                 },
                                 kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
@@ -45,7 +45,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                 ),
                             ),
                             number: Some(
-                                105553116266498,
+                                201053554793321,
                             ),
                         },
                         parameters: [],
@@ -60,7 +60,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                             ),
                                         ),
                                         number: Some(
-                                            4,
+                                            187649984473768,
                                         ),
                                     },
                                 ),
@@ -72,119 +72,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                         AirBlockId(
                             0,
                         ): AirBlock {
-                            nodes: [
-                                AirNode {
-                                    id: SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            211106232532993,
-                                        ),
-                                    },
-                                    kind: Assignment(
-                                        Assignment {
-                                            target: AirLocalValueId(
-                                                0,
-                                            ),
-                                            expected_type: Some(
-                                                Ident(
-                                                    SyntaxId {
-                                                        file_id: Some(
-                                                            FileId(
-                                                                1,
-                                                            ),
-                                                        ),
-                                                        number: Some(
-                                                            217621856993886,
-                                                        ),
-                                                    },
-                                                    "I32",
-                                                ),
-                                            ),
-                                            expression: AirExpression {
-                                                id: SyntaxId {
-                                                    file_id: Some(
-                                                        FileId(
-                                                            1,
-                                                        ),
-                                                    ),
-                                                    number: Some(
-                                                        221531231670420,
-                                                    ),
-                                                },
-                                                type: Computed(
-                                                    I32,
-                                                ),
-                                                kind: Constant(
-                                                    Number(
-                                                        1,
-                                                    ),
-                                                ),
-                                            },
-                                        },
-                                    ),
-                                },
-                                AirNode {
-                                    id: SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            234562480592213,
-                                        ),
-                                    },
-                                    kind: Update(
-                                        Update {
-                                            target: AirPlace {
-                                                id: SyntaxId {
-                                                    file_id: Some(
-                                                        FileId(
-                                                            1,
-                                                        ),
-                                                    ),
-                                                    number: Some(
-                                                        234562480592214,
-                                                    ),
-                                                },
-                                                type: Computed(
-                                                    I32,
-                                                ),
-                                                kind: Variable(
-                                                    AirLocalValueId(
-                                                        0,
-                                                    ),
-                                                ),
-                                            },
-                                            operator: PlusAssign,
-                                            expression: AirExpression {
-                                                id: SyntaxId {
-                                                    file_id: Some(
-                                                        FileId(
-                                                            1,
-                                                        ),
-                                                    ),
-                                                    number: Some(
-                                                        243358573614422,
-                                                    ),
-                                                },
-                                                type: Computed(
-                                                    I32,
-                                                ),
-                                                kind: Constant(
-                                                    Number(
-                                                        2,
-                                                    ),
-                                                ),
-                                            },
-                                        },
-                                    ),
-                                },
-                            ],
+                            nodes: [],
                             finalizer: Return(
                                 Null(
                                     SyntaxId {
@@ -194,7 +82,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                             ),
                                         ),
                                         number: Some(
-                                            211106232532991,
+                                            209989268339689,
                                         ),
                                     },
                                 ),
@@ -204,6 +92,37 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                 },
             },
             types: {
+                Struct(
+                    TypeId {
+                        id: SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                69499994249545,
+                            ),
+                        },
+                        kind: "auryn::auryn::air::typecheck::types::StructType",
+                    },
+                ): Computed(
+                    Struct(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    69499994249545,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::StructType",
+                        },
+                    ),
+                ),
                 Module(
                     TypeId {
                         id: SyntaxId {
@@ -246,7 +165,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                             ),
                         ),
                         number: Some(
-                            4,
+                            187649984473768,
                         ),
                     },
                 ): Function(
@@ -259,7 +178,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                     ),
                                 ),
                                 number: Some(
-                                    4,
+                                    187649984473768,
                                 ),
                             },
                         ),
@@ -270,13 +189,39 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
         ty_ctx: TypeContext {
             array_bounds: {},
             number_literals: {},
-            arrays: {},
-            metas: {
+            arrays: {
                 TypeId {
                     id: SyntaxId {
                         file_id: None,
                         number: Some(
                             2,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::ArrayType",
+                }: ArrayType {
+                    element_type: Struct(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    69499994249545,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::StructType",
+                        },
+                    ),
+                },
+            },
+            metas: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: None,
+                        number: Some(
+                            3,
                         ),
                     },
                     kind: "auryn::auryn::air::typecheck::types::MetaType",
@@ -297,6 +242,31 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                         },
                     ),
                 },
+                TypeId {
+                    id: SyntaxId {
+                        file_id: None,
+                        number: Some(
+                            4,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::MetaType",
+                }: MetaType {
+                    inner: Struct(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    69499994249545,
+                                ),
+                            },
+                            kind: "auryn::auryn::air::typecheck::types::StructType",
+                        },
+                    ),
+                },
             },
             structurals: {
                 TypeId {
@@ -311,7 +281,45 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                     fields: [],
                 },
             },
-            structs: {},
+            structs: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            69499994249545,
+                        ),
+                    },
+                    kind: "auryn::auryn::air::typecheck::types::StructType",
+                }: StructType {
+                    ident: "Foo",
+                    structural: StructuralType {
+                        fields: [
+                            (
+                                "a",
+                                I32,
+                            ),
+                            (
+                                "b",
+                                Array(
+                                    TypeId {
+                                        id: SyntaxId {
+                                            file_id: None,
+                                            number: Some(
+                                                2,
+                                            ),
+                                        },
+                                        kind: "auryn::auryn::air::typecheck::types::ArrayType",
+                                    },
+                                ),
+                            ),
+                        ],
+                    },
+                },
+            },
             externs: {},
             modules: {
                 TypeId {
@@ -338,10 +346,21 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                         ),
                                     ),
                                     number: Some(
-                                        4,
+                                        187649984473768,
                                     ),
                                 },
                                 kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
+                            },
+                        ),
+                        "Foo": Meta(
+                            TypeId {
+                                id: SyntaxId {
+                                    file_id: None,
+                                    number: Some(
+                                        4,
+                                    ),
+                                },
+                                kind: "auryn::auryn::air::typecheck::types::MetaType",
                             },
                         ),
                     },
@@ -356,7 +375,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                             ),
                         ),
                         number: Some(
-                            4,
+                            187649984473768,
                         ),
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
@@ -370,7 +389,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                 ),
                             ),
                             number: Some(
-                                105553116266498,
+                                201053554793321,
                             ),
                         },
                     },
@@ -395,7 +414,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                         ),
                                     ),
                                     number: Some(
-                                        4,
+                                        187649984473768,
                                     ),
                                 },
                             ),
@@ -417,7 +436,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                     },
                 ),
             },
-            next_id: 3,
+            next_id: 5,
         },
     },
     Diagnostics {

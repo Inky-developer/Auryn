@@ -325,6 +325,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                     fields: [],
                 },
             },
+            structs: {},
             externs: {},
             modules: {
                 TypeId {
