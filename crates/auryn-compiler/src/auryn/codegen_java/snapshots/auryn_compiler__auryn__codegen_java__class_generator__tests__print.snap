@@ -1,0 +1,71 @@
+---
+source: crates/auryn-compiler/src/auryn/codegen_java/class_generator.rs
+expression: "generate_class_wrapped(\"print(2 * 3)\")"
+---
+ClassData
+  this_class:		#2	Main
+  super_class:		#28	java/lang/Object
+Constant pool:
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			java/io/PrintStream
+  #06 = Class		#5	java/io/PrintStream
+  #07 = Utf8			java/lang/System
+  #08 = Class		#7	java/lang/System
+  #09 = Utf8			out
+  #10 = Utf8			Ljava/io/PrintStream;
+  #11 = NameAndType	#9:#10	out:Ljava/io/PrintStream;
+  #12 = FieldRef	#8.#11	java/lang/System.out:Ljava/io/PrintStream;
+  #13 = Integer			2
+  #14 = Integer			3
+  #15 = Utf8			println
+  #16 = Utf8			(I)V
+  #17 = NameAndType	#15:#16	println:(I)V
+  #18 = MethodRef	#6.#17	java/io/PrintStream:println:(I)V
+  #19 = Utf8			Code
+  #20 = Utf8			StackMapTable
+  #21 = Utf8			main
+  #22 = Utf8			([Ljava/lang/String;)V
+  #23 = Utf8			[Ljava/lang/String;
+  #24 = Class		#23	[Ljava/lang/String;
+  #25 = NameAndType	#3:#4	main$main:()V
+  #26 = MethodRef	#2.#25	Main:main$main:()V
+  #27 = Utf8			java/lang/Object
+  #28 = Class		#27	java/lang/Object
+
+{
+  fn main$main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 3, locals = 1
+       0: GetStatic		#12	java/lang/System.out:Ljava/io/PrintStream;
+       3: LoadConstant		#13	2
+       5: LoadConstant		#14	3
+       7: IMul
+       8: InvokeVirtual		#18	java/io/PrintStream:println:(I)V
+      11: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 2
+      0: InvokeStatic		#26	Main:main$main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

@@ -1,0 +1,24 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"print(\\n1)\")"
+---
+syntax_tree:
+0..9 Root
+|0..9 Block
+||0..9 Statement
+|||0..9 Expression
+||||0..9 PostfixOperation
+|||||0..5 Value
+||||||0..5 Ident
+|||||||Identifier `print`
+|||||5..9 PostfixOperator
+||||||5..9 ArgumentList
+|||||||ParensOpen `(`
+|||||||Newline `\n`
+|||||||7..8 Expression
+||||||||7..8 Value
+|||||||||7..8 NumberLiteral
+||||||||||NumberLiteral `1`
+|||||||ParensClose `)`
+
+diagnostics:

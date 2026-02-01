@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "auryn"
+name = "auryn-compiler"
 version = "0.1.0"
 dependencies = [
  "ariadne",

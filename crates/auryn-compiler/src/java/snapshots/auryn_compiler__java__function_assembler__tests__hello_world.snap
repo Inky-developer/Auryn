@@ -1,0 +1,352 @@
+---
+source: crates/auryn-compiler/src/java/function_assembler.rs
+expression: "(pool, method)"
+---
+(
+    ConstantPoolBuilder {
+        cache: {
+            Utf8(
+                "Hello World!",
+            ): ConstantPoolIndex(
+                15,
+            ),
+            Utf8(
+                "(Ljava/lang/String;)V",
+            ): ConstantPoolIndex(
+                18,
+            ),
+            Utf8(
+                "StackMapTable",
+            ): ConstantPoolIndex(
+                22,
+            ),
+            Utf8(
+                "java/io/PrintStream",
+            ): ConstantPoolIndex(
+                5,
+            ),
+            NameAndType {
+                name_index: ConstantPoolIndex(
+                    17,
+                ),
+                type_index: ConstantPoolIndex(
+                    18,
+                ),
+            }: ConstantPoolIndex(
+                19,
+            ),
+            Utf8(
+                "java/lang/String",
+            ): ConstantPoolIndex(
+                7,
+            ),
+            Class {
+                name_index: ConstantPoolIndex(
+                    9,
+                ),
+            }: ConstantPoolIndex(
+                10,
+            ),
+            Utf8(
+                "java/lang/System",
+            ): ConstantPoolIndex(
+                9,
+            ),
+            Utf8(
+                "Ljava/io/PrintStream;",
+            ): ConstantPoolIndex(
+                12,
+            ),
+            Class {
+                name_index: ConstantPoolIndex(
+                    1,
+                ),
+            }: ConstantPoolIndex(
+                2,
+            ),
+            Utf8(
+                "println",
+            ): ConstantPoolIndex(
+                17,
+            ),
+            MethodRef {
+                class_index: ConstantPoolIndex(
+                    6,
+                ),
+                name_and_type_index: ConstantPoolIndex(
+                    19,
+                ),
+            }: ConstantPoolIndex(
+                20,
+            ),
+            String {
+                string_index: ConstantPoolIndex(
+                    15,
+                ),
+            }: ConstantPoolIndex(
+                16,
+            ),
+            Class {
+                name_index: ConstantPoolIndex(
+                    7,
+                ),
+            }: ConstantPoolIndex(
+                8,
+            ),
+            NameAndType {
+                name_index: ConstantPoolIndex(
+                    11,
+                ),
+                type_index: ConstantPoolIndex(
+                    12,
+                ),
+            }: ConstantPoolIndex(
+                13,
+            ),
+            Utf8(
+                "Main",
+            ): ConstantPoolIndex(
+                1,
+            ),
+            FieldRef {
+                class_index: ConstantPoolIndex(
+                    10,
+                ),
+                name_and_type_index: ConstantPoolIndex(
+                    13,
+                ),
+            }: ConstantPoolIndex(
+                14,
+            ),
+            Utf8(
+                "Code",
+            ): ConstantPoolIndex(
+                21,
+            ),
+            Class {
+                name_index: ConstantPoolIndex(
+                    5,
+                ),
+            }: ConstantPoolIndex(
+                6,
+            ),
+            Utf8(
+                "()V",
+            ): ConstantPoolIndex(
+                4,
+            ),
+            Utf8(
+                "out",
+            ): ConstantPoolIndex(
+                11,
+            ),
+            Utf8(
+                "main",
+            ): ConstantPoolIndex(
+                3,
+            ),
+        },
+        entries: [
+            None,
+            Some(
+                Utf8(
+                    "Main",
+                ),
+            ),
+            Some(
+                Class {
+                    name_index: ConstantPoolIndex(
+                        1,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "main",
+                ),
+            ),
+            Some(
+                Utf8(
+                    "()V",
+                ),
+            ),
+            Some(
+                Utf8(
+                    "java/io/PrintStream",
+                ),
+            ),
+            Some(
+                Class {
+                    name_index: ConstantPoolIndex(
+                        5,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "java/lang/String",
+                ),
+            ),
+            Some(
+                Class {
+                    name_index: ConstantPoolIndex(
+                        7,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "java/lang/System",
+                ),
+            ),
+            Some(
+                Class {
+                    name_index: ConstantPoolIndex(
+                        9,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "out",
+                ),
+            ),
+            Some(
+                Utf8(
+                    "Ljava/io/PrintStream;",
+                ),
+            ),
+            Some(
+                NameAndType {
+                    name_index: ConstantPoolIndex(
+                        11,
+                    ),
+                    type_index: ConstantPoolIndex(
+                        12,
+                    ),
+                },
+            ),
+            Some(
+                FieldRef {
+                    class_index: ConstantPoolIndex(
+                        10,
+                    ),
+                    name_and_type_index: ConstantPoolIndex(
+                        13,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "Hello World!",
+                ),
+            ),
+            Some(
+                String {
+                    string_index: ConstantPoolIndex(
+                        15,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "println",
+                ),
+            ),
+            Some(
+                Utf8(
+                    "(Ljava/lang/String;)V",
+                ),
+            ),
+            Some(
+                NameAndType {
+                    name_index: ConstantPoolIndex(
+                        17,
+                    ),
+                    type_index: ConstantPoolIndex(
+                        18,
+                    ),
+                },
+            ),
+            Some(
+                MethodRef {
+                    class_index: ConstantPoolIndex(
+                        6,
+                    ),
+                    name_and_type_index: ConstantPoolIndex(
+                        19,
+                    ),
+                },
+            ),
+            Some(
+                Utf8(
+                    "Code",
+                ),
+            ),
+            Some(
+                Utf8(
+                    "StackMapTable",
+                ),
+            ),
+        ],
+        next_index: 23,
+    },
+    Method {
+        flags: PUBLIC | STATIC,
+        name_index: ConstantPoolIndex(
+            3,
+        ),
+        descriptor_index: ConstantPoolIndex(
+            4,
+        ),
+        attributes: [
+            AttributeInfo {
+                name_index: ConstantPoolIndex(
+                    21,
+                ),
+                attribute: Code(
+                    CodeAttribute {
+                        max_locals: 1,
+                        max_stack: 2,
+                        code: [
+                            GetStatic(
+                                ConstantPoolIndex(
+                                    14,
+                                ),
+                            ),
+                            Ldc(
+                                ConstantPoolIndex(
+                                    16,
+                                ),
+                            ),
+                            InvokeVirtual(
+                                ConstantPoolIndex(
+                                    20,
+                                ),
+                            ),
+                            Return,
+                        ],
+                        attributes: [
+                            AttributeInfo {
+                                name_index: ConstantPoolIndex(
+                                    22,
+                                ),
+                                attribute: StackMapTable(
+                                    StackMapTableAttribute {
+                                        entries: [
+                                            Full {
+                                                offset_delta: 0,
+                                                locals: [],
+                                                stack: [],
+                                            },
+                                        ],
+                                    },
+                                ),
+                            },
+                        ],
+                    },
+                ),
+            },
+        ],
+    },
+)

@@ -1,0 +1,37 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"if 1 { print(42) }\")"
+---
+syntax_tree:
+0..18 Root
+|0..18 Block
+||0..18 Statement
+|||0..18 IfStatement
+||||KeywordIf `if`
+||||Whitespace ` `
+||||3..5 Expression
+|||||3..5 Value
+||||||3..5 NumberLiteral
+|||||||NumberLiteral `1`
+|||||||Whitespace ` `
+||||BraceOpen `{`
+||||Whitespace ` `
+||||7..17 Block
+|||||7..17 Statement
+||||||7..17 Expression
+|||||||7..17 PostfixOperation
+||||||||7..12 Value
+|||||||||7..12 Ident
+||||||||||Identifier `print`
+||||||||12..17 PostfixOperator
+|||||||||12..17 ArgumentList
+||||||||||ParensOpen `(`
+||||||||||13..15 Expression
+|||||||||||13..15 Value
+||||||||||||13..15 NumberLiteral
+|||||||||||||NumberLiteral `42`
+||||||||||ParensClose `)`
+||||||||||Whitespace ` `
+||||BraceClose `}`
+
+diagnostics:

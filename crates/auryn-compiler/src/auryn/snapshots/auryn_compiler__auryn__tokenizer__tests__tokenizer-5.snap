@@ -1,0 +1,278 @@
+---
+source: crates/auryn-compiler/src/auryn/tokenizer.rs
+expression: "tokenize(\"comparisons = a == 1 && a != 2 && a > 3 && a >= 4 && a < 5 && a <= 6 and true or not false -> a\")"
+---
+[
+    Token {
+        kind: Identifier,
+        text: "comparisons",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Equal,
+        text: "=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: DoubleEqual,
+        text: "==",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "1",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NotEqual,
+        text: "!=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "2",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Greater,
+        text: ">",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "3",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: GreaterOrEqual,
+        text: ">=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "4",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Less,
+        text: "<",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "5",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Error,
+        text: "&",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: LessOrEqual,
+        text: "<=",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "6",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordAnd,
+        text: "and",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordTrue,
+        text: "true",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordOr,
+        text: "or",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordNot,
+        text: "not",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordFalse,
+        text: "false",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Arrow,
+        text: "->",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "a",
+    },
+]

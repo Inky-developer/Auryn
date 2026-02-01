@@ -1,0 +1,41 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            type Alias = {a: I32, b: Bool}\n            \"#)"
+---
+syntax_tree:
+0..56 Root
+|0..56 File
+||Newline `\n`
+||Whitespace `            `
+||13..43 Item
+|||13..43 TypeAlias
+||||KeywordType `type`
+||||Whitespace ` `
+||||Identifier `Alias`
+||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||26..43 Type
+|||||26..43 StructuralType
+||||||BraceOpen `{`
+||||||27..33 StructuralTypeField
+|||||||Identifier `a`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||30..33 Type
+||||||||30..33 Ident
+|||||||||Identifier `I32`
+||||||Comma `,`
+||||||Whitespace ` `
+||||||35..42 StructuralTypeField
+|||||||Identifier `b`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||38..42 Type
+||||||||38..42 Ident
+|||||||||Identifier `Bool`
+||||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

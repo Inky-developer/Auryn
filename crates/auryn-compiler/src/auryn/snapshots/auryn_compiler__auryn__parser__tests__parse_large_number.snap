@@ -1,0 +1,14 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"9999999999999\")"
+---
+syntax_tree:
+0..13 Root
+|0..13 Block
+||0..13 Statement
+|||0..13 Expression
+||||0..13 Value
+|||||0..13 NumberLiteral
+||||||NumberLiteral `9999999999999`
+
+diagnostics:

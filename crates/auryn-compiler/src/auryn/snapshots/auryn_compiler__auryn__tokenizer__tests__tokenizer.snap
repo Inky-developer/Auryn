@@ -1,0 +1,34 @@
+---
+source: crates/auryn-compiler/src/auryn/tokenizer.rs
+expression: "tokenize(\" 1 +4  \\n\")"
+---
+[
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "1",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Plus,
+        text: "+",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "4",
+    },
+    Token {
+        kind: Whitespace,
+        text: "  ",
+    },
+    Token {
+        kind: Newline,
+        text: "\n",
+    },
+]

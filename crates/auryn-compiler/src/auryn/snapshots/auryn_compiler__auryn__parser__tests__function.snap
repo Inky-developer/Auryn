@@ -1,0 +1,74 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(\"fn foo(a: Int,\\nb: []String, c: ()) -> Null { print(9000) }\")"
+---
+syntax_tree:
+0..58 Root
+|0..58 File
+||0..58 Item
+|||0..58 FunctionDefinition
+||||KeywordFn `fn`
+||||Whitespace ` `
+||||Identifier `foo`
+||||6..35 ParameterList
+|||||ParensOpen `(`
+|||||7..13 ParameterDefinition
+||||||Identifier `a`
+||||||Colon `:`
+||||||Whitespace ` `
+||||||10..13 Type
+|||||||10..13 Ident
+||||||||Identifier `Int`
+|||||Comma `,`
+|||||Newline `\n`
+|||||15..26 ParameterDefinition
+||||||Identifier `b`
+||||||Colon `:`
+||||||Whitespace ` `
+||||||18..26 Type
+|||||||18..26 ArrayType
+||||||||BracketOpen `[`
+||||||||BracketClose `]`
+||||||||20..26 Type
+|||||||||20..26 Ident
+||||||||||Identifier `String`
+|||||Comma `,`
+|||||Whitespace ` `
+|||||28..33 ParameterDefinition
+||||||Identifier `c`
+||||||Colon `:`
+||||||Whitespace ` `
+||||||31..33 Type
+|||||||31..33 UnitType
+||||||||ParensOpen `(`
+||||||||ParensClose `)`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||35..43 ReturnType
+|||||Arrow `->`
+|||||Whitespace ` `
+|||||38..43 Type
+||||||38..43 Ident
+|||||||Identifier `Null`
+|||||||Whitespace ` `
+||||BraceOpen `{`
+||||Whitespace ` `
+||||45..57 Block
+|||||45..57 Statement
+||||||45..57 Expression
+|||||||45..57 PostfixOperation
+||||||||45..50 Value
+|||||||||45..50 Ident
+||||||||||Identifier `print`
+||||||||50..57 PostfixOperator
+|||||||||50..57 ArgumentList
+||||||||||ParensOpen `(`
+||||||||||51..55 Expression
+|||||||||||51..55 Value
+||||||||||||51..55 NumberLiteral
+|||||||||||||NumberLiteral `9000`
+||||||||||ParensClose `)`
+||||||||||Whitespace ` `
+||||BraceClose `}`
+
+diagnostics:

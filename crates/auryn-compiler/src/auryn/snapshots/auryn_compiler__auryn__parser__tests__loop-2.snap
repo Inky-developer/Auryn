@@ -1,0 +1,21 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"loop { break }\")"
+---
+syntax_tree:
+0..14 Root
+|0..14 Block
+||0..14 Statement
+|||0..14 Loop
+||||KeywordLoop `loop`
+||||Whitespace ` `
+||||BraceOpen `{`
+||||Whitespace ` `
+||||7..13 Block
+|||||7..13 Statement
+||||||7..13 Break
+|||||||KeywordBreak `break`
+|||||||Whitespace ` `
+||||BraceClose `}`
+
+diagnostics:

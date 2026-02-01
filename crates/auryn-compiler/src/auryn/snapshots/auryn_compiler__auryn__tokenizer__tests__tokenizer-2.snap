@@ -1,0 +1,66 @@
+---
+source: crates/auryn-compiler/src/auryn/tokenizer.rs
+expression: "tokenize(\" hello_World(1 + 1, 1 -2)\")"
+---
+[
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "hello_World",
+    },
+    Token {
+        kind: ParensOpen,
+        text: "(",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "1",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Plus,
+        text: "+",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "1",
+    },
+    Token {
+        kind: Comma,
+        text: ",",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "1",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Minus,
+        text: "-",
+    },
+    Token {
+        kind: NumberLiteral,
+        text: "2",
+    },
+    Token {
+        kind: ParensClose,
+        text: ")",
+    },
+]

@@ -1,0 +1,19 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"(3)\")"
+---
+syntax_tree:
+0..3 Root
+|0..3 Block
+||0..3 Statement
+|||0..3 Expression
+||||0..3 Value
+|||||0..3 Parenthesis
+||||||ParensOpen `(`
+||||||1..2 Expression
+|||||||1..2 Value
+||||||||1..2 NumberLiteral
+|||||||||NumberLiteral `3`
+||||||ParensClose `)`
+
+diagnostics:

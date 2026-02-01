@@ -1,0 +1,32 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"1 * 2 + 3\")"
+---
+syntax_tree:
+0..9 Root
+|0..9 Block
+||0..9 Statement
+|||0..9 Expression
+||||0..9 BinaryOperation
+|||||0..6 Expression
+||||||0..6 BinaryOperation
+|||||||0..2 Expression
+||||||||0..2 Value
+|||||||||0..2 NumberLiteral
+||||||||||NumberLiteral `1`
+||||||||||Whitespace ` `
+|||||||Times `*`
+|||||||Whitespace ` `
+|||||||4..6 Expression
+||||||||4..6 Value
+|||||||||4..6 NumberLiteral
+||||||||||NumberLiteral `2`
+||||||||||Whitespace ` `
+|||||Plus `+`
+|||||Whitespace ` `
+|||||8..9 Expression
+||||||8..9 Value
+|||||||8..9 NumberLiteral
+||||||||NumberLiteral `3`
+
+diagnostics:

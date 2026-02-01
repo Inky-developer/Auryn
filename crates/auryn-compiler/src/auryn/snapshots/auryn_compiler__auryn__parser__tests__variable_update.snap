@@ -1,0 +1,23 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"a = 3\")"
+---
+syntax_tree:
+0..5 Root
+|0..5 Block
+||0..5 Statement
+|||0..5 VariableUpdate
+||||0..2 Path
+|||||0..2 Expression
+||||||0..2 Value
+|||||||0..2 Ident
+||||||||Identifier `a`
+||||||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||4..5 Expression
+|||||4..5 Value
+||||||4..5 NumberLiteral
+|||||||NumberLiteral `3`
+
+diagnostics:

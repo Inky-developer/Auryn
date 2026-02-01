@@ -1,27 +1,15 @@
-[package]
-name = "auryn"
-version = "0.1.0"
-edition = "2024"
-rust-version = "1.93"
-description = "The auryn language compiler"
-repository = "https://github.com/Inky-developer/Auryn"
-
 [workspace]
 members = ["crates/*"]
 resolver = "3"
 
 [workspace.dependencies]
-insta = { version = "1.44.3", features = ["glob"] }
 stdx = { path = "crates/stdx" }
+auryn-compiler = { path = "crates/auryn-compiler" }
 
-[dependencies]
+insta = { version = "1.44.3", features = ["glob"] }
 ariadne = "0.6.0"
 # Should just resolve to whatever version ariadne uses
 yansi = "*"
-stdx.workspace = true
-
-[dev-dependencies]
-insta.workspace = true
 
 [profile.release]
 strip = true
@@ -29,5 +17,5 @@ lto = true
 codegen-units = 1
 panic = "abort"
 
-[lints.clippy]
+[workspace.lints.clippy]
 dbg_macro = "warn"

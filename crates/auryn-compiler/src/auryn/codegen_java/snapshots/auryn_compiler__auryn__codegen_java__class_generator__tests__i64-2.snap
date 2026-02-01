@@ -1,0 +1,113 @@
+---
+source: crates/auryn-compiler/src/auryn/codegen_java/class_generator.rs
+expression: "generate_class(r#\"\n            fn main() {\n                foo(2034)\n            }\n\n            fn foo(a: I64) {\n                let b = a + 1            \n                print(b % 2 == 1)\n            }\n            \"#)"
+---
+ClassData
+  this_class:		#2	Main
+  super_class:		#36	java/lang/Object
+Constant pool:
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Long			2034
+  #07 = Utf8			main$foo
+  #08 = Utf8			(J)V
+  #09 = NameAndType	#7:#8	main$foo:(J)V
+  #10 = MethodRef	#2.#9	Main:main$foo:(J)V
+  #11 = Utf8			Code
+  #12 = Utf8			StackMapTable
+  #13 = Utf8			java/io/PrintStream
+  #14 = Class		#13	java/io/PrintStream
+  #15 = Long			1
+  #17 = Utf8			java/lang/System
+  #18 = Class		#17	java/lang/System
+  #19 = Utf8			out
+  #20 = Utf8			Ljava/io/PrintStream;
+  #21 = NameAndType	#19:#20	out:Ljava/io/PrintStream;
+  #22 = FieldRef	#18.#21	java/lang/System.out:Ljava/io/PrintStream;
+  #23 = Long			2
+  #25 = Utf8			println
+  #26 = Utf8			(Z)V
+  #27 = NameAndType	#25:#26	println:(Z)V
+  #28 = MethodRef	#14.#27	java/io/PrintStream:println:(Z)V
+  #29 = Utf8			main
+  #30 = Utf8			([Ljava/lang/String;)V
+  #31 = Utf8			[Ljava/lang/String;
+  #32 = Class		#31	[Ljava/lang/String;
+  #33 = NameAndType	#3:#4	main$main:()V
+  #34 = MethodRef	#2.#33	Main:main$main:()V
+  #35 = Utf8			java/lang/Object
+  #36 = Class		#35	java/lang/Object
+
+{
+  fn main$main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 2, locals = 1
+      0: Ldc2W			#5	2034
+      3: InvokeStatic		#10	Main:main$foo:(J)V
+      6: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main$foo {
+    descriptor: (J)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 5, locals = 5
+       0: LLoad			0
+       2: Ldc2W			#15	1
+       5: LAdd
+       6: LStore		2
+       8: GetStatic		#22	java/lang/System.out:Ljava/io/PrintStream;
+      11: LLoad			2
+      13: Ldc2W			#23	2
+      16: LRem
+      17: Ldc2W			#15	1
+      20: Lcmp
+      21: IfI !=		28
+      24: IConst			1
+      25: Goto				29
+      28: IConst			0
+      29: InvokeVirtual		#28	java/io/PrintStream:println:(Z)V
+      32: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Long ]
+          Stack = [  ]
+        Full
+          offset_delta = 23
+          locals = [ Long,Long ]
+          Stack = [ Object 'java/io/PrintStream' ]
+        Full
+          offset_delta = 3
+          locals = [ Long,Long ]
+          Stack = [ Object 'java/io/PrintStream' ]
+        Full
+          offset_delta = 0
+          locals = [ Long,Long ]
+          Stack = [ Object 'java/io/PrintStream',Integer ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 2
+      0: InvokeStatic		#34	Main:main$main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

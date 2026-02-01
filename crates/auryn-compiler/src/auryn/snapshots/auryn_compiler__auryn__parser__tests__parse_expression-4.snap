@@ -1,0 +1,50 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"1 + 1 == 2 or true and false\")"
+---
+syntax_tree:
+0..28 Root
+|0..28 Block
+||0..28 Statement
+|||0..28 Expression
+||||0..28 BinaryOperation
+|||||0..11 Expression
+||||||0..11 BinaryOperation
+|||||||0..6 Expression
+||||||||0..6 BinaryOperation
+|||||||||0..2 Expression
+||||||||||0..2 Value
+|||||||||||0..2 NumberLiteral
+||||||||||||NumberLiteral `1`
+||||||||||||Whitespace ` `
+|||||||||Plus `+`
+|||||||||Whitespace ` `
+|||||||||4..6 Expression
+||||||||||4..6 Value
+|||||||||||4..6 NumberLiteral
+||||||||||||NumberLiteral `1`
+||||||||||||Whitespace ` `
+|||||||DoubleEqual `==`
+|||||||Whitespace ` `
+|||||||9..11 Expression
+||||||||9..11 Value
+|||||||||9..11 NumberLiteral
+||||||||||NumberLiteral `2`
+||||||||||Whitespace ` `
+|||||KeywordOr `or`
+|||||Whitespace ` `
+|||||14..28 Expression
+||||||14..28 BinaryOperation
+|||||||14..19 Expression
+||||||||14..19 Value
+|||||||||14..19 BooleanLiteral
+||||||||||KeywordTrue `true`
+||||||||||Whitespace ` `
+|||||||KeywordAnd `and`
+|||||||Whitespace ` `
+|||||||23..28 Expression
+||||||||23..28 Value
+|||||||||23..28 BooleanLiteral
+||||||||||KeywordFalse `false`
+
+diagnostics:

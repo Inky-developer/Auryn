@@ -1,0 +1,23 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"1 == 1\")"
+---
+syntax_tree:
+0..6 Root
+|0..6 Block
+||0..6 Statement
+|||0..6 Expression
+||||0..6 BinaryOperation
+|||||0..2 Expression
+||||||0..2 Value
+|||||||0..2 NumberLiteral
+||||||||NumberLiteral `1`
+||||||||Whitespace ` `
+|||||DoubleEqual `==`
+|||||Whitespace ` `
+|||||5..6 Expression
+||||||5..6 Value
+|||||||5..6 NumberLiteral
+||||||||NumberLiteral `1`
+
+diagnostics:

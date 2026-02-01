@@ -1,0 +1,36 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(r#\"\n            let a = {a: false, }\n            \"#)"
+---
+syntax_tree:
+0..46 Root
+|0..46 Block
+||Newline `\n`
+||Whitespace `            `
+||13..33 Statement
+|||13..33 Assignment
+||||KeywordLet `let`
+||||Whitespace ` `
+||||Identifier `a`
+||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||21..33 Expression
+|||||21..33 Value
+||||||21..33 StructLiteral
+|||||||BraceOpen `{`
+|||||||22..30 StructLiteralField
+||||||||Identifier `a`
+||||||||Colon `:`
+||||||||Whitespace ` `
+||||||||25..30 Expression
+|||||||||25..30 Value
+||||||||||25..30 BooleanLiteral
+|||||||||||KeywordFalse `false`
+|||||||Comma `,`
+|||||||Whitespace ` `
+|||||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

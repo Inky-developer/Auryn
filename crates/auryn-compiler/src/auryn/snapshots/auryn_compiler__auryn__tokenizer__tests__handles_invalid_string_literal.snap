@@ -1,0 +1,10 @@
+---
+source: crates/auryn-compiler/src/auryn/tokenizer.rs
+expression: "tokenize(\"\\\"\")"
+---
+[
+    Token {
+        kind: StringLiteral,
+        text: "\"",
+    },
+]

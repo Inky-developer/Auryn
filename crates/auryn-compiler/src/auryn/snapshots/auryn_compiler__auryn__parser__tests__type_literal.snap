@@ -1,0 +1,85 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(r#\"\n            let a: {\n                a: I32,\n                b: I64\n            } = {\n                a: 10,\n                b: 20 * 2\n            }\n            \"#)"
+---
+syntax_tree:
+0..162 Root
+|0..162 Block
+||Newline `\n`
+||Whitespace `            `
+||13..149 Statement
+|||13..149 Assignment
+||||KeywordLet `let`
+||||Whitespace ` `
+||||Identifier `a`
+||||Colon `:`
+||||Whitespace ` `
+||||20..83 Type
+|||||20..83 StructuralType
+||||||BraceOpen `{`
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||38..44 StructuralTypeField
+|||||||Identifier `a`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||41..44 Type
+||||||||41..44 Ident
+|||||||||Identifier `I32`
+||||||Comma `,`
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||62..81 StructuralTypeField
+|||||||Identifier `b`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||65..81 Type
+||||||||65..81 Ident
+|||||||||Identifier `I64`
+|||||||||Newline `\n`
+|||||||||Whitespace `            `
+||||||BraceClose `}`
+||||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||85..149 Expression
+|||||85..149 Value
+||||||85..149 StructLiteral
+|||||||BraceOpen `{`
+|||||||Newline `\n`
+|||||||Whitespace `                `
+|||||||103..108 StructLiteralField
+||||||||Identifier `a`
+||||||||Colon `:`
+||||||||Whitespace ` `
+||||||||106..108 Expression
+|||||||||106..108 Value
+||||||||||106..108 NumberLiteral
+|||||||||||NumberLiteral `10`
+|||||||Comma `,`
+|||||||Newline `\n`
+|||||||Whitespace `                `
+|||||||126..148 StructLiteralField
+||||||||Identifier `b`
+||||||||Colon `:`
+||||||||Whitespace ` `
+||||||||129..148 Expression
+|||||||||129..148 BinaryOperation
+||||||||||129..132 Expression
+|||||||||||129..132 Value
+||||||||||||129..132 NumberLiteral
+|||||||||||||NumberLiteral `20`
+|||||||||||||Whitespace ` `
+||||||||||Times `*`
+||||||||||Whitespace ` `
+||||||||||134..148 Expression
+|||||||||||134..148 Value
+||||||||||||134..148 NumberLiteral
+|||||||||||||NumberLiteral `2`
+|||||||||||||Newline `\n`
+|||||||||||||Whitespace `            `
+|||||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

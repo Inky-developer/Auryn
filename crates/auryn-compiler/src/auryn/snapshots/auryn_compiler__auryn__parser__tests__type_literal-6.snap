@@ -1,0 +1,25 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(r#\"\n            while Foo {}\n            \"#)"
+---
+syntax_tree:
+0..38 Root
+|0..38 Block
+||Newline `\n`
+||Whitespace `            `
+||13..25 Statement
+|||13..25 WhileLoop
+||||KeywordWhile `while`
+||||Whitespace ` `
+||||19..23 Expression
+|||||19..23 Value
+||||||19..23 Ident
+|||||||Identifier `Foo`
+|||||||Whitespace ` `
+||||BraceOpen `{`
+||||24..24 Block ''
+||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

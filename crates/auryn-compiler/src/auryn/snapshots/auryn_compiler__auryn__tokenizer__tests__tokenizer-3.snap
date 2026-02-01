@@ -1,0 +1,26 @@
+---
+source: crates/auryn-compiler/src/auryn/tokenizer.rs
+expression: "tokenize(\" \\n \\t\\n \")"
+---
+[
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Newline,
+        text: "\n",
+    },
+    Token {
+        kind: Whitespace,
+        text: " \t",
+    },
+    Token {
+        kind: Newline,
+        text: "\n",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+]

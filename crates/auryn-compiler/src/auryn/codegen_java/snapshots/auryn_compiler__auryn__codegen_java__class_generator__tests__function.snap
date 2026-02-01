@@ -1,0 +1,88 @@
+---
+source: crates/auryn-compiler/src/auryn/codegen_java/class_generator.rs
+expression: "generate_class(\"fn main() { bar() }\\nfn bar() { print(1) }\")"
+---
+ClassData
+  this_class:		#2	Main
+  super_class:		#33	java/lang/Object
+Constant pool:
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$bar
+  #04 = Utf8			()V
+  #05 = Utf8			java/io/PrintStream
+  #06 = Class		#5	java/io/PrintStream
+  #07 = Utf8			java/lang/String
+  #08 = Class		#7	java/lang/String
+  #09 = Utf8			java/lang/System
+  #10 = Class		#9	java/lang/System
+  #11 = Utf8			out
+  #12 = Utf8			Ljava/io/PrintStream;
+  #13 = NameAndType	#11:#12	out:Ljava/io/PrintStream;
+  #14 = FieldRef	#10.#13	java/lang/System.out:Ljava/io/PrintStream;
+  #15 = Utf8			1
+  #16 = String		#15	1
+  #17 = Utf8			println
+  #18 = Utf8			(Ljava/lang/String;)V
+  #19 = NameAndType	#17:#18	println:(Ljava/lang/String;)V
+  #20 = MethodRef	#6.#19	java/io/PrintStream:println:(Ljava/lang/String;)V
+  #21 = Utf8			Code
+  #22 = Utf8			StackMapTable
+  #23 = Utf8			main$main
+  #24 = NameAndType	#3:#4	main$bar:()V
+  #25 = MethodRef	#2.#24	Main:main$bar:()V
+  #26 = Utf8			main
+  #27 = Utf8			([Ljava/lang/String;)V
+  #28 = Utf8			[Ljava/lang/String;
+  #29 = Class		#28	[Ljava/lang/String;
+  #30 = NameAndType	#23:#4	main$main:()V
+  #31 = MethodRef	#2.#30	Main:main$main:()V
+  #32 = Utf8			java/lang/Object
+  #33 = Class		#32	java/lang/Object
+
+{
+  fn main$bar {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 2, locals = 1
+      0: GetStatic		#14	java/lang/System.out:Ljava/io/PrintStream;
+      3: LoadConstant		#16	1
+      5: InvokeVirtual		#20	java/io/PrintStream:println:(Ljava/lang/String;)V
+      8: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main$main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 1
+      0: InvokeStatic		#25	Main:main$bar:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 2
+      0: InvokeStatic		#31	Main:main$main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

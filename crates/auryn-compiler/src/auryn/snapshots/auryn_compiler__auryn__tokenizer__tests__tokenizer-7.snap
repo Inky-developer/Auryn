@@ -1,0 +1,74 @@
+---
+source: crates/auryn-compiler/src/auryn/tokenizer.rs
+expression: "tokenize(\"unsafe extern type Foo { static let bar }\")"
+---
+[
+    Token {
+        kind: KeywordUnsafe,
+        text: "unsafe",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordExtern,
+        text: "extern",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordType,
+        text: "type",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "Foo",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: BraceOpen,
+        text: "{",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordStatic,
+        text: "static",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: KeywordLet,
+        text: "let",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: Identifier,
+        text: "bar",
+    },
+    Token {
+        kind: Whitespace,
+        text: " ",
+    },
+    Token {
+        kind: BraceClose,
+        text: "}",
+    },
+]

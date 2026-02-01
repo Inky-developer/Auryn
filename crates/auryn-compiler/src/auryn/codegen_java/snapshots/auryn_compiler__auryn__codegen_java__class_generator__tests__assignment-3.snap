@@ -1,0 +1,74 @@
+---
+source: crates/auryn-compiler/src/auryn/codegen_java/class_generator.rs
+expression: "generate_class_wrapped(\"let a: I32 = 7\\na = a * a\\nprint(a)\")"
+---
+ClassData
+  this_class:		#2	Main
+  super_class:		#27	java/lang/Object
+Constant pool:
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			java/io/PrintStream
+  #06 = Class		#5	java/io/PrintStream
+  #07 = Integer			7
+  #08 = Utf8			java/lang/System
+  #09 = Class		#8	java/lang/System
+  #10 = Utf8			out
+  #11 = Utf8			Ljava/io/PrintStream;
+  #12 = NameAndType	#10:#11	out:Ljava/io/PrintStream;
+  #13 = FieldRef	#9.#12	java/lang/System.out:Ljava/io/PrintStream;
+  #14 = Utf8			println
+  #15 = Utf8			(I)V
+  #16 = NameAndType	#14:#15	println:(I)V
+  #17 = MethodRef	#6.#16	java/io/PrintStream:println:(I)V
+  #18 = Utf8			Code
+  #19 = Utf8			StackMapTable
+  #20 = Utf8			main
+  #21 = Utf8			([Ljava/lang/String;)V
+  #22 = Utf8			[Ljava/lang/String;
+  #23 = Class		#22	[Ljava/lang/String;
+  #24 = NameAndType	#3:#4	main$main:()V
+  #25 = MethodRef	#2.#24	Main:main$main:()V
+  #26 = Utf8			java/lang/Object
+  #27 = Class		#26	java/lang/Object
+
+{
+  fn main$main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 2, locals = 2
+       0: LoadConstant		#7	7
+       2: IStore			0
+       4: ILoad			0
+       6: ILoad			0
+       8: IMul
+       9: IStore			0
+      11: GetStatic		#13	java/lang/System.out:Ljava/io/PrintStream;
+      14: ILoad			0
+      16: InvokeVirtual		#17	java/io/PrintStream:println:(I)V
+      19: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 2
+      0: InvokeStatic		#25	Main:main$main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

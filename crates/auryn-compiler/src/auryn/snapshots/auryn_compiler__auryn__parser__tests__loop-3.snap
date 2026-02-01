@@ -1,0 +1,43 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"\\t\\nloop {\\t\\n\\t\\n\\tprint(1)\\t\\n\\t}\\t\\n\\t\")"
+---
+syntax_tree:
+0..28 Root
+|Whitespace `\t`
+|1..28 Block
+||Newline `\n`
+||2..26 Statement
+|||2..26 Loop
+||||KeywordLoop `loop`
+||||Whitespace ` `
+||||BraceOpen `{`
+||||Whitespace `\t`
+||||Newline `\n`
+||||Whitespace `\t`
+||||Newline `\n`
+||||Whitespace `\t`
+||||13..24 Block
+|||||13..22 Statement
+||||||13..22 Expression
+|||||||13..22 PostfixOperation
+||||||||13..18 Value
+|||||||||13..18 Ident
+||||||||||Identifier `print`
+||||||||18..22 PostfixOperator
+|||||||||18..22 ArgumentList
+||||||||||ParensOpen `(`
+||||||||||19..20 Expression
+|||||||||||19..20 Value
+||||||||||||19..20 NumberLiteral
+|||||||||||||NumberLiteral `1`
+||||||||||ParensClose `)`
+||||||||||Whitespace `\t`
+|||||Newline `\n`
+|||||Whitespace `\t`
+||||BraceClose `}`
+||||Whitespace `\t`
+||Newline `\n`
+||Whitespace `\t`
+
+diagnostics:
