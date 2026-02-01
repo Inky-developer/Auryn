@@ -821,9 +821,14 @@ impl Parser<'_> {
 
     fn parse_while(&mut self) -> ParseResult {
         let watcher = self.push_node();
+        self.push_options(ParseOptions {
+            allow_named_struct_literals: false,
+            ..self.options()
+        });
 
         self.expect(TokenKind::KeywordWhile)?;
         self.parse_recoverable(TokenKind::BraceOpen.into(), Self::parse_expression)?;
+        self.pop_options();
         self.parse_braced_block()?;
 
         self.finish_node(watcher, SyntaxNodeKind::WhileLoop);
@@ -1395,6 +1400,11 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block(
             r#"
             if (Foo {}) {}
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify_block(
+            r#"
+            while Foo {}
             "#
         ));
     }
