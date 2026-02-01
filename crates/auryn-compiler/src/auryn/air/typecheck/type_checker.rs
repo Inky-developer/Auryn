@@ -370,12 +370,14 @@ impl Typechecker {
             } => {
                 self.resolve_if_unresolved(struct_type);
                 let Type::Struct(struct_id) = struct_type.computed() else {
-                    self.diagnostics.add(
-                        *struct_ident_id,
-                        DiagnosticError::ExpectedStruct {
-                            got: struct_type.as_view(&self.ty_ctx).to_string(),
-                        },
-                    );
+                    if !struct_type.as_view(&self.ty_ctx).is_erroneous() {
+                        self.diagnostics.add(
+                            *struct_ident_id,
+                            DiagnosticError::ExpectedStruct {
+                                got: struct_type.as_view(&self.ty_ctx).to_string(),
+                            },
+                        );
+                    }
                     return Type::Error;
                 };
 
@@ -580,14 +582,16 @@ impl Typechecker {
         match value_type_view.get_member(&accessor.ident) {
             Some(member_type_view) => member_type_view.as_type(),
             None => {
-                self.diagnostics.add(
-                    accessor.ident_id,
-                    DiagnosticError::UndefinedProperty {
-                        value_id: accessor.value.id,
-                        r#type: value_type_view.to_string(),
-                        ident: accessor.ident.clone(),
-                    },
-                );
+                if !value_type_view.is_erroneous() {
+                    self.diagnostics.add(
+                        accessor.ident_id,
+                        DiagnosticError::UndefinedProperty {
+                            value_id: accessor.value.id,
+                            r#type: value_type_view.to_string(),
+                            ident: accessor.ident.clone(),
+                        },
+                    );
+                }
                 Type::Error
             }
         }
@@ -611,7 +615,7 @@ impl Typechecker {
                 expected,
             ),
             other => {
-                if !matches!(other, Type::Error) {
+                if !other.as_view(&self.ty_ctx).is_erroneous() {
                     self.diagnostics.add(
                         id,
                         DiagnosticError::TypeMismatch {
@@ -777,14 +781,16 @@ impl Typechecker {
             return self.infer_intrinsic_array_of(id, arguments);
         };
         let TypeView::Array(array) = expected.as_view(&self.ty_ctx) else {
-            let array_type = self.ty_ctx.array_bound_of(Bound::Top).as_view(&self.ty_ctx);
-            self.diagnostics.add(
-                id,
-                DiagnosticError::TypeMismatch {
-                    expected: array_type.to_string(),
-                    got: expected.as_view(&self.ty_ctx).to_string(),
-                },
-            );
+            if !expected.as_view(&self.ty_ctx).is_erroneous() {
+                let array_type = self.ty_ctx.array_bound_of(Bound::Top).as_view(&self.ty_ctx);
+                self.diagnostics.add(
+                    id,
+                    DiagnosticError::TypeMismatch {
+                        expected: array_type.to_string(),
+                        got: expected.as_view(&self.ty_ctx).to_string(),
+                    },
+                );
+            }
             return self.ty_ctx.array_of(Type::Error);
         };
         let element_type = array.element_type;

@@ -10,11 +10,3 @@ Error: Undefined variable
    │     ─┬─  
    │      ╰─── Undefined variable `Foo`
 ───╯
-
-Error: Expected struct
-   ╭─[ main:2:5 ]
-   │
- 2 │     Foo {}
-   │     ─┬─  
-   │      ╰─── Expected this to be a struct, but it is of type `<<Error>>`
-───╯
