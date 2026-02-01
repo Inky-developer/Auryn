@@ -3,6 +3,8 @@ name = "auryn"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.93"
+description = "The auryn language compiler"
+repository = "https://github.com/Inky-developer/Auryn"
 
 [dependencies]
 ariadne = "0.6.0"
