@@ -1,13 +1,12 @@
-use crate::{
-    auryn::{
-        air::{data::Air, query_air},
-        api::AurynError,
-        diagnostic::Diagnostics,
-        environment::Environment,
-        file_id::FileId,
-        input_files::{InputFile, InputFiles},
-    },
-    utils::{fast_map::FastMap, small_string::SmallString},
+use stdx::{FastMap, SmallString};
+
+use crate::auryn::{
+    air::{data::Air, query_air},
+    api::AurynError,
+    diagnostic::Diagnostics,
+    environment::Environment,
+    file_id::FileId,
+    input_files::{InputFile, InputFiles},
 };
 
 pub struct World {

@@ -14,8 +14,8 @@ macro_rules! bitflags {
                 $item_vis const $item_name: Self = Self($item_val);
             )*
 
-            pub const FLAGS: [$crate::utils::bitflags::Flag<Self>; $crate::count!($($item_name)*)] = [$(
-                $crate::utils::bitflags::Flag {
+            pub const FLAGS: [$crate::bitflags::Flag<Self>; $crate::count!($($item_name)*)] = [$(
+                $crate::bitflags::Flag {
                     value: Self::$item_name,
                     name: stringify!($item_name)
                 }
@@ -25,7 +25,7 @@ macro_rules! bitflags {
                 self.0
             }
 
-            pub fn active_variants(&self) -> impl Iterator<Item = $crate::utils::bitflags::Flag<Self>> {
+            pub fn active_variants(&self) -> impl Iterator<Item = $crate::bitflags::Flag<Self>> {
                 Self::FLAGS.into_iter().filter(|flag| self.0 & flag.value.0 != 0)
             }
         }

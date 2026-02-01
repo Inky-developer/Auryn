@@ -6,15 +6,22 @@ rust-version = "1.93"
 description = "The auryn language compiler"
 repository = "https://github.com/Inky-developer/Auryn"
 
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.dependencies]
+insta = { version = "1.44.3", features = ["glob"] }
+stdx = { path = "crates/stdx" }
+
 [dependencies]
 ariadne = "0.6.0"
 # Should just resolve to whatever version ariadne uses
 yansi = "*"
-indexmap = "2.12.1"
-rustc-hash = "2.1.1"
+stdx.workspace = true
 
 [dev-dependencies]
-insta = { version = "1.44.3", features = ["glob"] }
+insta.workspace = true
 
 [profile.release]
 strip = true

@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::{bitset_item, utils::bitset::Bitset};
+use stdx::{Bitset, bitset_item};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperatorToken {

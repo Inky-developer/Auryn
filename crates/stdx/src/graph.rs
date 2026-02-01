@@ -1,6 +1,6 @@
 use std::{default::Default, hash::Hash};
 
-use crate::utils::fast_map::{FastMap, FastSet};
+use crate::fast_map::{FastMap, FastSet};
 
 /// A simple directed graph implementation
 #[derive(Debug)]
@@ -93,7 +93,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::graph::Graph;
+    use crate::graph::Graph;
 
     #[test]
     fn test_topological_order() {

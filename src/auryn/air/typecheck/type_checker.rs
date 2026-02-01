@@ -1,34 +1,27 @@
 use std::collections::VecDeque;
 
-use crate::{
-    auryn::{
-        air::{
-            data::{
-                Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
-                Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId, UnaryOperator,
-                Update,
-            },
-            namespace::UserDefinedTypeId,
-            typecheck::{
-                bounds::{Bound, BoundView, MaybeBounded},
-                resolver::{self, Resolver, ResolverError, ResolverResult},
-                type_context::{TypeContext, TypeId},
-                types::{FunctionItemType, FunctionParameters, StructuralType, Type, TypeView},
-            },
-            unresolved_type::UnresolvedType,
+use stdx::{FastMap, FastSet, Graph, SmallString, default};
+
+use crate::auryn::{
+    air::{
+        data::{
+            Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+            AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode, AirNodeKind,
+            AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment, Call,
+            Globals, Intrinsic, ReturnValue, TypeAliasId, UnaryOperator, Update,
         },
-        diagnostic::{DiagnosticError, Diagnostics},
-        syntax_id::SyntaxId,
-        tokenizer::BinaryOperatorToken,
+        namespace::UserDefinedTypeId,
+        typecheck::{
+            bounds::{Bound, BoundView, MaybeBounded},
+            resolver::{self, Resolver, ResolverError, ResolverResult},
+            type_context::{TypeContext, TypeId},
+            types::{FunctionItemType, FunctionParameters, StructuralType, Type, TypeView},
+        },
+        unresolved_type::UnresolvedType,
     },
-    utils::{
-        default,
-        fast_map::{FastMap, FastSet},
-        graph::Graph,
-        small_string::SmallString,
-    },
+    diagnostic::{DiagnosticError, Diagnostics},
+    syntax_id::SyntaxId,
+    tokenizer::BinaryOperatorToken,
 };
 
 pub fn typecheck_air(globals: Globals, diagnostics: Diagnostics) -> (Air, Diagnostics) {

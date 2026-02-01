@@ -1,20 +1,19 @@
 use std::{fmt::Debug, hash::Hash, marker::PhantomData, num::NonZeroU64};
 
-use crate::{
-    auryn::{
-        air::{
-            data::{AirFunctionId, AirModuleId},
-            typecheck::{
-                bounds::{ArrayBound, Bound},
-                types::{
-                    ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType, ModuleType,
-                    NumberLiteralType, StructType, StructuralType, Type,
-                },
+use stdx::{BidirectionalMap, FastMap, default};
+
+use crate::auryn::{
+    air::{
+        data::{AirFunctionId, AirModuleId},
+        typecheck::{
+            bounds::{ArrayBound, Bound},
+            types::{
+                ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType, ModuleType,
+                NumberLiteralType, StructType, StructuralType, Type,
             },
         },
-        syntax_id::SyntaxId,
     },
-    utils::{bidirectional_map::BidirectionalMap, default, fast_map::FastMap},
+    syntax_id::SyntaxId,
 };
 
 pub type TypeMap<T> = FastMap<TypeId<T>, T>;

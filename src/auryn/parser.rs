@@ -1,15 +1,13 @@
 use std::fmt::Debug;
 
-use crate::{
-    auryn::{
-        diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
-        file_id::FileId,
-        syntax_id::SyntaxId,
-        syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
-        tokenizer::{Token, TokenKind, TokenSet, Tokenizer, UpdateOperatorToken},
-    },
-    bitset,
-    utils::default,
+use stdx::{bitset, default};
+
+use crate::auryn::{
+    diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+    file_id::FileId,
+    syntax_id::SyntaxId,
+    syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
+    tokenizer::{Token, TokenKind, TokenSet, Tokenizer, UpdateOperatorToken},
 };
 
 #[derive(Debug)]

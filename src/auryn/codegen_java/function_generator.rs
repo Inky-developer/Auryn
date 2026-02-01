@@ -1,3 +1,5 @@
+use stdx::{FastIndexSet, FastMap, FastSet, SmallString, default};
+
 use crate::{
     auryn::{
         air::{
@@ -24,19 +26,14 @@ use crate::{
         function_assembler::{ConstantValue, FunctionAssembler, Instruction, VariableId},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
-    utils::{
-        fast_map::{FastMap, FastSet},
-        small_string::SmallString,
-    },
 };
-use indexmap::IndexSet;
 
 pub struct FunctionGenerator<'a> {
     assembler: FunctionAssembler<'a>,
     variable_map: FastMap<AirLocalValueId, VariableId>,
     block_translation: FastMap<AirBlockId, BasicBlockId>,
     generated_blocks: FastSet<AirBlockId>,
-    pending_blocks: IndexSet<AirBlockId>,
+    pending_blocks: FastIndexSet<AirBlockId>,
     function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
     ty_ctx: &'a TypeContext,
     repr_ctx: &'a mut RepresentationCtx,
@@ -96,8 +93,8 @@ impl<'a> FunctionGenerator<'a> {
             variable_map,
             ty_ctx: &parent.air.ty_ctx,
             repr_ctx: &mut parent.repr_ctx,
-            generated_blocks: FastSet::default(),
-            pending_blocks: IndexSet::default(),
+            generated_blocks: default(),
+            pending_blocks: default(),
         }
     }
 

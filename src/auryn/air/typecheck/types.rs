@@ -4,18 +4,17 @@ use std::{
     str::FromStr,
 };
 
-use crate::{
-    auryn::{
-        air::{
-            data::{ExternFunctionKind, FunctionReference, Intrinsic},
-            typecheck::{
-                bounds::MaybeBounded,
-                type_context::{FromTypeContext, TypeContext, TypeId},
-            },
+use stdx::{FastMap, SmallString};
+
+use crate::auryn::{
+    air::{
+        data::{ExternFunctionKind, FunctionReference, Intrinsic},
+        typecheck::{
+            bounds::MaybeBounded,
+            type_context::{FromTypeContext, TypeContext, TypeId},
         },
-        syntax_id::SyntaxId,
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    syntax_id::SyntaxId,
 };
 
 /// Defines the types of this programming language.

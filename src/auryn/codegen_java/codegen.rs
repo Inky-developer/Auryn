@@ -1,3 +1,5 @@
+use stdx::{FastMap, SmallString};
+
 use crate::{
     auryn::{
         air::data::Air,
@@ -8,7 +10,6 @@ use crate::{
         input_files::InputFiles,
     },
     java::class::ClassData,
-    utils::{fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Default)]

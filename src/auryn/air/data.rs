@@ -1,20 +1,19 @@
 use std::{fmt::Debug, panic::Location, str::FromStr};
 
-use crate::{
-    auryn::{
-        air::{
-            namespace::UserDefinedTypeId,
-            typecheck::{
-                type_context::{TypeContext, TypeId},
-                types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
-            },
-            unresolved_type::UnresolvedType,
+use stdx::{FastMap, SmallString};
+
+use crate::auryn::{
+    air::{
+        namespace::UserDefinedTypeId,
+        typecheck::{
+            type_context::{TypeContext, TypeId},
+            types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
         },
-        file_id::FileId,
-        syntax_id::SyntaxId,
-        tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
+        unresolved_type::UnresolvedType,
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    file_id::FileId,
+    syntax_id::SyntaxId,
+    tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
 };
 
 #[derive(Debug, Default)]

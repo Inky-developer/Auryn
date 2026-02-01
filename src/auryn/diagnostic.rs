@@ -4,16 +4,15 @@ use std::{
     panic::Location,
 };
 
-use crate::{
-    auryn::{
-        diagnostic_display::{
-            DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel, DisplayOptions, Label,
-        },
-        input_files::InputFiles,
-        syntax_id::SyntaxId,
-        tokenizer::TokenSet,
+use stdx::SmallString;
+
+use crate::auryn::{
+    diagnostic_display::{
+        DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel, DisplayOptions, Label,
     },
-    utils::small_string::SmallString,
+    input_files::InputFiles,
+    syntax_id::SyntaxId,
+    tokenizer::TokenSet,
 };
 
 #[derive(Debug, Clone)]

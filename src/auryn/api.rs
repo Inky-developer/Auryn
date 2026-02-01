@@ -5,17 +5,16 @@ use std::{
     process::Stdio,
 };
 
-use crate::{
-    auryn::{
-        codegen_java::codegen::{CodegenOutput, codegen},
-        diagnostic::{DiagnosticKind, Diagnostics},
-        diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
-        environment::{Environment, FilesystemEnvironment, ProjectTree},
-        file_id::FileId,
-        input_files::InputFiles,
-        world::World,
-    },
-    utils::default,
+use stdx::default;
+
+use crate::auryn::{
+    codegen_java::codegen::{CodegenOutput, codegen},
+    diagnostic::{DiagnosticKind, Diagnostics},
+    diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
+    environment::{Environment, FilesystemEnvironment, ProjectTree},
+    file_id::FileId,
+    input_files::InputFiles,
+    world::World,
 };
 
 #[derive(Debug)]

@@ -1,12 +1,11 @@
-use crate::{
-    auryn::air::{
-        data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
-        typecheck::{
-            type_context::TypeId,
-            types::{ExternType, ModuleType, StructType},
-        },
+use stdx::{FastMap, SmallString, default};
+
+use crate::auryn::air::{
+    data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
+    typecheck::{
+        type_context::TypeId,
+        types::{ExternType, ModuleType, StructType},
     },
-    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
 /// Represents a type that was defined by the user that later gets registered in the type context, for which we already now the id.

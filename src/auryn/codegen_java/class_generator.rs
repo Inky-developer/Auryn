@@ -1,3 +1,5 @@
+use stdx::{FastMap, SmallString, default};
+
 use crate::{
     auryn::{
         air::{
@@ -18,7 +20,6 @@ use crate::{
         constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{FunctionAssembler, Instruction},
     },
-    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
 pub(super) fn generate_main_class<'a>(

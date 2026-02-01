@@ -1,24 +1,23 @@
-use crate::{
-    auryn::{
-        air::{
-            data::{
-                AirModuleId, AirStaticValue, AirStaticValueId, AirType, FunctionReference,
-                TypeAliasId, UnresolvedExternMember,
-            },
-            namespace::UserDefinedTypeId,
-            typecheck::{
-                type_context::TypeContext,
-                types::{
-                    ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, ModuleType,
-                    StructType, StructuralType, Type,
-                },
-            },
-            unresolved_type::UnresolvedType,
+use stdx::FastMap;
+
+use crate::auryn::{
+    air::{
+        data::{
+            AirModuleId, AirStaticValue, AirStaticValueId, AirType, FunctionReference, TypeAliasId,
+            UnresolvedExternMember,
         },
-        diagnostic::{DiagnosticError, Diagnostics},
-        syntax_id::SyntaxId,
+        namespace::UserDefinedTypeId,
+        typecheck::{
+            type_context::TypeContext,
+            types::{
+                ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, ModuleType,
+                StructType, StructuralType, Type,
+            },
+        },
+        unresolved_type::UnresolvedType,
     },
-    utils::fast_map::FastMap,
+    diagnostic::{DiagnosticError, Diagnostics},
+    syntax_id::SyntaxId,
 };
 
 #[derive(Debug, Clone, Copy)]

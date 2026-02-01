@@ -1,3 +1,5 @@
+use stdx::SmallString;
+
 use crate::{
     auryn::codegen_java::{
         print_utils::make_value_printable,
@@ -12,7 +14,6 @@ use crate::{
         function_assembler::{ConstantValue, FunctionAssembler, Instruction, VariableId},
         source_graph::BlockFinalizer,
     },
-    utils::small_string::SmallString,
 };
 
 pub(super) fn gen_structural_type_class(info: &StructuralRepr) -> ClassData {

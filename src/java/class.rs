@@ -5,16 +5,14 @@ use std::{
     ops::Index,
 };
 
-use crate::{
-    bitflags,
-    java::{
-        constant_pool_builder::ConstantPoolBuilder,
-        display::{
-            ConstantPoolDisplay, ConstantPoolEntryDisplay, FieldDisplay, InstructionDisplay,
-            MethodDisplay, VerificationTypeInfoDisplay,
-        },
+use stdx::{SmallString, bitflags};
+
+use crate::java::{
+    constant_pool_builder::ConstantPoolBuilder,
+    display::{
+        ConstantPoolDisplay, ConstantPoolEntryDisplay, FieldDisplay, InstructionDisplay,
+        MethodDisplay, VerificationTypeInfoDisplay,
     },
-    utils::small_string::SmallString,
 };
 
 #[derive(Debug, Clone, Copy)]

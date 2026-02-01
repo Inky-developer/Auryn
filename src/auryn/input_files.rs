@@ -1,16 +1,15 @@
 use std::{cell::OnceCell, num::NonZeroU16};
 
-use crate::{
-    auryn::{
-        api::AurynError,
-        diagnostic_display::ComputedSpan,
-        environment::ProjectTree,
-        file_id::FileId,
-        parser::{Parser, ParserOutput},
-        syntax_id::SyntaxId,
-        syntax_tree::SyntaxTree,
-    },
-    utils::{default, fast_map::FastMap, small_string::SmallString},
+use stdx::{FastMap, SmallString, default};
+
+use crate::auryn::{
+    api::AurynError,
+    diagnostic_display::ComputedSpan,
+    environment::ProjectTree,
+    file_id::FileId,
+    parser::{Parser, ParserOutput},
+    syntax_id::SyntaxId,
+    syntax_tree::SyntaxTree,
 };
 
 #[derive(Debug)]

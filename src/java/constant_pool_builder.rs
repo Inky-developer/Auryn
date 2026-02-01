@@ -1,9 +1,10 @@
 use std::{num::NonZeroU16, ops::Index};
 
+use stdx::{FastMap, SmallString, default};
+
 use crate::{
     auryn::codegen_java::representation::FieldDescriptor,
     java::class::{ConstantPool, ConstantPoolEntry, ConstantPoolIndex},
-    utils::{default, fast_map::FastMap, small_string::SmallString},
 };
 
 #[derive(Debug, Clone)]

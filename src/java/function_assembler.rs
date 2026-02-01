@@ -1,3 +1,5 @@
+use stdx::SmallString;
+
 use crate::{
     auryn::codegen_java::representation::{
         FieldDescriptor, ImplicitArgs, MethodDescriptor, Representation,
@@ -7,7 +9,6 @@ use crate::{
         constant_pool_builder::ConstantPoolBuilder,
         source_graph::{BasicBlock, BasicBlockId, SourceGraph},
     },
-    utils::small_string::SmallString,
 };
 
 #[derive(Debug, Clone)]

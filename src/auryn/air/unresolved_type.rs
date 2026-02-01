@@ -1,12 +1,11 @@
-use crate::{
-    auryn::{
-        air::{
-            data::{FunctionReference, UnresolvedExternMember},
-            namespace::{Namespace, UserDefinedTypeId},
-        },
-        syntax_id::SyntaxId,
+use stdx::{FastMap, SmallString};
+
+use crate::auryn::{
+    air::{
+        data::{FunctionReference, UnresolvedExternMember},
+        namespace::{Namespace, UserDefinedTypeId},
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
+    syntax_id::SyntaxId,
 };
 
 /// Represents a type that was written by the user but not resolved yet.

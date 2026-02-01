@@ -4,12 +4,11 @@ use std::{
     ops::Range,
 };
 
-use crate::{
-    auryn::{
-        diagnostic::Diagnostic, diagnostic_display::ComputedSpan, syntax_id::SyntaxId,
-        tokenizer::TokenKind,
-    },
-    utils::small_string::SmallString,
+use stdx::SmallString;
+
+use crate::auryn::{
+    diagnostic::Diagnostic, diagnostic_display::ComputedSpan, syntax_id::SyntaxId,
+    tokenizer::TokenKind,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]

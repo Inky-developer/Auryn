@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::utils::{fast_map::FastMap, small_string::SmallString};
+use stdx::{FastMap, SmallString};
 
 #[derive(Debug, Default)]
 pub struct ProjectTree {

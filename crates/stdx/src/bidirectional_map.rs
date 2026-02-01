@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, fmt::Debug, hash::Hash};
 
-use crate::utils::fast_map::FastMap;
+use crate::fast_map::FastMap;
 
 pub struct BidirectionalMap<K, V> {
     k_to_v: FastMap<K, V>,

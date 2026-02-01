@@ -1,34 +1,32 @@
 use std::str::FromStr;
 
-use crate::{
-    auryn::{
-        air::{
-            data::{
-                self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
-                AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId,
-                Call, ExternFunctionKind, FunctionReference, Globals, ReturnValue, TypeAliasId,
-                UnaryOperation, UnaryOperator, UnresolvedExternMember,
-            },
-            namespace::{Namespace, UserDefinedTypeId},
-            typecheck::{type_context::TypeId, types},
-            unresolved_type::UnresolvedType,
+use stdx::{FastMap, SmallString, default};
+
+use crate::auryn::{
+    air::{
+        data::{
+            self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
+            AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
+            AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Call,
+            ExternFunctionKind, FunctionReference, Globals, ReturnValue, TypeAliasId,
+            UnaryOperation, UnaryOperator, UnresolvedExternMember,
         },
-        ast::ast_node::{
-            Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
-            BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
-            ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
-            IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
-            PostfixOperation, PostfixOperator, PrefixNot, ReturnStatement, Root, Statement,
-            StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField,
-            StructuralTypeField, Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate,
-            WhileStatement,
-        },
-        diagnostic::{DiagnosticError, Diagnostics},
-        syntax_id::SyntaxId,
-        syntax_tree::SyntaxToken,
+        namespace::{Namespace, UserDefinedTypeId},
+        typecheck::{type_context::TypeId, types},
+        unresolved_type::UnresolvedType,
     },
-    utils::{default, fast_map::FastMap, small_string::SmallString},
+    ast::ast_node::{
+        Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
+        BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
+        ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
+        IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
+        PostfixOperation, PostfixOperator, PrefixNot, ReturnStatement, Root, Statement,
+        StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField, StructuralTypeField,
+        Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate, WhileStatement,
+    },
+    diagnostic::{DiagnosticError, Diagnostics},
+    syntax_id::SyntaxId,
+    syntax_tree::SyntaxToken,
 };
 
 #[derive(Debug)]

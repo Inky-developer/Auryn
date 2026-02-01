@@ -3,12 +3,11 @@ use std::{
     io::Write,
 };
 
-use crate::{
-    auryn::{
-        diagnostic_display::implementation::InputFilesCache, file_id::FileId,
-        input_files::InputFiles, syntax_id::SyntaxId,
-    },
-    utils::default,
+use stdx::default;
+
+use crate::auryn::{
+    diagnostic_display::implementation::InputFilesCache, file_id::FileId, input_files::InputFiles,
+    syntax_id::SyntaxId,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -205,17 +204,15 @@ mod implementation {
     use std::{fmt::Debug, io::Write};
 
     use ariadne::{Cache, Color, IndexType, Report, ReportKind, Source};
+    use stdx::FastMap;
 
-    use crate::{
-        auryn::{
-            diagnostic_display::{
-                ComputedSpan, DiagnosticCollectionDisplay, DiagnosticLevel, LabelKind,
-            },
-            file_id::FileId,
-            input_files::InputFiles,
-            syntax_id::SyntaxId,
+    use crate::auryn::{
+        diagnostic_display::{
+            ComputedSpan, DiagnosticCollectionDisplay, DiagnosticLevel, LabelKind,
         },
-        utils::fast_map::FastMap,
+        file_id::FileId,
+        input_files::InputFiles,
+        syntax_id::SyntaxId,
     };
 
     // TODO: some syntax highlighting would be nice.

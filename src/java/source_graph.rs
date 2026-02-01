@@ -1,3 +1,5 @@
+use stdx::{FastMap, Graph};
+
 use crate::{
     auryn::codegen_java::representation::PrimitiveOrObject,
     java::{
@@ -9,7 +11,6 @@ use crate::{
         function_assembler::{ConstantValue, Instruction},
         symbolic_evaluation::{Frame, SymbolicEvaluator},
     },
-    utils::{fast_map::FastMap, graph::Graph},
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]

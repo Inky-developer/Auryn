@@ -1,5 +1,7 @@
 use std::fmt::{Display, Write};
 
+use stdx::{FastMap, SmallString};
+
 use crate::{
     auryn::air::typecheck::{
         type_context::{TypeContext, TypeId},
@@ -9,7 +11,6 @@ use crate::{
         class::{ConstantPoolIndex, PrimitiveType, TypeCategory, VerificationTypeInfo},
         constant_pool_builder::ConstantPoolBuilder,
     },
-    utils::{fast_map::FastMap, small_string::SmallString},
 };
 
 /// The representation of a type in the jvm, can be converted into field descriptors and verification type info

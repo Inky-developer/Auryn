@@ -224,7 +224,7 @@ macro_rules! bitset_item {
             ];
         }
 
-        impl $crate::utils::bitset::BitsetItem for $name {
+        impl $crate::bitset::BitsetItem for $name {
             fn index(self) -> u8 {
                 self as u8
             }
@@ -244,7 +244,7 @@ macro_rules! bitset_item {
 macro_rules! bitset [
     ($($items:expr),+ $(,)?) => {
         const {
-            let mut set = $crate::utils::bitset::Bitset::new();
+            let mut set = $crate::bitset::Bitset::new();
             $(set.insert_raw(($items) as u8);)*
             set
         }
@@ -253,7 +253,7 @@ macro_rules! bitset [
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::bitset::Bitset;
+    use crate::bitset::Bitset;
 
     bitset_item! {
         #[derive(Debug, Clone, Copy, Eq, PartialEq)]
