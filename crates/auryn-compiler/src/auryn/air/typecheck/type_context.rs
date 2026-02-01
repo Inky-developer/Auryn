@@ -9,7 +9,7 @@ use crate::auryn::{
             bounds::{ArrayBound, Bound},
             types::{
                 ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType, ModuleType,
-                NumberLiteralType, StructType, StructuralType, Type,
+                NumberLiteralType, StructType, StructuralType, Type, TypeData,
             },
         },
     },
@@ -18,10 +18,6 @@ use crate::auryn::{
 
 pub type TypeMap<T> = FastMap<TypeId<T>, T>;
 pub type BidirectionalTypeMap<T> = BidirectionalMap<TypeId<T>, T>;
-
-pub trait FromTypeContext: Sized {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
-}
 
 #[derive(Debug)]
 struct SpecialTypes {
@@ -151,7 +147,7 @@ impl TypeContext {
         id
     }
 
-    pub fn get<T: FromTypeContext>(&self, id: TypeId<T>) -> &T {
+    pub fn get<T: TypeData>(&self, id: TypeId<T>) -> &T {
         T::from_context(id, self)
     }
 

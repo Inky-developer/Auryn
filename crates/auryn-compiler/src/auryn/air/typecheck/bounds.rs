@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
 use crate::auryn::air::typecheck::{
-    type_context::{FromTypeContext, TypeContext, TypeId},
-    types::{Type, TypeView, TypeViewKind},
+    type_context::{TypeContext, TypeId},
+    types::{Type, TypeData, TypeView, TypeViewKind},
 };
 
 /// Represents either a bound or a type
@@ -39,9 +39,7 @@ impl MaybeBoundedView<'_> {
         match self {
             MaybeBoundedView::Bounded(bound) => bound.contains(other),
             MaybeBoundedView::Type(ty) => {
-                ty.as_type() == other.as_type()
-                    || matches!(ty, TypeView::Error)
-                    || matches!(other, TypeView::Error)
+                ty.as_type() == other.as_type() || ty.is_erroneous() || other.is_erroneous()
             }
         }
     }
@@ -95,11 +93,7 @@ impl BoundView<'_> {
     pub fn contains(self, other: TypeView) -> bool {
         use BoundView::*;
 
-        if matches!(other, TypeView::Error) {
-            return true;
-        }
-
-        match self {
+        let contains = match self {
             Top => true,
             Number => matches!(
                 other,
@@ -109,7 +103,9 @@ impl BoundView<'_> {
                 TypeView::Array(array) => bound.element().contains(array.element()),
                 _ => false,
             },
-        }
+        };
+
+        contains || other.is_erroneous()
     }
 }
 
@@ -118,10 +114,12 @@ pub struct ArrayBound {
     pub element_bound: Bound,
 }
 
-impl FromTypeContext for ArrayBound {
+impl TypeData for ArrayBound {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_array_bound(id)
     }
+
+    fn visit(&self, _visitor: &mut impl FnMut(Type)) {}
 }
 
 impl<'a> TypeViewKind<'a, ArrayBound> {

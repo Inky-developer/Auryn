@@ -11,7 +11,7 @@ use crate::auryn::{
         data::{ExternFunctionKind, FunctionReference, Intrinsic},
         typecheck::{
             bounds::MaybeBounded,
-            type_context::{FromTypeContext, TypeContext, TypeId},
+            type_context::{TypeContext, TypeId},
         },
     },
     syntax_id::SyntaxId,
@@ -70,6 +70,20 @@ macro_rules! define_types {
                 match self {
                     $(
                         Self::$name$(($data))? => Type::$name$(($data.id))?
+                    ),*
+                }
+            }
+
+            #[allow(non_snake_case)]
+            pub fn visit(self, visitor: &mut impl FnMut(TypeView)) {
+                match self {
+                    $(
+                       Self::$name$(($data))? => {
+                           visitor(self);
+                           $(
+                               $data.visit(&mut |ty| ty.as_view($data.ctx).visit(visitor));
+                           )?
+                       }
                     ),*
                 }
             }
@@ -146,6 +160,16 @@ impl<'a> TypeView<'a> {
         }
     }
 
+    pub fn is_erroneous(self) -> bool {
+        let mut is_error = false;
+        self.visit(&mut |view| {
+            if matches!(view, TypeView::Error) {
+                is_error = true;
+            }
+        });
+        is_error
+    }
+
     /// Returns whether a type is a static extern member.
     /// Right now, every type is considered static except for methods which don't have the static kind
     fn is_static_extern_member(self) -> bool {
@@ -162,14 +186,24 @@ impl<'a> TypeView<'a> {
     }
 }
 
+pub trait TypeData: Sized {
+    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
+
+    fn visit(&self, visitor: &mut impl FnMut(Type));
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
 pub struct NumberLiteralType {
     pub value: i128,
 }
 
-impl FromTypeContext for NumberLiteralType {
+impl TypeData for NumberLiteralType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_number_literal(id)
+    }
+
+    fn visit(&self, _visitor: &mut impl FnMut(Type)) {
+        let Self { value: _ } = self;
     }
 }
 
@@ -180,9 +214,19 @@ pub struct FunctionItemType {
     pub reference: FunctionReference,
 }
 
-impl FromTypeContext for FunctionItemType {
+impl TypeData for FunctionItemType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_function_item(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self {
+            parameters,
+            return_type,
+            reference: _,
+        } = self;
+        visitor(*return_type);
+        parameters.parameters.iter().copied().for_each(visitor);
     }
 }
 
@@ -197,9 +241,13 @@ pub struct IntrinsicType {
     pub intrinsic: Intrinsic,
 }
 
-impl FromTypeContext for IntrinsicType {
+impl TypeData for IntrinsicType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_intrinsic(id)
+    }
+
+    fn visit(&self, _visitor: &mut impl FnMut(Type)) {
+        let Self { intrinsic: _ } = self;
     }
 }
 
@@ -214,9 +262,14 @@ pub struct ArrayType {
     pub element_type: Type,
 }
 
-impl FromTypeContext for ArrayType {
+impl TypeData for ArrayType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_array(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self { element_type } = self;
+        visitor(*element_type);
     }
 }
 
@@ -226,9 +279,23 @@ pub struct ExternType {
     pub members: FastMap<SmallString, ExternTypeMember>,
 }
 
-impl FromTypeContext for ExternType {
+impl TypeData for ExternType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_extern(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self {
+            extern_name: _,
+            members,
+        } = self;
+        for member in members.values() {
+            let ExternTypeMember {
+                r#type,
+                extern_name: _,
+            } = member;
+            visitor(*r#type);
+        }
     }
 }
 
@@ -249,9 +316,16 @@ pub struct StructuralType {
     pub fields: Vec<(SmallString, Type)>,
 }
 
-impl FromTypeContext for StructuralType {
+impl TypeData for StructuralType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_structural(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self { fields } = self;
+        for (_, ty) in fields {
+            visitor(*ty);
+        }
     }
 }
 
@@ -292,9 +366,17 @@ pub struct StructType {
     pub structural: StructuralType,
 }
 
-impl FromTypeContext for StructType {
+impl TypeData for StructType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_struct(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self {
+            ident: _,
+            structural,
+        } = self;
+        structural.visit(visitor);
     }
 }
 
@@ -310,9 +392,14 @@ pub struct ModuleType {
     pub members: FastMap<SmallString, Type>,
 }
 
-impl FromTypeContext for ModuleType {
+impl TypeData for ModuleType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_module(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self { name: _, members } = self;
+        members.values().copied().for_each(visitor);
     }
 }
 
@@ -327,9 +414,14 @@ pub struct MetaType {
     pub inner: Type,
 }
 
-impl FromTypeContext for MetaType {
+impl TypeData for MetaType {
     fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
         ctx.get_meta(id)
+    }
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let Self { inner } = self;
+        visitor(*inner);
     }
 }
 
