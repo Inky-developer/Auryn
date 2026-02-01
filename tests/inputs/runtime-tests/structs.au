@@ -1,0 +1,11 @@
+// expect-output:
+// Foo { inner: [] }
+
+struct Foo {
+	inner: []Foo
+}
+
+fn main() {
+	let f = Foo { inner: arrayOfZeros(0) }
+	print(f)
+}

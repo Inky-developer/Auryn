@@ -1,0 +1,5 @@
+type Foo = { a: I32 }
+
+fn main() {
+	let f = Foo { a: 0 }
+}

@@ -318,6 +318,7 @@ impl Display for MethodDescriptor {
 pub struct StructuralRepr {
     pub fields: Vec<(SmallString, Representation)>,
     pub class_name: SmallString,
+    pub is_named: bool,
     pub is_zero_sized: bool,
 }
 
@@ -425,6 +426,7 @@ impl RepresentationCtx {
                 StructuralRepr {
                     fields: Vec::new(),
                     class_name: class_name.clone(),
+                    is_named: true,
                     is_zero_sized: false,
                 },
             );
@@ -438,6 +440,7 @@ impl RepresentationCtx {
             let repr = StructuralRepr {
                 is_zero_sized: fields.is_empty(),
                 fields,
+                is_named: true,
                 class_name,
             };
             self.struct_types.insert(ty.id, repr);
@@ -475,6 +478,7 @@ impl RepresentationCtx {
         StructuralRepr {
             is_zero_sized: fields.is_empty(),
             fields,
+            is_named: false,
             class_name: name.into(),
         }
     }

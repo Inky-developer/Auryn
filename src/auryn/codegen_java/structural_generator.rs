@@ -166,7 +166,12 @@ fn gen_to_string_method(info: &StructuralRepr, pool: &mut ConstantPoolBuilder) -
             method_descriptor: MethodDescriptor::VOID,
         },
     ]);
-    write_str(&mut assembler, "{ ");
+
+    if info.is_named {
+        write_str(&mut assembler, &format!("{} {{ ", info.class_name));
+    } else {
+        write_str(&mut assembler, "{ ");
+    }
 
     for (index, (name, repr)) in info.fields.iter().enumerate() {
         if index != 0 {

@@ -17,9 +17,19 @@ pub struct ParserOutput {
     pub syntax_tree: SyntaxTree,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 struct ParseOptions {
     newlines_are_whitespace: bool,
+    allow_named_struct_literals: bool,
+}
+
+impl Default for ParseOptions {
+    fn default() -> Self {
+        Self {
+            newlines_are_whitespace: false,
+            allow_named_struct_literals: true,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -332,6 +342,7 @@ impl<'a> Parser<'a> {
         let end_set = end_set.into();
         self.push_options(ParseOptions {
             newlines_are_whitespace: false,
+            ..self.options()
         });
         loop {
             self.consume_whitespace_and_newlines();
@@ -381,6 +392,7 @@ impl<'a> Parser<'a> {
     ) -> ParseResult {
         self.push_options(ParseOptions {
             newlines_are_whitespace: true,
+            ..self.options()
         });
         self.expect(start)?;
         self.parse_recoverable(end.into(), parse_fn)?;
@@ -769,9 +781,14 @@ impl Parser<'_> {
 
     fn parse_if_statement(&mut self) -> ParseResult {
         let watcher = self.push_node();
+        self.push_options(ParseOptions {
+            allow_named_struct_literals: false,
+            ..self.options()
+        });
 
         self.expect(TokenKind::KeywordIf)?;
         self.parse_expression()?;
+        self.pop_options();
         self.parse_braced_block()?;
 
         if self.peek().kind == TokenKind::KeywordElse {
@@ -961,14 +978,21 @@ impl Parser<'_> {
     fn parse_value_or_postfix(&mut self) -> ParseResult {
         let mut watcher = self.push_node();
 
-        match self.peek().kind {
-            TokenKind::Identifier => self.parse_identifier()?,
-            TokenKind::NumberLiteral => self.parse_number()?,
-            TokenKind::StringLiteral => self.parse_string_literal()?,
-            TokenKind::ParensOpen => self.parse_parenthesis()?,
-            TokenKind::BraceOpen => self.parse_struct_literal()?,
-            TokenKind::KeywordTrue | TokenKind::KeywordFalse => self.parse_boolean_literal()?,
-            TokenKind::KeywordNot => self.parse_not()?,
+        match self.multipeek() {
+            [TokenKind::Identifier, TokenKind::BraceOpen]
+                if self.options().allow_named_struct_literals =>
+            {
+                self.parse_struct_literal()?
+            }
+            [TokenKind::BraceOpen, ..] => self.parse_struct_literal()?,
+            [TokenKind::Identifier, ..] => self.parse_identifier()?,
+            [TokenKind::NumberLiteral, ..] => self.parse_number()?,
+            [TokenKind::StringLiteral, ..] => self.parse_string_literal()?,
+            [TokenKind::ParensOpen, ..] => self.parse_parenthesis()?,
+            [TokenKind::KeywordTrue, ..] | [TokenKind::KeywordFalse, ..] => {
+                self.parse_boolean_literal()?
+            }
+            [TokenKind::KeywordNot, ..] => self.parse_not()?,
             _ => {
                 self.push_error(DiagnosticError::ExpectedValue {
                     got: self.peek().text.into(),
@@ -1081,17 +1105,25 @@ impl Parser<'_> {
 
     fn parse_parenthesis(&mut self) -> ParseResult {
         let watcher = self.push_node();
+        self.push_options(ParseOptions {
+            allow_named_struct_literals: true,
+            ..self.options()
+        });
         self.parse_surrounded(
             TokenKind::ParensOpen,
             TokenKind::ParensClose,
             Self::parse_expression,
         )?;
+        self.pop_options();
         self.finish_node(watcher, SyntaxNodeKind::Parenthesis);
         Ok(())
     }
 
     fn parse_struct_literal(&mut self) -> ParseResult {
         let watcher = self.push_node();
+        if self.peek().kind == TokenKind::Identifier {
+            self.consume();
+        }
         self.parse_surrounded(TokenKind::BraceOpen, TokenKind::BraceClose, |parser| {
             parser.parse_separated(
                 TokenKind::BraceClose,
@@ -1348,6 +1380,21 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block(
             r#"
             let a = {a: false, }
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify_block(
+            r#"
+            let a = Foo {a: false, }
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify_block(
+            r#"
+            if Foo {}
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify_block(
+            r#"
+            if (Foo {}) {}
             "#
         ));
     }

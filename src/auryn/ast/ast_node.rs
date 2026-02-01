@@ -420,6 +420,12 @@ ast_node! {
     pub struct StructLiteral = SyntaxNodeKind::StructLiteral as { ...fields: StructLiteralField }
 }
 
+impl<'a> StructLiteral<'a> {
+    pub fn ident(self) -> Option<&'a SyntaxToken> {
+        self.0.tokens().find(|it| it.kind == TokenKind::Identifier)
+    }
+}
+
 ast_node! {
     pub struct StructLiteralField = SyntaxNodeKind::StructLiteralField as { token ident: TokenKind::Identifier, value: Expression, }
 }

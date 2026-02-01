@@ -1,0 +1,33 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(r#\"\n            if (Foo {}) {}\n            \"#)"
+---
+syntax_tree:
+0..40 Root
+|0..40 Block
+||Newline `\n`
+||Whitespace `            `
+||13..27 Statement
+|||13..27 IfStatement
+||||KeywordIf `if`
+||||Whitespace ` `
+||||16..25 Expression
+|||||16..25 Value
+||||||16..25 Parenthesis
+|||||||ParensOpen `(`
+|||||||17..23 Expression
+||||||||17..23 Value
+|||||||||17..23 StructLiteral
+||||||||||Identifier `Foo`
+||||||||||Whitespace ` `
+||||||||||BraceOpen `{`
+||||||||||BraceClose `}`
+|||||||ParensClose `)`
+|||||||Whitespace ` `
+||||BraceOpen `{`
+||||26..26 Block ''
+||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

@@ -327,7 +327,10 @@ pub enum AirConstant {
     Number(i128),
     Boolean(bool),
     String(SmallString),
-    StructLiteral(Vec<(SmallString, AirExpression)>),
+    StructLiteral {
+        struct_type: Option<(SyntaxId, AirType)>,
+        fields: Vec<(SmallString, AirExpression)>,
+    },
 }
 
 #[derive(Debug)]

@@ -1,0 +1,38 @@
+---
+source: src/auryn/parser.rs
+expression: "verify_block(r#\"\n            let a = Foo {a: false, }\n            \"#)"
+---
+syntax_tree:
+0..50 Root
+|0..50 Block
+||Newline `\n`
+||Whitespace `            `
+||13..37 Statement
+|||13..37 Assignment
+||||KeywordLet `let`
+||||Whitespace ` `
+||||Identifier `a`
+||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||21..37 Expression
+|||||21..37 Value
+||||||21..37 StructLiteral
+|||||||Identifier `Foo`
+|||||||Whitespace ` `
+|||||||BraceOpen `{`
+|||||||26..34 StructLiteralField
+||||||||Identifier `a`
+||||||||Colon `:`
+||||||||Whitespace ` `
+||||||||29..34 Expression
+|||||||||29..34 Value
+||||||||||29..34 BooleanLiteral
+|||||||||||KeywordFalse `false`
+|||||||Comma `,`
+|||||||Whitespace ` `
+|||||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

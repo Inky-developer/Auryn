@@ -312,7 +312,7 @@ impl Typechecker {
 
     fn infer_expression(&mut self, expression: &mut AirExpression) {
         let expression_type = match &mut expression.kind {
-            AirExpressionKind::Constant(constant) => self.infer_constant(constant),
+            AirExpressionKind::Constant(constant) => self.infer_constant(expression.id, constant),
             AirExpressionKind::BinaryOperator(binary_operator) => self.infer_binary_operator(
                 &mut binary_operator.lhs,
                 &mut binary_operator.rhs,
@@ -366,19 +366,40 @@ impl Typechecker {
         expression.r#type = AirType::Computed(inferred_type);
     }
 
-    fn infer_constant(&mut self, constant: &mut AirConstant) -> Type {
+    fn infer_constant(&mut self, id: SyntaxId, constant: &mut AirConstant) -> Type {
         match constant {
             AirConstant::Number(value) => self.ty_ctx.number_literal_of(*value),
             AirConstant::Boolean(_) => Type::Bool,
             AirConstant::String(_) => Type::String,
-            AirConstant::StructLiteral(struct_literal) => {
+            AirConstant::StructLiteral {
+                struct_type: Some((struct_ident_id, struct_type)),
+                fields,
+            } => {
+                self.resolve_if_unresolved(struct_type);
+                let Type::Struct(struct_id) = struct_type.computed() else {
+                    self.diagnostics.add(
+                        *struct_ident_id,
+                        DiagnosticError::ExpectedStruct {
+                            got: struct_type.as_view(&self.ty_ctx).to_string(),
+                        },
+                    );
+                    return Type::Error;
+                };
+
+                self.check_struct_literal(id, |ty_ctx| &ty_ctx.get(struct_id).structural, fields);
+                struct_type.computed()
+            }
+            AirConstant::StructLiteral {
+                struct_type: None,
+                fields: struct_literal,
+            } => {
                 let types = struct_literal
                     .iter_mut()
                     .map(|(ident, expr)| {
                         self.infer_expression(expr);
                         (ident.clone(), expr.r#type.computed())
                     })
-                    .collect();
+                    .collect::<Vec<_>>();
                 self.ty_ctx.structural_of(StructuralType { fields: types })
             }
         }
@@ -399,7 +420,7 @@ impl Typechecker {
                     // requires the ability to do runtime calculations, which Type::NumberLiteral does not support.
                     MaybeBounded::Bounded(Bound::Number) => Type::I32,
                     // If the bound is not strong enough, we just fall back to inference
-                    _ => return self.infer_constant(constant),
+                    _ => return self.infer_constant(id, constant),
                 };
                 if !BoundView::Number.contains(expected.as_view(&self.ty_ctx)) {
                     self.diagnostics.add(
@@ -439,11 +460,18 @@ impl Typechecker {
             }
             AirConstant::String(_) => Type::String,
             AirConstant::Boolean(_) => Type::Bool,
-            AirConstant::StructLiteral(struct_literal) => {
-                let MaybeBounded::Type(expected_type @ Type::Structural(structural_id)) = expected
-                else {
+            // For named structs the type cannot change, so lets just infer it
+            AirConstant::StructLiteral {
+                struct_type: Some(_),
+                ..
+            } => self.infer_constant(id, constant),
+            AirConstant::StructLiteral {
+                struct_type: None,
+                fields: struct_literal,
+            } => {
+                let MaybeBounded::Type(Type::Structural(structural_id)) = expected else {
                     // infer to figure out the received type
-                    let got = self.infer_constant(constant);
+                    let got = self.infer_constant(id, constant);
                     self.diagnostics.add(
                         id,
                         DiagnosticError::TypeMismatch {
@@ -455,24 +483,32 @@ impl Typechecker {
                     return got;
                 };
 
-                let structural = self.ty_ctx.get(structural_id);
-
-                if let Err(()) = check_fields_equal(
-                    &mut self.diagnostics,
-                    id,
-                    structural.fields.iter().map(|(name, _)| name),
-                    struct_literal.iter().map(|(name, _)| name),
-                ) {
-                    return expected_type;
-                }
-
-                let expected_types = structural.fields.iter().cloned().collect::<FastMap<_, _>>();
-                for (name, expression) in struct_literal {
-                    let expected_type = *expected_types.get(name).unwrap();
-                    self.check_expression(expression, MaybeBounded::Type(expected_type));
-                }
+                self.check_struct_literal(id, |ty_ctx| ty_ctx.get(structural_id), struct_literal);
                 Type::Structural(structural_id)
             }
+        }
+    }
+
+    fn check_struct_literal(
+        &mut self,
+        id: SyntaxId,
+        get_expected: impl FnOnce(&TypeContext) -> &StructuralType,
+        got: &mut Vec<(SmallString, AirExpression)>,
+    ) {
+        let expected = get_expected(&self.ty_ctx);
+        if let Err(()) = check_fields_equal(
+            &mut self.diagnostics,
+            id,
+            expected.fields.iter().map(|(name, _)| name),
+            got.iter().map(|(name, _)| name),
+        ) {
+            return;
+        }
+
+        let expected_types = expected.fields.iter().cloned().collect::<FastMap<_, _>>();
+        for (name, expression) in got {
+            let expected_type = *expected_types.get(name).unwrap();
+            self.check_expression(expression, MaybeBounded::Type(expected_type));
         }
     }
 

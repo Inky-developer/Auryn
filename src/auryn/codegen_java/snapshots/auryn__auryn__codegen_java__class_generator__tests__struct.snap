@@ -34,8 +34,8 @@ Constant pool:
   #25 = Utf8			java/lang/String
   #26 = Class		#25	java/lang/String
   #27 = MethodRef	#24.#10	java/lang/StringBuilder:<init>:()V
-  #28 = Utf8			{ 
-  #29 = String		#28	{ 
+  #28 = Utf8			Foo { 
+  #29 = String		#28	Foo { 
   #30 = Utf8			append
   #31 = Utf8			(Ljava/lang/String;)Ljava/lang/StringBuilder;
   #32 = NameAndType	#30:#31	append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -91,7 +91,7 @@ Constant pool:
        0: New			#24	java/lang/StringBuilder
        3: Dup
        4: InvokeSpecial		#27	java/lang/StringBuilder:<init>:()V
-       7: LoadConstant		#29	{ 
+       7: LoadConstant		#29	Foo { 
        9: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
       12: LoadConstant		#35	a: 
       14: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;

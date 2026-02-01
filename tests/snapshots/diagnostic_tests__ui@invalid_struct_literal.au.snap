@@ -1,0 +1,12 @@
+---
+source: tests/diagnostic_tests.rs
+expression: "type Foo = { a: I32 }\n\nfn main() {\n\tlet f = Foo { a: 0 }\n}\n"
+input_file: tests/inputs/diagnostics/invalid_struct_literal.au
+---
+Error: Expected struct
+   ╭─[ main:4:10 ]
+   │
+ 4 │     let f = Foo { a: 0 }
+   │             ─┬─  
+   │              ╰─── Expected this to be a struct, but it is of type `{ a: I32 }`
+───╯

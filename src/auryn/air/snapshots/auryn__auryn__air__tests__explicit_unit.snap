@@ -409,9 +409,10 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                             ),
                                         ),
                                         kind: Constant(
-                                            StructLiteral(
-                                                [],
-                                            ),
+                                            StructLiteral {
+                                                struct_type: None,
+                                                fields: [],
+                                            },
                                         ),
                                     },
                                 ),

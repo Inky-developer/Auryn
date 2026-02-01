@@ -996,10 +996,28 @@ impl FunctionTransformer<'_> {
             .fields()
             .flat_map(|it| self.transform_struct_literal_field(it))
             .collect();
+        let type_id = struct_literal.ident().map(|ident| {
+            let Some(id) = self.namespace.types.get(&ident.text) else {
+                self.diagnostics.add(
+                    ident.id,
+                    DiagnosticError::UndefinedVariable {
+                        ident: ident.text.clone(),
+                    },
+                );
+                return (ident.id, AirType::Computed(types::Type::Error));
+            };
+            (
+                ident.id,
+                AirType::Unresolved(UnresolvedType::DefinedType(*id)),
+            )
+        });
 
         AirExpression::new(
             struct_literal.id(),
-            AirExpressionKind::Constant(AirConstant::StructLiteral(fields)),
+            AirExpressionKind::Constant(AirConstant::StructLiteral {
+                struct_type: type_id,
+                fields,
+            }),
         )
     }
 

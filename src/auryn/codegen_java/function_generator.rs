@@ -380,11 +380,24 @@ impl FunctionGenerator<'_> {
                 let value = ConstantValue::String(text.clone());
                 self.assembler.add(Instruction::LoadConstant { value });
             }
-            AirConstant::StructLiteral(fields) => {
-                let TypeView::Structural(structural) = result_type else {
-                    panic!("Struct literal should result in a structural type");
+            AirConstant::StructLiteral {
+                struct_type,
+                fields,
+            } => {
+                let info = match struct_type.as_ref() {
+                    Some((_, ty)) => {
+                        let TypeView::Struct(ty) = ty.as_view(self.ty_ctx) else {
+                            unreachable!("Invalid struct type");
+                        };
+                        self.repr_ctx.get_struct_repr(ty).clone()
+                    }
+                    None => {
+                        let TypeView::Structural(structural) = result_type else {
+                            panic!("Struct literal should result in a structural type");
+                        };
+                        self.repr_ctx.get_structural_repr(structural).clone()
+                    }
                 };
-                let info = self.repr_ctx.get_structural_repr(structural).clone();
 
                 if info.is_zero_sized {
                     return;

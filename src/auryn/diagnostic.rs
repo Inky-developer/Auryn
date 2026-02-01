@@ -103,6 +103,9 @@ pub enum DiagnosticError {
     CircularTypeAlias {
         circular_type_alias: SyntaxId,
     },
+    ExpectedStruct {
+        got: String,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -337,6 +340,11 @@ impl Diagnostic {
                     .with_label(Label::new(*circular_type_alias).with_message(
                         "Because it includes this type, which causes the circular reference",
                     )),
+                DiagnosticError::ExpectedStruct { got } => {
+                    builder.with_code("Expected struct").with_message(format!(
+                        "Expected this to be a struct, but it is of type `{got}`"
+                    ))
+                }
             },
         };
     }
