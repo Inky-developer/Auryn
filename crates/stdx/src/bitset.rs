@@ -54,8 +54,8 @@ impl<T> Bitset<T> {
     /// # Examples
     ///
     /// ```
-    /// # use auryn::bitset;
-    /// # use auryn::utils::bitset::Bitset;
+    /// # use stdx::bitset;
+    /// # use stdx::Bitset;
     ///
     /// let a: Bitset<u8> = bitset![1, 3, 6];
     /// let b: Bitset<u8> = bitset![2, 4, 8];
