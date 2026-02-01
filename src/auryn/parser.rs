@@ -70,10 +70,6 @@ impl<'a> Parser<'a> {
         self.parse_with(Self::parse_file)
     }
 
-    pub fn parse_statements(self) -> ParserOutput {
-        self.parse_with(|this| this.parse_block(bitset![TokenKind::EndOfInput]))
-    }
-
     fn parse_with(mut self, parse: impl FnOnce(&mut Self) -> ParseResult) -> ParserOutput {
         let watcher = self.push_node();
 
@@ -1163,15 +1159,16 @@ impl Parser<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::fmt::Debug;
-
     use crate::auryn::{
         diagnostic::{Diagnostic, Diagnostics},
         diagnostic_display::DisplayOptions,
         file_id::FileId,
         input_files::InputFiles,
         parser::{Parser, ParserOutput},
+        tokenizer::TokenKind,
     };
+    use std::fmt::Debug;
+    use stdx::bitset;
 
     struct AnnotatedParserOutput {
         diagnostics: Vec<Diagnostic>,
@@ -1213,7 +1210,9 @@ mod tests {
     }
 
     fn verify_block(input: &str) -> impl Debug {
-        verify_with(input, |parser| parser.parse_statements())
+        verify_with(input, |parser| {
+            parser.parse_with(|this| this.parse_block(bitset![TokenKind::EndOfInput]))
+        })
     }
 
     fn verify(input: &str) -> impl Debug {

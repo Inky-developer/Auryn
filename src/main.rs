@@ -1,6 +1,6 @@
 use std::{io::Write, path::Path, process::Stdio};
 
-use auryn::auryn::api::{compile_file, compile_str, run};
+use auryn::{compile_file, compile_str, run};
 use yansi::Paint;
 
 const BUILD_DIR: &str = "build";

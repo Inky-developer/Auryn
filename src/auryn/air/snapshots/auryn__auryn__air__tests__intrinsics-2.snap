@@ -429,7 +429,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
                             file_id: Some(

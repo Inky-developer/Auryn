@@ -6,7 +6,7 @@ use crate::auryn::{
     air::{
         namespace::UserDefinedTypeId,
         typecheck::{
-            type_context::{TypeContext, TypeId},
+            type_context::TypeContext,
             types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
         },
         unresolved_type::UnresolvedType,
@@ -87,13 +87,6 @@ pub struct AirFunction {
 }
 
 impl AirFunction {
-    pub fn computed_type(&self) -> TypeId<FunctionItemType> {
-        let AirType::Computed(Type::FunctionItem(function_type)) = self.r#type else {
-            unreachable!("Function type should be computed at this point");
-        };
-        function_type
-    }
-
     pub fn unresolved_type(
         &self,
     ) -> (
@@ -155,6 +148,10 @@ pub struct AirLocalValueId(pub(super) usize);
 
 #[derive(Debug)]
 pub struct AirNode {
+    // Allow this field to be unused, because I expect it will be used at some point
+    // (For diagnostic locations)
+    // and removing it would actually be a refactor
+    #[expect(dead_code)]
     pub id: SyntaxId,
     pub kind: AirNodeKind,
 }
@@ -188,7 +185,6 @@ pub enum UnresolvedExternMember {
     },
     Function {
         unresolved_type: UnresolvedType,
-        ident: SmallString,
         extern_name: SmallString,
     },
 }
@@ -274,6 +270,8 @@ pub enum AirExpressionKind {
     Call(Call),
     /// Only used internally during typechecking, never emitted
     Synthetic,
+    // Allowing this unused field since it is just for debugging purposes
+    #[expect(dead_code)]
     Error(&'static Location<'static>),
 }
 
@@ -314,11 +312,6 @@ pub struct Accessor {
     pub value: Box<AirExpression>,
     pub ident: SmallString,
     pub ident_id: SyntaxId,
-}
-
-#[derive(Debug)]
-pub struct LoadConstant {
-    pub constant: AirConstant,
 }
 
 #[derive(Debug)]

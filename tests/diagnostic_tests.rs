@@ -1,12 +1,8 @@
 use std::fs;
 
-use auryn::auryn::{
-    api::{AurynError, compile_str},
-    diagnostic_display::DisplayOptions,
-};
-use insta::{assert_snapshot, glob};
-
 use crate::common::log_test;
+use auryn::{AurynError, DisplayOptions, compile_str};
+use insta::{assert_snapshot, glob};
 
 mod common;
 

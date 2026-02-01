@@ -47,6 +47,7 @@ macro_rules! ast_node {
                 Some(Self(Node { syntax_node } ))
             }
 
+            #[allow(dead_code)]
             pub fn id(&self) -> SyntaxId {
                 self.0.syntax_node.id
             }
@@ -76,6 +77,7 @@ macro_rules! ast_node {
                 }
             }
 
+            #[allow(dead_code)]
             pub fn id(&self) -> SyntaxId {
                 match self {
                     $(
@@ -353,6 +355,7 @@ impl<'a> ValueOrPostfix<'a> {
         }
     }
 
+    #[expect(dead_code)]
     pub fn id(&self) -> SyntaxId {
         match self {
             ValueOrPostfix::Value(value) => value.id(),

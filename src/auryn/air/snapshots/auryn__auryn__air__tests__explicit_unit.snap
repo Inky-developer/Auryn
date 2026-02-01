@@ -641,7 +641,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
                             file_id: Some(
@@ -695,7 +695,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [
                             I32,
                         ],

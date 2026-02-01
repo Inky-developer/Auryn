@@ -18,13 +18,6 @@ pub struct SymbolicEvaluator {
 }
 
 impl SymbolicEvaluator {
-    pub fn new(function_arguments: Vec<VerificationTypeInfo>) -> Self {
-        Self {
-            stack: Vec::default(),
-            locals: function_arguments,
-        }
-    }
-
     /// Evaluates the block and returns the highest recorded stack usage
     pub fn eval_block(&mut self, block: &BasicBlock, pool: &mut ConstantPoolBuilder) -> u16 {
         let mut highest_stack_usage = self.stack_usage();
@@ -206,7 +199,6 @@ impl SymbolicEvaluator {
                     constant_pool_index: pool.add_class(to.clone()),
                 });
             }
-            Instruction::Nop => {}
             Instruction::Pop(category) => {
                 let value = self.stack.pop();
                 assert_eq!(value.map(|it| it.category()), Some(*category))

@@ -602,7 +602,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [
                             I32,
                         ],
@@ -648,7 +648,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
                             file_id: Some(

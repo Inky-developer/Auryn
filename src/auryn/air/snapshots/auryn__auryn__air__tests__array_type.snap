@@ -480,7 +480,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [
                             Array(
                                 TypeId {
@@ -546,7 +546,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
                             file_id: Some(

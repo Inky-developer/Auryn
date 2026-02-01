@@ -88,10 +88,6 @@ impl Default for SourceGraph {
 }
 
 impl SourceGraph {
-    pub fn get(&self, id: BasicBlockId) -> &BasicBlock {
-        &self.graph[id.0]
-    }
-
     pub fn current_block_mut(&mut self) -> &mut BasicBlock {
         &mut self.graph[self.current.0]
     }
@@ -349,7 +345,7 @@ impl AssemblyContext<'_> {
                 on_instruction(class::Instruction::InvokeSpecial(method_ref_index))
             }
             Instruction::NewArray(element_type) => {
-                on_instruction(match element_type.clone().to_primitive_type_or_object() {
+                on_instruction(match element_type.clone().into_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(primitive) => {
                         class::Instruction::NewArray(primitive)
                     }
@@ -359,7 +355,7 @@ impl AssemblyContext<'_> {
                 })
             }
             Instruction::ArrayStore(element_type) => {
-                on_instruction(match element_type.clone().to_primitive_type_or_object() {
+                on_instruction(match element_type.clone().into_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => class::Instruction::IAStore,
                     PrimitiveOrObject::Primitive(PrimitiveType::Long) => {
                         class::Instruction::LAStore
@@ -374,7 +370,7 @@ impl AssemblyContext<'_> {
                 })
             }
             Instruction::ArrayLoad(element_type) => {
-                on_instruction(match element_type.clone().to_primitive_type_or_object() {
+                on_instruction(match element_type.clone().into_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int) => class::Instruction::IALoad,
                     PrimitiveOrObject::Primitive(PrimitiveType::Long) => class::Instruction::LALoad,
                     PrimitiveOrObject::Primitive(PrimitiveType::Boolean | PrimitiveType::Byte) => {
@@ -429,7 +425,7 @@ impl AssemblyContext<'_> {
                 _ => unimplemented!(),
             }),
             Instruction::Store(id) => {
-                on_instruction(match id.r#type.clone().to_primitive_type_or_object() {
+                on_instruction(match id.r#type.clone().into_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int | PrimitiveType::Boolean) => {
                         class::Instruction::IStore(id.index)
                     }
@@ -443,7 +439,7 @@ impl AssemblyContext<'_> {
                 })
             }
             Instruction::Load(id) => {
-                on_instruction(match id.r#type.clone().to_primitive_type_or_object() {
+                on_instruction(match id.r#type.clone().into_primitive_type_or_object() {
                     PrimitiveOrObject::Primitive(PrimitiveType::Int | PrimitiveType::Boolean) => {
                         class::Instruction::ILoad(id.index)
                     }
@@ -459,7 +455,6 @@ impl AssemblyContext<'_> {
             Instruction::IntToLong => on_instruction(class::Instruction::I2L),
             Instruction::LongToInt => on_instruction(class::Instruction::L2I),
             Instruction::Transmute(_) => {}
-            Instruction::Nop => on_instruction(class::Instruction::Nop),
             Instruction::Pop(category) => match category {
                 TypeCategory::Normal => on_instruction(class::Instruction::Pop),
                 TypeCategory::Big => on_instruction(class::Instruction::Pop2),

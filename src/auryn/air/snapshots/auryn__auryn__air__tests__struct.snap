@@ -380,7 +380,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                     },
                     kind: "auryn::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
-                    parameters: Constrained {
+                    parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
                             file_id: Some(

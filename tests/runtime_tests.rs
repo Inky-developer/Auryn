@@ -1,6 +1,6 @@
 use std::{path::PathBuf, process::Stdio};
 
-use auryn::auryn::api::{compile_str, run};
+use auryn::{compile_str, run};
 use insta::glob;
 
 use crate::common::log_test;

@@ -28,7 +28,7 @@ impl Representation {
         Representation::Object("java/lang/String".into())
     }
 
-    pub fn to_primitive_type_or_object(self) -> PrimitiveOrObject {
+    pub fn into_primitive_type_or_object(self) -> PrimitiveOrObject {
         match self {
             Representation::Integer => PrimitiveOrObject::Primitive(PrimitiveType::Int),
             Representation::Long => PrimitiveOrObject::Primitive(PrimitiveType::Long),
@@ -226,15 +226,6 @@ pub enum ReturnDescriptor {
     Void,
 }
 
-impl ReturnDescriptor {
-    pub fn into_primitive(self) -> Option<Representation> {
-        match self {
-            ReturnDescriptor::Value(value) => Some(value.into_primitive()),
-            ReturnDescriptor::Void => None,
-        }
-    }
-}
-
 impl Display for ReturnDescriptor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -378,20 +369,13 @@ impl RepresentationCtx {
         }
     }
 
-    /// Returns the representation of `air_type` as a jvm return [`ReturnDescriptor`]
-    pub fn get_return_type_representation(&mut self, air_type: TypeView) -> ReturnDescriptor {
-        self.get_representation(air_type)
-            .map(|primitive| primitive.into_field_descriptor().into())
-            .unwrap_or(ReturnDescriptor::Void)
-    }
-
     /// Returns the representation of an auryn type for the jvm
     pub fn get_function_representation(
         &mut self,
         ty: TypeViewKind<FunctionItemType>,
     ) -> MethodDescriptor {
         let parameters = ty
-            .constrained_parameters()
+            .parameters()
             .iter()
             .flat_map(|it| {
                 self.get_representation(it.as_view(ty.ctx))

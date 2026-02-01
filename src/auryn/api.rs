@@ -10,12 +10,14 @@ use stdx::default;
 use crate::auryn::{
     codegen_java::codegen::{CodegenOutput, codegen},
     diagnostic::{DiagnosticKind, Diagnostics},
-    diagnostic_display::{DiagnosticCollectionDisplay, DisplayOptions},
+    diagnostic_display::DiagnosticCollectionDisplay,
     environment::{Environment, FilesystemEnvironment, ProjectTree},
     file_id::FileId,
     input_files::InputFiles,
     world::World,
 };
+
+pub use crate::auryn::diagnostic_display::DisplayOptions;
 
 #[derive(Debug)]
 pub enum AurynError {

@@ -59,7 +59,7 @@ impl<'a> FunctionGenerator<'a> {
 
         let mut variable_index = 0;
         for (parameter, argument_id) in function_type
-            .constrained_parameters()
+            .parameters()
             .iter()
             .zip(function.argument_ids())
         {
@@ -440,7 +440,7 @@ impl FunctionGenerator<'_> {
             | BinaryOperatorToken::Remainder => {
                 let repr = lhs(self);
                 let PrimitiveOrObject::Primitive(primitive) =
-                    repr.clone().unwrap().to_primitive_type_or_object()
+                    repr.clone().unwrap().into_primitive_type_or_object()
                 else {
                     panic!("Can only perform operation on primitives");
                 };
@@ -481,7 +481,7 @@ impl FunctionGenerator<'_> {
     ) -> Option<Representation> {
         let repr = lhs(self);
         let PrimitiveOrObject::Primitive(primitive) =
-            repr.clone().unwrap().to_primitive_type_or_object()
+            repr.clone().unwrap().into_primitive_type_or_object()
         else {
             panic!("Can only compare primitives")
         };

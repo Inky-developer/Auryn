@@ -30,6 +30,4 @@ codegen-units = 1
 panic = "abort"
 
 [lints.clippy]
-# This simplifies module management imho
-pub_use = "warn"
 dbg_macro = "warn"

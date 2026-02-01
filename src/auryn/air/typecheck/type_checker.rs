@@ -202,7 +202,7 @@ impl Typechecker {
         self.function.clear(function_type.value.return_type);
         for (id, r#type) in function
             .argument_ids()
-            .zip(function_type.value.constrained_parameters().iter())
+            .zip(function_type.value.parameters().iter())
         {
             self.function.variables.insert(id, *r#type);
         }
@@ -643,25 +643,23 @@ impl Typechecker {
         let function_type = self.ty_ctx.get_function_item(function_type_id);
         let return_type = function_type.return_type;
 
-        if let FunctionParameters::Constrained {
+        let FunctionParameters {
             parameters,
             parameters_reference,
-        } = function_type.parameters.clone()
-        {
-            if parameters.len() != call.arguments.len() {
-                self.diagnostics.add(
-                    id,
-                    DiagnosticError::MismatchedArgumentCount {
-                        expected: parameters.len(),
-                        got: call.arguments.len(),
-                        parameter_def: Some(parameters_reference),
-                    },
-                );
-            }
+        } = function_type.parameters.clone();
+        if parameters.len() != call.arguments.len() {
+            self.diagnostics.add(
+                id,
+                DiagnosticError::MismatchedArgumentCount {
+                    expected: parameters.len(),
+                    got: call.arguments.len(),
+                    parameter_def: Some(parameters_reference),
+                },
+            );
+        }
 
-            for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
-                self.check_expression(actual, expected.as_bounded());
-            }
+        for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
+            self.check_expression(actual, expected.as_bounded());
         }
 
         return_type

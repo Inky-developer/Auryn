@@ -86,7 +86,7 @@ impl Resolver {
                 Type::FunctionItem(ctx.ty_ctx.add_function_item(
                     reference.syntax_id(),
                     FunctionItemType {
-                        parameters: FunctionParameters::Constrained {
+                        parameters: FunctionParameters {
                             parameters,
                             parameters_reference: *parameters_reference,
                         },

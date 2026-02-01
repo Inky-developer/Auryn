@@ -11,7 +11,7 @@ use crate::auryn::{
 
 pub struct World {
     input_files: InputFiles,
-    module_name_to_file_id: FastMap<SmallString, FileId>,
+    _module_name_to_file_id: FastMap<SmallString, FileId>,
 }
 
 impl World {
@@ -24,12 +24,8 @@ impl World {
 
         Ok(Self {
             input_files,
-            module_name_to_file_id,
+            _module_name_to_file_id: module_name_to_file_id,
         })
-    }
-
-    pub fn file_id_for_module(&self, module_name: &str) -> Option<FileId> {
-        self.module_name_to_file_id.get(module_name).copied()
     }
 
     pub fn file(&self, id: FileId) -> &InputFile {

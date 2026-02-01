@@ -187,13 +187,8 @@ impl FromTypeContext for FunctionItemType {
 }
 
 impl FunctionItemType {
-    pub fn constrained_parameters(&self) -> &[Type] {
-        match &self.parameters {
-            FunctionParameters::Unconstrained => {
-                panic!("function should have constrained parameters, but they are unconstrained")
-            }
-            FunctionParameters::Constrained { parameters, .. } => parameters,
-        }
+    pub fn parameters(&self) -> &[Type] {
+        &self.parameters.parameters
     }
 }
 
@@ -209,13 +204,9 @@ impl FromTypeContext for IntrinsicType {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum FunctionParameters {
-    /// Hack to enable variadic parameters for builtin functions
-    Unconstrained,
-    Constrained {
-        parameters: Vec<Type>,
-        parameters_reference: SyntaxId,
-    },
+pub struct FunctionParameters {
+    pub parameters: Vec<Type>,
+    pub parameters_reference: SyntaxId,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -382,15 +373,6 @@ impl<'a> TypeViewKind<'a, FunctionItemType> {
     }
 }
 
-impl<'a> TypeViewKind<'a, StructuralType> {
-    pub fn fields(self) -> impl Iterator<Item = (&'a SmallString, TypeView<'a>)> {
-        self.value
-            .fields
-            .iter()
-            .map(|(ident, ty)| (ident, ty.as_view(self.ctx)))
-    }
-}
-
 impl<'a> TypeViewKind<'a, StructType> {
     pub fn fields(self) -> impl Iterator<Item = (&'a SmallString, TypeView<'a>)> {
         self.value
@@ -420,18 +402,11 @@ impl<'a, T> Deref for TypeViewKind<'a, T> {
 impl<'a> Display for TypeViewKind<'a, FunctionItemType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;
-        match &self.value.parameters {
-            FunctionParameters::Constrained { parameters, .. } => {
-                for (index, parameter) in parameters.iter().enumerate() {
-                    if index != 0 {
-                        f.write_str(",")?;
-                    }
-                    Display::fmt(&parameter.as_view(self.ctx), f)?;
-                }
+        for (index, parameter) in self.parameters().iter().enumerate() {
+            if index != 0 {
+                f.write_str(",")?;
             }
-            FunctionParameters::Unconstrained => {
-                f.write_str("...")?;
-            }
+            Display::fmt(&parameter.as_view(self.ctx), f)?;
         }
 
         f.write_str(" -> ")?;

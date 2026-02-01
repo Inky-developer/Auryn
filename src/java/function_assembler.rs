@@ -19,14 +19,6 @@ pub enum ConstantValue {
     Boolean(bool),
 }
 impl ConstantValue {
-    pub fn to_primitive(&self) -> Representation {
-        match self {
-            ConstantValue::String(_) => Representation::string(),
-            ConstantValue::Integer(_) => Representation::Integer,
-            ConstantValue::Long(_) => Representation::Long,
-            ConstantValue::Boolean(_) => Representation::Boolean,
-        }
-    }
     pub fn to_verification_type(
         &self,
         constant_pool_builder: &mut ConstantPoolBuilder,
@@ -103,7 +95,6 @@ pub enum Instruction {
     Load(VariableId),
     IntToLong,
     LongToInt,
-    Nop,
     /// Does not correspond to any jvm instruction.
     /// Assumes that the top most stack value is now an object of the given type
     Transmute(SmallString),
@@ -195,10 +186,6 @@ impl<'a> FunctionAssembler<'a> {
                 }),
             }],
         }
-    }
-
-    pub fn current_block_id(&self) -> BasicBlockId {
-        self.blocks.current
     }
 
     pub fn add_all(&mut self, instructions: impl IntoIterator<Item = Instruction>) {

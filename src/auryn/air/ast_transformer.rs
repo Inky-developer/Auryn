@@ -286,7 +286,6 @@ impl AstTransformer {
                                 syntax_id,
                             },
                         },
-                        ident: ident.clone(),
                         extern_name,
                     };
 

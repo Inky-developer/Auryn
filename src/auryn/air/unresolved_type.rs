@@ -96,7 +96,6 @@ impl UnresolvedType {
                         } => r#type.visit_contained_types(visitor),
                         UnresolvedExternMember::Function {
                             unresolved_type,
-                            ident: _,
                             extern_name: _,
                         } => {
                             unresolved_type.visit_contained_types(visitor);
