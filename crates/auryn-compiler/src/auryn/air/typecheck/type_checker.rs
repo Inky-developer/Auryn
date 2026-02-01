@@ -463,17 +463,8 @@ impl Typechecker {
                 fields: struct_literal,
             } => {
                 let MaybeBounded::Type(Type::Structural(structural_id)) = expected else {
-                    // infer to figure out the received type
-                    let got = self.infer_constant(id, constant);
-                    self.diagnostics.add(
-                        id,
-                        DiagnosticError::TypeMismatch {
-                            expected: expected.as_view(&self.ty_ctx).to_string(),
-                            got: got.as_view(&self.ty_ctx).to_string(),
-                        },
-                    );
-
-                    return got;
+                    // the error will be created in check_expression
+                    return self.infer_constant(id, constant);
                 };
 
                 self.check_struct_literal(id, |ty_ctx| ty_ctx.get(structural_id), struct_literal);

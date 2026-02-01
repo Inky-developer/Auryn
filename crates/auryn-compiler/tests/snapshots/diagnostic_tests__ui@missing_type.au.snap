@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    let a: A = 1\n}"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/missing_type.au
+---
+Error: Undefined variable
+   ╭─[ main:2:12 ]
+   │
+ 2 │     let a: A = 1
+   │            ┬  
+   │            ╰── Undefined variable `A`
+───╯

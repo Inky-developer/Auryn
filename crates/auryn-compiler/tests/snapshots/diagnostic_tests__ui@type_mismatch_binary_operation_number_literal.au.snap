@@ -1,0 +1,20 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    let a = { a: 1 }\n    let b = a.a + 2\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/type_mismatch_binary_operation_number_literal.au
+---
+Error: Type mismatch
+   ╭─[ main:3:19 ]
+   │
+ 3 │     let b = a.a + 2
+   │                   ┬  
+   │                   ╰── Expected `1`, but got `2`
+───╯
+
+Error: Unsupported operation
+   ╭─[ main:3:13 ]
+   │
+ 3 │     let b = a.a + 2
+   │             ──┬─  
+   │               ╰─── Operation `+` is not supported on type `1`
+───╯

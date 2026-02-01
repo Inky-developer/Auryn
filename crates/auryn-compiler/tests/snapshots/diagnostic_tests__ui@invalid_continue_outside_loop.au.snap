@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    continue\n}"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_continue_outside_loop.au
+---
+Error: Continue outside loop
+   ╭─[ main:2:5 ]
+   │
+ 2 │     continue
+   │     ────┬───  
+   │         ╰───── Here
+───╯

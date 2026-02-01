@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    let a = 1\n    a = 2\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/unexpected_number_type.au
+---
+Error: Type mismatch
+   ╭─[ main:3:9 ]
+   │
+ 3 │     a = 2
+   │         ┬  
+   │         ╰── Expected `1`, but got `2`
+───╯

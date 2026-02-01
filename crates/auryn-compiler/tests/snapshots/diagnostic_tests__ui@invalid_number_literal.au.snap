@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    let a = 9999999999999999999999999999999999999999999999999999999999999999999999\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_number_literal.au
+---
+Error: Not a valid number
+   ╭─[ main:2:13 ]
+   │
+ 2 │     let a = 9999999999999999999999999999999999999999999999999999999999999999999999
+   │             ───────────────────────────────────┬──────────────────────────────────  
+   │                                                ╰──────────────────────────────────── Here
+───╯

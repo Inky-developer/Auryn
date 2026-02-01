@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    break\n}"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_break_outside_loop.au
+---
+Error: Break outside loop
+   ╭─[ main:2:5 ]
+   │
+ 2 │     break
+   │     ──┬──  
+   │       ╰──── Here
+───╯

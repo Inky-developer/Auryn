@@ -1,0 +1,20 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    Foo {}\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/missing_struct.au
+---
+Error: Undefined variable
+   ╭─[ main:2:5 ]
+   │
+ 2 │     Foo {}
+   │     ─┬─  
+   │      ╰─── Undefined variable `Foo`
+───╯
+
+Error: Expected struct
+   ╭─[ main:2:5 ]
+   │
+ 2 │     Foo {}
+   │     ─┬─  
+   │      ╰─── Expected this to be a struct, but it is of type `<<Error>>`
+───╯

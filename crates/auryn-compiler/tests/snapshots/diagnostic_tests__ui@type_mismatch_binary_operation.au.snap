@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n    let a: String = 1 + 1\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/type_mismatch_binary_operation.au
+---
+Error: Type mismatch
+   ╭─[ main:2:21 ]
+   │
+ 2 │     let a: String = 1 + 1
+   │                     ──┬──  
+   │                       ╰──── Expected `String`, but got `I32`
+───╯

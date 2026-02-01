@@ -1,0 +1,3 @@
+fn main() {
+    let a: String = 1 + 1
+}
