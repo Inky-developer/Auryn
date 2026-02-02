@@ -6,8 +6,11 @@ use std::{
 use stdx::default;
 
 use crate::auryn::{
-    diagnostics::diagnostic_display::implementation::InputFilesCache, file_id::FileId,
-    input_files::InputFiles, syntax_id::SyntaxId,
+    diagnostics::{
+        diagnostic::DiagnosticContext, diagnostic_display::implementation::InputFilesCache,
+    },
+    file_id::FileId,
+    syntax_id::SyntaxId,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -66,7 +69,7 @@ pub struct DiagnosticDisplay {
 }
 
 impl DiagnosticDisplay {
-    pub fn new(level: DiagnosticLevel, id: SyntaxId) -> Self {
+    pub fn new(level: DiagnosticLevel, id: SyntaxId, code: &'static str) -> Self {
         Self {
             main_label: Label {
                 message: default(),
@@ -75,17 +78,12 @@ impl DiagnosticDisplay {
                     DiagnosticLevel::Error => LabelKind::ErrorSource,
                 },
             },
-            code: "",
+            code,
             level,
             labels: default(),
             infos: default(),
             helps: default(),
         }
-    }
-
-    pub fn with_code(&mut self, code: &'static str) -> &mut Self {
-        self.code = code;
-        self
     }
 
     pub fn with_label(&mut self, label: Label) -> &mut Self {
@@ -139,10 +137,10 @@ pub struct DiagnosticCollectionDisplay<'a> {
 }
 
 impl<'a> DiagnosticCollectionDisplay<'a> {
-    pub fn new(input_files: &'a InputFiles, opts: DisplayOptions) -> Self {
+    pub fn new(ctx: &DiagnosticContext<'a>) -> Self {
         Self {
-            cache: InputFilesCache::new(input_files),
-            opts,
+            cache: InputFilesCache::new(ctx.input_files),
+            opts: ctx.options.clone(),
             displays: default(),
         }
     }

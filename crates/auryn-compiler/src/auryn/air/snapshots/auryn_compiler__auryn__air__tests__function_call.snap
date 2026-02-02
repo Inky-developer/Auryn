@@ -732,12 +732,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                         260624978435790,
                     ),
                 },
-                kind: Error(
-                    TypeMismatch {
-                        expected: "I32",
-                        got: "()",
-                    },
-                ),
+                kind: "Type mismatch",
                 ..
             },
         ],

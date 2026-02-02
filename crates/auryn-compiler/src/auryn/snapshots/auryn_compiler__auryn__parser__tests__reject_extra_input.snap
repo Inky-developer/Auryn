@@ -11,35 +11,35 @@ syntax_tree:
 |||||0..2 NumberLiteral
 ||||||NumberLiteral `1`
 ||||||Whitespace ` `
-||Error(ExpectedNewline)
+||ERROR Expected newline
 ||2..4 Statement
 |||2..4 Expression
 ||||2..4 Value
 |||||2..4 NumberLiteral
 ||||||NumberLiteral `1`
 ||||||Whitespace ` `
-||Error(ExpectedNewline)
+||ERROR Expected newline
 ||4..6 Statement
 |||4..6 Expression
 ||||4..6 Value
 |||||4..6 NumberLiteral
 ||||||NumberLiteral `1`
 ||||||Whitespace ` `
-||Error(ExpectedNewline)
+||ERROR Expected newline
 ||6..8 Statement
 |||6..8 Expression
 ||||6..8 Value
 |||||6..8 NumberLiteral
 ||||||NumberLiteral `1`
 ||||||Whitespace ` `
-||Error(ExpectedNewline)
+||ERROR Expected newline
 ||8..11 Statement
 |||8..11 Expression
 ||||8..11 Value
 |||||8..11 NumberLiteral
 ||||||NumberLiteral `11`
 ||||||Whitespace ` `
-||Error(ExpectedNewline)
+||ERROR Expected newline
 ||11..12 Statement
 |||11..12 Expression
 ||||11..12 Value

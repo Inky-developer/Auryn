@@ -1,14 +1,14 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a = arrayGet(arrayOfZeros(50), 25)\n}\n"
-input_file: tests/inputs/diagnostics/inference_failure_nested_array_calls.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/inference_failure_nested_array_calls.au
 ---
 Error: Could not infer type
    ╭─[ main:2:19 ]
    │
  2 │     let a = arrayGet(arrayOfZeros(50), 25)
    │                      ────────┬───────  
-   │                              ╰───────── Could not infer the type of this expresssion
+   │                              ╰───────── Could not infer the type of this expression
    │ 
    │ Help: Try annotating the expression: `let val: ExpectedType = ...`
 ───╯

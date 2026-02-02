@@ -19,7 +19,14 @@ use crate::auryn::{
         },
         unresolved_type::UnresolvedType,
     },
-    diagnostics::diagnostic::{DiagnosticError, Diagnostics},
+    diagnostics::{
+        diagnostic::Diagnostics,
+        errors::{
+            CircularTypeAlias, ExpectedStruct, InferenceFailed, InvalidCast,
+            MismatchedArgumentCount, MissingFields, TypeMismatch, UndefinedProperty,
+            UnexpectedFields, UnsupportedOperationWithType, ValueOutsideRange,
+        },
+    },
     syntax_id::SyntaxId,
     tokenizer::BinaryOperatorToken,
 };
@@ -99,7 +106,7 @@ impl Typechecker {
                         Err(ResolverError::CircularTypeAlias(circular_type_id)) => {
                             self.diagnostics.add(
                                 alias_id.0,
-                                DiagnosticError::CircularTypeAlias {
+                                CircularTypeAlias {
                                     circular_type_alias: circular_type_id,
                                 },
                             );
@@ -151,7 +158,7 @@ impl Typechecker {
 
         self.diagnostics.add(
             at,
-            DiagnosticError::TypeMismatch {
+            TypeMismatch {
                 expected: expected.as_view(&self.ty_ctx).to_string(),
                 got: received.as_view(&self.ty_ctx).to_string(),
             },
@@ -373,7 +380,7 @@ impl Typechecker {
                     if !struct_type.as_view(&self.ty_ctx).is_erroneous() {
                         self.diagnostics.add(
                             *struct_ident_id,
-                            DiagnosticError::ExpectedStruct {
+                            ExpectedStruct {
                                 got: struct_type.as_view(&self.ty_ctx).to_string(),
                             },
                         );
@@ -420,7 +427,7 @@ impl Typechecker {
                 if !BoundView::Number.contains(expected.as_view(&self.ty_ctx)) {
                     self.diagnostics.add(
                         id,
-                        DiagnosticError::TypeMismatch {
+                        TypeMismatch {
                             got: BoundView::Number.to_string(),
                             expected: expected.as_view(&self.ty_ctx).to_string(),
                         },
@@ -431,7 +438,7 @@ impl Typechecker {
                 {
                     self.diagnostics.add(
                         id,
-                        DiagnosticError::TypeMismatch {
+                        TypeMismatch {
                             expected: expected_value.value.value.to_string(),
                             got: value.to_string(),
                         },
@@ -443,7 +450,7 @@ impl Typechecker {
                 {
                     self.diagnostics.add(
                         id,
-                        DiagnosticError::ValueOutsideRange {
+                        ValueOutsideRange {
                             range: value_range,
                             got: *value,
                             r#type: expected.as_view(&self.ty_ctx).to_string(),
@@ -532,7 +539,7 @@ impl Typechecker {
                 if matches!(result_type, Type::NumberLiteral(_)) {
                     self.diagnostics.add(
                         lhs.id,
-                        DiagnosticError::UnsupportedOperationWithType {
+                        UnsupportedOperationWithType {
                             operation: operator.to_token_kind().as_str().into(),
                             r#type: result_type.as_view(&self.ty_ctx).to_string(),
                         },
@@ -585,7 +592,7 @@ impl Typechecker {
                 if !value_type_view.is_erroneous() {
                     self.diagnostics.add(
                         accessor.ident_id,
-                        DiagnosticError::UndefinedProperty {
+                        UndefinedProperty {
                             value_id: accessor.value.id,
                             r#type: value_type_view.to_string(),
                             ident: accessor.ident.clone(),
@@ -618,7 +625,7 @@ impl Typechecker {
                 if !other.as_view(&self.ty_ctx).is_erroneous() {
                     self.diagnostics.add(
                         id,
-                        DiagnosticError::TypeMismatch {
+                        TypeMismatch {
                             expected: "function".into(),
                             got: other.as_view(&self.ty_ctx).to_string(),
                         },
@@ -645,7 +652,7 @@ impl Typechecker {
         if parameters.len() != call.arguments.len() {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: parameters.len(),
                     got: call.arguments.len(),
                     parameter_def: Some(parameters_reference),
@@ -691,7 +698,7 @@ impl Typechecker {
         let [first] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
@@ -712,7 +719,7 @@ impl Typechecker {
         let [value] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
@@ -722,7 +729,7 @@ impl Typechecker {
         };
         self.infer_expression(value);
         let Some(expected) = expected.and_then(|it| it.as_type()) else {
-            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
+            self.diagnostics.add(id, InferenceFailed);
             return Type::Error;
         };
 
@@ -736,14 +743,14 @@ impl Typechecker {
         expected: Option<MaybeBounded>,
     ) -> Type {
         let Some(MaybeBounded::Type(expected)) = expected else {
-            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
+            self.diagnostics.add(id, InferenceFailed);
             return Type::Error;
         };
 
         let [value] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
@@ -761,7 +768,7 @@ impl Typechecker {
         ) {
             self.diagnostics.add(
                 id,
-                DiagnosticError::InvalidCast {
+                InvalidCast {
                     from: received.as_view(&self.ty_ctx).to_string(),
                     to: expected.as_view(&self.ty_ctx).to_string(),
                 },
@@ -785,7 +792,7 @@ impl Typechecker {
                 let array_type = self.ty_ctx.array_bound_of(Bound::Top).as_view(&self.ty_ctx);
                 self.diagnostics.add(
                     id,
-                    DiagnosticError::TypeMismatch {
+                    TypeMismatch {
                         expected: array_type.to_string(),
                         got: expected.as_view(&self.ty_ctx).to_string(),
                     },
@@ -804,7 +811,7 @@ impl Typechecker {
         let [first, rest @ ..] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 1,
                     got: 0,
                     parameter_def: None,
@@ -832,7 +839,7 @@ impl Typechecker {
         let [count] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
@@ -844,7 +851,7 @@ impl Typechecker {
         self.check_expression(count, Type::I32.as_bounded());
 
         let Some(expected) = expected.and_then(|it| it.as_type()) else {
-            self.diagnostics.add(id, DiagnosticError::InferenceFailed);
+            self.diagnostics.add(id, InferenceFailed);
             return self.ty_ctx.array_of(Type::Error);
         };
         let any_array = self.ty_ctx.array_bound_of(Bound::Top);
@@ -861,7 +868,7 @@ impl Typechecker {
         let [array, index] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 2,
                     got: arguments.len(),
                     parameter_def: None,
@@ -893,7 +900,7 @@ impl Typechecker {
         let [array, index, value] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 3,
                     got: arguments.len(),
                     parameter_def: None,
@@ -924,7 +931,7 @@ impl Typechecker {
         let [array] = arguments else {
             self.diagnostics.add(
                 id,
-                DiagnosticError::MismatchedArgumentCount {
+                MismatchedArgumentCount {
                     expected: 1,
                     got: arguments.len(),
                     parameter_def: None,
@@ -974,16 +981,7 @@ fn check_fields_equal<'a>(
         .map(|it| (*it).clone())
         .collect::<Vec<_>>();
     if !unexpected_fields.is_empty() {
-        let expected_fields = expected.clone().cloned().collect::<Vec<_>>();
-        let received_fields = received.clone().cloned().collect::<Vec<_>>();
-        diagnostics.add(
-            id,
-            DiagnosticError::UnexpectedFields {
-                expected_fields,
-                received_fields,
-                unexpected_fields,
-            },
-        );
+        diagnostics.add(id, UnexpectedFields { unexpected_fields });
         did_report_error = true;
     }
 
@@ -992,16 +990,7 @@ fn check_fields_equal<'a>(
         .map(|it| (*it).clone())
         .collect::<Vec<_>>();
     if !missing_fields.is_empty() {
-        let expected_fields = expected.cloned().collect::<Vec<_>>();
-        let received_fields = received.cloned().collect::<Vec<_>>();
-        diagnostics.add(
-            id,
-            DiagnosticError::MissingFields {
-                expected_fields,
-                received_fields,
-                missing_fields,
-            },
-        );
+        diagnostics.add(id, MissingFields { missing_fields });
         did_report_error = true;
     }
 

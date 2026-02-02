@@ -3,7 +3,13 @@ use std::fmt::Debug;
 use stdx::{bitset, default};
 
 use crate::auryn::{
-    diagnostics::diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+    diagnostics::{
+        diagnostic::{Diagnostic, DiagnosticKind},
+        errors::{
+            ExpectedExpression, ExpectedExternItem, ExpectedExternTypeBodyItem, ExpectedItem,
+            ExpectedNewline, ExpectedType, ExpectedValue, UnexpectedToken,
+        },
+    },
     file_id::FileId,
     syntax_id::SyntaxId,
     syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
@@ -118,7 +124,7 @@ impl<'a> Parser<'a> {
     }
 
     #[track_caller]
-    fn push_error(&mut self, diagnostic: impl Into<DiagnosticKind>) {
+    fn push_error(&mut self, diagnostic: impl DiagnosticKind + 'static) {
         let node = self.node_stack.last_mut().expect("Should have a node");
         let id = SyntaxId::new_unset(Some(self.file_id));
         node.children.push(SyntaxItem::Error(Box::new(ErrorNode {
@@ -207,7 +213,7 @@ impl<'a> Parser<'a> {
             Ok(token) => Ok(token.text),
             Err(token) => {
                 let got = token.text.into();
-                self.push_error(DiagnosticError::UnexpectedToken { expected, got });
+                self.push_error(UnexpectedToken { expected, got });
                 self.recover_to(self.current_stack_level(), expected)?;
                 Ok(self.consume().text)
             }
@@ -345,7 +351,7 @@ impl<'a> Parser<'a> {
             }
             self.parse_recoverable(end_set + TokenKind::Newline, &parse)?;
             if !self.consume_statement_separator() && !end_set.contains(self.peek().kind) {
-                self.push_error(DiagnosticError::ExpectedNewline);
+                self.push_error(ExpectedNewline);
             }
         }
         self.pop_options();
@@ -417,7 +423,7 @@ impl Parser<'_> {
             [TokenKind::KeywordStruct, ..] => self.parse_struct()?,
             [..] => {
                 let got = self.peek().text.into();
-                self.push_error(DiagnosticError::ExpectedItem { got });
+                self.push_error(ExpectedItem { got });
                 return Err(());
             }
         }
@@ -454,7 +460,7 @@ impl Parser<'_> {
             TokenKind::KeywordType => self.parse_extern_type()?,
             _ => {
                 let got = self.peek().text.into();
-                self.push_error(DiagnosticError::ExpectedExternItem { got });
+                self.push_error(ExpectedExternItem { got });
                 return Err(());
             }
         }
@@ -505,7 +511,7 @@ impl Parser<'_> {
                 self.parse_extern_type_body_function()?
             }
             _ => {
-                self.push_error(DiagnosticError::ExpectedExternTypeBodyItem {
+                self.push_error(ExpectedExternTypeBodyItem {
                     got: self.peek().text.into(),
                 });
                 return Err(());
@@ -662,7 +668,7 @@ impl Parser<'_> {
             TokenKind::BraceOpen => self.parse_structural_type()?,
             TokenKind::Identifier => self.parse_identifier()?,
             _ => {
-                self.push_error(DiagnosticError::ExpectedType {
+                self.push_error(ExpectedType {
                     got: self.peek().text.into(),
                 });
                 return Err(());
@@ -861,7 +867,7 @@ impl Parser<'_> {
 
     fn parse_expression_or_update(&mut self) -> ParseResult {
         if !Self::EXPRESSION_START.contains(self.peek().kind) {
-            self.push_error(DiagnosticError::ExpectedExpression {
+            self.push_error(ExpectedExpression {
                 got: self.peek().text.into(),
                 valid_tokens: Self::EXPRESSION_START,
             });
@@ -886,7 +892,7 @@ impl Parser<'_> {
 
             self.finish_node(watcher, SyntaxNodeKind::VariableUpdate);
         } else if let [_, TokenKind::Equal] = self.multipeek() {
-            self.push_error(DiagnosticError::UnexpectedToken {
+            self.push_error(UnexpectedToken {
                 expected: UpdateOperatorToken::TOKEN_SET,
                 got: self.peek().text.into(),
             });
@@ -903,7 +909,7 @@ impl Parser<'_> {
 
     fn parse_expression(&mut self) -> ParseResult {
         if !Self::EXPRESSION_START.contains(self.peek().kind) {
-            self.push_error(DiagnosticError::ExpectedExpression {
+            self.push_error(ExpectedExpression {
                 got: self.peek().text.into(),
                 valid_tokens: Self::EXPRESSION_START,
             });
@@ -993,7 +999,7 @@ impl Parser<'_> {
             }
             [TokenKind::KeywordNot, ..] => self.parse_not()?,
             _ => {
-                self.push_error(DiagnosticError::ExpectedValue {
+                self.push_error(ExpectedValue {
                     got: self.peek().text.into(),
                 });
                 return Err(());
@@ -1162,7 +1168,11 @@ mod tests {
     use crate::{
         DisplayOptions,
         auryn::{
-            diagnostics::diagnostic::{Diagnostic, Diagnostics},
+            air::typecheck::type_context::TypeContext,
+            diagnostics::{
+                diagnostic::{Diagnostic, DiagnosticContext},
+                diagnostic_display::DiagnosticCollectionDisplay,
+            },
             file_id::FileId,
             input_files::InputFiles,
             parser::{Parser, ParserOutput},
@@ -1180,12 +1190,18 @@ mod tests {
     impl Debug for AnnotatedParserOutput {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let ast = self.input_files.get(FileId::MAIN_FILE).syntax_tree();
-            let diagnostics: Diagnostics = self.diagnostics.iter().cloned().collect();
+            let ctx = DiagnosticContext {
+                input_files: &self.input_files,
+                ty_ctx: &TypeContext::default(),
+                options: DisplayOptions::FOR_TESTING,
+            };
+            let mut display = DiagnosticCollectionDisplay::new(&ctx);
+            display.extend(self.diagnostics.iter().map(|it| it.display(&ctx)));
+
             writeln!(
                 f,
-                "syntax_tree:\n{}\ndiagnostics:\n{}",
+                "syntax_tree:\n{}\ndiagnostics:\n{display}",
                 ast.display(self.input_files.get(FileId::MAIN_FILE).source.as_ref()),
-                diagnostics.to_display(&self.input_files, DisplayOptions::FOR_TESTING)
             )
         }
     }

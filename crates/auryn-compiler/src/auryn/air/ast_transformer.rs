@@ -24,7 +24,14 @@ use crate::auryn::{
         StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField, StructuralTypeField,
         Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate, WhileStatement,
     },
-    diagnostics::diagnostic::{DiagnosticError, Diagnostics},
+    diagnostics::{
+        diagnostic::Diagnostics,
+        errors::{
+            BreakOutsideLoop, ContinueOutsideLoop, ExternTypeRequiresMetadata,
+            ImmutableVariableUpdate, InvalidNumber, InvalidPlace, UndefinedVariable,
+            UnexpectedExternTarget,
+        },
+    },
     syntax_id::SyntaxId,
     syntax_tree::SyntaxToken,
 };
@@ -161,8 +168,7 @@ impl AstTransformer {
         if let Ok(target) = block.extern_target()
             && target.string_literal_text().as_str() != "java"
         {
-            self.diagnostics
-                .add(target.id, DiagnosticError::UnexpectedExternTarget);
+            self.diagnostics.add(target.id, UnexpectedExternTarget);
         }
         for item in block.items() {
             self.transform_extern_block_item(item);
@@ -180,8 +186,7 @@ impl AstTransformer {
                 };
                 let extern_path = item.metadata().and_then(|metadata| metadata.value());
                 let Ok(extern_path) = extern_path else {
-                    self.diagnostics
-                        .add(item.id(), DiagnosticError::ExternTypeRequiresMetadata);
+                    self.diagnostics.add(item.id(), ExternTypeRequiresMetadata);
                     return;
                 };
                 let Ok(extern_body) = extern_type.body() else {
@@ -210,8 +215,7 @@ impl AstTransformer {
 
         for item in body.items() {
             let Ok(metadata) = item.metadata() else {
-                self.diagnostics
-                    .add(item.id(), DiagnosticError::ExternTypeRequiresMetadata);
+                self.diagnostics.add(item.id(), ExternTypeRequiresMetadata);
                 continue;
             };
             let Ok(metadata_token) = metadata.value() else {
@@ -676,8 +680,7 @@ impl FunctionTransformer<'_> {
 
     fn transform_break_statement(&mut self, r#break: BreakStatement) {
         let Some(loop_info) = self.loops.last() else {
-            self.diagnostics
-                .add(r#break.id(), DiagnosticError::BreakOutsideLoop);
+            self.diagnostics.add(r#break.id(), BreakOutsideLoop);
             return;
         };
         let break_target = loop_info.break_target;
@@ -688,8 +691,7 @@ impl FunctionTransformer<'_> {
 
     fn transform_continue_statement(&mut self, r#continue: ContinueStatement) {
         let Some(loop_info) = self.loops.last() else {
-            self.diagnostics
-                .add(r#continue.id(), DiagnosticError::ContinueOutsideLoop);
+            self.diagnostics.add(r#continue.id(), ContinueOutsideLoop);
             return;
         };
         let continue_target = loop_info.continue_target;
@@ -749,15 +751,13 @@ impl FunctionTransformer<'_> {
             AirExpressionKind::Variable(id) => match id {
                 AirValueId::Local(local_id) => AirPlaceKind::Variable(local_id),
                 AirValueId::Global(_) | AirValueId::Intrinsic(_) => {
-                    self.diagnostics
-                        .add(path.id(), DiagnosticError::ImmutableVariableUpdate);
+                    self.diagnostics.add(path.id(), ImmutableVariableUpdate);
                     return Err(AstError);
                 }
             },
             AirExpressionKind::Accessor(accessor) => AirPlaceKind::Accessor(accessor),
             _ => {
-                self.diagnostics
-                    .add(path.id(), DiagnosticError::InvalidPlace);
+                self.diagnostics.add(path.id(), InvalidPlace);
                 return Err(AstError);
             }
         };
@@ -888,8 +888,7 @@ impl FunctionTransformer<'_> {
         };
 
         let Ok(value) = token.text.as_ref().parse() else {
-            self.diagnostics
-                .add(number.id(), DiagnosticError::InvalidNumber);
+            self.diagnostics.add(number.id(), InvalidNumber);
             return AirExpression::error(number.id());
         };
 
@@ -974,7 +973,7 @@ impl FunctionTransformer<'_> {
 
         self.diagnostics.add(
             ident.id,
-            DiagnosticError::UndefinedVariable {
+            UndefinedVariable {
                 ident: ident.text.clone(),
             },
         );
@@ -997,7 +996,7 @@ impl FunctionTransformer<'_> {
             let Some(id) = self.namespace.types.get(&ident.text) else {
                 self.diagnostics.add(
                     ident.id,
-                    DiagnosticError::UndefinedVariable {
+                    UndefinedVariable {
                         ident: ident.text.clone(),
                     },
                 );

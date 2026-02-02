@@ -8,10 +8,11 @@ use std::{
 use stdx::default;
 
 use crate::auryn::{
+    air::typecheck::type_context::TypeContext,
     codegen_java::codegen::{CodegenOutput, codegen},
     diagnostics::{
-        diagnostic::{DiagnosticKind, Diagnostics},
-        diagnostic_display::DiagnosticCollectionDisplay,
+        diagnostic::Diagnostics,
+        diagnostic_display::{DiagnosticCollectionDisplay, DiagnosticLevel},
     },
     environment::{Environment, FilesystemEnvironment, ProjectTree},
     file_id::FileId,
@@ -23,7 +24,7 @@ pub use crate::auryn::diagnostics::diagnostic_display::DisplayOptions;
 
 #[derive(Debug)]
 pub enum AurynError {
-    CompilerError(OwnedDiagnostics),
+    CompilerError(Box<OwnedDiagnostics>),
     MainFileDoesNotExist(String),
     InvalidInputDir(PathBuf),
     InvalidInputFile(PathBuf),
@@ -31,7 +32,7 @@ pub enum AurynError {
 
 impl From<OwnedDiagnostics> for AurynError {
     fn from(value: OwnedDiagnostics) -> Self {
-        Self::CompilerError(value)
+        Self::CompilerError(Box::new(value))
     }
 }
 
@@ -55,6 +56,7 @@ impl std::error::Error for AurynError {}
 
 pub struct OwnedDiagnostics {
     pub input_files: InputFiles,
+    pub ty_ctx: TypeContext,
     pub diagnostics: Diagnostics,
 }
 
@@ -64,7 +66,8 @@ impl OwnedDiagnostics {
     }
 
     pub fn to_display_with_opts(&self, opts: DisplayOptions) -> DiagnosticCollectionDisplay<'_> {
-        self.diagnostics.to_display(&self.input_files, opts)
+        self.diagnostics
+            .to_display(&self.input_files, &self.ty_ctx, opts)
     }
 }
 
@@ -134,11 +137,12 @@ fn compile(
     if !diagnostics.is_empty() {
         let should_abort = diagnostics
             .iter()
-            .any(|it| matches!(it.kind, DiagnosticKind::Error(_)));
+            .any(|it| matches!(it.level(), DiagnosticLevel::Error));
 
         if should_abort {
             return Err(OwnedDiagnostics {
                 input_files: world.into_input_files(),
+                ty_ctx: air.ty_ctx,
                 diagnostics,
             }
             .into());

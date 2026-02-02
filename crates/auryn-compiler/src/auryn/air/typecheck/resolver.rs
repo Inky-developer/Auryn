@@ -16,7 +16,7 @@ use crate::auryn::{
         },
         unresolved_type::UnresolvedType,
     },
-    diagnostics::diagnostic::{DiagnosticError, Diagnostics},
+    diagnostics::{diagnostic::Diagnostics, errors::UndefinedVariable},
     syntax_id::SyntaxId,
 };
 
@@ -62,7 +62,7 @@ impl Resolver {
                 Err(_) => {
                     ctx.diagnostics.add(
                         *id,
-                        DiagnosticError::UndefinedVariable {
+                        UndefinedVariable {
                             ident: ident.clone(),
                         },
                     );

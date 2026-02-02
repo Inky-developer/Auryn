@@ -351,7 +351,7 @@ impl Display for SyntaxNodeDisplay<'_, '_> {
                         for _ in 0..(depth + 1) {
                             write!(f, "|")?;
                         }
-                        writeln!(f, "{:?}", error.diagnostic.kind)?;
+                        writeln!(f, "ERROR {}", error.diagnostic.kind.code())?;
                     }
                 }
                 offset += child.len();

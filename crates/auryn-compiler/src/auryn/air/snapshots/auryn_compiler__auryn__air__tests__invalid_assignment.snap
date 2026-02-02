@@ -638,12 +638,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                         221531231670419,
                     ),
                 },
-                kind: Error(
-                    TypeMismatch {
-                        expected: "I32",
-                        got: "()",
-                    },
-                ),
+                kind: "Type mismatch",
                 ..
             },
             Diagnostic {
@@ -657,12 +652,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                         241892558110725,
                     ),
                 },
-                kind: Error(
-                    TypeMismatch {
-                        expected: "Number",
-                        got: "()",
-                    },
-                ),
+                kind: "Type mismatch",
                 ..
             },
             Diagnostic {
@@ -676,12 +666,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                         242992069738496,
                     ),
                 },
-                kind: Error(
-                    TypeMismatch {
-                        expected: "()",
-                        got: "Number",
-                    },
-                ),
+                kind: "Type mismatch",
                 ..
             },
         ],
