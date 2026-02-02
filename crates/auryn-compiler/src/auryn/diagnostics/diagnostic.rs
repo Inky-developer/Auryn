@@ -1,98 +1,13 @@
-use std::rc::Rc;
-use std::{fmt::Debug, panic::Location};
+use std::{fmt::Debug, panic::Location, rc::Rc};
 
-use crate::auryn::air::typecheck::type_context::TypeContext;
 use crate::auryn::{
+    air::typecheck::type_context::TypeContext,
     diagnostics::diagnostic_display::{
         DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel, DisplayOptions,
     },
     input_files::InputFiles,
     syntax_id::SyntaxId,
 };
-
-/// Simple macro for creating diagnostics.
-/// Non-trivial logic is not supported and needs to be implemented manually.
-#[macro_export]
-macro_rules! diag {
-    (
-        $(#[$($meta:tt)*])*
-        $vis:vis struct $name:ident {
-            $(
-                $field_name:ident: $field_type:ty
-            ),* $(,)?
-        }
-    ) => {
-        $vis struct $name {
-            $(
-                pub $field_name: $field_type
-            ),*
-        }
-
-        diag! {
-            impl $name with $($field_name: $field_type),* {
-                $(#[$($meta)*])*
-            }
-        }
-    };
-    (
-        $(#[$($meta:tt)*])*
-        $vis:vis struct $name:ident;
-    ) => {
-        $vis struct $name;
-
-        diag! {
-            impl $name with {
-                $(#[$($meta)*])*
-            }
-        }
-    };
-    (
-        impl $name:ident with $($field_name:ident: $field_type:ty),* {
-            #[level($level:expr)]
-            #[code($code:literal)]
-            $(#[message($($message:tt)+)])?
-            $(#[info($($info:tt)+)])?
-            $(#[help($($help:tt)+)])?
-            $(#[label($label:expr)])?
-            $(#[custom_diagnostic($func:expr)])?
-        }
-    ) => {
-        impl $crate::auryn::diagnostics::diagnostic::DiagnosticKind for $name {
-            fn code(&self) -> &'static str {
-                $code
-            }
-
-            fn level(&self) -> DiagnosticLevel {
-                $level
-            }
-
-            fn build(
-                &self,
-                #[allow(unused)]
-                builder: &mut $crate::auryn::diagnostics::diagnostic_display::DiagnosticDisplay,
-                _ctx: &$crate::auryn::diagnostics::diagnostic::DiagnosticContext
-            ) {
-                let Self {$($field_name),*} = self;
-
-                $(builder.with_message(format!($($message)*));)?
-                $(builder.with_info(format!($($info)*));)?
-                $(builder.with_help(format!($($help)*));)?
-                $(builder.with_label($label);)?
-                $(
-                    {
-                        // Small hack so that rust can infer the type of the passed closure
-                        fn get_handler<F, R>(handler: F) -> F
-                            where F: FnOnce(&mut $crate::auryn::diagnostics::diagnostic_display::DiagnosticDisplay) -> R
-                        {
-                            handler
-                        }
-                        (get_handler($func))(builder);
-                    }
-                )?
-            }
-        }
-    };
-}
 
 #[derive(Debug, Clone)]
 pub struct DiagnosticContext<'a> {
@@ -203,4 +118,86 @@ impl Diagnostic {
     pub fn level(&self) -> DiagnosticLevel {
         self.kind.level()
     }
+}
+
+/// Simple macro for creating diagnostics.
+/// Non-trivial logic is not supported and needs to be implemented manually.
+#[macro_export]
+macro_rules! diag {
+    (
+        $(#[$($meta:tt)*])*
+        $vis:vis struct $name:ident {
+            $(
+                $field_name:ident: $field_type:ty
+            ),* $(,)?
+        }
+    ) => {
+        $vis struct $name {
+            $(
+                pub $field_name: $field_type
+            ),*
+        }
+
+        diag! {
+            impl $name with $($field_name: $field_type),* {
+                $(#[$($meta)*])*
+            }
+        }
+    };
+    (
+        $(#[$($meta:tt)*])*
+        $vis:vis struct $name:ident;
+    ) => {
+        $vis struct $name;
+
+        diag! {
+            impl $name with {
+                $(#[$($meta)*])*
+            }
+        }
+    };
+    (
+        impl $name:ident with $($field_name:ident: $field_type:ty),* {
+            #[level($level:expr)]
+            #[code($code:literal)]
+            $(#[message($($message:tt)+)])?
+            $(#[info($($info:tt)+)])?
+            $(#[help($($help:tt)+)])?
+            $(#[label($label:expr)])?
+            $(#[custom_diagnostic($func:expr)])?
+        }
+    ) => {
+        impl $crate::auryn::diagnostics::diagnostic::DiagnosticKind for $name {
+            fn code(&self) -> &'static str {
+                $code
+            }
+
+            fn level(&self) -> DiagnosticLevel {
+                $level
+            }
+
+            fn build(
+                &self,
+                #[allow(unused)]
+                builder: &mut $crate::auryn::diagnostics::diagnostic_display::DiagnosticDisplay,
+                _ctx: &$crate::auryn::diagnostics::diagnostic::DiagnosticContext
+            ) {
+                let Self {$($field_name),*} = self;
+
+                $(builder.with_message(format!($($message)*));)?
+                $(builder.with_info(format!($($info)*));)?
+                $(builder.with_help(format!($($help)*));)?
+                $(builder.with_label($label);)?
+                $({
+                    // Small hack so that rust can infer the type of the passed closure
+                    fn get_handler<F, R>(handler: F) -> F
+                        where F: FnOnce(&mut $crate::auryn::diagnostics::diagnostic_display::DiagnosticDisplay) -> R
+                    {
+                        handler
+                    }
+                    (get_handler($func))(builder);
+                })?
+            }
+        }
+    };
 }
