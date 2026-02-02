@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use stdx::{bitset, default};
 
 use crate::auryn::{
-    diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
+    diagnostics::diagnostic::{Diagnostic, DiagnosticError, DiagnosticKind},
     file_id::FileId,
     syntax_id::SyntaxId,
     syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
@@ -1159,13 +1159,15 @@ impl Parser<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::auryn::{
-        diagnostic::{Diagnostic, Diagnostics},
-        diagnostic_display::DisplayOptions,
-        file_id::FileId,
-        input_files::InputFiles,
-        parser::{Parser, ParserOutput},
-        tokenizer::TokenKind,
+    use crate::{
+        DisplayOptions,
+        auryn::{
+            diagnostics::diagnostic::{Diagnostic, Diagnostics},
+            file_id::FileId,
+            input_files::InputFiles,
+            parser::{Parser, ParserOutput},
+            tokenizer::TokenKind,
+        },
     };
     use std::fmt::Debug;
     use stdx::bitset;

@@ -19,7 +19,7 @@ use crate::auryn::{
         },
         unresolved_type::UnresolvedType,
     },
-    diagnostic::{DiagnosticError, Diagnostics},
+    diagnostics::diagnostic::{DiagnosticError, Diagnostics},
     syntax_id::SyntaxId,
     tokenizer::BinaryOperatorToken,
 };

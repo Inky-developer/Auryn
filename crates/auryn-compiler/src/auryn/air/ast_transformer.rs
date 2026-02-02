@@ -24,7 +24,7 @@ use crate::auryn::{
         StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField, StructuralTypeField,
         Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate, WhileStatement,
     },
-    diagnostic::{DiagnosticError, Diagnostics},
+    diagnostics::diagnostic::{DiagnosticError, Diagnostics},
     syntax_id::SyntaxId,
     syntax_tree::SyntaxToken,
 };

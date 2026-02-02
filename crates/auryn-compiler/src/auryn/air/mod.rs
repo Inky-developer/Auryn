@@ -7,7 +7,7 @@ use crate::auryn::{
         unresolved_type::UnresolvedType,
     },
     ast::query_ast,
-    diagnostic::Diagnostics,
+    diagnostics::diagnostic::Diagnostics,
     input_files::InputFile,
 };
 
@@ -49,7 +49,7 @@ pub fn query_air<'a>(
 mod tests {
     use crate::auryn::{
         air::{data::Air, query_air},
-        diagnostic::Diagnostics,
+        diagnostics::diagnostic::Diagnostics,
         file_id::FileId,
         input_files::InputFiles,
     };

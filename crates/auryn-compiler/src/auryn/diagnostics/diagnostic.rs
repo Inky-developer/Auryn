@@ -7,7 +7,7 @@ use std::{
 use stdx::SmallString;
 
 use crate::auryn::{
-    diagnostic_display::{
+    diagnostics::diagnostic_display::{
         DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel, DisplayOptions, Label,
     },
     input_files::InputFiles,

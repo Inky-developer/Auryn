@@ -3,7 +3,7 @@ use stdx::{FastMap, SmallString};
 use crate::auryn::{
     air::{data::Air, query_air},
     api::AurynError,
-    diagnostic::Diagnostics,
+    diagnostics::diagnostic::Diagnostics,
     environment::Environment,
     file_id::FileId,
     input_files::{InputFile, InputFiles},

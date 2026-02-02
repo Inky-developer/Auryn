@@ -7,7 +7,8 @@ use std::{
 use stdx::SmallString;
 
 use crate::auryn::{
-    diagnostic::Diagnostic, diagnostic_display::ComputedSpan, syntax_id::SyntaxId,
+    diagnostics::{diagnostic::Diagnostic, diagnostic_display::ComputedSpan},
+    syntax_id::SyntaxId,
     tokenizer::TokenKind,
 };
 

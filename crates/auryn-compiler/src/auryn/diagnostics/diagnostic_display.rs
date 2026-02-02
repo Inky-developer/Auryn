@@ -6,8 +6,8 @@ use std::{
 use stdx::default;
 
 use crate::auryn::{
-    diagnostic_display::implementation::InputFilesCache, file_id::FileId, input_files::InputFiles,
-    syntax_id::SyntaxId,
+    diagnostics::diagnostic_display::implementation::InputFilesCache, file_id::FileId,
+    input_files::InputFiles, syntax_id::SyntaxId,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -207,7 +207,7 @@ mod implementation {
     use stdx::FastMap;
 
     use crate::auryn::{
-        diagnostic_display::{
+        diagnostics::diagnostic_display::{
             ComputedSpan, DiagnosticCollectionDisplay, DiagnosticLevel, LabelKind,
         },
         file_id::FileId,

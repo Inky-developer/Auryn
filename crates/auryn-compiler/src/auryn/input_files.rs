@@ -4,7 +4,7 @@ use stdx::{FastMap, SmallString, default};
 
 use crate::auryn::{
     api::AurynError,
-    diagnostic_display::ComputedSpan,
+    diagnostics::diagnostic_display::ComputedSpan,
     environment::ProjectTree,
     file_id::FileId,
     parser::{Parser, ParserOutput},
