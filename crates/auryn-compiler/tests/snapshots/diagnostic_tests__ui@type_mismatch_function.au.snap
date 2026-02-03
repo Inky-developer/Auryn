@@ -3,10 +3,10 @@ source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "type A = I32\n\nfn main() {\n    A()\n}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/type_mismatch_function.au
 ---
-Error: Type mismatch
+Error: Expected function
    ╭─[ main:4:5 ]
    │
  4 │     A()
    │     ─┬─  
-   │      ╰─── Expected `function`, but got `Type[I32]`
+   │      ╰─── Can only call functions, but got `Type[I32]`
 ───╯

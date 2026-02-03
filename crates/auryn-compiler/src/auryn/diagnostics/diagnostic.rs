@@ -1,7 +1,15 @@
-use std::{fmt::Debug, panic::Location, rc::Rc};
+use std::{
+    fmt::{Debug, Display},
+    panic::Location,
+    rc::Rc,
+};
 
 use crate::auryn::{
-    air::typecheck::type_context::TypeContext,
+    air::typecheck::{
+        bounds::{MaybeBounded, MaybeBoundedView},
+        type_context::TypeContext,
+        types::{Type, TypeView},
+    },
     diagnostics::diagnostic_display::{
         DiagnosticCollectionDisplay, DiagnosticDisplay, DiagnosticLevel, DisplayOptions,
     },
@@ -23,7 +31,7 @@ pub trait DiagnosticKind {
 
     fn build(&self, builder: &mut DiagnosticDisplay, ctx: &DiagnosticContext);
 
-    fn is_valid(&self, _ctx: DiagnosticContext) -> bool {
+    fn is_valid(&self, _ctx: &DiagnosticContext) -> bool {
         true
     }
 }
@@ -82,7 +90,12 @@ impl Diagnostics {
             options,
         };
         let mut display = DiagnosticCollectionDisplay::new(&ctx);
-        display.extend(self.diagnostics.iter().map(|it| it.display(&ctx)));
+        display.extend(
+            self.diagnostics
+                .iter()
+                .filter(|it| it.kind.is_valid(&ctx))
+                .map(|it| it.display(&ctx)),
+        );
         display
     }
 
@@ -120,14 +133,93 @@ impl Diagnostic {
     }
 }
 
+/// Used for filtering out diagnostics which have invalid fields.
+/// The main use case is filtering out type error diagnostics which include the Error type
+pub trait DiagnosticValidator {
+    fn is_valid(&self, ctx: &DiagnosticContext) -> bool;
+}
+
+impl DiagnosticValidator for Type {
+    fn is_valid(&self, ctx: &DiagnosticContext) -> bool {
+        !self.as_view(ctx.ty_ctx).is_erroneous()
+    }
+}
+
+impl DiagnosticValidator for MaybeBounded {
+    fn is_valid(&self, ctx: &DiagnosticContext) -> bool {
+        self.as_type()
+            .map(|ty| !ty.as_view(ctx.ty_ctx).is_erroneous())
+            .unwrap_or(true)
+    }
+}
+
+/// Used for converting into a representation more suited towards printing,
+/// e.g. turning [`Type`] into [`TypeView`].
+pub trait AsDiagnosticDisplay<'a> {
+    type Output: 'a;
+
+    fn as_display(&'a self, ctx: &'a DiagnosticContext) -> Self::Output;
+}
+
+impl<'a, T: Display + 'a> AsDiagnosticDisplay<'a> for T {
+    type Output = &'a Self;
+
+    fn as_display(&'a self, _: &'a DiagnosticContext) -> Self::Output {
+        self
+    }
+}
+
+impl<'a> AsDiagnosticDisplay<'a> for Type {
+    type Output = TypeView<'a>;
+
+    fn as_display(&'a self, ctx: &'a DiagnosticContext) -> Self::Output {
+        self.as_view(ctx.ty_ctx)
+    }
+}
+
+impl<'a> AsDiagnosticDisplay<'a> for MaybeBounded {
+    type Output = MaybeBoundedView<'a>;
+
+    fn as_display(&'a self, ctx: &'a DiagnosticContext) -> Self::Output {
+        self.as_view(ctx.ty_ctx)
+    }
+}
+
+impl<'a> AsDiagnosticDisplay<'a> for SyntaxId {
+    type Output = SyntaxId;
+
+    fn as_display(&'a self, _: &'a DiagnosticContext) -> Self::Output {
+        *self
+    }
+}
+
 /// Simple macro for creating diagnostics.
 /// Non-trivial logic is not supported and needs to be implemented manually.
+///
+/// Supported attributes on the struct:
+/// - `level(DiagnosticLevel)` (required) - specify the diagnostic level
+/// - `code(str)` (required) - Specify a code for the diagnostic
+/// - `message(format_str)` - Specify the main message for the diagnostic
+/// - `info(format_str)` - Specify some info for the diagnostic
+/// - `help(format_str)` - Specify some help for the diagnostic
+/// - `label(Label)` - Add a spanned label to the diagnostic
+/// - `custom_diagnostic(expr)` - Supply a custom closure which gets mutable access to the builder
+///
+/// Supported attributes on the struct fields:
+/// - `validate` - Require this field to be valid or filter out this diagnostic.
+///   A field is valid according to its implementation of `DiagnosticValidator`.
+/// - `no_display` - Mark that this field should not be converted using `AsDiagnosticDisplay`.
+///   Useful if some custom display logic is implement for the field.
+///
+/// # Examples
+/// Find examples at `crate::auryn::diagnostics::errors`
 #[macro_export]
 macro_rules! diag {
     (
         $(#[$($meta:tt)*])*
         $vis:vis struct $name:ident {
             $(
+                $(#[$field_attr:tt])?
                 $field_name:ident: $field_type:ty
             ),* $(,)?
         }
@@ -139,7 +231,7 @@ macro_rules! diag {
         }
 
         diag! {
-            impl $name with $($field_name: $field_type),* {
+            impl $name with $($(#[$field_attr])? $field_name: $field_type),* {
                 $(#[$($meta)*])*
             }
         }
@@ -157,7 +249,7 @@ macro_rules! diag {
         }
     };
     (
-        impl $name:ident with $($field_name:ident: $field_type:ty),* {
+        impl $name:ident with $($(#[$field_attr:tt])? $field_name:ident: $field_type:ty),* {
             #[level($level:expr)]
             #[code($code:literal)]
             $(#[message($($message:tt)+)])?
@@ -180,9 +272,13 @@ macro_rules! diag {
                 &self,
                 #[allow(unused)]
                 builder: &mut $crate::auryn::diagnostics::diagnostic_display::DiagnosticDisplay,
-                _ctx: &$crate::auryn::diagnostics::diagnostic::DiagnosticContext
+                #[allow(unused)]
+                ctx: &$crate::auryn::diagnostics::diagnostic::DiagnosticContext
             ) {
                 let Self {$($field_name),*} = self;
+                $(
+                    let $field_name = diag!(as_display ctx $(#[$field_attr])? $field_name);
+                )*
 
                 $(builder.with_message(format!($($message)*));)?
                 $(builder.with_info(format!($($info)*));)?
@@ -198,6 +294,28 @@ macro_rules! diag {
                     (get_handler($func))(builder);
                 })?
             }
+
+            #[allow(unused)]
+            fn is_valid(&self, ctx: &$crate::auryn::diagnostics::diagnostic::DiagnosticContext) -> bool {
+                $(
+                  diag!(validate self ctx $(#[$field_attr])? $field_name);
+                )*
+                true
+            }
         }
+    };
+
+    (validate $self:ident $ctx:ident #[validate] $field_name:ident) => {
+        if !$crate::auryn::diagnostics::diagnostic::DiagnosticValidator::is_valid(&$self.$field_name, $ctx) {
+            return false;
+        }
+    };
+    (validate $self:ident $ctx:ident $(#[$other:tt])? $field_name:ident) => {};
+
+    (as_display $ctx:ident #[no_display] $field_name:ident) => {
+        $field_name
+    };
+    (as_display $ctx:ident $(#[$other:tt])? $field_name:ident) => {
+        $crate::auryn::diagnostics::diagnostic::AsDiagnosticDisplay::as_display($field_name, $ctx)
     };
 }

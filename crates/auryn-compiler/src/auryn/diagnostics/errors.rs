@@ -4,6 +4,7 @@ use stdx::SmallString;
 
 use crate::{
     auryn::{
+        air::typecheck::{bounds::MaybeBounded, types::Type},
         diagnostics::{
             diagnostic_display::{DiagnosticLevel, Label},
             text_utils::{fmt_items, pluralize},
@@ -21,6 +22,7 @@ diag! {
     #[info("Valid tokens: {}", fmt_items(*valid_tokens, "or"))]
     pub struct ExpectedExpression {
         got: SmallString,
+        #[no_display]
         valid_tokens: TokenSet,
     }
 }
@@ -67,6 +69,7 @@ diag! {
     #[message("got {got:?}")]
     #[info("Expected {}", fmt_items(*expected, "or"))]
     pub struct UnexpectedToken {
+        #[no_display]
         expected: TokenSet,
         got: SmallString,
     }
@@ -150,10 +153,11 @@ diag! {
     #[level(DiagnosticLevel::Error)]
     #[code("Undefined property")]
     #[message("Unknown property `{ident}`")]
-    #[label(Label::new(*value_id).with_message(format!("Value has type `{type}`")))]
+    #[label(Label::new(value_id).with_message(format!("Value has type `{type}`")))]
     pub struct UndefinedProperty {
         value_id: SyntaxId,
-        r#type: String,
+        #[validate]
+        r#type: Type,
         ident: SmallString,
     }
 }
@@ -163,8 +167,30 @@ diag! {
     #[code("Type mismatch")]
     #[message("Expected `{expected}`, but got `{got}`")]
     pub struct TypeMismatch {
-        expected: String,
-        got: String,
+        #[validate]
+        expected: MaybeBounded,
+        #[validate]
+        got: Type,
+    }
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Expected struct")]
+    #[message("Expected this to be a struct, but it is of type `{got}`")]
+    pub struct ExpectedStruct {
+        #[validate]
+        got: Type,
+    }
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Expected function")]
+    #[message("Can only call functions, but got `{got}`")]
+    pub struct ExpectedFunction {
+        #[validate]
+        got: Type
     }
 }
 
@@ -174,7 +200,8 @@ diag! {
     #[message("Operation `{operation}` is not supported on type `{type}`")]
     pub struct UnsupportedOperationWithType {
         operation: SmallString,
-        r#type: String,
+        #[validate]
+        r#type: Type,
     }
 }
 
@@ -183,9 +210,11 @@ diag! {
     #[code("Value outside of valid range")]
     #[message("Value {got} is outside the valid range {range:?} for type `{type}`")]
     pub struct ValueOutsideRange {
+        #[no_display]
         range: RangeInclusive<i128>,
         got: i128,
-        r#type: String,
+        #[validate]
+        r#type: Type,
     }
 }
 
@@ -204,6 +233,7 @@ diag! {
     pub struct MismatchedArgumentCount {
         expected: usize,
         got: usize,
+        #[no_display]
         parameter_def: Option<SyntaxId>,
     }
 }
@@ -218,6 +248,7 @@ diag! {
         fmt_items(unexpected_fields, "and")
     )]
     pub struct UnexpectedFields {
+        #[no_display]
         unexpected_fields: Vec<SmallString>,
     }
 }
@@ -231,6 +262,7 @@ diag! {
         fmt_items(missing_fields, "and")
     )]
     pub struct MissingFields {
+        #[no_display]
         missing_fields: Vec<SmallString>,
     }
 }
@@ -248,8 +280,10 @@ diag! {
     #[code("Invalid cast")]
     #[message("Can not cast from `{from}` to `{to}`")]
     pub struct InvalidCast {
-        from: String,
-        to: String,
+        #[validate]
+        from: Type,
+        #[validate]
+        to: Type,
     }
 }
 
@@ -258,19 +292,10 @@ diag! {
     #[code("Circular type alias")]
     #[message("A type alias must not refer to itself")]
     #[label(
-        Label::new(*circular_type_alias)
+        Label::new(circular_type_alias)
             .with_message("Because it includes this type, which causes the circular reference")
     )]
     pub struct CircularTypeAlias {
         circular_type_alias: SyntaxId,
-    }
-}
-
-diag! {
-    #[level(DiagnosticLevel::Error)]
-    #[code("Expected struct")]
-    #[message("Expected this to be a struct, but it is of type `{got}`")]
-    pub struct ExpectedStruct {
-        got: String,
     }
 }

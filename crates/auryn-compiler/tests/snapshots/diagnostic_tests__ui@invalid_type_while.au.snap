@@ -1,12 +1,12 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "\nfn main() {\n\twhile 5 {\n\t\t\n\t}\n}\n"
-input_file: tests/inputs/diagnostics/invalid_type_while.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_type_while.au
 ---
 Error: Type mismatch
    ╭─[ main:3:8 ]
    │
  3 │     while 5 {
    │           ─┬  
-   │            ╰── Expected `Bool`, but got `Number`
+   │            ╰── Expected `Bool`, but got `I32`
 ───╯

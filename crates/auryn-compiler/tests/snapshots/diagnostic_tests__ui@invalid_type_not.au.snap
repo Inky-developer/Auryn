@@ -1,12 +1,12 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a = not 5\n\tprint(a)\n}\n"
-input_file: tests/inputs/diagnostics/invalid_type_not.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_type_not.au
 ---
 Error: Type mismatch
    ╭─[ main:2:14 ]
    │
  2 │     let a = not 5
    │                 ┬  
-   │                 ╰── Expected `Bool`, but got `Number`
+   │                 ╰── Expected `Bool`, but got `I32`
 ───╯

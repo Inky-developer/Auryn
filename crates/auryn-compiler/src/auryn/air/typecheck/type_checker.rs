@@ -22,7 +22,7 @@ use crate::auryn::{
     diagnostics::{
         diagnostic::Diagnostics,
         errors::{
-            CircularTypeAlias, ExpectedStruct, InferenceFailed, InvalidCast,
+            CircularTypeAlias, ExpectedFunction, ExpectedStruct, InferenceFailed, InvalidCast,
             MismatchedArgumentCount, MissingFields, TypeMismatch, UndefinedProperty,
             UnexpectedFields, UnsupportedOperationWithType, ValueOutsideRange,
         },
@@ -159,8 +159,8 @@ impl Typechecker {
         self.diagnostics.add(
             at,
             TypeMismatch {
-                expected: expected.as_view(&self.ty_ctx).to_string(),
-                got: received.as_view(&self.ty_ctx).to_string(),
+                expected,
+                got: received,
             },
         );
     }
@@ -377,14 +377,12 @@ impl Typechecker {
             } => {
                 self.resolve_if_unresolved(struct_type);
                 let Type::Struct(struct_id) = struct_type.computed() else {
-                    if !struct_type.as_view(&self.ty_ctx).is_erroneous() {
-                        self.diagnostics.add(
-                            *struct_ident_id,
-                            ExpectedStruct {
-                                got: struct_type.as_view(&self.ty_ctx).to_string(),
-                            },
-                        );
-                    }
+                    self.diagnostics.add(
+                        *struct_ident_id,
+                        ExpectedStruct {
+                            got: struct_type.computed(),
+                        },
+                    );
                     return Type::Error;
                 };
 
@@ -415,12 +413,13 @@ impl Typechecker {
     ) -> Type {
         match constant {
             AirConstant::Number(value) => {
+                let default_type = Type::I32;
                 let expected = match expected {
                     MaybeBounded::Type(ty) => ty,
                     // Lets just use I32 as a default type for numbers right now.
                     // Note that this is different to what is returned for Bound::Top, because Bound::Number
                     // requires the ability to do runtime calculations, which Type::NumberLiteral does not support.
-                    MaybeBounded::Bounded(Bound::Number) => Type::I32,
+                    MaybeBounded::Bounded(Bound::Number) => default_type,
                     // If the bound is not strong enough, we just fall back to inference
                     _ => return self.infer_constant(id, constant),
                 };
@@ -428,21 +427,19 @@ impl Typechecker {
                     self.diagnostics.add(
                         id,
                         TypeMismatch {
-                            got: BoundView::Number.to_string(),
-                            expected: expected.as_view(&self.ty_ctx).to_string(),
+                            got: default_type,
+                            expected: expected.as_bounded(),
                         },
                     );
                 }
                 if let TypeView::NumberLiteral(expected_value) = expected.as_view(&self.ty_ctx)
                     && expected_value.value.value != *value
                 {
-                    self.diagnostics.add(
-                        id,
-                        TypeMismatch {
-                            expected: expected_value.value.value.to_string(),
-                            got: value.to_string(),
-                        },
-                    );
+                    let expected = TypeView::NumberLiteral(expected_value)
+                        .as_type()
+                        .as_bounded();
+                    let got = self.ty_ctx.number_literal_of(*value);
+                    self.diagnostics.add(id, TypeMismatch { expected, got });
                 }
 
                 if let Some(value_range) = expected.int_value_range()
@@ -453,7 +450,7 @@ impl Typechecker {
                         ValueOutsideRange {
                             range: value_range,
                             got: *value,
-                            r#type: expected.as_view(&self.ty_ctx).to_string(),
+                            r#type: expected,
                         },
                     );
                 }
@@ -541,7 +538,7 @@ impl Typechecker {
                         lhs.id,
                         UnsupportedOperationWithType {
                             operation: operator.to_token_kind().as_str().into(),
-                            r#type: result_type.as_view(&self.ty_ctx).to_string(),
+                            r#type: result_type,
                         },
                     );
                 }
@@ -589,16 +586,14 @@ impl Typechecker {
         match value_type_view.get_member(&accessor.ident) {
             Some(member_type_view) => member_type_view.as_type(),
             None => {
-                if !value_type_view.is_erroneous() {
-                    self.diagnostics.add(
-                        accessor.ident_id,
-                        UndefinedProperty {
-                            value_id: accessor.value.id,
-                            r#type: value_type_view.to_string(),
-                            ident: accessor.ident.clone(),
-                        },
-                    );
-                }
+                self.diagnostics.add(
+                    accessor.ident_id,
+                    UndefinedProperty {
+                        value_id: accessor.value.id,
+                        r#type: value_type_view.as_type(),
+                        ident: accessor.ident.clone(),
+                    },
+                );
                 Type::Error
             }
         }
@@ -622,15 +617,7 @@ impl Typechecker {
                 expected,
             ),
             other => {
-                if !other.as_view(&self.ty_ctx).is_erroneous() {
-                    self.diagnostics.add(
-                        id,
-                        TypeMismatch {
-                            expected: "function".into(),
-                            got: other.as_view(&self.ty_ctx).to_string(),
-                        },
-                    );
-                }
+                self.diagnostics.add(id, ExpectedFunction { got: other });
                 Type::Error
             }
         }
@@ -769,8 +756,8 @@ impl Typechecker {
             self.diagnostics.add(
                 id,
                 InvalidCast {
-                    from: received.as_view(&self.ty_ctx).to_string(),
-                    to: expected.as_view(&self.ty_ctx).to_string(),
+                    from: received,
+                    to: expected,
                 },
             );
         }
@@ -788,16 +775,14 @@ impl Typechecker {
             return self.infer_intrinsic_array_of(id, arguments);
         };
         let TypeView::Array(array) = expected.as_view(&self.ty_ctx) else {
-            if !expected.as_view(&self.ty_ctx).is_erroneous() {
-                let array_type = self.ty_ctx.array_bound_of(Bound::Top).as_view(&self.ty_ctx);
-                self.diagnostics.add(
-                    id,
-                    TypeMismatch {
-                        expected: array_type.to_string(),
-                        got: expected.as_view(&self.ty_ctx).to_string(),
-                    },
-                );
-            }
+            let array_type = self.ty_ctx.array_bound_of(Bound::Top);
+            self.diagnostics.add(
+                id,
+                TypeMismatch {
+                    expected: MaybeBounded::Bounded(array_type),
+                    got: expected,
+                },
+            );
             return self.ty_ctx.array_of(Type::Error);
         };
         let element_type = array.element_type;
