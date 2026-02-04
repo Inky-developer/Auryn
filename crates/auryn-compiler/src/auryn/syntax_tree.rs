@@ -8,7 +8,7 @@ use stdx::SmallString;
 
 use crate::auryn::{
     diagnostics::{diagnostic::Diagnostic, diagnostic_display::ComputedSpan},
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
     tokenizer::TokenKind,
 };
 
@@ -171,6 +171,13 @@ impl SyntaxToken {
             .trim_start_matches("\"")
             .trim_end_matches("\"")
             .replace("\\n", "\n")
+    }
+
+    pub fn spanned_text(&self) -> Spanned<SmallString> {
+        Spanned {
+            value: self.text.clone(),
+            syntax_id: self.id,
+        }
     }
 }
 

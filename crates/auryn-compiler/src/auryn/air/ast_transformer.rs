@@ -32,7 +32,7 @@ use crate::auryn::{
             UnexpectedExternTarget,
         },
     },
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
     syntax_tree::SyntaxToken,
 };
 
@@ -1020,10 +1020,10 @@ impl FunctionTransformer<'_> {
     fn transform_struct_literal_field(
         &mut self,
         field: StructLiteralField,
-    ) -> Option<(SmallString, AirExpression)> {
+    ) -> Option<(Spanned<SmallString>, AirExpression)> {
         let ident = field.ident().ok()?;
         let expression = field.value().ok()?;
-        Some((ident.text.clone(), self.transform_expression(expression)))
+        Some((ident.spanned_text(), self.transform_expression(expression)))
     }
 }
 

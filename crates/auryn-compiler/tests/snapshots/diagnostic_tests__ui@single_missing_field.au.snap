@@ -1,0 +1,28 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "struct A {\n\ta: I32\n}\n\nfn main() {\n\tlet a: A = A {b: 1}\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/single_missing_field.au
+---
+Error: Unexpected fields
+   ╭─[ main:6:16 ]
+   │
+ 1 │ struct A {
+   │        ┬  
+   │        ╰── Type is defined here
+   │ 
+ 6 │     let a: A = A {b: 1}
+   │                   ┬  
+   │                   ╰── Unexpected field: `b`
+───╯
+
+Error: Missing fields
+   ╭─[ main:6:13 ]
+   │
+ 1 │ struct A {
+   │        ┬  
+   │        ╰── Type is defined here
+   │ 
+ 6 │     let a: A = A {b: 1}
+   │                ────┬───  
+   │                    ╰───── Missing field: `a`
+───╯

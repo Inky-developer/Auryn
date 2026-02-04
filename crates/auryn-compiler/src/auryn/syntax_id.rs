@@ -1,4 +1,8 @@
-use std::{fmt::Debug, num::NonZeroU64, ops::Range};
+use std::{
+    fmt::Debug,
+    num::NonZeroU64,
+    ops::{Deref, DerefMut, Range},
+};
 
 use crate::auryn::file_id::FileId;
 
@@ -58,6 +62,25 @@ impl Debug for SyntaxId {
             .field("file_id", &self.file_id())
             .field("number", &self.number())
             .finish()
+    }
+}
+
+#[derive(Debug)]
+pub struct Spanned<T> {
+    pub value: T,
+    pub syntax_id: SyntaxId,
+}
+
+impl<T> Deref for Spanned<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<T> DerefMut for Spanned<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 

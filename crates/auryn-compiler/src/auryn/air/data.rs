@@ -12,7 +12,7 @@ use crate::auryn::{
         unresolved_type::UnresolvedType,
     },
     file_id::FileId,
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
     tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
 };
 
@@ -321,7 +321,7 @@ pub enum AirConstant {
     String(SmallString),
     StructLiteral {
         struct_type: Option<(SyntaxId, AirType)>,
-        fields: Vec<(SmallString, AirExpression)>,
+        fields: Vec<(Spanned<SmallString>, AirExpression)>,
     },
 }
 

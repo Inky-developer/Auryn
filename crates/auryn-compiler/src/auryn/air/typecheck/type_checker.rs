@@ -27,7 +27,7 @@ use crate::auryn::{
             UnexpectedFields, UnsupportedOperationWithType, ValueOutsideRange,
         },
     },
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
     tokenizer::BinaryOperatorToken,
 };
 
@@ -386,7 +386,16 @@ impl Typechecker {
                     return Type::Error;
                 };
 
-                self.check_struct_literal(id, |ty_ctx| &ty_ctx.get(struct_id).structural, fields);
+                self.check_struct_literal(
+                    id,
+                    |ty_ctx| {
+                        (
+                            &ty_ctx.get(struct_id).structural,
+                            Some(struct_id.syntax_id()),
+                        )
+                    },
+                    fields,
+                );
                 struct_type.computed()
             }
             AirConstant::StructLiteral {
@@ -473,7 +482,11 @@ impl Typechecker {
                     return self.infer_constant(id, constant);
                 };
 
-                self.check_struct_literal(id, |ty_ctx| ty_ctx.get(structural_id), struct_literal);
+                self.check_struct_literal(
+                    id,
+                    |ty_ctx| (ty_ctx.get(structural_id), None),
+                    struct_literal,
+                );
                 Type::Structural(structural_id)
             }
         }
@@ -482,13 +495,14 @@ impl Typechecker {
     fn check_struct_literal(
         &mut self,
         id: SyntaxId,
-        get_expected: impl FnOnce(&TypeContext) -> &StructuralType,
-        got: &mut Vec<(SmallString, AirExpression)>,
+        get_expected: impl FnOnce(&TypeContext) -> (&StructuralType, Option<SyntaxId>),
+        got: &mut Vec<(Spanned<SmallString>, AirExpression)>,
     ) {
-        let expected = get_expected(&self.ty_ctx);
+        let (expected, expected_def) = get_expected(&self.ty_ctx);
         if let Err(()) = check_fields_equal(
             &mut self.diagnostics,
             id,
+            expected_def,
             expected.fields.iter().map(|(name, _)| name),
             got.iter().map(|(name, _)| name),
         ) {
@@ -497,7 +511,7 @@ impl Typechecker {
 
         let expected_types = expected.fields.iter().cloned().collect::<FastMap<_, _>>();
         for (name, expression) in got {
-            let expected_type = *expected_types.get(name).unwrap();
+            let expected_type = *expected_types.get(name.as_ref()).unwrap();
             self.check_expression(expression, MaybeBounded::Type(expected_type));
         }
     }
@@ -954,28 +968,51 @@ fn order_aliasses(aliasses: &FastMap<TypeAliasId, AirType>) -> Vec<TypeAliasId> 
 fn check_fields_equal<'a>(
     diagnostics: &mut Diagnostics,
     id: SyntaxId,
+    expected_def_id: Option<SyntaxId>,
     expected: impl Iterator<Item = &'a SmallString> + Clone,
-    received: impl Iterator<Item = &'a SmallString> + Clone,
+    received: impl Iterator<Item = &'a Spanned<SmallString>> + Clone,
 ) -> Result<(), ()> {
     let mut did_report_error = false;
 
     let expected_set = expected.clone().collect::<FastSet<_>>();
-    let received_set = received.clone().collect::<FastSet<_>>();
-    let unexpected_fields = received_set
-        .difference(&expected_set)
-        .map(|it| (*it).clone())
+    let received_map = received
+        .clone()
+        .map(|spanned| (&spanned.value, spanned.syntax_id))
+        .collect::<FastMap<_, _>>();
+    let unexpected_fields = received_map
+        .keys()
+        .filter(|field| !expected_set.contains(*field))
+        .map(|field| (**field).clone())
         .collect::<Vec<_>>();
     if !unexpected_fields.is_empty() {
-        diagnostics.add(id, UnexpectedFields { unexpected_fields });
+        let id = if unexpected_fields.len() == 1 {
+            received_map[&unexpected_fields[0]]
+        } else {
+            id
+        };
+        diagnostics.add(
+            id,
+            UnexpectedFields {
+                unexpected_fields,
+                def_id: expected_def_id,
+            },
+        );
         did_report_error = true;
     }
 
     let missing_fields = expected_set
-        .difference(&received_set)
-        .map(|it| (*it).clone())
+        .iter()
+        .filter(|field| !received_map.contains_key(*field))
+        .map(|field| (*field).clone())
         .collect::<Vec<_>>();
     if !missing_fields.is_empty() {
-        diagnostics.add(id, MissingFields { missing_fields });
+        diagnostics.add(
+            id,
+            MissingFields {
+                missing_fields,
+                def_id: expected_def_id,
+            },
+        );
         did_report_error = true;
     }
 

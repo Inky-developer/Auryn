@@ -239,7 +239,6 @@ diag! {
 }
 
 diag! {
-    // TODO: This and Missing fields could just be a note on TypeMismatch
     #[level(DiagnosticLevel::Error)]
     #[code("Unexpected fields")]
     #[message(
@@ -247,7 +246,14 @@ diag! {
         pluralize(unexpected_fields.len(), "field", "fields"),
         fmt_items(unexpected_fields, "and")
     )]
+    #[custom_diagnostic(|builder|
+        if let Some(def_id) = *def_id {
+            builder.with_label(Label::new(def_id).with_message("Type is defined here"));
+        }
+     )]
     pub struct UnexpectedFields {
+        #[no_display]
+        def_id: Option<SyntaxId>,
         #[no_display]
         unexpected_fields: Vec<SmallString>,
     }
@@ -261,7 +267,14 @@ diag! {
         pluralize(missing_fields.len(), "field", "fields"),
         fmt_items(missing_fields, "and")
     )]
+    #[custom_diagnostic(|builder|
+        if let Some(def_id) = *def_id {
+            builder.with_label(Label::new(def_id).with_message("Type is defined here"));
+        }
+     )]
     pub struct MissingFields {
+        #[no_display]
+        def_id: Option<SyntaxId>,
         #[no_display]
         missing_fields: Vec<SmallString>,
     }
