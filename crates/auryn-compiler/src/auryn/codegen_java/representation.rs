@@ -322,17 +322,6 @@ impl StructuralRepr {
             Some(Representation::Object(self.class_name.clone()))
         }
     }
-
-    pub fn init_descriptor(&self) -> MethodDescriptor {
-        MethodDescriptor {
-            parameters: self
-                .fields
-                .iter()
-                .map(|(_, repr)| repr.clone().into_field_descriptor())
-                .collect(),
-            return_type: ReturnDescriptor::Void,
-        }
-    }
 }
 
 #[derive(Debug, Default)]

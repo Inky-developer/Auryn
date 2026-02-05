@@ -5,57 +5,56 @@ expression: "generate_classes(r#\"\n            // main\n            struct Foo 
 Foo:
 ClassData
   this_class:		#2	Foo
-  super_class:		#8	java/lang/Object
+  super_class:		#6	java/lang/Object
 Constant pool:
   #01 = Utf8			Foo
   #02 = Class		#1	Foo
   #03 = Utf8			<init>
-  #04 = Utf8			(I[LFoo;)V
-  #05 = Utf8			[LFoo;
-  #06 = Class		#5	[LFoo;
-  #07 = Utf8			java/lang/Object
-  #08 = Class		#7	java/lang/Object
-  #09 = Utf8			()V
-  #10 = NameAndType	#3:#9	<init>:()V
-  #11 = MethodRef	#8.#10	java/lang/Object:<init>:()V
-  #12 = Utf8			a
-  #13 = Utf8			I
-  #14 = NameAndType	#12:#13	a:I
-  #15 = FieldRef	#2.#14	Foo.a:I
-  #16 = Utf8			b
-  #17 = NameAndType	#16:#5	b:[LFoo;
-  #18 = FieldRef	#2.#17	Foo.b:[LFoo;
-  #19 = Utf8			Code
-  #20 = Utf8			StackMapTable
-  #21 = Utf8			toString
-  #22 = Utf8			()Ljava/lang/String;
-  #23 = Utf8			java/lang/StringBuilder
-  #24 = Class		#23	java/lang/StringBuilder
-  #25 = Utf8			java/lang/String
-  #26 = Class		#25	java/lang/String
-  #27 = MethodRef	#24.#10	java/lang/StringBuilder:<init>:()V
-  #28 = Utf8			Foo { 
-  #29 = String		#28	Foo { 
-  #30 = Utf8			append
-  #31 = Utf8			(Ljava/lang/String;)Ljava/lang/StringBuilder;
-  #32 = NameAndType	#30:#31	append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
-  #33 = MethodRef	#24.#32	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
-  #34 = Utf8			a: 
-  #35 = String		#34	a: 
-  #36 = Utf8			(I)Ljava/lang/StringBuilder;
-  #37 = NameAndType	#30:#36	append:(I)Ljava/lang/StringBuilder;
-  #38 = MethodRef	#24.#37	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
-  #39 = Utf8			, b: 
-  #40 = String		#39	, b: 
-  #41 = Utf8			java/util/Arrays
-  #42 = Class		#41	java/util/Arrays
-  #43 = Utf8			([Ljava/lang/Object;)Ljava/lang/String;
-  #44 = NameAndType	#21:#43	toString:([Ljava/lang/Object;)Ljava/lang/String;
-  #45 = MethodRef	#42.#44	java/util/Arrays:toString:([Ljava/lang/Object;)Ljava/lang/String;
-  #46 = Utf8			 }
-  #47 = String		#46	 }
-  #48 = NameAndType	#21:#22	toString:()Ljava/lang/String;
-  #49 = MethodRef	#24.#48	java/lang/StringBuilder:toString:()Ljava/lang/String;
+  #04 = Utf8			()V
+  #05 = Utf8			java/lang/Object
+  #06 = Class		#5	java/lang/Object
+  #07 = NameAndType	#3:#4	<init>:()V
+  #08 = MethodRef	#6.#7	java/lang/Object:<init>:()V
+  #09 = Utf8			Code
+  #10 = Utf8			StackMapTable
+  #11 = Utf8			toString
+  #12 = Utf8			()Ljava/lang/String;
+  #13 = Utf8			java/lang/StringBuilder
+  #14 = Class		#13	java/lang/StringBuilder
+  #15 = Utf8			java/lang/String
+  #16 = Class		#15	java/lang/String
+  #17 = Utf8			[LFoo;
+  #18 = Class		#17	[LFoo;
+  #19 = MethodRef	#14.#7	java/lang/StringBuilder:<init>:()V
+  #20 = Utf8			Foo { 
+  #21 = String		#20	Foo { 
+  #22 = Utf8			append
+  #23 = Utf8			(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #24 = NameAndType	#22:#23	append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #25 = MethodRef	#14.#24	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #26 = Utf8			a: 
+  #27 = String		#26	a: 
+  #28 = Utf8			a
+  #29 = Utf8			I
+  #30 = NameAndType	#28:#29	a:I
+  #31 = FieldRef	#2.#30	Foo.a:I
+  #32 = Utf8			(I)Ljava/lang/StringBuilder;
+  #33 = NameAndType	#22:#32	append:(I)Ljava/lang/StringBuilder;
+  #34 = MethodRef	#14.#33	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
+  #35 = Utf8			, b: 
+  #36 = String		#35	, b: 
+  #37 = Utf8			b
+  #38 = NameAndType	#37:#17	b:[LFoo;
+  #39 = FieldRef	#2.#38	Foo.b:[LFoo;
+  #40 = Utf8			java/util/Arrays
+  #41 = Class		#40	java/util/Arrays
+  #42 = Utf8			([Ljava/lang/Object;)Ljava/lang/String;
+  #43 = NameAndType	#11:#42	toString:([Ljava/lang/Object;)Ljava/lang/String;
+  #44 = MethodRef	#41.#43	java/util/Arrays:toString:([Ljava/lang/Object;)Ljava/lang/String;
+  #45 = Utf8			 }
+  #46 = String		#45	 }
+  #47 = NameAndType	#11:#12	toString:()Ljava/lang/String;
+  #48 = MethodRef	#14.#47	java/lang/StringBuilder:toString:()Ljava/lang/String;
 
 {
   PUBLIC a: I
@@ -63,23 +62,17 @@ Constant pool:
   PUBLIC b: [LFoo;
 
   fn <init> {
-    descriptor: (I[LFoo;)V
+    descriptor: ()V
     flags: PUBLIC
     Code:
-      stack = 3, locals = 4
-       0: ALoad			0
-       2: Dup
-       3: InvokeSpecial		#11	java/lang/Object:<init>:()V
-       6: Dup
-       7: ILoad			1
-       9: PutField		#15	Foo.a:I
-      12: ALoad			2
-      14: PutField		#18	Foo.b:[LFoo;
-      17: Return
+      stack = 1, locals = 2
+      0: ALoad			0
+      2: InvokeSpecial		#8	java/lang/Object:<init>:()V
+      5: Return
       StackMapTable:
         Full
           offset_delta = 0
-          locals = [ UninitializedThis,Integer,Object '[LFoo;' ]
+          locals = [ UninitializedThis ]
           Stack = [  ]
   }
 
@@ -88,25 +81,25 @@ Constant pool:
     flags: PUBLIC
     Code:
       stack = 2, locals = 2
-       0: New			#24	java/lang/StringBuilder
+       0: New			#14	java/lang/StringBuilder
        3: Dup
-       4: InvokeSpecial		#27	java/lang/StringBuilder:<init>:()V
-       7: LoadConstant		#29	Foo { 
-       9: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
-      12: LoadConstant		#35	a: 
-      14: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       4: InvokeSpecial		#19	java/lang/StringBuilder:<init>:()V
+       7: LoadConstant		#21	Foo { 
+       9: InvokeVirtual		#25	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      12: LoadConstant		#27	a: 
+      14: InvokeVirtual		#25	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
       17: ALoad			0
-      19: GetField		#15	Foo.a:I
-      22: InvokeVirtual		#38	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
-      25: LoadConstant		#40	, b: 
-      27: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      19: GetField		#31	Foo.a:I
+      22: InvokeVirtual		#34	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
+      25: LoadConstant		#36	, b: 
+      27: InvokeVirtual		#25	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
       30: ALoad			0
-      32: GetField		#18	Foo.b:[LFoo;
-      35: InvokeStatic		#45	java/util/Arrays:toString:([Ljava/lang/Object;)Ljava/lang/String;
-      38: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
-      41: LoadConstant		#47	 }
-      43: InvokeVirtual		#33	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
-      46: InvokeVirtual		#49	java/lang/StringBuilder:toString:()Ljava/lang/String;
+      32: GetField		#39	Foo.b:[LFoo;
+      35: InvokeStatic		#44	java/util/Arrays:toString:([Ljava/lang/Object;)Ljava/lang/String;
+      38: InvokeVirtual		#25	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      41: LoadConstant		#46	 }
+      43: InvokeVirtual		#25	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      46: InvokeVirtual		#48	java/lang/StringBuilder:toString:()Ljava/lang/String;
       49: AReturn
       StackMapTable:
         Full

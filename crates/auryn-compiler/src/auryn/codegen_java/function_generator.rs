@@ -403,17 +403,27 @@ impl FunctionGenerator<'_> {
                 self.assembler.add_all([
                     Instruction::New(info.class_name.clone()),
                     Instruction::Dup(TypeCategory::Normal),
+                    Instruction::InvokeSpecial {
+                        method_descriptor: MethodDescriptor::VOID,
+                        class_name: info.class_name.clone(),
+                        name: "<init>".into(),
+                    },
                 ]);
 
-                for (_, expr) in fields {
-                    self.generate_expression(expr);
-                }
+                for (name, expr) in fields {
+                    self.assembler.add(Instruction::Dup(TypeCategory::Normal));
+                    let repr = self.generate_expression(expr);
 
-                self.assembler.add(Instruction::InvokeSpecial {
-                    method_descriptor: info.init_descriptor(),
-                    class_name: info.class_name,
-                    name: "<init>".into(),
-                });
+                    if let Some(repr) = repr {
+                        self.assembler.add_all([Instruction::PutField {
+                            class_name: info.class_name.clone(),
+                            name: name.value.clone(),
+                            field_descriptor: repr.into_field_descriptor(),
+                        }]);
+                    } else {
+                        self.assembler.add(Instruction::Pop(TypeCategory::Normal));
+                    }
+                }
             }
         }
     }

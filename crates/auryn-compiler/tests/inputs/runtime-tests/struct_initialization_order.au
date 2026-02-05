@@ -1,0 +1,22 @@
+// expect-output:
+// String
+// I64
+// A { a: 0, b: Handle this order }
+
+struct A { a: I64, b: String }
+
+fn main() {
+	let a = A { b: getString(), a: getI64() }
+	print(a)
+}
+
+fn getI64() -> I64 {
+	print("I64")
+	return 0
+}
+
+fn getString() -> String {
+	print("String")
+	return "Handle this order"
+}
+
