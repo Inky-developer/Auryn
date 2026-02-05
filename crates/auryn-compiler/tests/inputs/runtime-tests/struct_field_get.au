@@ -1,0 +1,11 @@
+// expect-output:
+// 42
+
+struct Foo {
+	a: I32
+}
+
+fn main() {
+	let f = Foo { a: 42 }
+	print(f.a)
+}

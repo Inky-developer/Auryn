@@ -638,7 +638,7 @@ impl FunctionGenerator<'_> {
         let value_repr = self.generate_expression(&accessor.value);
 
         match accessor.value.r#type.as_view(self.ty_ctx) {
-            TypeView::Structural(_) => {
+            TypeView::Structural(_) | TypeView::Struct(_) => {
                 let Some(result_repr) = result_repr else {
                     if let Some(value_repr) = value_repr {
                         self.assembler.add(Instruction::Pop(value_repr.category()));
