@@ -1,0 +1,6 @@
+// Make this type recursive to check that the `is_erroneous` check on types does not loop forever
+struct Foo { inner: []Foo }
+
+fn main() {
+	let a: I32 = Foo { inner: arrayOfZeros(0) }
+}

@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use stdx::{FastMap, SmallString};
+use stdx::{FastMap, FastSet, SmallString};
 
 use crate::auryn::{
     air::{
@@ -75,13 +75,17 @@ macro_rules! define_types {
             }
 
             #[allow(non_snake_case)]
-            pub fn visit(self, visitor: &mut impl FnMut(TypeView)) {
+            pub fn visit(self, visited_types: &mut FastSet<Type>) {
                 match self {
                     $(
                        Self::$name$(($data))? => {
-                           visitor(self);
+                           #[allow(unused_variables)]
+                           let is_new = visited_types.insert(self.as_type());
+
                            $(
-                               $data.visit(&mut |ty| ty.as_view($data.ctx).visit(visitor));
+                               if is_new {
+                                    $data.visit(&mut |ty| ty.as_view($data.ctx).visit(visited_types));
+                               }
                            )?
                        }
                     ),*
@@ -161,13 +165,9 @@ impl<'a> TypeView<'a> {
     }
 
     pub fn is_erroneous(self) -> bool {
-        let mut is_error = false;
-        self.visit(&mut |view| {
-            if matches!(view, TypeView::Error) {
-                is_error = true;
-            }
-        });
-        is_error
+        let mut visited_types = FastSet::default();
+        self.visit(&mut visited_types);
+        visited_types.iter().any(|it| matches!(it, Type::Error))
     }
 
     /// Returns whether a type is a static extern member.
@@ -546,12 +546,7 @@ impl Display for TypeView<'_> {
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
             TypeView::Module(module_type) => write!(f, "module {}", module_type.name),
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
-            TypeView::Struct(r#struct) => write!(
-                f,
-                "struct {} {}",
-                r#struct.value.ident,
-                r#struct.value.structural.display(r#struct.ctx)
-            ),
+            TypeView::Struct(r#struct) => write!(f, "struct {}", r#struct.value.ident,),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Error => f.write_str("<<Error>>"),
         }
