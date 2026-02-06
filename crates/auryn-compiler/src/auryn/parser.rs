@@ -21,9 +21,15 @@ pub struct ParserOutput {
     pub syntax_tree: SyntaxTree,
 }
 
+/// Context-sensitive parser state
 #[derive(Debug, Clone, Copy)]
 struct ParseOptions {
+    /// Normally the grammar is sensitive to newlines, because newlines are statement separators,
+    /// but e.g. inside of parenthesis newlines are counted as whitespace
     newlines_are_whitespace: bool,
+    /// There is a parser ambiguity with struct literals: `if Foo {}` can be parsed as an incomplete
+    /// if statement with the condition being a struct literal.
+    /// To avoid this, if statements similar set this flag.
     allow_named_struct_literals: bool,
 }
 
@@ -55,6 +61,8 @@ pub struct Parser<'a> {
     index: usize,
     node_stack: Vec<ParserStackNode>,
     option_stack: Vec<(usize, ParseOptions)>,
+    /// Each individual parsing function can register some tokens here that can be used to
+    /// recover the parser to a good state again
     recovery_stack: Vec<TokenSet>,
 }
 
@@ -570,6 +578,12 @@ impl Parser<'_> {
 
         self.expect(TokenKind::KeywordFn)?;
         self.expect(TokenKind::Identifier)?;
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_recoverable(
+                bitset![TokenKind::Arrow, TokenKind::BraceOpen],
+                Self::parse_generic_parameter_list,
+            )?;
+        }
         self.parse_recoverable(
             bitset![TokenKind::Arrow, TokenKind::BraceOpen],
             Self::parse_parameter_list,
@@ -580,6 +594,30 @@ impl Parser<'_> {
         self.parse_braced_block()?;
 
         self.finish_node(watcher, SyntaxNodeKind::FunctionDefinition);
+        Ok(())
+    }
+
+    fn parse_generic_parameter_list(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.parse_surrounded(TokenKind::BracketOpen, TokenKind::BracketClose, |parser| {
+            parser.parse_separated(
+                TokenKind::BracketClose,
+                TokenKind::Comma,
+                Self::parse_generic_parameter_definition,
+            )
+        })?;
+
+        self.finish_node(watcher, SyntaxNodeKind::GenericParameterList);
+        Ok(())
+    }
+
+    fn parse_generic_parameter_definition(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+
+        self.finish_node(watcher, SyntaxNodeKind::GenericParameterDefinition);
         Ok(())
     }
 
@@ -1332,6 +1370,8 @@ mod tests {
         insta::assert_debug_snapshot!(verify(
             "fn foo(a: Int,\nb: []String, c: ()) -> Null { print(9000) }"
         ));
+        insta::assert_debug_snapshot!(verify("fn foo[]() -> Null {}"));
+        insta::assert_debug_snapshot!(verify("fn foo[T, Uvw]() {}"));
     }
 
     #[test]

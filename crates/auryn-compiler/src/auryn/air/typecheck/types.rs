@@ -10,7 +10,7 @@ use crate::auryn::{
     air::{
         data::{ExternFunctionKind, FunctionReference, Intrinsic},
         typecheck::{
-            bounds::{Bound, MaybeBounded},
+            bounds::MaybeBounded,
             type_context::{TypeContext, TypeId},
         },
     },
@@ -433,15 +433,14 @@ impl TypeData for MetaType {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GenericId(pub usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GenericType {
     /// The id of this generic type in its defined scope
     pub id: GenericId,
     pub ident: SmallString,
-    pub bound: Bound,
 }
 
 impl TypeData for GenericType {
@@ -450,11 +449,7 @@ impl TypeData for GenericType {
     }
 
     fn visit(&self, _: &mut impl FnMut(Type)) {
-        let Self {
-            id: _,
-            ident: _,
-            bound: _,
-        } = self;
+        let Self { id: _, ident: _ } = self;
     }
 }
 

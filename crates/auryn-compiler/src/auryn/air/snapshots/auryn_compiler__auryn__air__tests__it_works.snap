@@ -426,7 +426,7 @@ expression: "compile_wrapped(\"print(1)\")"
                     intrinsic: Print,
                 },
             },
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

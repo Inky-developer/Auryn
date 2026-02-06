@@ -711,7 +711,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                     intrinsic: Print,
                 },
             },
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

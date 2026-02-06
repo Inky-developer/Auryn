@@ -163,4 +163,19 @@ mod tests {
             "#
         ));
     }
+
+    #[test]
+    fn test_generic_function() {
+        insta::assert_debug_snapshot!(compile(
+            r#"
+            fn identity[T](value: T) -> T {
+                return value
+            }
+
+            fn main() {
+                let a: I64 = identity(10)
+            }
+            "#
+        ));
+    }
 }

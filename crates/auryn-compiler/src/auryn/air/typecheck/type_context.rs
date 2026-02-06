@@ -55,7 +55,7 @@ pub struct TypeContext {
     modules: TypeMap<ModuleType>,
     function_items: TypeMap<FunctionItemType>,
     intrinsics: BidirectionalTypeMap<IntrinsicType>,
-    generics: Vec<GenericType>,
+    generics: BidirectionalTypeMap<GenericType>,
     special_types: SpecialTypes,
     next_id: NonZeroU64,
 }
@@ -93,6 +93,10 @@ impl TypeContext {
         Type::Meta(self.add_meta(MetaType { inner }))
     }
 
+    pub fn generic_of(&mut self, generic: GenericType) -> Type {
+        Type::Generic(self.add_generic(generic))
+    }
+
     pub fn add_number_literal(
         &mut self,
         number_literal: NumberLiteralType,
@@ -117,6 +121,10 @@ impl TypeContext {
 
     pub fn add_meta(&mut self, meta: MetaType) -> TypeId<MetaType> {
         add_non_unique_type(&mut self.next_id, meta, &mut self.metas)
+    }
+
+    pub fn add_generic(&mut self, generic: GenericType) -> TypeId<GenericType> {
+        add_non_unique_type(&mut self.next_id, generic, &mut self.generics)
     }
 
     pub fn add_intrinsic(&mut self, intrinsic: IntrinsicType) -> TypeId<IntrinsicType> {
@@ -180,8 +188,7 @@ impl TypeContext {
         self.metas.get_by_key(&id).unwrap()
     }
     pub(super) fn get_generic(&self, id: TypeId<GenericType>) -> &GenericType {
-        let index: usize = id.0.number().unwrap().get().try_into().unwrap();
-        &self.generics[index]
+        self.generics.get_by_key(&id).unwrap()
     }
 }
 

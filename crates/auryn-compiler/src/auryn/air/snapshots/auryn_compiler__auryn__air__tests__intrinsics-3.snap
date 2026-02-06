@@ -460,7 +460,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOfZeros(3)\")"
                     intrinsic: ArrayOfZeros,
                 },
             },
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

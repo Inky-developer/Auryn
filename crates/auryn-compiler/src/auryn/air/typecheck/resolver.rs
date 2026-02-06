@@ -8,7 +8,6 @@ use crate::auryn::{
         },
         namespace::UserDefinedTypeId,
         typecheck::{
-            bounds::Bound,
             type_context::TypeContext,
             types::{
                 ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, GenericId,
@@ -33,10 +32,13 @@ pub struct Context<'a> {
     pub diagnostics: &'a mut Diagnostics,
     pub statics: &'a FastMap<AirStaticValueId, AirStaticValue>,
     pub type_aliasses: &'a FastMap<TypeAliasId, AirType>,
+    pub type_parameters: &'a Vec<GenericType>,
 }
 
 #[derive(Debug, Default)]
-pub struct Resolver;
+pub struct Resolver {
+    current_generic_parameters: Vec<GenericType>,
+}
 
 impl Resolver {
     pub fn resolve_type(
@@ -44,6 +46,11 @@ impl Resolver {
         ctx: &mut Context,
         unresolved: &UnresolvedType,
     ) -> ResolverResult {
+        self.current_generic_parameters.clear();
+        self.resolve(ctx, unresolved)
+    }
+
+    fn resolve(&mut self, ctx: &mut Context, unresolved: &UnresolvedType) -> ResolverResult {
         Ok(match unresolved {
             UnresolvedType::DefinedType(user_defined_type_id) => match user_defined_type_id {
                 UserDefinedTypeId::Extern(type_id) => Type::Extern(*type_id),
@@ -56,6 +63,19 @@ impl Resolver {
                     }
                     AirType::Computed(ty) => *ty,
                 },
+                UserDefinedTypeId::Generic(id) => {
+                    // Two cases:
+                    // - Either we are currently resolving a function signature
+                    //   Then the `current_generic_parameters` field is set
+                    // - Or we are currently inside a function body where this generic is defined
+                    //   Then we can use the already calculated generic of the ctx scope
+                    let generic = if self.current_generic_parameters.is_empty() {
+                        ctx.type_parameters[id.0].clone()
+                    } else {
+                        self.current_generic_parameters[id.0].clone()
+                    };
+                    ctx.ty_ctx.generic_of(generic)
+                }
             },
             UnresolvedType::Unit => ctx.ty_ctx.unit_type(),
             UnresolvedType::Ident(id, ident) => match ident.parse() {
@@ -83,16 +103,20 @@ impl Resolver {
                     .map(|(index, param)| GenericType {
                         id: GenericId(index),
                         ident: param.clone(),
-                        bound: Bound::Top,
                     })
-                    .collect();
+                    .collect::<Vec<_>>();
+
+                // Make the generic parameters known so that they can be used in nested resolve calls
+                self.current_generic_parameters
+                    .extend(type_parameters.iter().cloned());
+
                 let parameters = parameters
                     .iter()
-                    .map(|param| self.resolve_type(ctx, param))
+                    .map(|param| self.resolve(ctx, param))
                     .collect::<Result<_, _>>()?;
                 let return_type = return_type
                     .as_ref()
-                    .map_or(Ok(ctx.ty_ctx.unit_type()), |ty| self.resolve_type(ctx, ty))?;
+                    .map_or(Ok(ctx.ty_ctx.unit_type()), |ty| self.resolve(ctx, ty))?;
                 let reference = self.resolve_function_reference(ctx, reference)?;
                 Type::FunctionItem(ctx.ty_ctx.add_function_item(
                     reference.syntax_id(),
@@ -108,7 +132,7 @@ impl Resolver {
                 ))
             }
             UnresolvedType::Array(_id, inner) => {
-                let element_type = self.resolve_type(ctx, inner)?;
+                let element_type = self.resolve(ctx, inner)?;
                 ctx.ty_ctx.array_of(element_type)
             }
             // TODO: Prevent infinite recursion and handle recursive definitions
@@ -127,14 +151,14 @@ impl Resolver {
                                 ..
                             } => ExternTypeMember {
                                 extern_name: extern_name.clone(),
-                                r#type: self.resolve_type(ctx, r#type)?,
+                                r#type: self.resolve(ctx, r#type)?,
                             },
                             UnresolvedExternMember::Function {
                                 unresolved_type,
                                 extern_name,
                                 ..
                             } => ExternTypeMember {
-                                r#type: self.resolve_type(ctx, unresolved_type)?,
+                                r#type: self.resolve(ctx, unresolved_type)?,
                                 extern_name: extern_name.clone(),
                             },
                         };
@@ -187,7 +211,7 @@ impl Resolver {
                 let ty = StructuralType {
                     fields: structural_type
                         .iter()
-                        .map(|(ident, field)| Ok((ident.clone(), self.resolve_type(ctx, field)?)))
+                        .map(|(ident, field)| Ok((ident.clone(), self.resolve(ctx, field)?)))
                         .collect::<Result<_, _>>()?,
                 };
                 ctx.ty_ctx.structural_of(ty)
@@ -196,7 +220,7 @@ impl Resolver {
                 let structural = StructuralType {
                     fields: fields
                         .iter()
-                        .map(|(ident, field)| Ok((ident.clone(), self.resolve_type(ctx, field)?)))
+                        .map(|(ident, field)| Ok((ident.clone(), self.resolve(ctx, field)?)))
                         .collect::<Result<_, _>>()?,
                 };
                 let r#struct = StructType {
@@ -213,7 +237,7 @@ impl Resolver {
         ctx: &mut Context,
         user_defined_id: UserDefinedTypeId,
     ) -> ResolverResult {
-        self.resolve_type(ctx, &UnresolvedType::DefinedType(user_defined_id))
+        self.resolve(ctx, &UnresolvedType::DefinedType(user_defined_id))
     }
 
     fn resolve_function_reference(
@@ -232,7 +256,7 @@ impl Resolver {
                 let parent = match parent.as_ref() {
                     AirType::Inferred => unreachable!(),
                     AirType::Computed(ty) => *ty,
-                    AirType::Unresolved(unresolved) => self.resolve_type(ctx, unresolved)?,
+                    AirType::Unresolved(unresolved) => self.resolve(ctx, unresolved)?,
                 };
                 FunctionReference::Extern {
                     parent: Box::new(AirType::Computed(parent)),

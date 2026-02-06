@@ -1,6 +1,6 @@
 ---
 source: crates/auryn-compiler/src/auryn/air/mod.rs
-expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
+expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n                return value\n            }\n\n            fn main() {\n                let a: I64 = identity(10)\n            }\n            \"#)"
 ---
 (
     Air {
@@ -15,7 +15,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                 ),
                             ),
                             number: Some(
-                                4,
+                                62549994824592,
                             ),
                         },
                     ),
@@ -30,7 +30,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                         ),
                                     ),
                                     number: Some(
-                                        4,
+                                        62549994824592,
                                     ),
                                 },
                                 kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -46,7 +46,153 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                     ),
                                 ),
                                 number: Some(
-                                    105553116266498,
+                                    73922721156333,
+                                ),
+                            },
+                            type_parameters: [
+                                "T",
+                            ],
+                            parameters: [
+                                DefinedType(
+                                    Generic(
+                                        GenericId(
+                                            0,
+                                        ),
+                                    ),
+                                ),
+                            ],
+                            return_type: Some(
+                                DefinedType(
+                                    Generic(
+                                        GenericId(
+                                            0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                62549994824592,
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            ),
+                        },
+                    ),
+                    ident: "identity",
+                    blocks: {
+                        AirBlockId(
+                            0,
+                        ): AirBlock {
+                            nodes: [],
+                            finalizer: Return(
+                                Expression(
+                                    AirExpression {
+                                        id: SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                88770447200552,
+                                            ),
+                                        },
+                                        type: Computed(
+                                            Generic(
+                                                TypeId {
+                                                    id: SyntaxId {
+                                                        file_id: None,
+                                                        number: Some(
+                                                            3,
+                                                        ),
+                                                    },
+                                                    kind: "auryn_compiler::auryn::air::typecheck::types::GenericType",
+                                                },
+                                            ),
+                                        ),
+                                        kind: Variable(
+                                            Local(
+                                                AirLocalValueId(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                        AirBlockId(
+                            1,
+                        ): AirBlock {
+                            nodes: [],
+                            finalizer: Return(
+                                Null(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            88138629071008,
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    },
+                },
+                AirFunctionId(
+                    AirStaticValueId(
+                        SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                187649984473768,
+                            ),
+                        },
+                    ),
+                ): AirFunction {
+                    type: Computed(
+                        FunctionItem(
+                            TypeId {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        187649984473768,
+                                    ),
+                                },
+                                kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
+                            },
+                        ),
+                    ),
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    198074983611197,
                                 ),
                             },
                             type_parameters: [],
@@ -62,7 +208,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                 ),
                                             ),
                                             number: Some(
-                                                4,
+                                                187649984473768,
                                             ),
                                         },
                                     ),
@@ -84,7 +230,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                             ),
                                         ),
                                         number: Some(
-                                            211106232532993,
+                                            211974982461103,
                                         ),
                                     },
                                     kind: Assignment(
@@ -101,7 +247,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                             ),
                                                         ),
                                                         number: Some(
-                                                            230653105915676,
+                                                            212618500926376,
                                                         ),
                                                     },
                                                     "I64",
@@ -115,7 +261,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                         ),
                                                     ),
                                                     number: Some(
-                                                        242381229945283,
+                                                        213004612005537,
                                                     ),
                                                 },
                                                 type: Computed(
@@ -131,25 +277,40 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                     ),
                                                                 ),
                                                                 number: Some(
-                                                                    242381229945286,
+                                                                    213004612005540,
                                                                 ),
                                                             },
                                                             type: Computed(
-                                                                Intrinsic(
+                                                                FunctionItem(
                                                                     TypeId {
                                                                         id: SyntaxId {
-                                                                            file_id: None,
+                                                                            file_id: Some(
+                                                                                FileId(
+                                                                                    1,
+                                                                                ),
+                                                                            ),
                                                                             number: Some(
-                                                                                3,
+                                                                                62549994824592,
                                                                             ),
                                                                         },
-                                                                        kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
+                                                                        kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                                                                     },
                                                                 ),
                                                             ),
                                                             kind: Variable(
-                                                                Intrinsic(
-                                                                    ArrayGet,
+                                                                Global(
+                                                                    AirStaticValueId(
+                                                                        SyntaxId {
+                                                                            file_id: Some(
+                                                                                FileId(
+                                                                                    1,
+                                                                                ),
+                                                                            ),
+                                                                            number: Some(
+                                                                                62549994824592,
+                                                                            ),
+                                                                        },
+                                                                    ),
                                                                 ),
                                                             ),
                                                         },
@@ -162,96 +323,15 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                         ),
                                                                     ),
                                                                     number: Some(
-                                                                        244615158331877,
+                                                                        213090414467576,
                                                                     ),
                                                                 },
                                                                 type: Computed(
-                                                                    Array(
-                                                                        TypeId {
-                                                                            id: SyntaxId {
-                                                                                file_id: None,
-                                                                                number: Some(
-                                                                                    4,
-                                                                                ),
-                                                                            },
-                                                                            kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
-                                                                        },
-                                                                    ),
-                                                                ),
-                                                                kind: Call(
-                                                                    Call {
-                                                                        function: AirExpression {
-                                                                            id: SyntaxId {
-                                                                                file_id: Some(
-                                                                                    FileId(
-                                                                                        1,
-                                                                                    ),
-                                                                                ),
-                                                                                number: Some(
-                                                                                    244615158331880,
-                                                                                ),
-                                                                            },
-                                                                            type: Computed(
-                                                                                Intrinsic(
-                                                                                    TypeId {
-                                                                                        id: SyntaxId {
-                                                                                            file_id: None,
-                                                                                            number: Some(
-                                                                                                5,
-                                                                                            ),
-                                                                                        },
-                                                                                        kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
-                                                                                    },
-                                                                                ),
-                                                                            ),
-                                                                            kind: Variable(
-                                                                                Intrinsic(
-                                                                                    ArrayOfZeros,
-                                                                                ),
-                                                                            ),
-                                                                        },
-                                                                        arguments: [
-                                                                            AirExpression {
-                                                                                id: SyntaxId {
-                                                                                    file_id: Some(
-                                                                                        FileId(
-                                                                                            1,
-                                                                                        ),
-                                                                                    ),
-                                                                                    number: Some(
-                                                                                        244801319030761,
-                                                                                    ),
-                                                                                },
-                                                                                type: Computed(
-                                                                                    I32,
-                                                                                ),
-                                                                                kind: Constant(
-                                                                                    Number(
-                                                                                        3,
-                                                                                    ),
-                                                                                ),
-                                                                            },
-                                                                        ],
-                                                                    },
-                                                                ),
-                                                            },
-                                                            AirExpression {
-                                                                id: SyntaxId {
-                                                                    file_id: Some(
-                                                                        FileId(
-                                                                            1,
-                                                                        ),
-                                                                    ),
-                                                                    number: Some(
-                                                                        245452881476847,
-                                                                    ),
-                                                                },
-                                                                type: Computed(
-                                                                    I32,
+                                                                    I64,
                                                                 ),
                                                                 kind: Constant(
                                                                     Number(
-                                                                        1,
+                                                                        10,
                                                                     ),
                                                                 ),
                                                             },
@@ -272,7 +352,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                             ),
                                         ),
                                         number: Some(
-                                            211106232532991,
+                                            211974982461101,
                                         ),
                                     },
                                 ),
@@ -324,7 +404,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                             ),
                         ),
                         number: Some(
-                            4,
+                            62549994824592,
                         ),
                     },
                 ): Function(
@@ -337,7 +417,34 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                     ),
                                 ),
                                 number: Some(
-                                    4,
+                                    62549994824592,
+                                ),
+                            },
+                        ),
+                    ),
+                ),
+                AirStaticValueId(
+                    SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            187649984473768,
+                        ),
+                    },
+                ): Function(
+                    AirFunctionId(
+                        AirStaticValueId(
+                            SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    187649984473768,
                                 ),
                             },
                         ),
@@ -346,33 +453,9 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
             },
         },
         ty_ctx: TypeContext {
-            array_bounds: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            6,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::bounds::ArrayBound",
-                }: ArrayBound {
-                    element_bound: Top,
-                },
-            },
+            array_bounds: {},
             number_literals: {},
-            arrays: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            4,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
-                }: ArrayType {
-                    element_type: I64,
-                },
-            },
+            arrays: {},
             metas: {
                 TypeId {
                     id: SyntaxId {
@@ -440,7 +523,22 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                         ),
                                     ),
                                     number: Some(
-                                        4,
+                                        187649984473768,
+                                    ),
+                                },
+                                kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
+                            },
+                        ),
+                        "identity": FunctionItem(
+                            TypeId {
+                                id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        62549994824592,
                                     ),
                                 },
                                 kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -458,7 +556,81 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                             ),
                         ),
                         number: Some(
-                            4,
+                            62549994824592,
+                        ),
+                    },
+                    kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
+                }: FunctionItemType {
+                    type_parameters: [
+                        GenericType {
+                            id: GenericId(
+                                0,
+                            ),
+                            ident: "T",
+                        },
+                    ],
+                    parameters: FunctionParameters {
+                        parameters: [
+                            Generic(
+                                TypeId {
+                                    id: SyntaxId {
+                                        file_id: None,
+                                        number: Some(
+                                            3,
+                                        ),
+                                    },
+                                    kind: "auryn_compiler::auryn::air::typecheck::types::GenericType",
+                                },
+                            ),
+                        ],
+                        parameters_reference: SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                73922721156333,
+                            ),
+                        },
+                    },
+                    return_type: Generic(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: None,
+                                number: Some(
+                                    3,
+                                ),
+                            },
+                            kind: "auryn_compiler::auryn::air::typecheck::types::GenericType",
+                        },
+                    ),
+                    reference: UserDefined(
+                        AirFunctionId(
+                            AirStaticValueId(
+                                SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        62549994824592,
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                },
+                TypeId {
+                    id: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            187649984473768,
                         ),
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -473,7 +645,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                 ),
                             ),
                             number: Some(
-                                105553116266498,
+                                198074983611197,
                             ),
                         },
                     },
@@ -498,7 +670,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                         ),
                                     ),
                                     number: Some(
-                                        4,
+                                        187649984473768,
                                     ),
                                 },
                             ),
@@ -506,7 +678,8 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                     ),
                 },
             },
-            intrinsics: {
+            intrinsics: {},
+            generics: {
                 TypeId {
                     id: SyntaxId {
                         file_id: None,
@@ -514,23 +687,14 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                             3,
                         ),
                     },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
-                }: IntrinsicType {
-                    intrinsic: ArrayGet,
-                },
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            5,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
-                }: IntrinsicType {
-                    intrinsic: ArrayOfZeros,
+                    kind: "auryn_compiler::auryn::air::typecheck::types::GenericType",
+                }: GenericType {
+                    id: GenericId(
+                        0,
+                    ),
+                    ident: "T",
                 },
             },
-            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {
@@ -544,7 +708,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                     },
                 ),
             },
-            next_id: 7,
+            next_id: 4,
         },
     },
     Diagnostics {

@@ -354,28 +354,47 @@ impl AstTransformer {
         let Ok(ident) = function_definition.ident() else {
             return;
         };
+        let ident = ident.text.clone();
+
+        let generic_parameters = function_definition
+            .maybe_generic_parameter_list()
+            .ok()
+            .into_iter()
+            .flat_map(|list| {
+                list.parameters().filter_map(|param| {
+                    let ident = param.ident().ok()?;
+                    Some(ident.text.clone())
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let function_namespace = {
+            let mut namespace = self.namespace.clone();
+            for (index, ident) in generic_parameters.iter().cloned().enumerate() {
+                namespace
+                    .types
+                    .insert(ident, UserDefinedTypeId::Generic(types::GenericId(index)));
+            }
+            namespace
+        };
+
         let Ok(parameters) = function_definition.parameter_list() else {
             return;
         };
-        let Ok(block) = function_definition.block() else {
-            return;
-        };
-
-        let ident = ident.text.clone();
         let declared_parameters = parameters
             .parameters()
             .filter_map(|param| {
                 param
                     .r#type()
                     .ok()
-                    .and_then(|ty| transform_to_unresolved(&self.namespace, ty).ok())
+                    .and_then(|ty| transform_to_unresolved(&function_namespace, ty).ok())
             })
             .collect::<Vec<_>>();
         let declared_return_type = function_definition
             .return_type()
             .ok()
             .and_then(|r#type| r#type.r#type().ok())
-            .and_then(|r#type| transform_to_unresolved(&self.namespace, r#type).ok())
+            .and_then(|r#type| transform_to_unresolved(&function_namespace, r#type).ok())
             .map(Box::new);
 
         let parameter_idents = parameters
@@ -384,7 +403,11 @@ impl AstTransformer {
             .collect::<Vec<_>>();
 
         let function_transformer =
-            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &self.namespace);
+            FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &function_namespace);
+
+        let Ok(block) = function_definition.block() else {
+            return;
+        };
         let blocks = function_transformer.transform_function_body(block);
 
         let function_id = self.namespace.unwrap_function(&ident);
@@ -392,7 +415,7 @@ impl AstTransformer {
             r#type: AirType::Inferred,
             unresolved_type: UnresolvedType::Function(UnresolvedFunction {
                 parameters_reference: parameters.id(),
-                type_parameters: Vec::new(),
+                type_parameters: generic_parameters,
                 parameters: declared_parameters,
                 return_type: declared_return_type,
                 reference: FunctionReference::UserDefined(function_id),

@@ -185,10 +185,19 @@ impl ExternTypeFunction<'_> {
 ast_node! {
     pub struct FunctionDefinition = SyntaxNodeKind::FunctionDefinition as {
         token ident: TokenKind::Identifier,
+        maybe_generic_parameter_list: GenericParameterList,
         parameter_list: ParameterList,
         return_type: ReturnType,
         block: Block,
     }
+}
+
+ast_node! {
+    pub struct GenericParameterList = SyntaxNodeKind::GenericParameterList as { ...parameters: GenericParameter }
+}
+
+ast_node! {
+    pub struct GenericParameter = SyntaxNodeKind::GenericParameterDefinition as { token ident: TokenKind::Identifier, }
 }
 
 ast_node! {

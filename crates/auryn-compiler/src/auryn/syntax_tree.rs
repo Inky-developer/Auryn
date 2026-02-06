@@ -28,6 +28,8 @@ pub enum SyntaxNodeKind {
     ExternTypeFunction,
     ItemMetadata,
     FunctionDefinition,
+    GenericParameterList,
+    GenericParameterDefinition,
     ParameterList,
     ParameterDefinition,
     ReturnType,

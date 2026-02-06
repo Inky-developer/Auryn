@@ -748,7 +748,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                 },
             },
             intrinsics: {},
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

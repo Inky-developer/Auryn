@@ -427,7 +427,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                 },
             },
             intrinsics: {},
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

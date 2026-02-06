@@ -488,7 +488,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                     intrinsic: ArrayOf,
                 },
             },
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

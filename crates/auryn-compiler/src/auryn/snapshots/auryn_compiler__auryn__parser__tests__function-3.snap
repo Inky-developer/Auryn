@@ -1,0 +1,30 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(\"fn foo[T, Uvw]() {}\")"
+---
+syntax_tree:
+0..19 Root
+|0..19 File
+||0..19 Item
+|||0..19 FunctionDefinition
+||||KeywordFn `fn`
+||||Whitespace ` `
+||||Identifier `foo`
+||||6..14 GenericParameterList
+|||||BracketOpen `[`
+|||||7..8 GenericParameterDefinition
+||||||Identifier `T`
+|||||Comma `,`
+|||||Whitespace ` `
+|||||10..13 GenericParameterDefinition
+||||||Identifier `Uvw`
+|||||BracketClose `]`
+||||14..17 ParameterList
+|||||ParensOpen `(`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||BraceOpen `{`
+||||18..18 Block ''
+||||BraceClose `}`
+
+diagnostics:

@@ -4,26 +4,25 @@ use crate::auryn::air::{
     data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
     typecheck::{
         type_context::TypeId,
-        types::{ExternType, ModuleType, StructType},
+        types::{ExternType, GenericId, ModuleType, StructType},
     },
 };
 
-/// Represents a type that was defined by the user that later gets registered in the type context, for which we already now the id.
-/// The point of this type is to enable recursive type definitions:
-/// If an extern type `Foo` is defined, we can already construct a type for it without registering
-/// it in the [`super::typecheck::type_context::TypeContext`] first, by using [`UserDefinedTypeId::to_type`].
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+/// Represents a type that was defined by the user.
+/// Should just be a pointer to the actual type data or be a structural type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),
     Module(TypeId<ModuleType>),
     Struct(TypeId<StructType>),
     TypeAlias(TypeAliasId),
+    Generic(GenericId),
 }
 
 /// This type stores the mapping from identifiers to the corresponding air item ids.
 /// This is only used during the ast-to-air transformation, but not after the air has been created,
 /// because at that point everything is identified using ids.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Namespace {
     pub types: FastMap<SmallString, UserDefinedTypeId>,
     pub statics: FastMap<SmallString, AirStaticValueId>,

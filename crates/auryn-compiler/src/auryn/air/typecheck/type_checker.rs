@@ -13,9 +13,12 @@ use crate::auryn::{
         namespace::UserDefinedTypeId,
         typecheck::{
             bounds::{Bound, BoundView, MaybeBounded},
+            generics::GenericInference,
             resolver::{self, Resolver, ResolverError, ResolverResult},
             type_context::{TypeContext, TypeId},
-            types::{FunctionItemType, FunctionParameters, StructuralType, Type, TypeView},
+            types::{
+                FunctionItemType, FunctionParameters, GenericType, StructuralType, Type, TypeView,
+            },
         },
         unresolved_type::UnresolvedType,
     },
@@ -37,6 +40,7 @@ pub fn typecheck_air(globals: Globals, diagnostics: Diagnostics) -> (Air, Diagno
 
 #[derive(Debug)]
 struct FunctionContext {
+    type_variables: Vec<GenericType>,
     variables: FastMap<AirLocalValueId, Type>,
     return_type: Type,
 }
@@ -44,7 +48,8 @@ struct FunctionContext {
 impl Default for FunctionContext {
     fn default() -> Self {
         Self {
-            variables: Default::default(),
+            type_variables: default(),
+            variables: default(),
             return_type: Type::Error,
         }
     }
@@ -54,9 +59,11 @@ impl FunctionContext {
     fn clear(&mut self, expected_return_type: Type) {
         let FunctionContext {
             variables,
+            type_variables,
             return_type,
         } = self;
         variables.clear();
+        type_variables.clear();
         *return_type = expected_return_type;
     }
 }
@@ -173,6 +180,7 @@ impl Typechecker {
             diagnostics: &mut self.diagnostics,
             statics: &self.statics,
             type_aliasses: &self.type_aliasses,
+            type_parameters: &self.function.type_variables,
         };
         self.resolver.resolve_type(&mut ctx, unresolved)
     }
@@ -207,6 +215,9 @@ impl Typechecker {
         };
 
         self.function.clear(function_type.value.return_type);
+        self.function
+            .type_variables
+            .extend(function_type.type_parameters.iter().cloned());
         for (id, r#type) in function
             .argument_ids()
             .zip(function_type.value.parameters().iter())
@@ -622,7 +633,7 @@ impl Typechecker {
         self.infer_expression(&mut call.function);
         match call.function.r#type.computed() {
             Type::FunctionItem(function_type) => {
-                self.typecheck_call_to_function_item(id, call, function_type)
+                self.typecheck_call_to_function_item(id, call, function_type, expected)
             }
             Type::Intrinsic(intrinsic_type) => self.typecheck_call_to_intrinsic(
                 id,
@@ -642,6 +653,7 @@ impl Typechecker {
         id: SyntaxId,
         call: &mut Call,
         function_type_id: TypeId<FunctionItemType>,
+        expected: Option<MaybeBounded>,
     ) -> Type {
         let function_type = self.ty_ctx.get_function_item(function_type_id);
         let return_type = function_type.return_type;
@@ -661,11 +673,19 @@ impl Typechecker {
             );
         }
 
-        for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
-            self.check_expression(actual, expected.as_bounded());
+        let mut inference = GenericInference::default();
+
+        if let Some(MaybeBounded::Type(ty)) = expected {
+            inference.add_inferred(&self.ty_ctx, return_type, ty);
         }
 
-        return_type
+        for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
+            let bound = inference.get_bound_for_inference(&self.ty_ctx, expected);
+            self.check_expression(actual, bound);
+            inference.add_inferred(&self.ty_ctx, expected, actual.r#type.computed());
+        }
+
+        inference.get_resolved(&self.ty_ctx, return_type)
     }
 
     /// Handles both inference and checking because I am lazy

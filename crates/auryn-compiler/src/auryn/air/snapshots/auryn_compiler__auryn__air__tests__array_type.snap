@@ -597,7 +597,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                 },
             },
             intrinsics: {},
-            generics: [],
+            generics: {},
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {
