@@ -13,7 +13,7 @@ use crate::auryn::{
         },
         namespace::{Namespace, UserDefinedTypeId},
         typecheck::{type_context::TypeId, types},
-        unresolved_type::UnresolvedType,
+        unresolved_type::{UnresolvedFunction, UnresolvedType},
     },
     ast::ast_node::{
         Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
@@ -277,8 +277,9 @@ impl AstTransformer {
                     };
 
                     let member = UnresolvedExternMember::Function {
-                        unresolved_type: UnresolvedType::Function {
+                        unresolved_type: UnresolvedType::Function(UnresolvedFunction {
                             parameters_reference: parameters.id(),
+                            type_parameters: Vec::new(),
                             parameters: declared_parameters,
                             return_type: declared_return_type,
                             reference: FunctionReference::Extern {
@@ -289,7 +290,7 @@ impl AstTransformer {
                                 ))),
                                 syntax_id,
                             },
-                        },
+                        }),
                         extern_name,
                     };
 
@@ -389,12 +390,13 @@ impl AstTransformer {
         let function_id = self.namespace.unwrap_function(&ident);
         let function = AirFunction {
             r#type: AirType::Inferred,
-            unresolved_type: UnresolvedType::Function {
+            unresolved_type: UnresolvedType::Function(UnresolvedFunction {
                 parameters_reference: parameters.id(),
+                type_parameters: Vec::new(),
                 parameters: declared_parameters,
                 return_type: declared_return_type,
                 reference: FunctionReference::UserDefined(function_id),
-            },
+            }),
             ident,
             blocks,
         };

@@ -74,6 +74,7 @@ impl ClassGenerator<'_> {
             else {
                 unreachable!("Function should have a function type");
             };
+            assert!(function_type.type_parameters.is_empty(), "TODO");
             let method_descriptor = self.repr_ctx.get_function_representation(function_type);
 
             let module_name = &self

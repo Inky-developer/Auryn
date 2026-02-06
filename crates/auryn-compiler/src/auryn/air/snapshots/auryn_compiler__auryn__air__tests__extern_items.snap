@@ -209,6 +209,7 @@ expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type
             },
             function_items: {},
             intrinsics: {},
+            generics: [],
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

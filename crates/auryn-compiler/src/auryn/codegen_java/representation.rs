@@ -354,6 +354,7 @@ impl RepresentationCtx {
                 .to_representation(),
             Struct(struct_type) => self.get_struct_repr(struct_type).to_representation(),
             FunctionItem(_) | Intrinsic(_) | Meta(_) | Module(_) => None,
+            Generic(g) => unreachable!("Called with non-monorphized generic type {g:?}"),
             Error => unreachable!("Called with error type"),
         }
     }

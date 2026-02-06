@@ -37,40 +37,43 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                             },
                         ),
                     ),
-                    unresolved_type: Function {
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    71932494048280,
+                                ),
+                            },
+                            type_parameters: [],
+                            parameters: [],
+                            return_type: Some(
+                                Structural(
+                                    [],
                                 ),
                             ),
-                            number: Some(
-                                71932494048280,
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                62549994824592,
+                                            ),
+                                        },
+                                    ),
+                                ),
                             ),
                         },
-                        parameters: [],
-                        return_type: Some(
-                            Structural(
-                                [],
-                            ),
-                        ),
-                        reference: UserDefined(
-                            AirFunctionId(
-                                AirStaticValueId(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            62549994824592,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                    },
+                    ),
                     ident: "main",
                     blocks: {
                         AirBlockId(
@@ -236,38 +239,21 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                             },
                         ),
                     ),
-                    unresolved_type: Function {
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
                                 ),
-                            ),
-                            number: Some(
-                                197032483697456,
-                            ),
-                        },
-                        parameters: [
-                            Ident(
-                                SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        198400764834245,
-                                    ),
-                                },
-                                "I32",
-                            ),
-                        ],
-                        return_type: Some(
-                            Unit,
-                        ),
-                        reference: UserDefined(
-                            AirFunctionId(
-                                AirStaticValueId(
+                                number: Some(
+                                    197032483697456,
+                                ),
+                            },
+                            type_parameters: [],
+                            parameters: [
+                                Ident(
                                     SyntaxId {
                                         file_id: Some(
                                             FileId(
@@ -275,13 +261,33 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                             ),
                                         ),
                                         number: Some(
-                                            187649984473768,
+                                            198400764834245,
                                         ),
                                     },
+                                    "I32",
+                                ),
+                            ],
+                            return_type: Some(
+                                Unit,
+                            ),
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                187649984473768,
+                                            ),
+                                        },
+                                    ),
                                 ),
                             ),
-                        ),
-                    },
+                        },
+                    ),
                     ident: "foo",
                     blocks: {
                         AirBlockId(
@@ -641,6 +647,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
+                    type_parameters: [],
                     parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
@@ -695,6 +702,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
+                    type_parameters: [],
                     parameters: FunctionParameters {
                         parameters: [
                             I32,
@@ -740,6 +748,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                 },
             },
             intrinsics: {},
+            generics: [],
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

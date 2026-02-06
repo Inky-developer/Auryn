@@ -9,7 +9,7 @@ use crate::auryn::{
             type_context::TypeContext,
             types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
         },
-        unresolved_type::UnresolvedType,
+        unresolved_type::{UnresolvedFunction, UnresolvedType},
     },
     file_id::FileId,
     syntax_id::{Spanned, SyntaxId},
@@ -87,36 +87,18 @@ pub struct AirFunction {
 }
 
 impl AirFunction {
-    pub fn unresolved_type(
-        &self,
-    ) -> (
-        SyntaxId,
-        &[UnresolvedType],
-        Option<&UnresolvedType>,
-        &FunctionReference,
-    ) {
-        let UnresolvedType::Function {
-            parameters_reference,
-            parameters,
-            return_type,
-            reference,
-        } = &self.unresolved_type
-        else {
+    pub fn unresolved_type(&self) -> &UnresolvedFunction {
+        let UnresolvedType::Function(unresolved_function) = &self.unresolved_type else {
             unreachable!("Should be a function type");
         };
-        (
-            *parameters_reference,
-            parameters,
-            return_type.as_deref(),
-            reference,
-        )
+        unresolved_function
     }
 
     /// Returns value ids for the arguments.
     /// The value ids increment for each argument.
     pub fn argument_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
         self.unresolved_type()
-            .1
+            .parameters
             .iter()
             .enumerate()
             .map(|(index, _)| AirLocalValueId(index))

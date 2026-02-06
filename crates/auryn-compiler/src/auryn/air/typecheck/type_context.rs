@@ -8,8 +8,8 @@ use crate::auryn::{
         typecheck::{
             bounds::{ArrayBound, Bound},
             types::{
-                ArrayType, ExternType, FunctionItemType, IntrinsicType, MetaType, ModuleType,
-                NumberLiteralType, StructType, StructuralType, Type, TypeData,
+                ArrayType, ExternType, FunctionItemType, GenericType, IntrinsicType, MetaType,
+                ModuleType, NumberLiteralType, StructType, StructuralType, Type, TypeData,
             },
         },
     },
@@ -55,6 +55,7 @@ pub struct TypeContext {
     modules: TypeMap<ModuleType>,
     function_items: TypeMap<FunctionItemType>,
     intrinsics: BidirectionalTypeMap<IntrinsicType>,
+    generics: Vec<GenericType>,
     special_types: SpecialTypes,
     next_id: NonZeroU64,
 }
@@ -178,6 +179,10 @@ impl TypeContext {
     pub(super) fn get_meta(&self, id: TypeId<MetaType>) -> &MetaType {
         self.metas.get_by_key(&id).unwrap()
     }
+    pub(super) fn get_generic(&self, id: TypeId<GenericType>) -> &GenericType {
+        let index: usize = id.0.number().unwrap().get().try_into().unwrap();
+        &self.generics[index]
+    }
 }
 
 fn add_non_unique_type<T: Eq + Hash + Clone>(
@@ -207,6 +212,7 @@ impl Default for TypeContext {
             externs: default(),
             modules: default(),
             function_items: default(),
+            generics: default(),
             intrinsics: default(),
             special_types: default(),
             next_id: NonZeroU64::new(1).unwrap(),

@@ -8,13 +8,14 @@ use crate::auryn::{
         },
         namespace::UserDefinedTypeId,
         typecheck::{
+            bounds::Bound,
             type_context::TypeContext,
             types::{
-                ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, ModuleType,
-                StructType, StructuralType, Type,
+                ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, GenericId,
+                GenericType, ModuleType, StructType, StructuralType, Type,
             },
         },
-        unresolved_type::UnresolvedType,
+        unresolved_type::{UnresolvedFunction, UnresolvedType},
     },
     diagnostics::{diagnostic::Diagnostics, errors::UndefinedVariable},
     syntax_id::SyntaxId,
@@ -69,12 +70,22 @@ impl Resolver {
                     Type::Error
                 }
             },
-            UnresolvedType::Function {
+            UnresolvedType::Function(UnresolvedFunction {
                 parameters_reference,
+                type_parameters,
                 parameters,
                 return_type,
                 reference,
-            } => {
+            }) => {
+                let type_parameters = type_parameters
+                    .iter()
+                    .enumerate()
+                    .map(|(index, param)| GenericType {
+                        id: GenericId(index),
+                        ident: param.clone(),
+                        bound: Bound::Top,
+                    })
+                    .collect();
                 let parameters = parameters
                     .iter()
                     .map(|param| self.resolve_type(ctx, param))
@@ -86,6 +97,7 @@ impl Resolver {
                 Type::FunctionItem(ctx.ty_ctx.add_function_item(
                     reference.syntax_id(),
                     FunctionItemType {
+                        type_parameters,
                         parameters: FunctionParameters {
                             parameters,
                             parameters_reference: *parameters_reference,

@@ -37,36 +37,39 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                             },
                         ),
                     ),
-                    unresolved_type: Function {
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
                                 ),
-                            ),
-                            number: Some(
-                                201053554793321,
+                                number: Some(
+                                    201053554793321,
+                                ),
+                            },
+                            type_parameters: [],
+                            parameters: [],
+                            return_type: None,
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                187649984473768,
+                                            ),
+                                        },
+                                    ),
+                                ),
                             ),
                         },
-                        parameters: [],
-                        return_type: None,
-                        reference: UserDefined(
-                            AirFunctionId(
-                                AirStaticValueId(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            187649984473768,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                    },
+                    ),
                     ident: "main",
                     blocks: {
                         AirBlockId(
@@ -380,6 +383,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
+                    type_parameters: [],
                     parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
@@ -423,6 +427,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                 },
             },
             intrinsics: {},
+            generics: [],
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

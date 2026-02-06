@@ -8,7 +8,16 @@ use crate::auryn::{
     syntax_id::SyntaxId,
 };
 
-/// Represents a type that was written by the user but not resolved yet.
+#[derive(Debug)]
+pub struct UnresolvedFunction {
+    pub parameters_reference: SyntaxId,
+    pub type_parameters: Vec<SmallString>,
+    pub parameters: Vec<UnresolvedType>,
+    pub return_type: Option<Box<UnresolvedType>>,
+    pub reference: FunctionReference,
+}
+
+/// Reprsents a type that was written by the user but not resolved yet.
 #[derive(Debug)]
 pub enum UnresolvedType {
     /// A type that was defined by the user, identified by its `syntax_id`
@@ -26,12 +35,7 @@ pub enum UnresolvedType {
     },
     Unit,
     /// A function type
-    Function {
-        parameters_reference: SyntaxId,
-        parameters: Vec<UnresolvedType>,
-        return_type: Option<Box<UnresolvedType>>,
-        reference: FunctionReference,
-    },
+    Function(UnresolvedFunction),
     Extern {
         id: SyntaxId,
         extern_name: SmallString,
@@ -70,12 +74,13 @@ impl UnresolvedType {
                     ty.visit_contained_types(visitor);
                 }
             }
-            Function {
+            Function(UnresolvedFunction {
                 parameters_reference: _,
+                type_parameters: _,
                 parameters,
                 return_type,
                 reference: _,
-            } => {
+            }) => {
                 for param in parameters {
                     param.visit_contained_types(visitor);
                 }

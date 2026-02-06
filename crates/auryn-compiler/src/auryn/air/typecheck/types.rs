@@ -10,7 +10,7 @@ use crate::auryn::{
     air::{
         data::{ExternFunctionKind, FunctionReference, Intrinsic},
         typecheck::{
-            bounds::MaybeBounded,
+            bounds::{Bound, MaybeBounded},
             type_context::{TypeContext, TypeId},
         },
     },
@@ -115,6 +115,7 @@ define_types! {
     Module(ModuleType),
     /// Represents the type of a type, also zero sized, because it is a compile-time only construct.
     Meta(MetaType),
+    Generic(GenericType),
     /// Created when an erraneous program is being compiled.
     Error
 }
@@ -130,7 +131,9 @@ impl Type {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Structural(_) | Struct(_) | Module(_) | Meta(_) | Error => None,
+            | Extern(_) | Structural(_) | Struct(_) | Module(_) | Meta(_) | Generic(_) | Error => {
+                None
+            }
         }
     }
 }
@@ -209,6 +212,7 @@ impl TypeData for NumberLiteralType {
 
 #[derive(Debug)]
 pub struct FunctionItemType {
+    pub type_parameters: Vec<GenericType>,
     pub parameters: FunctionParameters,
     pub return_type: Type,
     pub reference: FunctionReference,
@@ -221,10 +225,14 @@ impl TypeData for FunctionItemType {
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {
+            type_parameters,
             parameters,
             return_type,
             reference: _,
         } = self;
+        for type_parameter in type_parameters {
+            type_parameter.visit(visitor);
+        }
         visitor(*return_type);
         parameters.parameters.iter().copied().for_each(visitor);
     }
@@ -425,6 +433,31 @@ impl TypeData for MetaType {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct GenericId(pub usize);
+
+#[derive(Debug)]
+pub struct GenericType {
+    /// The id of this generic type in its defined scope
+    pub id: GenericId,
+    pub ident: SmallString,
+    pub bound: Bound,
+}
+
+impl TypeData for GenericType {
+    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
+        ctx.get_generic(id)
+    }
+
+    fn visit(&self, _: &mut impl FnMut(Type)) {
+        let Self {
+            id: _,
+            ident: _,
+            bound: _,
+        } = self;
+    }
+}
+
 impl FromStr for Type {
     type Err = ();
 
@@ -546,8 +579,9 @@ impl Display for TypeView<'_> {
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
             TypeView::Module(module_type) => write!(f, "module {}", module_type.name),
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
-            TypeView::Struct(r#struct) => write!(f, "struct {}", r#struct.value.ident,),
+            TypeView::Struct(r#struct) => write!(f, "struct {}", r#struct.value.ident),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
+            TypeView::Generic(generic) => write!(f, "{}", generic.value.ident),
             TypeView::Error => f.write_str("<<Error>>"),
         }
     }

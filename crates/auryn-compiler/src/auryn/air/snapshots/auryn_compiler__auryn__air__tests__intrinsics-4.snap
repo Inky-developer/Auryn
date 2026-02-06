@@ -37,36 +37,39 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                             },
                         ),
                     ),
-                    unresolved_type: Function {
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
                                 ),
-                            ),
-                            number: Some(
-                                105553116266498,
+                                number: Some(
+                                    105553116266498,
+                                ),
+                            },
+                            type_parameters: [],
+                            parameters: [],
+                            return_type: None,
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                4,
+                                            ),
+                                        },
+                                    ),
+                                ),
                             ),
                         },
-                        parameters: [],
-                        return_type: None,
-                        reference: UserDefined(
-                            AirFunctionId(
-                                AirStaticValueId(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            4,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                    },
+                    ),
                     ident: "main",
                     blocks: {
                         AirBlockId(
@@ -460,6 +463,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
+                    type_parameters: [],
                     parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
@@ -526,6 +530,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                     intrinsic: ArrayOfZeros,
                 },
             },
+            generics: [],
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {

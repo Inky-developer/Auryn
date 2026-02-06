@@ -37,88 +37,91 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                             },
                         ),
                     ),
-                    unresolved_type: Function {
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: Some(
+                                    218924981886066,
+                                ),
+                            },
+                            type_parameters: [],
+                            parameters: [
+                                Array(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            223920293972753,
+                                        ),
+                                    },
+                                    Ident(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                223920293972754,
+                                            ),
+                                        },
+                                        "I32",
+                                    ),
+                                ),
+                            ],
+                            return_type: Some(
+                                Array(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            238616646923435,
+                                        ),
+                                    },
+                                    Ident(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                238616646923436,
+                                            ),
+                                        },
+                                        "I32",
+                                    ),
                                 ),
                             ),
-                            number: Some(
-                                218924981886066,
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                187649984473772,
+                                            ),
+                                        },
+                                    ),
+                                ),
                             ),
                         },
-                        parameters: [
-                            Array(
-                                SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        223920293972753,
-                                    ),
-                                },
-                                Ident(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            223920293972754,
-                                        ),
-                                    },
-                                    "I32",
-                                ),
-                            ),
-                        ],
-                        return_type: Some(
-                            Array(
-                                SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        238616646923435,
-                                    ),
-                                },
-                                Ident(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            238616646923436,
-                                        ),
-                                    },
-                                    "I32",
-                                ),
-                            ),
-                        ),
-                        reference: UserDefined(
-                            AirFunctionId(
-                                AirStaticValueId(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            187649984473772,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                    },
+                    ),
                     ident: "foo",
                     blocks: {
                         AirBlockId(
@@ -214,36 +217,39 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                             },
                         ),
                     ),
-                    unresolved_type: Function {
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
+                    unresolved_type: Function(
+                        UnresolvedFunction {
+                            parameters_reference: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
                                 ),
-                            ),
-                            number: Some(
-                                40210710958667,
+                                number: Some(
+                                    40210710958667,
+                                ),
+                            },
+                            type_parameters: [],
+                            parameters: [],
+                            return_type: None,
+                            reference: UserDefined(
+                                AirFunctionId(
+                                    AirStaticValueId(
+                                        SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: Some(
+                                                4,
+                                            ),
+                                        },
+                                    ),
+                                ),
                             ),
                         },
-                        parameters: [],
-                        return_type: None,
-                        reference: UserDefined(
-                            AirFunctionId(
-                                AirStaticValueId(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            4,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                    },
+                    ),
                     ident: "main",
                     blocks: {
                         AirBlockId(
@@ -480,6 +486,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
+                    type_parameters: [],
                     parameters: FunctionParameters {
                         parameters: [
                             Array(
@@ -546,6 +553,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                 }: FunctionItemType {
+                    type_parameters: [],
                     parameters: FunctionParameters {
                         parameters: [],
                         parameters_reference: SyntaxId {
@@ -589,6 +597,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                 },
             },
             intrinsics: {},
+            generics: [],
             special_types: SpecialTypes {
                 unit: Structural(
                     TypeId {
