@@ -1,5 +1,6 @@
 /target
 /.idea
+/.helix
 # For debugging
 /build
 # Code snippets for testing
