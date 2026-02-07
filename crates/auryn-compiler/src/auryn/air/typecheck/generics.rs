@@ -33,11 +33,7 @@ impl GenericInference {
             let generic = ty_ctx.get(generic);
             let existing_inference = self.inferred.insert(generic.id, received);
             if let Some(existing_inference) = existing_inference {
-                assert_eq!(
-                    existing_inference,
-                    received,
-                    "TODO: Add error message"
-                );
+                assert_eq!(existing_inference, received, "TODO: Add error message");
             }
         }
     }
@@ -50,5 +46,11 @@ impl GenericInference {
                 .expect("TODO Add error messsage for non-inferred type"),
             _ => ty,
         }
+    }
+
+    pub fn into_inferred(self) -> Vec<Type> {
+        let mut inferred = self.inferred.into_iter().collect::<Vec<_>>();
+        inferred.sort_by_key(|(id, _)| id.0);
+        inferred.into_iter().map(|(_, ty)| ty).collect()
     }
 }

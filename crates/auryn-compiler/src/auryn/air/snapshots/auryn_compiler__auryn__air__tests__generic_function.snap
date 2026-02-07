@@ -336,6 +336,11 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                 ),
                                                             },
                                                         ],
+                                                        generic_arguments: Computed(
+                                                            [
+                                                                I64,
+                                                            ],
+                                                        ),
                                                     },
                                                 ),
                                             },

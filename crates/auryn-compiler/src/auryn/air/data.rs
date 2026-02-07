@@ -308,9 +308,25 @@ pub enum AirConstant {
 }
 
 #[derive(Debug)]
+pub enum AirGenericArguments {
+    Inferred,
+    Computed(Vec<Type>),
+}
+
+impl AirGenericArguments {
+    pub fn computed(&self) -> &Vec<Type> {
+        match self {
+            AirGenericArguments::Inferred => panic!("Should be computed at this points"),
+            AirGenericArguments::Computed(computed) => computed,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Call {
     pub function: Box<AirExpression>,
     pub arguments: Vec<AirExpression>,
+    pub generic_arguments: AirGenericArguments,
 }
 
 pub enum CallKind<'a> {

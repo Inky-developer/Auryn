@@ -6,9 +6,10 @@ use crate::auryn::{
     air::{
         data::{
             Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-            AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode, AirNodeKind,
-            AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Assignment, Call,
-            Globals, Intrinsic, ReturnValue, TypeAliasId, UnaryOperator, Update,
+            AirExpressionKind, AirFunction, AirFunctionId, AirGenericArguments, AirLocalValueId,
+            AirNode, AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType,
+            AirValueId, Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId,
+            UnaryOperator, Update,
         },
         namespace::UserDefinedTypeId,
         typecheck::{
@@ -656,6 +657,7 @@ impl Typechecker {
         expected: Option<MaybeBounded>,
     ) -> Type {
         let function_type = self.ty_ctx.get_function_item(function_type_id);
+        let num_generic_args = function_type.type_parameters.len();
         let return_type = function_type.return_type;
 
         let FunctionParameters {
@@ -685,7 +687,17 @@ impl Typechecker {
             inference.add_inferred(&self.ty_ctx, expected, actual.r#type.computed());
         }
 
-        inference.get_resolved(&self.ty_ctx, return_type)
+        let result = inference.get_resolved(&self.ty_ctx, return_type);
+
+        let inferred_args = inference.into_inferred();
+        assert_eq!(
+            num_generic_args,
+            inferred_args.len(),
+            "TODO: Add error message that type could not be inferred"
+        );
+        call.generic_arguments = AirGenericArguments::Computed(inferred_args);
+
+        result
     }
 
     /// Handles both inference and checking because I am lazy

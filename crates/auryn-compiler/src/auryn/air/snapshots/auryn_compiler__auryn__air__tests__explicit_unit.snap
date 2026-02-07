@@ -185,6 +185,9 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                             ),
                                                         },
                                                     ],
+                                                    generic_arguments: Computed(
+                                                        [],
+                                                    ),
                                                 },
                                             ),
                                         },

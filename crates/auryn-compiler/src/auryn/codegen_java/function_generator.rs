@@ -5,14 +5,14 @@ use crate::{
         air::{
             data::{
                 Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-                AirExpressionKind, AirFunction, AirFunctionId, AirLocalValueId, AirNode,
-                AirNodeKind, AirPlace, AirPlaceKind, AirValueId, Assignment, BinaryOperation, Call,
-                CallKind, ExternFunctionKind, FunctionReference, Intrinsic, UnaryOperator, Update,
+                AirExpressionKind, AirFunction, AirLocalValueId, AirNode, AirNodeKind, AirPlace,
+                AirPlaceKind, AirValueId, Assignment, BinaryOperation, Call, CallKind,
+                ExternFunctionKind, FunctionReference, Intrinsic, UnaryOperator, Update,
             },
-            typecheck::{type_context::TypeContext, types::TypeView},
+            typecheck::types::TypeView,
         },
         codegen_java::{
-            class_generator::{ClassGenerator, GeneratedMethodData},
+            class_generator::{ClassGenerator, Monomorphizations},
             print_utils::make_value_printable,
             representation::{
                 FieldDescriptor, ImplicitArgs, MethodDescriptor, PrimitiveOrObject, Representation,
@@ -23,21 +23,21 @@ use crate::{
     },
     java::{
         class::{self, Comparison, TypeCategory},
+        constant_pool_builder::ConstantPoolBuilder,
         function_assembler::{ConstantValue, FunctionAssembler, Instruction, VariableId},
         source_graph::{BasicBlockId, BlockFinalizer},
     },
 };
 
-pub struct FunctionGenerator<'a> {
+pub(super) struct FunctionGenerator<'a> {
     assembler: FunctionAssembler<'a>,
     variable_map: FastMap<AirLocalValueId, VariableId>,
     block_translation: FastMap<AirBlockId, BasicBlockId>,
     generated_blocks: FastSet<AirBlockId>,
     pending_blocks: FastIndexSet<AirBlockId>,
-    function_infos: &'a FastMap<AirFunctionId, GeneratedMethodData>,
-    ty_ctx: &'a TypeContext,
+    parent: &'a ClassGenerator<'a>,
     repr_ctx: &'a mut RepresentationCtx,
-    class_name: &'a SmallString,
+    monomorphizations: &'a mut Monomorphizations,
 }
 
 impl<'a> FunctionGenerator<'a> {
@@ -45,7 +45,10 @@ impl<'a> FunctionGenerator<'a> {
         name: SmallString,
         function: &AirFunction,
         method_descriptor: MethodDescriptor,
-        parent: &'a mut ClassGenerator,
+        parent: &'a ClassGenerator,
+        repr_ctx: &'a mut RepresentationCtx,
+        monomorphizations: &'a mut Monomorphizations,
+        constant_pool: &'a mut ConstantPoolBuilder,
     ) -> Self {
         let TypeView::FunctionItem(function_type) =
             function.r#type.computed().as_view(&parent.air.ty_ctx)
@@ -63,9 +66,8 @@ impl<'a> FunctionGenerator<'a> {
             .iter()
             .zip(function.argument_ids())
         {
-            if let Some(primitive) = parent
-                .repr_ctx
-                .get_representation(parameter.as_view(&parent.air.ty_ctx))
+            if let Some(primitive) =
+                repr_ctx.get_representation(parameter.as_view(&parent.air.ty_ctx))
             {
                 let size = primitive.stack_size();
                 let variable_id = VariableId {
@@ -78,21 +80,20 @@ impl<'a> FunctionGenerator<'a> {
         }
 
         let assembler = FunctionAssembler::new(
-            parent.constant_pool.add_class(parent.class_name.clone()),
+            constant_pool.add_class(parent.class_name.clone()),
             name,
             method_descriptor,
             ImplicitArgs::None,
-            &mut parent.constant_pool,
+            constant_pool,
         );
 
         Self {
-            class_name: &parent.class_name,
-            function_infos: &parent.generated_methods,
             assembler,
             block_translation,
             variable_map,
-            ty_ctx: &parent.air.ty_ctx,
-            repr_ctx: &mut parent.repr_ctx,
+            repr_ctx,
+            parent,
+            monomorphizations,
             generated_blocks: default(),
             pending_blocks: default(),
         }
@@ -197,7 +198,11 @@ impl FunctionGenerator<'_> {
         let variable_id = if self.variable_map.contains_key(&assignment.target) {
             Some(self.variable_map[&assignment.target].clone())
         } else {
-            let air_type = assignment.expression.r#type.computed().as_view(self.ty_ctx);
+            let air_type = assignment
+                .expression
+                .r#type
+                .computed()
+                .as_view(self.parent.ty_ctx());
             if let Some(primitive) = self.repr_ctx.get_representation(air_type) {
                 let variable_id = self.assembler.alloc_variable(primitive);
                 self.variable_map
@@ -242,7 +247,7 @@ impl FunctionGenerator<'_> {
                 let object_repr = self.generate_expression(&accessor.value);
                 let target_repr = self
                     .repr_ctx
-                    .get_representation(place.r#type.as_view(self.ty_ctx));
+                    .get_representation(place.r#type.as_view(self.parent.ty_ctx()));
                 if let (Some(object_repr), Some(target_repr)) = (object_repr, target_repr) {
                     match object_repr {
                         Representation::Object(name) => Place::Stack {
@@ -313,7 +318,7 @@ impl FunctionGenerator<'_> {
 
     /// The return value indicates the stack usage
     fn generate_expression(&mut self, expression: &AirExpression) -> Option<Representation> {
-        let result_type = expression.r#type.as_view(self.ty_ctx);
+        let result_type = expression.r#type.as_view(self.parent.ty_ctx());
         let repr = self.repr_ctx.get_representation(result_type);
 
         match &expression.kind {
@@ -333,9 +338,10 @@ impl FunctionGenerator<'_> {
                 // Nothing needs to be done, since types are compile time constructs
             }
             AirExpressionKind::Accessor(accessor) => self.generate_accessor(accessor, repr.clone()),
-            AirExpressionKind::Call(call) => {
-                self.generate_call(call, expression.r#type.computed().as_view(self.ty_ctx))
-            }
+            AirExpressionKind::Call(call) => self.generate_call(
+                call,
+                expression.r#type.computed().as_view(self.parent.ty_ctx()),
+            ),
             expr @ (AirExpressionKind::Synthetic | AirExpressionKind::Error(_)) => {
                 unreachable!("Codegen was started with invalid air: {expr:?}")
             }
@@ -383,7 +389,7 @@ impl FunctionGenerator<'_> {
             } => {
                 let info = match struct_type.as_ref() {
                     Some((_, ty)) => {
-                        let TypeView::Struct(ty) = ty.as_view(self.ty_ctx) else {
+                        let TypeView::Struct(ty) = ty.as_view(self.parent.ty_ctx()) else {
                             unreachable!("Invalid struct type");
                         };
                         self.repr_ctx.get_struct_repr(ty).clone()
@@ -647,7 +653,7 @@ impl FunctionGenerator<'_> {
     fn generate_accessor(&mut self, accessor: &Accessor, result_repr: Option<Representation>) {
         let value_repr = self.generate_expression(&accessor.value);
 
-        match accessor.value.r#type.as_view(self.ty_ctx) {
+        match accessor.value.r#type.as_view(self.parent.ty_ctx()) {
             TypeView::Structural(_) | TypeView::Struct(_) => {
                 let Some(result_repr) = result_repr else {
                     if let Some(value_repr) = value_repr {
@@ -697,7 +703,7 @@ impl FunctionGenerator<'_> {
     fn generate_call(&mut self, call: &Call, expression_type: TypeView) {
         self.generate_expression(&call.function);
 
-        let function_type = call.function_type(self.ty_ctx);
+        let function_type = call.function_type(self.parent.ty_ctx());
         match function_type {
             CallKind::Intrinsic(intrinsic) => {
                 self.generate_intrinsic_call(expression_type, intrinsic.intrinsic, &call.arguments)
@@ -708,13 +714,24 @@ impl FunctionGenerator<'_> {
                         self.generate_expression(argument);
                     }
 
-                    let GeneratedMethodData {
-                        generated_name,
-                        method_descriptor,
-                    } = &self.function_infos[function_id];
+                    self.monomorphizations
+                        .add(*function_id, call.generic_arguments.computed().clone());
+                    let generated_name = self.repr_ctx.get_method_name(
+                        self.parent.input_files,
+                        &self.parent.air.globals.functions[function_id],
+                        *function_id,
+                        call.generic_arguments
+                            .computed()
+                            .iter()
+                            .map(|ty| ty.as_view(self.parent.ty_ctx())),
+                    );
+                    let method_descriptor = self.repr_ctx.get_method_descriptor(
+                        function_item,
+                        call.generic_arguments.computed().clone(),
+                    );
                     self.assembler.add(Instruction::InvokeStatic {
-                        class_name: self.class_name.clone(),
-                        name: generated_name.clone(),
+                        class_name: self.parent.class_name.clone(),
+                        name: generated_name.into(),
                         method_descriptor: method_descriptor.clone(),
                     });
                 }
@@ -728,11 +745,13 @@ impl FunctionGenerator<'_> {
                         self.generate_expression(argument);
                     }
 
-                    let method_descriptor =
-                        self.repr_ctx.get_function_representation(function_item);
+                    // Extern functions cannot be generic right now
+                    let method_descriptor = self
+                        .repr_ctx
+                        .get_method_descriptor(function_item, Vec::new());
                     let Some(Representation::Object(class_name)) = self
                         .repr_ctx
-                        .get_representation(parent.as_view(self.ty_ctx))
+                        .get_representation(parent.as_view(self.parent.ty_ctx()))
                     else {
                         panic!("Extern function should be member of an object");
                     };
@@ -790,7 +809,7 @@ impl FunctionGenerator<'_> {
                 if let Some(other) = repr {
                     self.assembler.add(Instruction::Pop(other.category()));
                 }
-                let ty = arguments[0].r#type.computed().as_view(self.ty_ctx);
+                let ty = arguments[0].r#type.computed().as_view(self.parent.ty_ctx());
                 self.assembler.add(Instruction::LoadConstant {
                     value: ConstantValue::String(ty.to_string().into()),
                 });
@@ -835,7 +854,7 @@ impl FunctionGenerator<'_> {
 
         self.generate_expression(value);
 
-        let from_type = value.r#type.computed().as_view(self.ty_ctx);
+        let from_type = value.r#type.computed().as_view(self.parent.ty_ctx());
 
         let from = self.repr_ctx.get_representation(from_type).unwrap();
         let to = self.repr_ctx.get_representation(target_type).unwrap();
@@ -910,7 +929,8 @@ impl FunctionGenerator<'_> {
             unreachable!("Should be valid call");
         };
 
-        let TypeView::Array(array_type) = array.r#type.computed().as_view(self.ty_ctx) else {
+        let TypeView::Array(array_type) = array.r#type.computed().as_view(self.parent.ty_ctx())
+        else {
             unreachable!("Should be an array");
         };
         let primitive = self
@@ -929,7 +949,8 @@ impl FunctionGenerator<'_> {
             unreachable!("Should be valid call");
         };
 
-        let TypeView::Array(array_type) = array.r#type.computed().as_view(self.ty_ctx) else {
+        let TypeView::Array(array_type) = array.r#type.computed().as_view(self.parent.ty_ctx())
+        else {
             unreachable!("Should be an array");
         };
         let primitive = self

@@ -6,10 +6,10 @@ use crate::auryn::{
     air::{
         data::{
             self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-            AirExpressionKind, AirFunction, AirLocalValueId, AirModuleId, AirNode, AirNodeKind,
-            AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType, AirValueId, Call,
-            ExternFunctionKind, FunctionReference, Globals, ReturnValue, TypeAliasId,
-            UnaryOperation, UnaryOperator, UnresolvedExternMember,
+            AirExpressionKind, AirFunction, AirGenericArguments, AirLocalValueId, AirModuleId,
+            AirNode, AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId,
+            AirType, AirValueId, Call, ExternFunctionKind, FunctionReference, Globals, ReturnValue,
+            TypeAliasId, UnaryOperation, UnaryOperator, UnresolvedExternMember,
         },
         namespace::{Namespace, UserDefinedTypeId},
         typecheck::{type_context::TypeId, types},
@@ -870,6 +870,7 @@ impl FunctionTransformer<'_> {
             AirExpressionKind::Call(Call {
                 function,
                 arguments,
+                generic_arguments: AirGenericArguments::Inferred,
             }),
         )
     }
