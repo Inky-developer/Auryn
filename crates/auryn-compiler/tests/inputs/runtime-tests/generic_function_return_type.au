@@ -1,0 +1,10 @@
+// expect-output:
+// [1, 2]
+
+fn main() {
+	print(make("1", "2"))
+}
+
+fn make[T](first: T, second: T) -> []T {
+	return arrayOf(first, second)
+}

@@ -96,16 +96,6 @@ impl GenericInference {
         Ok(())
     }
 
-    pub fn get_resolved(&self, ty_ctx: &TypeContext, ty: Type) -> Type {
-        match ty {
-            Type::Generic(generic) => *self
-                .inferred
-                .get(&ty_ctx.get(generic).id)
-                .expect("TODO Add error messsage for non-inferred type"),
-            _ => ty,
-        }
-    }
-
     pub fn into_inferred(self) -> FastMap<GenericId, Type> {
         self.inferred
     }

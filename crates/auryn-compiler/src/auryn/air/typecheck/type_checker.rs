@@ -705,7 +705,11 @@ impl Typechecker {
             }
         }
 
-        let result = inference.get_resolved(&self.ty_ctx, return_type);
+        // If the inference cannot resolve the type, we can don't need to add an error diagnostics,
+        // as `check_inference_types` will fail
+        let result = inference
+            .resolve_generic_type(&mut self.ty_ctx, return_type)
+            .unwrap_or(Type::Error);
 
         let inferred_args = check_inference_types(
             &mut self.diagnostics,
