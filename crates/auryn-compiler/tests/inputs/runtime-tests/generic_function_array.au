@@ -1,0 +1,11 @@
+// expect-output:
+// 5
+
+fn main() {
+	let my_array: []I32 = arrayOf(1, 2, 3, 4, 5)
+	print(len(my_array))
+}
+
+fn len[T](value: []T) -> I32 {
+	return arrayLen(value)
+}

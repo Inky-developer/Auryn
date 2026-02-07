@@ -1,0 +1,11 @@
+// expect-output:
+// 50
+
+fn main() {
+	let a: I32 = identity(50)
+	print(a)
+}
+
+fn identity[T](value: T) -> T {
+	return value
+}
