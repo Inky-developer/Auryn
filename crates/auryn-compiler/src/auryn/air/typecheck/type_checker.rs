@@ -18,7 +18,8 @@ use crate::auryn::{
             resolver::{self, Resolver, ResolverError, ResolverResult},
             type_context::{TypeContext, TypeId},
             types::{
-                FunctionItemType, FunctionParameters, GenericType, StructuralType, Type, TypeView,
+                FunctionItemType, FunctionParameters, GenericId, GenericType, StructuralType, Type,
+                TypeView,
             },
         },
         unresolved_type::UnresolvedType,
@@ -27,8 +28,8 @@ use crate::auryn::{
         diagnostic::Diagnostics,
         errors::{
             CircularTypeAlias, ExpectedFunction, ExpectedStruct, InferenceFailed, InvalidCast,
-            MismatchedArgumentCount, MissingFields, TypeMismatch, UndefinedProperty,
-            UnexpectedFields, UnsupportedOperationWithType, ValueOutsideRange,
+            MismatchedArgumentCount, MissingFields, NonInferredGenericType, TypeMismatch,
+            UndefinedProperty, UnexpectedFields, UnsupportedOperationWithType, ValueOutsideRange,
         },
     },
     syntax_id::{Spanned, SyntaxId},
@@ -521,9 +522,13 @@ impl Typechecker {
             return;
         }
 
-        let expected_types = expected.fields.iter().cloned().collect::<FastMap<_, _>>();
+        let expected_types = expected
+            .fields
+            .iter()
+            .map(|(ident, ty)| (ident.value.clone(), *ty))
+            .collect::<FastMap<_, _>>();
         for (name, expression) in got {
-            let expected_type = *expected_types.get(name.as_ref()).unwrap();
+            let expected_type = *expected_types.get(&name.value).unwrap();
             self.check_expression(expression, MaybeBounded::Type(expected_type));
         }
     }
@@ -657,7 +662,6 @@ impl Typechecker {
         expected: Option<MaybeBounded>,
     ) -> Type {
         let function_type = self.ty_ctx.get_function_item(function_type_id);
-        let num_generic_args = function_type.type_parameters.len();
         let return_type = function_type.return_type;
 
         let FunctionParameters {
@@ -703,11 +707,11 @@ impl Typechecker {
 
         let result = inference.get_resolved(&self.ty_ctx, return_type);
 
-        let inferred_args = inference.into_inferred();
-        assert_eq!(
-            num_generic_args,
-            inferred_args.len(),
-            "TODO: Add error message that type could not be inferred"
+        let inferred_args = check_inference_types(
+            &mut self.diagnostics,
+            id,
+            inference.into_inferred(),
+            &self.ty_ctx.get(function_type_id).type_parameters,
         );
         call.generic_arguments = AirGenericArguments::Computed(inferred_args);
 
@@ -1015,19 +1019,22 @@ fn check_fields_equal<'a>(
     diagnostics: &mut Diagnostics,
     id: SyntaxId,
     expected_def_id: Option<SyntaxId>,
-    expected: impl Iterator<Item = &'a SmallString> + Clone,
+    expected: impl Iterator<Item = &'a Spanned<SmallString>> + Clone,
     received: impl Iterator<Item = &'a Spanned<SmallString>> + Clone,
 ) -> Result<(), ()> {
     let mut did_report_error = false;
 
-    let expected_set = expected.clone().collect::<FastSet<_>>();
+    let expected_set = expected
+        .clone()
+        .map(|spanned| (&spanned.value, spanned.syntax_id))
+        .collect::<FastMap<_, _>>();
     let received_map = received
         .clone()
         .map(|spanned| (&spanned.value, spanned.syntax_id))
         .collect::<FastMap<_, _>>();
     let unexpected_fields = received_map
         .keys()
-        .filter(|field| !expected_set.contains(*field))
+        .filter(|field| !expected_set.contains_key(*field))
         .map(|field| (**field).clone())
         .collect::<Vec<_>>();
     if !unexpected_fields.is_empty() {
@@ -1047,7 +1054,7 @@ fn check_fields_equal<'a>(
     }
 
     let missing_fields = expected_set
-        .iter()
+        .keys()
         .filter(|field| !received_map.contains_key(*field))
         .map(|field| (*field).clone())
         .collect::<Vec<_>>();
@@ -1063,4 +1070,28 @@ fn check_fields_equal<'a>(
     }
 
     if did_report_error { Err(()) } else { Ok(()) }
+}
+
+fn check_inference_types(
+    diagnostics: &mut Diagnostics,
+    id: SyntaxId,
+    inferred_types: FastMap<GenericId, Type>,
+    declared_types: &[GenericType],
+) -> Vec<Type> {
+    for (index, declared_type) in declared_types.iter().enumerate() {
+        let declared_id = GenericId(index);
+        if !inferred_types.contains_key(&declared_id) {
+            diagnostics.add(
+                id,
+                NonInferredGenericType {
+                    arg_span: declared_type.ident.syntax_id,
+                    generic_name: declared_type.ident.value.clone(),
+                },
+            );
+        }
+    }
+
+    let mut sorted = inferred_types.into_iter().collect::<Vec<_>>();
+    sorted.sort_by_key(|(id, _)| id.0);
+    sorted.into_iter().map(|(_, ty)| ty).collect()
 }

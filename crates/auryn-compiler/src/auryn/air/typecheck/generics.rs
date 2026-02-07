@@ -6,13 +6,13 @@ use crate::auryn::{
         types::{GenericId, GenericType, Type, TypeView},
     },
     diagnostics::{diagnostic::Diagnostics, errors::MismatchedTypeInference},
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
 };
 
 #[derive(Debug)]
 pub enum GenericInferenceError {
     MultipleInference {
-        generic_name: SmallString,
+        generic_name: Spanned<SmallString>,
         first_inferred: Type,
         second_inferred: Type,
     },
@@ -106,9 +106,7 @@ impl GenericInference {
         }
     }
 
-    pub fn into_inferred(self) -> Vec<Type> {
-        let mut inferred = self.inferred.into_iter().collect::<Vec<_>>();
-        inferred.sort_by_key(|(id, _)| id.0);
-        inferred.into_iter().map(|(_, ty)| ty).collect()
+    pub fn into_inferred(self) -> FastMap<GenericId, Type> {
+        self.inferred
     }
 }

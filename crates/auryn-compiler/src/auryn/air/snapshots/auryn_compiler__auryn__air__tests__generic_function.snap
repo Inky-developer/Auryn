@@ -50,7 +50,19 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                 ),
                             },
                             type_parameters: [
-                                "T",
+                                Spanned {
+                                    value: "T",
+                                    syntax_id: SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            72027266767711,
+                                        ),
+                                    },
+                                },
                             ],
                             parameters: [
                                 DefinedType(
@@ -571,7 +583,19 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                             id: GenericId(
                                 0,
                             ),
-                            ident: "T",
+                            ident: Spanned {
+                                value: "T",
+                                syntax_id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
+                                        ),
+                                    ),
+                                    number: Some(
+                                        72027266767711,
+                                    ),
+                                },
+                            },
                         },
                     ],
                     parameters: FunctionParameters {
@@ -697,7 +721,19 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                     id: GenericId(
                         0,
                     ),
-                    ident: "T",
+                    ident: Spanned {
+                        value: "T",
+                        syntax_id: SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: Some(
+                                72027266767711,
+                            ),
+                        },
+                    },
                 },
             },
             special_types: SpecialTypes {

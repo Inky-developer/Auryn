@@ -1,0 +1,16 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n\tfoo(42)\n}\n\nfn foo[T](values: []T) {\n\tprint(values)\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/generic_function_impossible_to_infer_arg.au
+---
+Error: Non-inferred generic type argument
+   ╭─[ main:2:2 ]
+   │
+ 2 │     foo(42)
+   │     ───┬───  
+   │        ╰───── Could not infer the generic type argument `T`
+   │ 
+ 5 │ fn foo[T](values: []T) {
+   │        ┬  
+   │        ╰── The argument is defined here
+───╯

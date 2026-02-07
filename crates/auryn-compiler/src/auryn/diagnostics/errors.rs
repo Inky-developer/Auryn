@@ -9,7 +9,7 @@ use crate::{
             diagnostic_display::{DiagnosticLevel, Label},
             text_utils::{fmt_items, pluralize},
         },
-        syntax_id::SyntaxId,
+        syntax_id::{Spanned, SyntaxId},
         tokenizer::TokenSet,
     },
     diag,
@@ -317,13 +317,30 @@ diag! {
     #[level(DiagnosticLevel::Error)]
     #[code("Mismatched inferred generic type")]
     #[message(
-        "Could not infer the generic type `{generic_name}`. It was first inferred to `{first_inferred}` and later inferred to `{second_inferred}`, which are not compatible"
+        "Could not infer the generic type `{}`", generic_name.value
+    )]
+    #[label(
+        Label::new(generic_name.syntax_id).with_message(format!(
+            "This argument was first inferred to `{first_inferred}`, but later inferred to `{second_inferred}`, which are not compatible"
+        ))
     )]
     pub struct MismatchedTypeInference {
-        generic_name: SmallString,
+        #[no_display]
+        generic_name: Spanned<SmallString>,
         #[validate]
         first_inferred: Type,
         #[validate]
         second_inferred: Type,
+    }
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Non-inferred generic type argument")]
+    #[message("Could not infer the generic type argument `{generic_name}`")]
+    #[label(Label::new(arg_span).with_message("The argument is defined here"))]
+    pub struct NonInferredGenericType {
+        arg_span: SyntaxId,
+        generic_name: SmallString
     }
 }

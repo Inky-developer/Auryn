@@ -455,7 +455,7 @@ impl RepresentationCtx {
                 .fields()
                 .flat_map(|(ident, ty)| {
                     self.get_representation(ty)
-                        .map(|repr| (ident.clone(), repr))
+                        .map(|repr| (ident.value.clone(), repr))
                 })
                 .collect::<Vec<_>>();
             let repr = StructuralRepr {
@@ -492,7 +492,7 @@ impl RepresentationCtx {
             .iter()
             .flat_map(|(ident, ty)| {
                 self.get_representation(ty.as_view(ty_ctx))
-                    .map(|repr| (ident.clone(), repr))
+                    .map(|repr| (ident.value.clone(), repr))
             })
             .collect::<Vec<_>>();
 

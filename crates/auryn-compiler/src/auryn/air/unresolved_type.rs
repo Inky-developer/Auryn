@@ -5,13 +5,13 @@ use crate::auryn::{
         data::{FunctionReference, UnresolvedExternMember},
         namespace::{Namespace, UserDefinedTypeId},
     },
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
 };
 
 #[derive(Debug)]
 pub struct UnresolvedFunction {
     pub parameters_reference: SyntaxId,
-    pub type_parameters: Vec<SmallString>,
+    pub type_parameters: Vec<Spanned<SmallString>>,
     pub parameters: Vec<UnresolvedType>,
     pub return_type: Option<Box<UnresolvedType>>,
     pub reference: FunctionReference,
@@ -26,12 +26,12 @@ pub enum UnresolvedType {
     Ident(SyntaxId, SmallString),
     Array(SyntaxId, Box<UnresolvedType>),
     /// A structural type like {a: I32, b: I64}
-    Structural(Vec<(SmallString, UnresolvedType)>),
+    Structural(Vec<(Spanned<SmallString>, UnresolvedType)>),
     /// A nominal (named) structural type
     Struct {
         id: SyntaxId,
         ident: SmallString,
-        fields: Vec<(SmallString, UnresolvedType)>,
+        fields: Vec<(Spanned<SmallString>, UnresolvedType)>,
     },
     Unit,
     /// A function type

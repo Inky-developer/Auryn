@@ -342,7 +342,7 @@ impl AstTransformer {
     fn transform_struct_body(
         &self,
         body: StructBody,
-    ) -> Result<Vec<(SmallString, UnresolvedType)>, AstError> {
+    ) -> Result<Vec<(Spanned<SmallString>, UnresolvedType)>, AstError> {
         let fields = body
             .fields()
             .map(|field| transform_field_to_unresolved(&self.namespace, field))
@@ -363,7 +363,7 @@ impl AstTransformer {
             .flat_map(|list| {
                 list.parameters().filter_map(|param| {
                     let ident = param.ident().ok()?;
-                    Some(ident.text.clone())
+                    Some(ident.spanned_text())
                 })
             })
             .collect::<Vec<_>>();
@@ -371,9 +371,10 @@ impl AstTransformer {
         let function_namespace = {
             let mut namespace = self.namespace.clone();
             for (index, ident) in generic_parameters.iter().cloned().enumerate() {
-                namespace
-                    .types
-                    .insert(ident, UserDefinedTypeId::Generic(types::GenericId(index)));
+                namespace.types.insert(
+                    ident.value,
+                    UserDefinedTypeId::Generic(types::GenericId(index)),
+                );
             }
             namespace
         };
@@ -1085,9 +1086,12 @@ fn transform_to_unresolved(
 fn transform_field_to_unresolved(
     namespace: &Namespace,
     field: StructuralTypeField,
-) -> Result<(SmallString, UnresolvedType), AstError> {
+) -> Result<(Spanned<SmallString>, UnresolvedType), AstError> {
     let ident = field.ident()?;
     let ty = field.r#type()?;
 
-    Ok((ident.text.clone(), transform_to_unresolved(namespace, ty)?))
+    Ok((
+        ident.spanned_text(),
+        transform_to_unresolved(namespace, ty)?,
+    ))
 }

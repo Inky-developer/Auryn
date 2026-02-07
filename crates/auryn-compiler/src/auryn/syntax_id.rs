@@ -65,7 +65,7 @@ impl Debug for SyntaxId {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Spanned<T> {
     pub value: T,
     pub syntax_id: SyntaxId,

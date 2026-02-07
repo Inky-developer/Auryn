@@ -14,7 +14,7 @@ use crate::auryn::{
             type_context::{TypeContext, TypeId},
         },
     },
-    syntax_id::SyntaxId,
+    syntax_id::{Spanned, SyntaxId},
 };
 
 /// Defines the types of this programming language.
@@ -321,7 +321,7 @@ pub struct ExternTypeMember {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct StructuralType {
-    pub fields: Vec<(SmallString, Type)>,
+    pub fields: Vec<(Spanned<SmallString>, Type)>,
 }
 
 impl TypeData for StructuralType {
@@ -357,7 +357,7 @@ impl StructuralType {
             } else {
                 write!(f, "{{ ")?;
                 for (index, (ident, ty)) in self.fields.iter().enumerate() {
-                    write!(f, "{ident}: {}", ty.as_view(ty_ctx))?;
+                    write!(f, "{}: {}", ident.value, ty.as_view(ty_ctx))?;
                     if index + 1 < self.fields.len() {
                         write!(f, ", ")?;
                     }
@@ -440,7 +440,7 @@ pub struct GenericId(pub usize);
 pub struct GenericType {
     /// The id of this generic type in its defined scope
     pub id: GenericId,
-    pub ident: SmallString,
+    pub ident: Spanned<SmallString>,
 }
 
 impl TypeData for GenericType {
@@ -494,7 +494,7 @@ impl<'a> TypeViewKind<'a, FunctionItemType> {
 }
 
 impl<'a> TypeViewKind<'a, StructType> {
-    pub fn fields(self) -> impl Iterator<Item = (&'a SmallString, TypeView<'a>)> {
+    pub fn fields(self) -> impl Iterator<Item = (&'a Spanned<SmallString>, TypeView<'a>)> {
         self.value
             .structural
             .fields
@@ -576,7 +576,7 @@ impl Display for TypeView<'_> {
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
             TypeView::Struct(r#struct) => write!(f, "struct {}", r#struct.value.ident),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
-            TypeView::Generic(generic) => write!(f, "{}", generic.value.ident),
+            TypeView::Generic(generic) => write!(f, "{}", generic.value.ident.value),
             TypeView::Error => f.write_str("<<Error>>"),
         }
     }

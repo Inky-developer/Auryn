@@ -16,5 +16,9 @@ Error: Mismatched inferred generic type
    │
  2 │     foo(1, "test")
    │     ───────┬──────  
-   │            ╰──────── Could not infer the generic type `T`. It was first inferred to `1` and later inferred to `String`, which are not compatible
+   │            ╰──────── Could not infer the generic type `T`
+   │ 
+ 5 │ fn foo[T](first: T, second: T) -> T {
+   │        ┬  
+   │        ╰── This argument was first inferred to `1`, but later inferred to `String`, which are not compatible
 ───╯

@@ -302,11 +302,35 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                     structural: StructuralType {
                         fields: [
                             (
-                                "a",
+                                Spanned {
+                                    value: "a",
+                                    syntax_id: SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            86874992811927,
+                                        ),
+                                    },
+                                },
                                 I32,
                             ),
                             (
-                                "b",
+                                Spanned {
+                                    value: "b",
+                                    syntax_id: SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: Some(
+                                            89654992581907,
+                                        ),
+                                    },
+                                },
                                 Array(
                                     TypeId {
                                         id: SyntaxId {

@@ -1,0 +1,7 @@
+fn main() {
+	foo(42)
+}
+
+fn foo[T](values: []T) {
+	print(values)
+}
