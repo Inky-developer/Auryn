@@ -678,16 +678,27 @@ impl Typechecker {
         let mut inference = GenericInference::default();
 
         if let Some(MaybeBounded::Type(ty)) = expected {
-            inference.add_inferred(return_type.as_view(&self.ty_ctx), ty.as_view(&self.ty_ctx));
+            let result = inference
+                .infer_generics(return_type.as_view(&self.ty_ctx), ty.as_view(&self.ty_ctx));
+            if let Err(err) = result {
+                err.write(id, &mut self.diagnostics);
+            }
         }
 
         for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
-            let bound = inference.get_bound_for_inference(&self.ty_ctx, expected);
-            self.check_expression(actual, bound);
-            inference.add_inferred(
+            let resolved = inference.resolve_generic_type(&mut self.ty_ctx, expected);
+            self.check_expression(
+                actual,
+                resolved.map_or(MaybeBounded::Bounded(Bound::Top), Type::as_bounded),
+            );
+
+            let result = inference.infer_generics(
                 expected.as_view(&self.ty_ctx),
                 actual.r#type.as_view(&self.ty_ctx),
             );
+            if let Err(err) = result {
+                err.write(id, &mut self.diagnostics);
+            }
         }
 
         let result = inference.get_resolved(&self.ty_ctx, return_type);

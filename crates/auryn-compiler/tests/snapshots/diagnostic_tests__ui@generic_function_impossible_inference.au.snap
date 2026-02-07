@@ -1,0 +1,20 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n\tfoo(1, \"test\")\n}\n\nfn foo[T](first: T, second: T) -> T {\n\treturn first\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/generic_function_impossible_inference.au
+---
+Error: Type mismatch
+   ╭─[ main:2:9 ]
+   │
+ 2 │     foo(1, "test")
+   │            ───┬──  
+   │               ╰──── Expected `1`, but got `String`
+───╯
+
+Error: Mismatched inferred generic type
+   ╭─[ main:2:2 ]
+   │
+ 2 │     foo(1, "test")
+   │     ───────┬──────  
+   │            ╰──────── Could not infer the generic type `T`. It was first inferred to `1` and later inferred to `String`, which are not compatible
+───╯

@@ -1,0 +1,9 @@
+fn main() {
+	foo(arrayOf("a", "b", "c"), "d")
+}
+
+fn foo[T](first: []T, second: []T) {
+	print(first)
+	print(second)
+}
+

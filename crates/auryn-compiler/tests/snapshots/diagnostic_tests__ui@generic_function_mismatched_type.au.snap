@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n\tfoo(arrayOf(\"a\", \"b\", \"c\"), \"d\")\n}\n\nfn foo[T](first: []T, second: []T) {\n\tprint(first)\n\tprint(second)\n}\n\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/generic_function_mismatched_type.au
+---
+Error: Type mismatch
+   ╭─[ main:2:30 ]
+   │
+ 2 │     foo(arrayOf("a", "b", "c"), "d")
+   │                                 ─┬─  
+   │                                  ╰─── Expected `[]String`, but got `String`
+───╯

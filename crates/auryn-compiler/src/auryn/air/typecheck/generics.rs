@@ -1,10 +1,45 @@
-use stdx::{FastMap, default};
+use stdx::{FastMap, SmallString};
 
-use crate::auryn::air::typecheck::{
-    bounds::{Bound, MaybeBounded},
-    type_context::TypeContext,
-    types::{GenericId, GenericType, Type, TypeView},
+use crate::auryn::{
+    air::typecheck::{
+        type_context::TypeContext,
+        types::{GenericId, GenericType, Type, TypeView},
+    },
+    diagnostics::{diagnostic::Diagnostics, errors::MismatchedTypeInference},
+    syntax_id::SyntaxId,
 };
+
+#[derive(Debug)]
+pub enum GenericInferenceError {
+    MultipleInference {
+        generic_name: SmallString,
+        first_inferred: Type,
+        second_inferred: Type,
+    },
+}
+
+impl GenericInferenceError {
+    pub fn write(self, syntax_id: SyntaxId, diagnostics: &mut Diagnostics) {
+        match self {
+            GenericInferenceError::MultipleInference {
+                generic_name,
+                first_inferred,
+                second_inferred,
+            } => {
+                diagnostics.add(
+                    syntax_id,
+                    MismatchedTypeInference {
+                        generic_name,
+                        first_inferred,
+                        second_inferred,
+                    },
+                );
+            }
+        }
+    }
+}
+
+pub type InferenceResult<T = ()> = Result<T, GenericInferenceError>;
 
 /// Implements inference for generic types
 #[derive(Debug, Default)]
@@ -13,52 +48,52 @@ pub struct GenericInference {
 }
 
 impl GenericInference {
-    /// Returns the type that should be used when infererring a parameter of the given expected type
-    /// The bound is either the type or the resolved generic
-    pub fn get_bound_for_inference(&self, ty_ctx: &TypeContext, ty: Type) -> MaybeBounded {
-        match ty {
-            Type::Generic(generic) => {
-                let id = ty_ctx.get(generic).id;
-                self.inferred
-                    .get(&id)
-                    .map_or(MaybeBounded::Bounded(Bound::Top), |ty| ty.as_bounded())
+    /// Resolves a generic type if its generic type parameters are already known.
+    /// Otherwise, returns None
+    pub fn resolve_generic_type(&self, ty_ctx: &mut TypeContext, ty: Type) -> Option<Type> {
+        match ty.as_view(ty_ctx) {
+            TypeView::Generic(generic) => {
+                let id = generic.value.id;
+                self.inferred.get(&id).copied()
             }
-            _ => {
-                // If we don't receive a generic type here we cannot simply return the actual type as a bound,
-                // because e.g. Array<T> can never be satisfied. So instead we only return the type as bound,
-                // if the type does not contain any inner generics.
-                // TODO: It is possible to compute much tighter bounds here, e.g. `Array<Top` for `Array<T>`
-                let mut visited_types = default();
-                ty.as_view(ty_ctx).visit(&mut visited_types);
-                if visited_types
-                    .iter()
-                    .any(|ty| matches!(ty, Type::Generic(_)))
-                {
-                    MaybeBounded::Bounded(Bound::Top)
-                } else {
-                    ty.as_bounded()
-                }
+            TypeView::Array(array) => {
+                let inner = array.value.element_type;
+                let resolved_inner = self.resolve_generic_type(ty_ctx, inner)?;
+                Some(ty_ctx.array_of(resolved_inner))
             }
+            _ => Some(ty),
         }
     }
 
     /// Adds new information discovered about generic parameters to be used later.
     /// Performs inference recursively, e.g. `Array<T>` with `Array<I32>` infers `T=I32`.
-    pub fn add_inferred(&mut self, expected: TypeView, received: TypeView) {
+    pub fn infer_generics(&mut self, expected: TypeView, received: TypeView) -> InferenceResult {
+        // println!("Inferring: {expected} {received}");
         match (expected, received) {
             (TypeView::Array(expected_inner), TypeView::Array(received_inner)) => {
-                self.add_inferred(expected_inner.element(), received_inner.element())
+                self.infer_generics(expected_inner.element(), received_inner.element())?;
             }
-            (TypeView::Generic(generic), _) => self.add_generic(generic.value, received.as_type()),
+            (TypeView::Generic(generic), _) => {
+                self.add_generic(generic.value, received.as_type())?;
+            }
             _ => {}
-        }
+        };
+        Ok(())
     }
 
-    fn add_generic(&mut self, generic: &GenericType, received: Type) {
+    fn add_generic(&mut self, generic: &GenericType, received: Type) -> InferenceResult {
         let existing_inference = self.inferred.insert(generic.id, received);
-        if let Some(existing_inference) = existing_inference {
-            assert_eq!(existing_inference, received, "TODO: Add error message");
+        if let Some(existing_inference) = existing_inference
+            && existing_inference != received
+        {
+            return Err(GenericInferenceError::MultipleInference {
+                generic_name: generic.ident.clone(),
+                first_inferred: existing_inference,
+                second_inferred: received,
+            });
         }
+
+        Ok(())
     }
 
     pub fn get_resolved(&self, ty_ctx: &TypeContext, ty: Type) -> Type {

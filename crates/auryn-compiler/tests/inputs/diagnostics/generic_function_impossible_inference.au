@@ -1,0 +1,7 @@
+fn main() {
+	foo(1, "test")
+}
+
+fn foo[T](first: T, second: T) -> T {
+	return first
+}

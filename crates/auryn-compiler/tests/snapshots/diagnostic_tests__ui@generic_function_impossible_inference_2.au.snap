@@ -1,0 +1,28 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn main() {\n\tfoo(arrayOf(\"a\", \"b\", \"c\"), arrayOf(false, true, true))\n}\n\nfn foo[T](first: []T, second: []T) {\n\tprint(first)\n\tprint(second)\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/generic_function_impossible_inference_2.au
+---
+Error: Type mismatch
+   ╭─[ main:2:38 ]
+   │
+ 2 │     foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
+   │                                         ──┬──  
+   │                                           ╰──── Expected `String`, but got `Bool`
+───╯
+
+Error: Type mismatch
+   ╭─[ main:2:45 ]
+   │
+ 2 │     foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
+   │                                                ──┬─  
+   │                                                  ╰─── Expected `String`, but got `Bool`
+───╯
+
+Error: Type mismatch
+   ╭─[ main:2:51 ]
+   │
+ 2 │     foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
+   │                                                      ──┬─  
+   │                                                        ╰─── Expected `String`, but got `Bool`
+───╯

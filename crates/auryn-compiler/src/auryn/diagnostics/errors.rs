@@ -312,3 +312,18 @@ diag! {
         circular_type_alias: SyntaxId,
     }
 }
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Mismatched inferred generic type")]
+    #[message(
+        "Could not infer the generic type `{generic_name}`. It was first inferred to `{first_inferred}` and later inferred to `{second_inferred}`, which are not compatible"
+    )]
+    pub struct MismatchedTypeInference {
+        generic_name: SmallString,
+        #[validate]
+        first_inferred: Type,
+        #[validate]
+        second_inferred: Type,
+    }
+}
