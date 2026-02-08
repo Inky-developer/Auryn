@@ -17,6 +17,7 @@ use crate::auryn::{
     environment::{Environment, FilesystemEnvironment, ProjectTree},
     file_id::FileId,
     input_files::InputFiles,
+    monomorphization::monomorphize,
     world::World,
 };
 
@@ -133,7 +134,7 @@ fn compile(
 ) -> Result<CodegenOutput, AurynError> {
     let mut world = World::new(environment, main_file)?;
 
-    let (air, diagnostics) = world.query_air(FileId::MAIN_FILE);
+    let (mut air, diagnostics) = world.query_air(FileId::MAIN_FILE);
     if !diagnostics.is_empty() {
         let should_abort = diagnostics
             .iter()
@@ -148,7 +149,8 @@ fn compile(
             .into());
         }
     }
-    Ok(codegen(world.input_files(), &air))
+    let monomorphizations = monomorphize(&mut air);
+    Ok(codegen(world.input_files(), &air, &monomorphizations))
 }
 
 /// Runs a program and returns its output.

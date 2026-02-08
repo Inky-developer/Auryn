@@ -183,7 +183,9 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                                                 ),
                                                             },
                                                         ],
-                                                        generic_arguments: Inferred,
+                                                        generic_arguments: Computed(
+                                                            [],
+                                                        ),
                                                     },
                                                 ),
                                             },

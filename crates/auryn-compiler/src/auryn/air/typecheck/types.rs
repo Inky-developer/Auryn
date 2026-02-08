@@ -8,7 +8,7 @@ use stdx::{FastMap, FastSet, SmallString};
 
 use crate::auryn::{
     air::{
-        data::{ExternFunctionKind, FunctionReference, Intrinsic},
+        data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
         typecheck::{
             bounds::MaybeBounded,
             type_context::{TypeContext, TypeId},
@@ -210,7 +210,7 @@ impl TypeData for NumberLiteralType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunctionItemType {
     pub type_parameters: Vec<GenericType>,
     pub parameters: FunctionParameters,
@@ -241,6 +241,15 @@ impl TypeData for FunctionItemType {
 impl FunctionItemType {
     pub fn parameters(&self) -> &[Type] {
         &self.parameters.parameters
+    }
+
+    /// Returns value ids for the arguments.
+    /// The value ids increment for each argument.
+    pub fn argument_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
+        self.parameters()
+            .iter()
+            .enumerate()
+            .map(|(index, _)| AirLocalValueId(index))
     }
 }
 

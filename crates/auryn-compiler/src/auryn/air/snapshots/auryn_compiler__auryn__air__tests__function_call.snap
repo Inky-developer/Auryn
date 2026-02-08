@@ -196,7 +196,9 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                             ),
                                                         },
                                                     ],
-                                                    generic_arguments: Inferred,
+                                                    generic_arguments: Computed(
+                                                        [],
+                                                    ),
                                                 },
                                             ),
                                         },

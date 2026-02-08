@@ -237,7 +237,9 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                 ),
                                                             },
                                                         ],
-                                                        generic_arguments: Inferred,
+                                                        generic_arguments: Computed(
+                                                            [],
+                                                        ),
                                                     },
                                                 ),
                                             },

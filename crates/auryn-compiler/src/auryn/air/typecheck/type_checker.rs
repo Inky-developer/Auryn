@@ -220,7 +220,7 @@ impl Typechecker {
         self.function
             .type_variables
             .extend(function_type.type_parameters.iter().cloned());
-        for (id, r#type) in function
+        for (id, r#type) in function_type
             .argument_ids()
             .zip(function_type.value.parameters().iter())
         {
@@ -641,12 +641,16 @@ impl Typechecker {
             Type::FunctionItem(function_type) => {
                 self.typecheck_call_to_function_item(id, call, function_type, expected)
             }
-            Type::Intrinsic(intrinsic_type) => self.typecheck_call_to_intrinsic(
-                id,
-                self.ty_ctx.get_intrinsic(intrinsic_type).intrinsic,
-                &mut call.arguments,
-                expected,
-            ),
+            Type::Intrinsic(intrinsic_type) => {
+                // Intrinsics don't have generic arguments
+                call.generic_arguments = AirGenericArguments::Computed(Vec::new());
+                self.typecheck_call_to_intrinsic(
+                    id,
+                    self.ty_ctx.get_intrinsic(intrinsic_type).intrinsic,
+                    &mut call.arguments,
+                    expected,
+                )
+            }
             other => {
                 self.diagnostics.add(id, ExpectedFunction { got: other });
                 Type::Error

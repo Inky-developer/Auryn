@@ -8,6 +8,7 @@ use crate::{
             structural_generator::gen_structural_type_class,
         },
         input_files::InputFiles,
+        monomorphization::Monomorphizations,
     },
     java::class::ClassData,
 };
@@ -32,9 +33,13 @@ impl std::fmt::Debug for CodegenOutput {
     }
 }
 
-pub fn codegen(input_files: &InputFiles, air: &Air) -> CodegenOutput {
+pub fn codegen(
+    input_files: &InputFiles,
+    air: &Air,
+    monomorphizations: &Monomorphizations,
+) -> CodegenOutput {
     let mut ctx = RepresentationCtx::default();
-    let main_class = generate_main_class(air, &mut ctx, input_files);
+    let main_class = generate_main_class(air, monomorphizations, &mut ctx, input_files);
 
     let mut output = CodegenOutput::default();
     output.files.insert("Main".into(), main_class);

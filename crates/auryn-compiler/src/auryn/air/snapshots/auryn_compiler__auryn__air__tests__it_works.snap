@@ -176,7 +176,9 @@ expression: "compile_wrapped(\"print(1)\")"
                                                             ),
                                                         },
                                                     ],
-                                                    generic_arguments: Inferred,
+                                                    generic_arguments: Computed(
+                                                        [],
+                                                    ),
                                                 },
                                             ),
                                         },

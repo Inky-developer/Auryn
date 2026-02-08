@@ -6,6 +6,7 @@ pub mod diagnostics;
 pub mod environment;
 pub mod file_id;
 pub mod input_files;
+pub mod monomorphization;
 pub mod parser;
 pub mod syntax_id;
 pub mod syntax_tree;

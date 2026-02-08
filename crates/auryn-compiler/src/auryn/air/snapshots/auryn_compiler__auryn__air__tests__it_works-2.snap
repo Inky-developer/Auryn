@@ -228,7 +228,9 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                             ),
                                                         },
                                                     ],
-                                                    generic_arguments: Inferred,
+                                                    generic_arguments: Computed(
+                                                        [],
+                                                    ),
                                                 },
                                             ),
                                         },
@@ -345,7 +347,9 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                             ),
                                                         },
                                                     ],
-                                                    generic_arguments: Inferred,
+                                                    generic_arguments: Computed(
+                                                        [],
+                                                    ),
                                                 },
                                             ),
                                         },

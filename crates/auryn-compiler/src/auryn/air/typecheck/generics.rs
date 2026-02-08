@@ -48,6 +48,16 @@ pub struct GenericInference {
 }
 
 impl GenericInference {
+    pub fn from_mono(monomorphization: Vec<Type>) -> Self {
+        Self {
+            inferred: monomorphization
+                .into_iter()
+                .enumerate()
+                .map(|(index, ty)| (GenericId(index), ty))
+                .collect(),
+        }
+    }
+
     /// Resolves a generic type if its generic type parameters are already known.
     /// Otherwise, returns None
     pub fn resolve_generic_type(&self, ty_ctx: &mut TypeContext, ty: Type) -> Option<Type> {

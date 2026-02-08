@@ -1,0 +1,18 @@
+// expect-output:
+// [Hi]
+// [Hi]
+
+fn main() {
+	print(makeArray("Hi"))
+}
+
+fn makeArray[T](value: T) -> []T {
+	let arr = arrayOf(value)
+	dbg(arr)
+	return arr
+}
+
+fn dbg[T](value: T) {
+	print(value)
+}
+

@@ -232,7 +232,9 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                                 ),
                                                                             },
                                                                         ],
-                                                                        generic_arguments: Inferred,
+                                                                        generic_arguments: Computed(
+                                                                            [],
+                                                                        ),
                                                                     },
                                                                 ),
                                                             },
@@ -257,7 +259,9 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                 ),
                                                             },
                                                         ],
-                                                        generic_arguments: Inferred,
+                                                        generic_arguments: Computed(
+                                                            [],
+                                                        ),
                                                     },
                                                 ),
                                             },

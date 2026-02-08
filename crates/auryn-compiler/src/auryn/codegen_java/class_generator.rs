@@ -1,13 +1,10 @@
-use stdx::{FastIndexSet, FastSet, SmallString, default};
+use stdx::{SmallString, default};
 
 use crate::{
     auryn::{
         air::{
-            data::{Air, AirFunction, AirFunctionId},
-            typecheck::{
-                type_context::TypeContext,
-                types::{Type, TypeView},
-            },
+            data::Air,
+            typecheck::{type_context::TypeContext, types::TypeViewKind},
         },
         codegen_java::{
             function_generator::FunctionGenerator,
@@ -17,6 +14,7 @@ use crate::{
             },
         },
         input_files::InputFiles,
+        monomorphization::{Monomorphization, Monomorphizations},
     },
     java::{
         class,
@@ -27,40 +25,20 @@ use crate::{
 
 pub(super) fn generate_main_class<'a>(
     air: &Air,
+    monomorphizations: &'a Monomorphizations,
     repr_ctx: &'a mut RepresentationCtx,
     input_files: &'a InputFiles,
 ) -> class::ClassData {
-    let generator = ClassGenerator::new("Main".into(), air, repr_ctx, input_files);
+    let generator = ClassGenerator {
+        input_files,
+        air,
+        class_name: "Main".into(),
+        repr_ctx,
+        methods: default(),
+        constant_pool: default(),
+        monomorphizations,
+    };
     generator.generate_from_air()
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub(super) struct Monomorphization {
-    function: AirFunctionId,
-    generic_args: Vec<Type>,
-}
-
-#[derive(Debug, Default)]
-pub(super) struct Monomorphizations {
-    pending: FastIndexSet<Monomorphization>,
-    seen: FastSet<Monomorphization>,
-}
-
-impl Monomorphizations {
-    pub fn add(&mut self, id: AirFunctionId, generic_args: Vec<Type>) {
-        let mono = Monomorphization {
-            function: id,
-            generic_args,
-        };
-        if !self.seen.contains(&mono) {
-            self.seen.insert(mono.clone());
-            self.pending.insert(mono);
-        }
-    }
-
-    pub fn pop_pending(&mut self) -> Option<Monomorphization> {
-        self.pending.pop()
-    }
 }
 
 pub struct ClassGenerator<'a> {
@@ -69,27 +47,8 @@ pub struct ClassGenerator<'a> {
     pub(super) repr_ctx: &'a mut RepresentationCtx,
     pub(super) class_name: SmallString,
     methods: Vec<class::Method>,
-    monomorphizations: Monomorphizations,
+    monomorphizations: &'a Monomorphizations,
     pub(super) constant_pool: ConstantPoolBuilder,
-}
-
-impl<'a> ClassGenerator<'a> {
-    fn new(
-        class_name: SmallString,
-        air: &'a Air,
-        repr_ctx: &'a mut RepresentationCtx,
-        input_files: &'a InputFiles,
-    ) -> Self {
-        Self {
-            input_files,
-            air,
-            class_name,
-            repr_ctx,
-            methods: default(),
-            constant_pool: default(),
-            monomorphizations: default(),
-        }
-    }
 }
 
 impl ClassGenerator<'_> {
@@ -98,16 +57,11 @@ impl ClassGenerator<'_> {
     }
 
     fn generate_from_air(mut self) -> class::ClassData {
-        self.monomorphizations
-            .add(self.air.main_function().0, vec![]);
-
-        while let Some(mono) = self.monomorphizations.pop_pending() {
-            let function = &self.air.globals.functions[&mono.function];
-            self.generate_function(mono.function, function, mono.generic_args);
+        for mono in self.monomorphizations {
+            self.generate_function(mono);
         }
 
-        let main_function_id = self.air.main_function().0;
-        self.generate_main_function(main_function_id);
+        self.generate_main_function();
 
         class::ClassData::new(
             self.class_name,
@@ -117,67 +71,56 @@ impl ClassGenerator<'_> {
         )
     }
 
-    fn get_method_repr(&mut self, id: AirFunctionId, monomorphization: Vec<Type>) -> MethodRepr {
-        let function = &self.air.globals.functions[&id];
-        let TypeView::FunctionItem(function_type) = function.r#type.as_view(&self.air.ty_ctx)
-        else {
-            panic!("Invalid function type")
-        };
-        let name = self.repr_ctx.get_method_name(
-            self.input_files,
-            function,
-            id,
-            monomorphization
-                .iter()
-                .map(|it| it.as_view(&self.air.ty_ctx)),
-        );
-        let method_descriptor = self
+    fn get_method_repr(&mut self, mono: &Monomorphization) -> MethodRepr {
+        let function = &self.air.globals.functions[&mono.function_id];
+        let name = self
             .repr_ctx
-            .get_method_descriptor(function_type, monomorphization);
+            .get_method_name(self.input_files, function, mono.function_id);
+        let method_descriptor = self.repr_ctx.get_method_descriptor(TypeViewKind {
+            id: mono.ty,
+            value: self.air.ty_ctx.get(mono.ty),
+            ctx: &self.air.ty_ctx,
+        });
         MethodRepr {
             generated_name: name.into(),
             method_descriptor,
         }
     }
 
-    fn generate_function(
-        &mut self,
-        id: AirFunctionId,
-        function: &AirFunction,
-        monomorphization: Vec<Type>,
-    ) {
+    fn generate_function(&mut self, mono: &Monomorphization) {
         let method = {
             let MethodRepr {
                 generated_name,
                 method_descriptor,
-            } = self.get_method_repr(id, monomorphization.clone());
-            self.repr_ctx.monomorphization = monomorphization;
+            } = self.get_method_repr(mono);
             let mut repr_ctx = std::mem::take(self.repr_ctx);
             let mut constant_pool = std::mem::take(&mut self.constant_pool);
-            let mut monomorphizations = std::mem::take(&mut self.monomorphizations);
 
             let mut generator = FunctionGenerator::new(
                 generated_name,
-                function,
+                mono,
                 method_descriptor,
                 self,
                 &mut repr_ctx,
-                &mut monomorphizations,
                 &mut constant_pool,
             );
-            generator.generate_from_function(function);
+            generator.generate_from_mono(mono);
             let result = generator.finish();
 
-            self.monomorphizations = monomorphizations;
             self.constant_pool = constant_pool;
             *self.repr_ctx = repr_ctx;
-            self.repr_ctx.monomorphization.clear();
             result
         };
         self.methods.push(method);
     }
 
-    fn generate_main_function(&mut self, id: AirFunctionId) {
+    fn generate_main_function(&mut self) {
+        let id = self.air.main_function().0;
+        let mono = self
+            .monomorphizations
+            .iter()
+            .find(|mono| mono.function_id == id)
+            .expect("Main function should exist");
         let main_descriptor = MethodDescriptor {
             parameters: vec![FieldDescriptor::Array {
                 dimension_count: 1,
@@ -189,7 +132,7 @@ impl ClassGenerator<'_> {
         let MethodRepr {
             generated_name: name,
             method_descriptor,
-        } = self.get_method_repr(id, Vec::new());
+        } = self.get_method_repr(mono);
 
         // if the auryn main function is already defined like the java main function, we don't need generate a wrapper
         if method_descriptor == main_descriptor {

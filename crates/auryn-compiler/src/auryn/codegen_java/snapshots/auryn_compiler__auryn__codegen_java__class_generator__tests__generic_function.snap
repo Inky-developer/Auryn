@@ -5,7 +5,7 @@ expression: "generate_classes(r#\"\n            // main\n            fn main() {
 Main:
 ClassData
   this_class:		#2	Main
-  super_class:		#27	java/lang/Object
+  super_class:		#26	java/lang/Object
 Constant pool:
   #01 = Utf8			Main
   #02 = Class		#1	Main
@@ -14,26 +14,25 @@ Constant pool:
   #05 = Utf8			java/lang/String
   #06 = Class		#5	java/lang/String
   #07 = Integer			0
-  #08 = Utf8			main$identity$($I32)
+  #08 = Utf8			main$identity
   #09 = Utf8			(I)I
-  #10 = NameAndType	#8:#9	main$identity$($I32):(I)I
-  #11 = MethodRef	#2.#10	Main:main$identity$($I32):(I)I
+  #10 = NameAndType	#8:#9	main$identity:(I)I
+  #11 = MethodRef	#2.#10	Main:main$identity:(I)I
   #12 = Utf8			hi
   #13 = String		#12	hi
-  #14 = Utf8			main$identity$($String)
-  #15 = Utf8			(Ljava/lang/String;)Ljava/lang/String;
-  #16 = NameAndType	#14:#15	main$identity$($String):(Ljava/lang/String;)Ljava/lang/String;
-  #17 = MethodRef	#2.#16	Main:main$identity$($String):(Ljava/lang/String;)Ljava/lang/String;
-  #18 = Utf8			Code
-  #19 = Utf8			StackMapTable
-  #20 = Utf8			main
-  #21 = Utf8			([Ljava/lang/String;)V
-  #22 = Utf8			[Ljava/lang/String;
-  #23 = Class		#22	[Ljava/lang/String;
-  #24 = NameAndType	#3:#4	main$main:()V
-  #25 = MethodRef	#2.#24	Main:main$main:()V
-  #26 = Utf8			java/lang/Object
-  #27 = Class		#26	java/lang/Object
+  #14 = Utf8			(Ljava/lang/String;)Ljava/lang/String;
+  #15 = NameAndType	#8:#14	main$identity:(Ljava/lang/String;)Ljava/lang/String;
+  #16 = MethodRef	#2.#15	Main:main$identity:(Ljava/lang/String;)Ljava/lang/String;
+  #17 = Utf8			Code
+  #18 = Utf8			StackMapTable
+  #19 = Utf8			main
+  #20 = Utf8			([Ljava/lang/String;)V
+  #21 = Utf8			[Ljava/lang/String;
+  #22 = Class		#21	[Ljava/lang/String;
+  #23 = NameAndType	#3:#4	main$main:()V
+  #24 = MethodRef	#2.#23	Main:main$main:()V
+  #25 = Utf8			java/lang/Object
+  #26 = Class		#25	java/lang/Object
 
 {
   fn main$main {
@@ -42,10 +41,10 @@ Constant pool:
     Code:
       stack = 1, locals = 3
        0: LoadConstant		#7	0
-       2: InvokeStatic		#11	Main:main$identity$($I32):(I)I
+       2: InvokeStatic		#11	Main:main$identity:(I)I
        5: IStore			0
        7: LoadConstant		#13	hi
-       9: InvokeStatic		#17	Main:main$identity$($String):(Ljava/lang/String;)Ljava/lang/String;
+       9: InvokeStatic		#16	Main:main$identity:(Ljava/lang/String;)Ljava/lang/String;
       12: AStore			1
       14: Return
       StackMapTable:
@@ -55,7 +54,7 @@ Constant pool:
           Stack = [  ]
   }
 
-  fn main$identity$($String) {
+  fn main$identity {
     descriptor: (Ljava/lang/String;)Ljava/lang/String;
     flags: PUBLIC | STATIC
     Code:
@@ -69,7 +68,7 @@ Constant pool:
           Stack = [  ]
   }
 
-  fn main$identity$($I32) {
+  fn main$identity {
     descriptor: (I)I
     flags: PUBLIC | STATIC
     Code:
@@ -88,7 +87,7 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 0, locals = 2
-      0: InvokeStatic		#25	Main:main$main:()V
+      0: InvokeStatic		#24	Main:main$main:()V
       3: Return
       StackMapTable:
         Full

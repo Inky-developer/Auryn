@@ -8,9 +8,7 @@ use crate::{
             data::{AirFunction, AirFunctionId},
             typecheck::{
                 type_context::{TypeContext, TypeId},
-                types::{
-                    FunctionItemType, StructType, StructuralType, Type, TypeView, TypeViewKind,
-                },
+                types::{FunctionItemType, StructType, StructuralType, TypeView, TypeViewKind},
             },
         },
         input_files::InputFiles,
@@ -339,7 +337,6 @@ impl StructuralRepr {
 
 #[derive(Debug, Default)]
 pub struct RepresentationCtx {
-    pub monomorphization: Vec<Type>,
     pub(super) structural_types: FastMap<TypeId<StructuralType>, StructuralRepr>,
     pub(super) struct_types: FastMap<TypeId<StructType>, StructuralRepr>,
 }
@@ -368,21 +365,17 @@ impl RepresentationCtx {
                 .to_representation(),
             Struct(struct_type) => self.get_struct_repr(struct_type).to_representation(),
             FunctionItem(_) | Intrinsic(_) | Meta(_) | Module(_) => None,
-            Generic(g) => {
-                self.get_representation(self.monomorphization[g.value.id.0].as_view(g.ctx))
+            Generic(_) => {
+                unreachable!("Called with unresolved generic type `{air_type}`")
             }
             Error => unreachable!("Called with error type"),
         }
     }
 
-    /// Returns the representation of an auryn type for the jvm
-    /// TODO: This will fail for nested generic calls
     pub fn get_method_descriptor(
         &mut self,
         ty: TypeViewKind<FunctionItemType>,
-        generic_args: Vec<Type>,
     ) -> MethodDescriptor {
-        let prev_args = std::mem::replace(&mut self.monomorphization, generic_args);
         let parameters = ty
             .parameters()
             .iter()
@@ -396,36 +389,21 @@ impl RepresentationCtx {
             .map_or(ReturnDescriptor::Void, |it| {
                 it.into_field_descriptor().into()
             });
-        self.monomorphization = prev_args;
         MethodDescriptor {
             parameters,
             return_type,
         }
     }
 
-    pub fn get_method_name<'a>(
+    pub fn get_method_name(
         &mut self,
         input_files: &InputFiles,
         function: &AirFunction,
         function_id: AirFunctionId,
-        generic_args: impl Iterator<Item = TypeView<'a>>,
     ) -> String {
         let mut result = String::new();
         let module_name = &input_files.get(function_id.0.0.file_id().unwrap()).name;
         write!(result, "{module_name}${}", function.ident).unwrap();
-        let mut index = 0;
-        for arg in generic_args {
-            if index == 0 {
-                result.push_str("$(");
-            } else {
-                result.push(',')
-            }
-            write!(result, "${arg}").unwrap();
-            index += 1;
-        }
-        if index != 0 {
-            result.push(')');
-        }
         result
     }
 

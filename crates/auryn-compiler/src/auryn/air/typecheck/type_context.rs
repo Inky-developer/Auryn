@@ -142,6 +142,15 @@ impl TypeContext {
         id
     }
 
+    pub fn add_monomorphized_function_item(
+        &mut self,
+        function: FunctionItemType,
+    ) -> TypeId<FunctionItemType> {
+        let id = SyntaxId::new(None, self.next_id);
+        self.next_id = self.next_id.checked_add(1).unwrap();
+        self.add_function_item(id, function)
+    }
+
     pub fn add_extern(&mut self, syntax_id: SyntaxId, r#extern: ExternType) -> TypeId<ExternType> {
         let id = TypeId::new(syntax_id);
         let prev = self.externs.insert(id, r#extern);

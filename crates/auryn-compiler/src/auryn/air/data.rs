@@ -9,7 +9,7 @@ use crate::auryn::{
             type_context::TypeContext,
             types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
         },
-        unresolved_type::{UnresolvedFunction, UnresolvedType},
+        unresolved_type::UnresolvedType,
     },
     file_id::FileId,
     syntax_id::{Spanned, SyntaxId},
@@ -86,25 +86,6 @@ pub struct AirFunction {
     pub blocks: FastMap<AirBlockId, AirBlock>,
 }
 
-impl AirFunction {
-    pub fn unresolved_type(&self) -> &UnresolvedFunction {
-        let UnresolvedType::Function(unresolved_function) = &self.unresolved_type else {
-            unreachable!("Should be a function type");
-        };
-        unresolved_function
-    }
-
-    /// Returns value ids for the arguments.
-    /// The value ids increment for each argument.
-    pub fn argument_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
-        self.unresolved_type()
-            .parameters
-            .iter()
-            .enumerate()
-            .map(|(index, _)| AirLocalValueId(index))
-    }
-}
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct AirBlockId(pub(super) usize);
 
@@ -130,10 +111,6 @@ pub struct AirLocalValueId(pub(super) usize);
 
 #[derive(Debug)]
 pub struct AirNode {
-    // Allow this field to be unused, because I expect it will be used at some point
-    // (For diagnostic locations)
-    // and removing it would actually be a refactor
-    #[expect(dead_code)]
     pub id: SyntaxId,
     pub kind: AirNodeKind,
 }
@@ -187,6 +164,27 @@ impl FunctionReference {
         match self {
             FunctionReference::UserDefined(air_function_id) => air_function_id.0.0,
             FunctionReference::Extern { syntax_id, .. } => *syntax_id,
+        }
+    }
+}
+
+impl Clone for FunctionReference {
+    fn clone(&self) -> Self {
+        match self {
+            FunctionReference::UserDefined(air_function_id) => {
+                FunctionReference::UserDefined(*air_function_id)
+            }
+            FunctionReference::Extern {
+                parent,
+                kind,
+                extern_name,
+                syntax_id,
+            } => FunctionReference::Extern {
+                parent: Box::new(AirType::Computed(parent.computed())),
+                kind: *kind,
+                extern_name: extern_name.clone(),
+                syntax_id: *syntax_id,
+            },
         }
     }
 }
@@ -252,8 +250,6 @@ pub enum AirExpressionKind {
     Call(Call),
     /// Only used internally during typechecking, never emitted
     Synthetic,
-    // Allowing this unused field since it is just for debugging purposes
-    #[expect(dead_code)]
     Error(&'static Location<'static>),
 }
 
@@ -316,7 +312,7 @@ pub enum AirGenericArguments {
 impl AirGenericArguments {
     pub fn computed(&self) -> &Vec<Type> {
         match self {
-            AirGenericArguments::Inferred => panic!("Should be computed at this points"),
+            AirGenericArguments::Inferred => panic!("Should be computed at this point"),
             AirGenericArguments::Computed(computed) => computed,
         }
     }
