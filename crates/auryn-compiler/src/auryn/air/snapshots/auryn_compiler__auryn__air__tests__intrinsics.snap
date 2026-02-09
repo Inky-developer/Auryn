@@ -328,7 +328,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

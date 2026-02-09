@@ -493,7 +493,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

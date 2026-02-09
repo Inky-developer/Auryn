@@ -382,7 +382,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

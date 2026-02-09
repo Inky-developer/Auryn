@@ -582,7 +582,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

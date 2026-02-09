@@ -546,7 +546,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

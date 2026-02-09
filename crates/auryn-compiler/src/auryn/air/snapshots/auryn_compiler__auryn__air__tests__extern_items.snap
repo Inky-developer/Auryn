@@ -139,7 +139,7 @@ expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

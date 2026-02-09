@@ -311,7 +311,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

@@ -1,8 +1,12 @@
 use std::{
+    borrow::Borrow,
     fmt::Debug,
+    hash::Hash,
     num::NonZeroU64,
     ops::{Deref, DerefMut, Range},
 };
+
+use stdx::SmallString;
 
 use crate::auryn::file_id::FileId;
 
@@ -65,10 +69,43 @@ impl Debug for SyntaxId {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone)]
 pub struct Spanned<T> {
     pub value: T,
     pub syntax_id: SyntaxId,
+}
+
+impl<T: PartialEq> PartialEq for Spanned<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl<T: Eq> Eq for Spanned<T> {}
+
+impl<T: Hash> Hash for Spanned<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.hash(state)
+    }
+}
+
+impl<T> AsRef<T> for Spanned<T> {
+    fn as_ref(&self) -> &T {
+        &self.value
+    }
+}
+
+impl<T> Borrow<T> for Spanned<T> {
+    fn borrow(&self) -> &T {
+        &self.value
+    }
+}
+
+// Unfortunate hack so that indexing into a map of `Spanned<SmallStrng>` keys works with `&str`
+impl Borrow<str> for Spanned<SmallString> {
+    fn borrow(&self) -> &str {
+        self.value.borrow()
+    }
 }
 
 impl<T> Deref for Spanned<T> {

@@ -320,7 +320,7 @@ expression: "compile_wrapped(\"print(1)\")"
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

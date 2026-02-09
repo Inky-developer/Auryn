@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use stdx::{FastMap, FastSet, SmallString};
+use stdx::{FastIndexMap, FastMap, FastSet, SmallString, fast_map::FastHasher};
 
 use crate::auryn::{
     air::{
@@ -330,7 +330,7 @@ pub struct ExternTypeMember {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct StructuralType {
-    pub fields: Vec<(Spanned<SmallString>, Type)>,
+    pub fields: FastIndexMap<Spanned<SmallString>, Type>,
 }
 
 impl TypeData for StructuralType {
@@ -348,13 +348,12 @@ impl TypeData for StructuralType {
 
 impl StructuralType {
     /// The type to be used for functions that return nothing
-    pub const UNIT: Self = StructuralType { fields: Vec::new() };
+    pub const UNIT: Self = StructuralType {
+        fields: FastIndexMap::with_hasher(FastHasher {}),
+    };
 
     pub fn get_member(&self, member: &str) -> Option<Type> {
-        self.fields
-            .iter()
-            .find(|(name, _)| name.as_ref() == member)
-            .map(|(_, ty)| *ty)
+        self.fields.get(member).copied()
     }
 
     pub fn display(&self, ty_ctx: &TypeContext) -> impl Display {

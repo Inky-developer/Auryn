@@ -418,7 +418,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

@@ -399,7 +399,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

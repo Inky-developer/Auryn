@@ -510,7 +510,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {},

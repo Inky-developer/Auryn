@@ -421,7 +421,7 @@ impl Typechecker {
                         self.infer_expression(expr);
                         (ident.clone(), expr.r#type.computed())
                     })
-                    .collect::<Vec<_>>();
+                    .collect();
                 self.ty_ctx.structural_of(StructuralType { fields: types })
             }
         }

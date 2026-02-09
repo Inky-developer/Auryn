@@ -281,7 +281,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                     },
                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                 }: StructuralType {
-                    fields: [],
+                    fields: {},
                 },
             },
             structs: {
@@ -300,50 +300,44 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                 }: StructType {
                     ident: "Foo",
                     structural: StructuralType {
-                        fields: [
-                            (
-                                Spanned {
-                                    value: "a",
-                                    syntax_id: SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
+                        fields: {
+                            Spanned {
+                                value: "a",
+                                syntax_id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
                                         ),
-                                        number: Some(
-                                            86874992811927,
-                                        ),
-                                    },
+                                    ),
+                                    number: Some(
+                                        86874992811927,
+                                    ),
                                 },
-                                I32,
-                            ),
-                            (
-                                Spanned {
-                                    value: "b",
-                                    syntax_id: SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
+                            }: I32,
+                            Spanned {
+                                value: "b",
+                                syntax_id: SyntaxId {
+                                    file_id: Some(
+                                        FileId(
+                                            1,
                                         ),
-                                        number: Some(
-                                            89654992581907,
-                                        ),
-                                    },
+                                    ),
+                                    number: Some(
+                                        89654992581907,
+                                    ),
                                 },
-                                Array(
-                                    TypeId {
-                                        id: SyntaxId {
-                                            file_id: None,
-                                            number: Some(
-                                                2,
-                                            ),
-                                        },
-                                        kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
+                            }: Array(
+                                TypeId {
+                                    id: SyntaxId {
+                                        file_id: None,
+                                        number: Some(
+                                            2,
+                                        ),
                                     },
-                                ),
+                                    kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
+                                },
                             ),
-                        ],
+                        },
                     },
                 },
             },
