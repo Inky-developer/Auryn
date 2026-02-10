@@ -1,0 +1,12 @@
+// expect-output:
+// { foo: Foo, value: 10 }
+
+fn main() {
+	let value: I32 = 10
+	let f = foo(value)
+	print(f)
+}
+
+fn foo[T](value: T) -> {foo: String, value: T} {
+	return {foo: "Foo", value: value}
+}

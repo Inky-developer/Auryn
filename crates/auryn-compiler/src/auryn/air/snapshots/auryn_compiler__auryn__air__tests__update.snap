@@ -272,6 +272,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {},
             metas: {

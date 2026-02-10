@@ -6,7 +6,7 @@ use crate::auryn::{
     air::{
         data::{AirFunctionId, AirModuleId},
         typecheck::{
-            bounds::{ArrayBound, Bound},
+            bounds::{ArrayBound, Bound, StructuralBound},
             types::{
                 ArrayType, ExternType, FunctionItemType, GenericType, IntrinsicType, MetaType,
                 ModuleType, NumberLiteralType, StructType, StructuralType, Type, TypeData,
@@ -46,6 +46,7 @@ impl Default for SpecialTypes {
 #[derive(Debug)]
 pub struct TypeContext {
     array_bounds: BidirectionalTypeMap<ArrayBound>,
+    structural_bounds: BidirectionalTypeMap<StructuralBound>,
     number_literals: BidirectionalTypeMap<NumberLiteralType>,
     arrays: BidirectionalTypeMap<ArrayType>,
     metas: BidirectionalTypeMap<MetaType>,
@@ -69,12 +70,24 @@ impl TypeContext {
         Bound::Array(self.add_array_bound(ArrayBound { element_bound }))
     }
 
+    pub fn structural_bound_of(&mut self, structural_bound: StructuralBound) -> Bound {
+        Bound::Structural(self.add_structural_bound(structural_bound))
+    }
+
     pub fn add_array_bound(&mut self, bound: ArrayBound) -> TypeId<ArrayBound> {
         add_non_unique_type(&mut self.next_id, bound, &mut self.array_bounds)
     }
 
+    pub fn add_structural_bound(&mut self, bound: StructuralBound) -> TypeId<StructuralBound> {
+        add_non_unique_type(&mut self.next_id, bound, &mut self.structural_bounds)
+    }
+
     pub fn get_array_bound(&self, id: TypeId<ArrayBound>) -> &ArrayBound {
         self.array_bounds.get_by_key(&id).unwrap()
+    }
+
+    pub fn get_structural_bound(&self, id: TypeId<StructuralBound>) -> &StructuralBound {
+        self.structural_bounds.get_by_key(&id).unwrap()
     }
 
     pub fn number_literal_of(&mut self, value: i128) -> Type {
@@ -220,6 +233,7 @@ impl Default for TypeContext {
     fn default() -> Self {
         let mut this = Self {
             array_bounds: default(),
+            structural_bounds: default(),
             number_literals: default(),
             arrays: default(),
             structurals: default(),

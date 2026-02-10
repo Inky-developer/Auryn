@@ -471,6 +471,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {},
             metas: {

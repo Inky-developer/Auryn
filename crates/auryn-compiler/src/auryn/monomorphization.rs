@@ -8,6 +8,7 @@ use crate::auryn::air::{
         FunctionReference, Globals, ReturnValue, UnaryOperation, Update,
     },
     typecheck::{
+        bounds::MaybeBounded,
         generics::GenericInference,
         type_context::{TypeContext, TypeId},
         types::{FunctionItemType, FunctionParameters, Type},
@@ -107,9 +108,16 @@ impl FunctionBuilder<'_> {
     }
 
     fn resolve_type(&mut self, ty: Type) -> Type {
-        self.inference
-            .resolve_generic_type(self.ty_ctx, ty)
-            .expect("Should be able to resolve any generic type at this point")
+        {
+            match self.inference.resolve_generic_type(self.ty_ctx, ty) {
+                MaybeBounded::Type(val) => val,
+                MaybeBounded::Bounded(bound) => panic!(
+                    "Could not resolve {}, best I could do is infer this bound: {}",
+                    ty.as_view(self.ty_ctx),
+                    bound.as_view(self.ty_ctx)
+                ),
+            }
+        }
     }
 
     fn resolve(&mut self, air_type: &AirType) -> AirType {

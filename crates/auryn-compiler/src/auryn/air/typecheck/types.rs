@@ -10,7 +10,7 @@ use crate::auryn::{
     air::{
         data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
         typecheck::{
-            bounds::MaybeBounded,
+            bounds::{HasStructuralFields, MaybeBounded},
             type_context::{TypeContext, TypeId},
         },
     },
@@ -343,6 +343,14 @@ impl TypeData for StructuralType {
         for (_, ty) in fields {
             visitor(*ty);
         }
+    }
+}
+
+impl HasStructuralFields for StructuralType {
+    fn fields(&self) -> impl Iterator<Item = (&Spanned<SmallString>, MaybeBounded)> {
+        self.fields
+            .iter()
+            .map(|(ident, ty)| (ident, ty.as_bounded()))
     }
 }
 

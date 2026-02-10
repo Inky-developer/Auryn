@@ -75,6 +75,7 @@ expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {},
             metas: {

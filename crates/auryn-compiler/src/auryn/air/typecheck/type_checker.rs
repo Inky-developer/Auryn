@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use stdx::{FastMap, FastSet, Graph, SmallString, default};
+use stdx::{FastIndexMap, FastMap, FastSet, Graph, SmallString, default, fast_map::FastHasher};
 
 use crate::auryn::{
     air::{
@@ -13,7 +13,7 @@ use crate::auryn::{
         },
         namespace::UserDefinedTypeId,
         typecheck::{
-            bounds::{Bound, BoundView, MaybeBounded},
+            bounds::{Bound, BoundView, HasStructuralFields, MaybeBounded},
             generics::GenericInference,
             resolver::{self, Resolver, ResolverError, ResolverResult},
             type_context::{TypeContext, TypeId},
@@ -490,47 +490,58 @@ impl Typechecker {
                 struct_type: None,
                 fields: struct_literal,
             } => {
-                let MaybeBounded::Type(Type::Structural(structural_id)) = expected else {
-                    // the error will be created in check_expression
-                    return self.infer_constant(id, constant);
-                };
-
-                self.check_struct_literal(
-                    id,
-                    |ty_ctx| (ty_ctx.get(structural_id), None),
-                    struct_literal,
-                );
-                Type::Structural(structural_id)
+                match expected {
+                    MaybeBounded::Type(Type::Structural(structural_id)) => self
+                        .check_struct_literal(
+                            id,
+                            |ty_ctx| (ty_ctx.get(structural_id), None),
+                            struct_literal,
+                        ),
+                    MaybeBounded::Bounded(Bound::Structural(structural_id)) => self
+                        .check_struct_literal(
+                            id,
+                            |ty_ctx| (ty_ctx.get(structural_id), None),
+                            struct_literal,
+                        ),
+                    _ => {
+                        // the error will be created in check_expression
+                        self.infer_constant(id, constant)
+                    }
+                }
             }
         }
     }
 
-    fn check_struct_literal(
+    fn check_struct_literal<T: HasStructuralFields>(
         &mut self,
         id: SyntaxId,
-        get_expected: impl FnOnce(&TypeContext) -> (&StructuralType, Option<SyntaxId>),
+        get_expected: impl FnOnce(&TypeContext) -> (&T, Option<SyntaxId>),
         got: &mut Vec<(Spanned<SmallString>, AirExpression)>,
-    ) {
+    ) -> Type {
         let (expected, expected_def) = get_expected(&self.ty_ctx);
         if let Err(()) = check_fields_equal(
             &mut self.diagnostics,
             id,
             expected_def,
-            expected.fields.iter().map(|(name, _)| name),
+            expected,
             got.iter().map(|(name, _)| name),
         ) {
-            return;
+            return Type::Error;
         }
 
         let expected_types = expected
-            .fields
-            .iter()
-            .map(|(ident, ty)| (ident.value.clone(), *ty))
+            .fields()
+            .map(|(ident, ty)| (ident.value.clone(), ty))
             .collect::<FastMap<_, _>>();
+
+        let mut fields = FastIndexMap::with_capacity_and_hasher(got.len(), FastHasher {});
         for (name, expression) in got {
-            let expected_type = *expected_types.get(&name.value).unwrap();
-            self.check_expression(expression, MaybeBounded::Type(expected_type));
+            let expected_bound = *expected_types.get(&name.value).unwrap();
+            self.check_expression(expression, expected_bound);
+            fields.insert(name.clone(), expression.r#type.computed());
         }
+
+        self.ty_ctx.structural_of(StructuralType { fields })
     }
 
     fn infer_binary_operator(
@@ -695,10 +706,7 @@ impl Typechecker {
 
         for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
             let resolved = inference.resolve_generic_type(&mut self.ty_ctx, expected);
-            self.check_expression(
-                actual,
-                resolved.map_or(MaybeBounded::Bounded(Bound::Top), Type::as_bounded),
-            );
+            self.check_expression(actual, resolved);
 
             let result = inference.infer_generics(
                 expected.as_view(&self.ty_ctx),
@@ -713,6 +721,7 @@ impl Typechecker {
         // as `check_inference_types` will fail
         let result = inference
             .resolve_generic_type(&mut self.ty_ctx, return_type)
+            .as_type()
             .unwrap_or(Type::Error);
 
         let inferred_args = check_inference_types(
@@ -1027,14 +1036,14 @@ fn check_fields_equal<'a>(
     diagnostics: &mut Diagnostics,
     id: SyntaxId,
     expected_def_id: Option<SyntaxId>,
-    expected: impl Iterator<Item = &'a Spanned<SmallString>> + Clone,
+    expected: &impl HasStructuralFields,
     received: impl Iterator<Item = &'a Spanned<SmallString>> + Clone,
 ) -> Result<(), ()> {
     let mut did_report_error = false;
 
     let expected_set = expected
-        .clone()
-        .map(|spanned| (&spanned.value, spanned.syntax_id))
+        .fields()
+        .map(|(spanned, _)| (&spanned.value, spanned.syntax_id))
         .collect::<FastMap<_, _>>();
     let received_map = received
         .clone()

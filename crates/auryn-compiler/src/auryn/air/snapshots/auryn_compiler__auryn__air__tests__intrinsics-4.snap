@@ -365,6 +365,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                     element_bound: Top,
                 },
             },
+            structural_bounds: {},
             number_literals: {},
             arrays: {
                 TypeId {

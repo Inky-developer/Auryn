@@ -269,6 +269,7 @@ expression: "compile_wrapped(\"print(1)\")"
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {
                 TypeId {
                     id: SyntaxId {

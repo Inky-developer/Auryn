@@ -507,6 +507,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {},
             metas: {

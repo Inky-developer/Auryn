@@ -1,0 +1,12 @@
+// expect-output:
+// { y: 1, z: false }
+
+fn main() {
+	print(yz({x: 10, y: arrayOf("1", "2", "3")}, {y: 11, z: false}))
+}
+
+fn yz[T, U](a: {x: I32, y: []T}, b: {y: I32, z: U}) -> {y: T, z: U} {
+	let y = arrayGet(a.y, 0)
+	let z = b.z
+	return {y: y, z: z}
+}

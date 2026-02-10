@@ -303,6 +303,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOfZeros(3)\")"
                     element_bound: Top,
                 },
             },
+            structural_bounds: {},
             number_literals: {},
             arrays: {
                 TypeId {

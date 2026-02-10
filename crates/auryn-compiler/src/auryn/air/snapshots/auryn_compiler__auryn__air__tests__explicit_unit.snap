@@ -543,6 +543,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {},
             metas: {

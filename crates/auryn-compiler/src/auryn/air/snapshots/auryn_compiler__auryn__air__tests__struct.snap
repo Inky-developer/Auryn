@@ -191,6 +191,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {
                 TypeId {

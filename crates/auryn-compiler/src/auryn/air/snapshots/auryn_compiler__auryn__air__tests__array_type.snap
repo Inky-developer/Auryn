@@ -367,6 +367,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
         },
         ty_ctx: TypeContext {
             array_bounds: {},
+            structural_bounds: {},
             number_literals: {},
             arrays: {
                 TypeId {

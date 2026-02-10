@@ -3,6 +3,14 @@ source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n\tfoo(42)\n}\n\nfn foo[T](values: []T) {\n\tprint(values)\n}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/generic_function_impossible_to_infer_arg.au
 ---
+Error: Type mismatch
+   ╭─[ main:2:6 ]
+   │
+ 2 │     foo(42)
+   │         ─┬  
+   │          ╰── Expected `[]Any`, but got `42`
+───╯
+
 Error: Non-inferred generic type argument
    ╭─[ main:2:2 ]
    │
