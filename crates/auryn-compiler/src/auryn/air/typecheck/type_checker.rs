@@ -657,7 +657,7 @@ impl Typechecker {
                 call.generic_arguments = AirGenericArguments::Computed(Vec::new());
                 self.typecheck_call_to_intrinsic(
                     id,
-                    self.ty_ctx.get_intrinsic(intrinsic_type).intrinsic,
+                    self.ty_ctx.get(intrinsic_type).intrinsic,
                     &mut call.arguments,
                     expected,
                 )
@@ -676,7 +676,7 @@ impl Typechecker {
         function_type_id: TypeId<FunctionItemType>,
         expected: Option<MaybeBounded>,
     ) -> Type {
-        let function_type = self.ty_ctx.get_function_item(function_type_id);
+        let function_type = self.ty_ctx.get(function_type_id);
         let return_type = function_type.return_type;
 
         let FunctionParameters {

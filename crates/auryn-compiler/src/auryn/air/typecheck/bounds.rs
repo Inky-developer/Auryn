@@ -5,6 +5,7 @@ use stdx::{FastIndexMap, SmallString};
 use crate::auryn::{
     air::typecheck::{
         type_context::{TypeContext, TypeId},
+        type_storage::StructuralStorage,
         types::{Type, TypeData, TypeView, TypeViewKind},
     },
     syntax_id::Spanned,
@@ -153,9 +154,7 @@ pub struct ArrayBound {
 }
 
 impl TypeData for ArrayBound {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_array_bound(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, _visitor: &mut impl FnMut(Type)) {}
 }
@@ -176,9 +175,7 @@ pub struct StructuralBound {
 }
 
 impl TypeData for StructuralBound {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_structural_bound(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, _: &mut impl FnMut(Type)) {}
 }

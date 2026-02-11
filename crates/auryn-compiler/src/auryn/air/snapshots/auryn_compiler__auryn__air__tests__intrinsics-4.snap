@@ -140,7 +140,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                         id: SyntaxId {
                                                                             file_id: None,
                                                                             number: Some(
-                                                                                3,
+                                                                                1,
                                                                             ),
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
@@ -171,7 +171,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                             id: SyntaxId {
                                                                                 file_id: None,
                                                                                 number: Some(
-                                                                                    4,
+                                                                                    1,
                                                                                 ),
                                                                             },
                                                                             kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
@@ -197,7 +197,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                                         id: SyntaxId {
                                                                                             file_id: None,
                                                                                             number: Some(
-                                                                                                5,
+                                                                                                2,
                                                                                             ),
                                                                                         },
                                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
@@ -351,208 +351,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                 ),
             },
         },
-        ty_ctx: TypeContext {
-            array_bounds: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            6,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::bounds::ArrayBound",
-                }: ArrayBound {
-                    element_bound: Top,
-                },
-            },
-            structural_bounds: {},
-            number_literals: {},
-            arrays: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            4,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
-                }: ArrayType {
-                    element_type: I64,
-                },
-            },
-            metas: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            2,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::MetaType",
-                }: MetaType {
-                    inner: Module(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: Some(
-                                    1,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::ModuleType",
-                        },
-                    ),
-                },
-            },
-            structurals: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            1,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
-                }: StructuralType {
-                    fields: {},
-                },
-            },
-            structs: {},
-            externs: {},
-            modules: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: Some(
-                            FileId(
-                                1,
-                            ),
-                        ),
-                        number: Some(
-                            1,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::ModuleType",
-                }: ModuleType {
-                    name: "main",
-                    members: {
-                        "main": FunctionItem(
-                            TypeId {
-                                id: SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        4,
-                                    ),
-                                },
-                                kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                            },
-                        ),
-                    },
-                },
-            },
-            function_items: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: Some(
-                            FileId(
-                                1,
-                            ),
-                        ),
-                        number: Some(
-                            4,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                }: FunctionItemType {
-                    type_parameters: [],
-                    parameters: FunctionParameters {
-                        parameters: [],
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
-                                ),
-                            ),
-                            number: Some(
-                                105553116266498,
-                            ),
-                        },
-                    },
-                    return_type: Structural(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: None,
-                                number: Some(
-                                    1,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
-                        },
-                    ),
-                    reference: UserDefined(
-                        AirFunctionId(
-                            AirStaticValueId(
-                                SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        4,
-                                    ),
-                                },
-                            ),
-                        ),
-                    ),
-                },
-            },
-            intrinsics: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            3,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
-                }: IntrinsicType {
-                    intrinsic: ArrayGet,
-                },
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            5,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
-                }: IntrinsicType {
-                    intrinsic: ArrayOfZeros,
-                },
-            },
-            generics: {},
-            special_types: SpecialTypes {
-                unit: Structural(
-                    TypeId {
-                        id: SyntaxId {
-                            file_id: None,
-                            number: Some(
-                                1,
-                            ),
-                        },
-                        kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
-                    },
-                ),
-            },
-            next_id: 7,
-        },
+        ty_ctx: TypeContext { .. },
     },
     Diagnostics {
         diagnostics: [],

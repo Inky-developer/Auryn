@@ -161,7 +161,7 @@ impl FunctionBuilder<'_> {
                 },
             },
         };
-        self.ty_ctx.add_monomorphized_function_item(function)
+        self.ty_ctx.add(None, function)
     }
 
     fn transform_block(&mut self, block: &AirBlock) -> AirBlock {

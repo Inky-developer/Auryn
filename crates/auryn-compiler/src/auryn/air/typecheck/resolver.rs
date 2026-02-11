@@ -8,7 +8,7 @@ use crate::auryn::{
         },
         namespace::UserDefinedTypeId,
         typecheck::{
-            type_context::TypeContext,
+            type_context::{TypeContext, TypeId},
             types::{
                 ExternType, ExternTypeMember, FunctionItemType, FunctionParameters, GenericId,
                 GenericType, ModuleType, StructType, StructuralType, Type,
@@ -118,8 +118,8 @@ impl Resolver {
                     .as_ref()
                     .map_or(Ok(ctx.ty_ctx.unit_type()), |ty| self.resolve(ctx, ty))?;
                 let reference = self.resolve_function_reference(ctx, reference)?;
-                Type::FunctionItem(ctx.ty_ctx.add_function_item(
-                    reference.syntax_id(),
+                Type::FunctionItem(ctx.ty_ctx.add(
+                    Some(reference.syntax_id()),
                     FunctionItemType {
                         type_parameters,
                         parameters: FunctionParameters {
@@ -165,7 +165,7 @@ impl Resolver {
                         Ok((ident.clone(), member))
                     })
                     .collect::<Result<_, _>>()?;
-                Type::Extern(ctx.ty_ctx.add_extern(
+                Type::Extern(ctx.ty_ctx.add(
                     *id,
                     ExternType {
                         extern_name: extern_name.clone(),
@@ -202,10 +202,8 @@ impl Resolver {
                     name: name.clone(),
                     members,
                 };
-                Type::Module(
-                    ctx.ty_ctx
-                        .add_module(AirModuleId(id.file_id().unwrap()), module),
-                )
+                let id: TypeId<_> = AirModuleId(id.file_id().unwrap()).into();
+                Type::Module(ctx.ty_ctx.add(id.syntax_id(), module))
             }
             UnresolvedType::Structural(structural_type) => {
                 let ty = StructuralType {
@@ -227,7 +225,7 @@ impl Resolver {
                     ident: ident.clone(),
                     structural,
                 };
-                Type::Struct(ctx.ty_ctx.add_struct(*id, r#struct))
+                Type::Struct(ctx.ty_ctx.add(*id, r#struct))
             }
         })
     }

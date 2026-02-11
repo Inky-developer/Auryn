@@ -150,7 +150,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                         id: SyntaxId {
                                                                             file_id: None,
                                                                             number: Some(
-                                                                                3,
+                                                                                1,
                                                                             ),
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
@@ -181,7 +181,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                             id: SyntaxId {
                                                                                 file_id: None,
                                                                                 number: Some(
-                                                                                    4,
+                                                                                    1,
                                                                                 ),
                                                                             },
                                                                             kind: "auryn_compiler::auryn::air::typecheck::types::NumberLiteralType",
@@ -259,7 +259,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                     id: SyntaxId {
                                                                         file_id: None,
                                                                         number: Some(
-                                                                            3,
+                                                                            1,
                                                                         ),
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
@@ -457,185 +457,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                 ),
             },
         },
-        ty_ctx: TypeContext {
-            array_bounds: {},
-            structural_bounds: {},
-            number_literals: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            4,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::NumberLiteralType",
-                }: NumberLiteralType {
-                    value: 1,
-                },
-            },
-            arrays: {},
-            metas: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            2,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::MetaType",
-                }: MetaType {
-                    inner: Module(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: Some(
-                                    1,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::ModuleType",
-                        },
-                    ),
-                },
-            },
-            structurals: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            1,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
-                }: StructuralType {
-                    fields: {},
-                },
-            },
-            structs: {},
-            externs: {},
-            modules: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: Some(
-                            FileId(
-                                1,
-                            ),
-                        ),
-                        number: Some(
-                            1,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::ModuleType",
-                }: ModuleType {
-                    name: "main",
-                    members: {
-                        "main": FunctionItem(
-                            TypeId {
-                                id: SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        4,
-                                    ),
-                                },
-                                kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                            },
-                        ),
-                    },
-                },
-            },
-            function_items: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: Some(
-                            FileId(
-                                1,
-                            ),
-                        ),
-                        number: Some(
-                            4,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                }: FunctionItemType {
-                    type_parameters: [],
-                    parameters: FunctionParameters {
-                        parameters: [],
-                        parameters_reference: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
-                                ),
-                            ),
-                            number: Some(
-                                105553116266498,
-                            ),
-                        },
-                    },
-                    return_type: Structural(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: None,
-                                number: Some(
-                                    1,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
-                        },
-                    ),
-                    reference: UserDefined(
-                        AirFunctionId(
-                            AirStaticValueId(
-                                SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        4,
-                                    ),
-                                },
-                            ),
-                        ),
-                    ),
-                },
-            },
-            intrinsics: {
-                TypeId {
-                    id: SyntaxId {
-                        file_id: None,
-                        number: Some(
-                            3,
-                        ),
-                    },
-                    kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
-                }: IntrinsicType {
-                    intrinsic: Print,
-                },
-            },
-            generics: {},
-            special_types: SpecialTypes {
-                unit: Structural(
-                    TypeId {
-                        id: SyntaxId {
-                            file_id: None,
-                            number: Some(
-                                1,
-                            ),
-                        },
-                        kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
-                    },
-                ),
-            },
-            next_id: 5,
-        },
+        ty_ctx: TypeContext { .. },
     },
     Diagnostics {
         diagnostics: [

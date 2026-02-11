@@ -1,4 +1,4 @@
-use std::{fmt::Debug, panic::Location, str::FromStr};
+use std::{fmt::Debug, hash::Hash, panic::Location, str::FromStr};
 
 use stdx::{FastMap, SmallString};
 
@@ -189,6 +189,35 @@ impl Clone for FunctionReference {
     }
 }
 
+impl PartialEq for FunctionReference {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::UserDefined(left), Self::UserDefined(right)) => left == right,
+            (
+                Self::Extern {
+                    syntax_id: left, ..
+                },
+                Self::Extern {
+                    syntax_id: right, ..
+                },
+            ) => left == right,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for FunctionReference {}
+
+impl Hash for FunctionReference {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        match self {
+            FunctionReference::UserDefined(air_function_id) => air_function_id.hash(state),
+            FunctionReference::Extern { syntax_id, .. } => syntax_id.hash(state),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ExternFunctionKind {
     Static,
@@ -357,7 +386,7 @@ pub enum Intrinsic {
 
 impl Intrinsic {
     pub fn r#type(self, ty_ctx: &mut TypeContext) -> Type {
-        Type::Intrinsic(ty_ctx.add_intrinsic(IntrinsicType { intrinsic: self }))
+        Type::Intrinsic(ty_ctx.add((), IntrinsicType { intrinsic: self }))
     }
 }
 

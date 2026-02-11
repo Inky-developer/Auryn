@@ -12,6 +12,7 @@ use crate::auryn::{
         typecheck::{
             bounds::{HasStructuralFields, MaybeBounded},
             type_context::{TypeContext, TypeId},
+            type_storage::{CombinedStorage, NominalStorage, StructuralStorage, TypeStorage},
         },
     },
     syntax_id::{Spanned, SyntaxId},
@@ -190,7 +191,7 @@ impl<'a> TypeView<'a> {
 }
 
 pub trait TypeData: Sized {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self;
+    type Storage: TypeStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type));
 }
@@ -201,16 +202,14 @@ pub struct NumberLiteralType {
 }
 
 impl TypeData for NumberLiteralType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_number_literal(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, _visitor: &mut impl FnMut(Type)) {
         let Self { value: _ } = self;
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FunctionItemType {
     pub type_parameters: Vec<GenericType>,
     pub parameters: FunctionParameters,
@@ -219,9 +218,7 @@ pub struct FunctionItemType {
 }
 
 impl TypeData for FunctionItemType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_function_item(id)
-    }
+    type Storage = CombinedStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {
@@ -259,16 +256,14 @@ pub struct IntrinsicType {
 }
 
 impl TypeData for IntrinsicType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_intrinsic(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, _visitor: &mut impl FnMut(Type)) {
         let Self { intrinsic: _ } = self;
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct FunctionParameters {
     pub parameters: Vec<Type>,
     pub parameters_reference: SyntaxId,
@@ -280,9 +275,7 @@ pub struct ArrayType {
 }
 
 impl TypeData for ArrayType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_array(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self { element_type } = self;
@@ -297,9 +290,7 @@ pub struct ExternType {
 }
 
 impl TypeData for ExternType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_extern(id)
-    }
+    type Storage = NominalStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {
@@ -334,9 +325,7 @@ pub struct StructuralType {
 }
 
 impl TypeData for StructuralType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_structural(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self { fields } = self;
@@ -391,9 +380,7 @@ pub struct StructType {
 }
 
 impl TypeData for StructType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_struct(id)
-    }
+    type Storage = NominalStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {
@@ -417,9 +404,7 @@ pub struct ModuleType {
 }
 
 impl TypeData for ModuleType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_module(id)
-    }
+    type Storage = NominalStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self { name: _, members } = self;
@@ -439,9 +424,7 @@ pub struct MetaType {
 }
 
 impl TypeData for MetaType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_meta(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self { inner } = self;
@@ -460,9 +443,7 @@ pub struct GenericType {
 }
 
 impl TypeData for GenericType {
-    fn from_context(id: TypeId<Self>, ctx: &TypeContext) -> &Self {
-        ctx.get_generic(id)
-    }
+    type Storage = StructuralStorage<Self>;
 
     fn visit(&self, _: &mut impl FnMut(Type)) {
         let Self { id: _, ident: _ } = self;
