@@ -47,7 +47,8 @@ pub fn codegen(
     let structurals = ctx
         .structural_types
         .into_values()
-        .chain(ctx.struct_types.into_values());
+        .chain(ctx.struct_types.into_values())
+        .chain(ctx.application_types.into_values());
     for structural_repr in structurals {
         if structural_repr.is_zero_sized {
             continue;

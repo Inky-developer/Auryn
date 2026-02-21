@@ -1,0 +1,52 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            struct Foo[T, U] {\n                some_value: T,\n                b: U\n            }\n            \"#)"
+---
+syntax_tree:
+0..110 Root
+|0..110 File
+||Newline `\n`
+||Whitespace `            `
+||13..97 Item
+|||13..97 Struct
+||||KeywordStruct `struct`
+||||Whitespace ` `
+||||Identifier `Foo`
+||||23..30 GenericParameterList
+|||||BracketOpen `[`
+|||||24..25 GenericParameterDefinition
+||||||Identifier `T`
+|||||Comma `,`
+|||||Whitespace ` `
+|||||27..28 GenericParameterDefinition
+||||||Identifier `U`
+|||||BracketClose `]`
+|||||Whitespace ` `
+||||BraceOpen `{`
+||||Newline `\n`
+||||Whitespace `                `
+||||48..96 StructBody
+|||||48..61 StructuralTypeField
+||||||Identifier `some_value`
+||||||Colon `:`
+||||||Whitespace ` `
+||||||60..61 Type
+|||||||60..61 TypeRef
+||||||||Identifier `T`
+|||||Comma `,`
+|||||Newline `\n`
+|||||Whitespace `                `
+|||||79..96 StructuralTypeField
+||||||Identifier `b`
+||||||Colon `:`
+||||||Whitespace ` `
+||||||82..96 Type
+|||||||82..96 TypeRef
+||||||||Identifier `U`
+||||||||Newline `\n`
+||||||||Whitespace `            `
+||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

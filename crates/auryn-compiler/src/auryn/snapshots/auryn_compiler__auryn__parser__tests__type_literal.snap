@@ -24,7 +24,7 @@ syntax_tree:
 |||||||Colon `:`
 |||||||Whitespace ` `
 |||||||41..44 Type
-||||||||41..44 Ident
+||||||||41..44 TypeRef
 |||||||||Identifier `I32`
 ||||||Comma `,`
 ||||||Newline `\n`
@@ -34,7 +34,7 @@ syntax_tree:
 |||||||Colon `:`
 |||||||Whitespace ` `
 |||||||65..81 Type
-||||||||65..81 Ident
+||||||||65..81 TypeRef
 |||||||||Identifier `I64`
 |||||||||Newline `\n`
 |||||||||Whitespace `            `

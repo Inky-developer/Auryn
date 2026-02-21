@@ -31,6 +31,11 @@ macro_rules! define_types {
         /// A type can have associated data, which implements the [`FromTypeContext`] trait.
         /// These data can be accessed via the [`TypeContext`] or by creating a view via [`Type::as_view`].
         ///
+        /// A propert that is not represented in the type system is that a type can be either resolved or not resolved.
+        /// A resolved type is an 'actual' type which can be used during codegen, while an unresolved type
+        /// contains generics and is semantically closer to being a function that returns a type when given the type arguments.
+        /// An unresolved type can be resolved by using the `GenericInference` struct.
+        ///
         /// [`Type`] implements [`Eq`].
         #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
         pub enum Type {
@@ -112,6 +117,12 @@ define_types! {
     Array(ArrayType),
     Extern(ExternType),
     Structural(StructuralType),
+    /// An application is basically a type-level function call.
+    /// For example `Foo[I32]` where `Foo` is a struct.
+    Application(ApplicationType),
+    /// The type of the value that gets created when a [`StructItem`] is instantiated.
+    /// The distinction is that a [`StructItem`] has type parameters, while a struct type
+    /// has type arguments.
     Struct(StructType),
     Module(ModuleType),
     /// Represents the type of a type, also zero sized, because it is a compile-time only construct.
@@ -132,9 +143,8 @@ impl Type {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Structural(_) | Struct(_) | Module(_) | Meta(_) | Generic(_) | Error => {
-                None
-            }
+            | Extern(_) | Structural(_) | Struct(_) | Module(_) | Meta(_) | Generic(_)
+            | Application(_) | Error => None,
         }
     }
 }
@@ -373,18 +383,20 @@ impl StructuralType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct StructType {
     pub ident: SmallString,
+    pub type_parameters: Vec<GenericType>,
     pub structural: StructuralType,
 }
 
 impl TypeData for StructType {
-    type Storage = NominalStorage<Self>;
+    type Storage = CombinedStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {
             ident: _,
+            type_parameters: _,
             structural,
         } = self;
         structural.visit(visitor);
@@ -394,6 +406,24 @@ impl TypeData for StructType {
 impl StructType {
     pub fn get_member(&self, member: &str) -> Option<Type> {
         self.structural.get_member(member)
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+pub struct ApplicationType {
+    pub r#type: Type,
+    pub arguments: Vec<Type>,
+}
+
+impl TypeData for ApplicationType {
+    type Storage = StructuralStorage<Self>;
+
+    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+        let ApplicationType {
+            r#type,
+            arguments: _,
+        } = self;
+        visitor(*r#type);
     }
 }
 
@@ -551,6 +581,22 @@ impl<'a> Display for TypeViewKind<'a, StructuralType> {
     }
 }
 
+impl<'a> Display for TypeViewKind<'a, ApplicationType> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}[", self.r#type.as_view(self.ctx))?;
+
+        for (index, arg) in self.arguments.iter().enumerate() {
+            if index != 0 {
+                write!(f, ", ")?;
+            }
+
+            write!(f, "{}", arg.as_view(self.ctx))?;
+        }
+
+        write!(f, "]")
+    }
+}
+
 impl<'a> Display for TypeViewKind<'a, MetaType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Type[{}]", self.value.inner.as_view(self.ctx))
@@ -574,6 +620,7 @@ impl Display for TypeView<'_> {
             TypeView::Struct(r#struct) => write!(f, "struct {}", r#struct.value.ident),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Generic(generic) => write!(f, "{}", generic.value.ident.value),
+            TypeView::Application(inner) => Display::fmt(&inner, f),
             TypeView::Error => f.write_str("<<Error>>"),
         }
     }

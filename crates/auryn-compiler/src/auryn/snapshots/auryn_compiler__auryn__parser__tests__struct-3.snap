@@ -1,0 +1,34 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            type Foo = []Bar[I32]\n            \"#)"
+---
+syntax_tree:
+0..47 Root
+|0..47 File
+||Newline `\n`
+||Whitespace `            `
+||13..34 Item
+|||13..34 TypeAlias
+||||KeywordType `type`
+||||Whitespace ` `
+||||Identifier `Foo`
+||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||24..34 Type
+|||||24..34 ArrayType
+||||||BracketOpen `[`
+||||||BracketClose `]`
+||||||26..34 Type
+|||||||26..34 TypeRef
+||||||||Identifier `Bar`
+||||||||29..34 TypeArguments
+|||||||||BracketOpen `[`
+|||||||||30..33 Type
+||||||||||30..33 TypeRef
+|||||||||||Identifier `I32`
+|||||||||BracketClose `]`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

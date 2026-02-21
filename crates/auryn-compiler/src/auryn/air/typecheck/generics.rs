@@ -49,7 +49,7 @@ pub struct GenericInference {
 }
 
 impl GenericInference {
-    pub fn from_mono(monomorphization: Vec<Type>) -> Self {
+    pub fn from_already_inferred(monomorphization: Vec<Type>) -> Self {
         Self {
             inferred: monomorphization
                 .into_iter()
@@ -98,6 +98,28 @@ impl GenericInference {
                     MaybeBounded::Bounded(ty_ctx.structural_bound_of(StructuralBound {
                         fields: resolved_fields,
                     }))
+                }
+            }
+            TypeView::Application(application) => {
+                let r#type = application.r#type;
+                let arguments = application.arguments.clone();
+                let resolved_args = arguments
+                    .into_iter()
+                    .map(|ty| self.resolve_generic_type(ty_ctx, ty))
+                    .collect::<Vec<_>>();
+                if resolved_args.iter().all(|arg| arg.as_type().is_some()) {
+                    MaybeBounded::Type(
+                        ty_ctx.applied_of(
+                            r#type,
+                            resolved_args
+                                .into_iter()
+                                .map(|arg| arg.as_type().unwrap())
+                                .collect(),
+                        ),
+                    )
+                } else {
+                    // TODO: Use tighter bound here
+                    Bound::Top.as_bounded()
                 }
             }
             _ => MaybeBounded::Type(ty),

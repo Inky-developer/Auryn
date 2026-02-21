@@ -17,7 +17,7 @@ syntax_tree:
 ||||||Colon `:`
 ||||||Whitespace ` `
 ||||||10..13 Type
-|||||||10..13 Ident
+|||||||10..13 TypeRef
 ||||||||Identifier `Int`
 |||||Comma `,`
 |||||Newline `\n`
@@ -30,7 +30,7 @@ syntax_tree:
 ||||||||BracketOpen `[`
 ||||||||BracketClose `]`
 ||||||||20..26 Type
-|||||||||20..26 Ident
+|||||||||20..26 TypeRef
 ||||||||||Identifier `String`
 |||||Comma `,`
 |||||Whitespace ` `
@@ -48,7 +48,7 @@ syntax_tree:
 |||||Arrow `->`
 |||||Whitespace ` `
 |||||38..43 Type
-||||||38..43 Ident
+||||||38..43 TypeRef
 |||||||Identifier `Null`
 |||||||Whitespace ` `
 ||||BraceOpen `{`

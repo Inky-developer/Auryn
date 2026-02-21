@@ -1,11 +1,14 @@
 use stdx::{FastMap, SmallString, default};
 
-use crate::auryn::air::{
-    data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
-    typecheck::{
-        type_context::TypeId,
-        types::{ExternType, GenericId, ModuleType, StructType},
+use crate::auryn::{
+    air::{
+        data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
+        typecheck::{
+            type_context::TypeId,
+            types::{ExternType, GenericId, ModuleType, StructType},
+        },
     },
+    syntax_id::Spanned,
 };
 
 /// Represents a type that was defined by the user.
@@ -29,7 +32,7 @@ pub struct Namespace {
 }
 
 impl Namespace {
-    pub fn with_modules(modules: impl IntoIterator<Item = (SmallString, AirModuleId)>) -> Self {
+    pub fn new_with_modules(modules: impl IntoIterator<Item = (SmallString, AirModuleId)>) -> Self {
         Self {
             statics: default(),
             types: modules
@@ -37,6 +40,18 @@ impl Namespace {
                 .map(|(name, file_id)| (name, UserDefinedTypeId::Module(file_id.into())))
                 .collect(),
         }
+    }
+
+    pub fn with_generics(&self, generics: impl IntoIterator<Item = Spanned<SmallString>>) -> Self {
+        let mut result = self.clone();
+
+        for (index, ident) in generics.into_iter().enumerate() {
+            result
+                .types
+                .insert(ident.value, UserDefinedTypeId::Generic(GenericId(index)));
+        }
+
+        result
     }
 
     pub fn get(&self, ident: &str) -> Option<AirStaticValueId> {

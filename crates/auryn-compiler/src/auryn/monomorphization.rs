@@ -71,7 +71,7 @@ fn monomorphize_function(
     let mut builder = FunctionBuilder {
         queue,
         ty_ctx,
-        inference: GenericInference::from_mono(args),
+        inference: GenericInference::from_already_inferred(args),
     };
     let (blocks, ty) = builder.build(&globals.functions[&id]);
     Monomorphization {
@@ -318,7 +318,7 @@ impl FunctionBuilder<'_> {
         if let Type::FunctionItem(fn_ty) = function.r#type.computed() {
             let prev = std::mem::replace(
                 &mut self.inference,
-                GenericInference::from_mono(generic_args.clone()),
+                GenericInference::from_already_inferred(generic_args.clone()),
             );
             function.r#type =
                 AirType::Computed(Type::FunctionItem(self.resolve_function_type(fn_ty)));

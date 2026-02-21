@@ -7,8 +7,8 @@ use crate::auryn::{
         bounds::{ArrayBound, StructuralBound},
         type_context::TypeId,
         types::{
-            ArrayType, ExternType, FunctionItemType, GenericType, IntrinsicType, MetaType,
-            ModuleType, NumberLiteralType, StructType, StructuralType, TypeData,
+            ApplicationType, ArrayType, ExternType, FunctionItemType, GenericType, IntrinsicType,
+            MetaType, ModuleType, NumberLiteralType, StructType, StructuralType, TypeData,
         },
     },
     syntax_id::SyntaxId,
@@ -65,6 +65,7 @@ define_storage! {
         function_items: FunctionItemType,
         intrinsics: IntrinsicType,
         generics: GenericType,
+        applied_types: ApplicationType,
     }
 }
 

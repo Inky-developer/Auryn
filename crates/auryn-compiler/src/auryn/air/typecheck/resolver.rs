@@ -65,9 +65,9 @@ impl Resolver {
                 },
                 UserDefinedTypeId::Generic(id) => {
                     // Two cases:
-                    // - Either we are currently resolving a function signature
+                    // - Either we are currently resolving a type signature
                     //   Then the `current_generic_parameters` field is set
-                    // - Or we are currently inside a function body where this generic is defined
+                    // - Or we are currently inside a cotext where this generic is defined
                     //   Then we can use the already calculated generic of the ctx scope
                     let generic = if self.current_generic_parameters.is_empty() {
                         ctx.type_parameters[id.0].clone()
@@ -107,6 +107,7 @@ impl Resolver {
                     .collect::<Vec<_>>();
 
                 // Make the generic parameters known so that they can be used in nested resolve calls
+                self.current_generic_parameters.clear();
                 self.current_generic_parameters
                     .extend(type_parameters.iter().cloned());
 
@@ -214,18 +215,50 @@ impl Resolver {
                 };
                 ctx.ty_ctx.structural_of(ty)
             }
-            UnresolvedType::Struct { id, ident, fields } => {
+            UnresolvedType::Struct {
+                id,
+                ident,
+                fields,
+                generics,
+            } => {
+                let generics = generics
+                    .iter()
+                    .enumerate()
+                    .map(|(index, it)| GenericType {
+                        id: GenericId(index),
+                        ident: it.clone(),
+                    })
+                    .collect::<Vec<_>>();
+
+                self.current_generic_parameters.clear();
+                self.current_generic_parameters
+                    .extend(generics.iter().cloned());
                 let structural = StructuralType {
                     fields: fields
                         .iter()
                         .map(|(ident, field)| Ok((ident.clone(), self.resolve(ctx, field)?)))
                         .collect::<Result<_, _>>()?,
                 };
+
                 let r#struct = StructType {
+                    type_parameters: generics,
                     ident: ident.clone(),
                     structural,
                 };
-                Type::Struct(ctx.ty_ctx.add(*id, r#struct))
+                Type::Struct(ctx.ty_ctx.add(Some(*id), r#struct))
+            }
+            UnresolvedType::Application {
+                id: _,
+                r#type,
+                generic_arguments,
+            } => {
+                let generic_type = self.resolve(ctx, r#type)?;
+                let generic_arguments = generic_arguments
+                    .iter()
+                    .map(|arg| self.resolve(ctx, arg))
+                    .collect::<Result<Vec<_>, _>>()?;
+                // TODO: Add error message if the type cannot accept the generic arguments
+                ctx.ty_ctx.applied_of(generic_type, generic_arguments)
             }
         })
     }

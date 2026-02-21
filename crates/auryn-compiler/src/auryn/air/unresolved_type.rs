@@ -31,6 +31,7 @@ pub enum UnresolvedType {
     Struct {
         id: SyntaxId,
         ident: SmallString,
+        generics: Vec<Spanned<SmallString>>,
         fields: Vec<(Spanned<SmallString>, UnresolvedType)>,
     },
     Unit,
@@ -45,6 +46,12 @@ pub enum UnresolvedType {
         name: SmallString,
         id: SyntaxId,
         namespace: Namespace,
+    },
+    /// A type constructor that gets called with some arguments, like `Foo[I32]`
+    Application {
+        id: SyntaxId,
+        r#type: Box<UnresolvedType>,
+        generic_arguments: Vec<UnresolvedType>,
     },
 }
 
@@ -66,6 +73,7 @@ impl UnresolvedType {
             Array(_, unresolved_type) => unresolved_type.visit_contained_types(visitor),
             Struct {
                 fields,
+                generics: _,
                 id: _,
                 ident: _,
             }
@@ -106,6 +114,16 @@ impl UnresolvedType {
                             unresolved_type.visit_contained_types(visitor);
                         }
                     }
+                }
+            }
+            Application {
+                id: _,
+                r#type,
+                generic_arguments,
+            } => {
+                r#type.visit_contained_types(visitor);
+                for arg in generic_arguments {
+                    arg.visit_contained_types(visitor);
                 }
             }
         }

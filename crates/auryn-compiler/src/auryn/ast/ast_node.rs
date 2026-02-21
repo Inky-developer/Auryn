@@ -217,7 +217,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct Struct = SyntaxNodeKind::Struct as { token ident: TokenKind::Identifier, body: StructBody, }
+    pub struct Struct = SyntaxNodeKind::Struct as { token ident: TokenKind::Identifier, maybe_generics: GenericParameterList, body: StructBody, }
 }
 
 ast_node! {
@@ -229,7 +229,7 @@ ast_node! {
         | SyntaxNodeKind::StructuralType as StructuralType
         | SyntaxNodeKind::ArrayType as ArrayType
         | SyntaxNodeKind::UnitType as UnitType
-        | SyntaxNodeKind::Ident as Ident
+        | SyntaxNodeKind::TypeRef as TypeRef
 }
 
 ast_node! {
@@ -246,6 +246,14 @@ ast_node! {
 
 ast_node! {
     pub struct UnitType = SyntaxNodeKind::UnitType as {}
+}
+
+ast_node! {
+    pub struct TypeRef = SyntaxNodeKind::TypeRef as { token ident: TokenKind::Identifier, maybe_generic_args: TypeArguments, }
+}
+
+ast_node! {
+    pub struct TypeArguments = SyntaxNodeKind::TypeArguments as { ...types: Type }
 }
 
 ast_node! {

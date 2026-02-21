@@ -1,0 +1,6 @@
+struct Foo[T] {
+	inner: []Foo,
+	value: T
+}
+
+fn main() {}

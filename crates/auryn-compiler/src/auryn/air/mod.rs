@@ -162,6 +162,16 @@ mod tests {
             fn main() {}
             "#
         ));
+        insta::assert_debug_snapshot!(compile(
+            r#"
+            struct Foo[T] {
+                a: T,
+                b: []Foo[T]
+            }
+
+            fn main() {}
+            "#
+        ));
     }
 
     #[test]

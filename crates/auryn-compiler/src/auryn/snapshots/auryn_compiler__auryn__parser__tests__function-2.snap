@@ -21,7 +21,7 @@ syntax_tree:
 |||||Arrow `->`
 |||||Whitespace ` `
 |||||14..19 Type
-||||||14..19 Ident
+||||||14..19 TypeRef
 |||||||Identifier `Null`
 |||||||Whitespace ` `
 ||||BraceOpen `{`

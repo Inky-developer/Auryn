@@ -18,8 +18,8 @@ use crate::auryn::{
             resolver::{self, Resolver, ResolverError, ResolverResult},
             type_context::{TypeContext, TypeId},
             types::{
-                FunctionItemType, FunctionParameters, GenericId, GenericType, StructuralType, Type,
-                TypeView,
+                ApplicationType, FunctionItemType, FunctionParameters, GenericId, GenericType,
+                StructType, StructuralType, Type, TypeView,
             },
         },
         unresolved_type::UnresolvedType,
@@ -387,30 +387,7 @@ impl Typechecker {
             AirConstant::StructLiteral {
                 struct_type: Some((struct_ident_id, struct_type)),
                 fields,
-            } => {
-                self.resolve_if_unresolved(struct_type);
-                let Type::Struct(struct_id) = struct_type.computed() else {
-                    self.diagnostics.add(
-                        *struct_ident_id,
-                        ExpectedStruct {
-                            got: struct_type.computed(),
-                        },
-                    );
-                    return Type::Error;
-                };
-
-                self.check_struct_literal(
-                    id,
-                    |ty_ctx| {
-                        (
-                            &ty_ctx.get(struct_id).structural,
-                            Some(struct_id.syntax_id()),
-                        )
-                    },
-                    fields,
-                );
-                struct_type.computed()
-            }
+            } => self.infer_struct_literal(id, struct_ident_id, struct_type, fields),
             AirConstant::StructLiteral {
                 struct_type: None,
                 fields: struct_literal,
@@ -424,6 +401,91 @@ impl Typechecker {
                     .collect();
                 self.ty_ctx.structural_of(StructuralType { fields: types })
             }
+        }
+    }
+
+    fn infer_struct_literal(
+        &mut self,
+        id: SyntaxId,
+        struct_ident_id: &mut SyntaxId,
+        struct_type: &mut AirType,
+        fields: &mut [(Spanned<SmallString>, AirExpression)],
+    ) -> Type {
+        self.resolve_if_unresolved(struct_type);
+        let Ok((_producer_id, struct_id)) =
+            get_producer_and_struct(struct_type.as_view(&self.ty_ctx))
+        else {
+            self.diagnostics.add(
+                *struct_ident_id,
+                ExpectedStruct {
+                    got: struct_type.computed(),
+                },
+            );
+            return Type::Error;
+        };
+
+        // First check that the field names match
+        let result = check_fields_equal(
+            &mut self.diagnostics,
+            id,
+            Some(struct_id.syntax_id()),
+            &self.ty_ctx.get(struct_id).structural,
+            fields.iter().map(|(name, _)| name),
+        );
+        if let Err(()) = result {
+            return Type::Error;
+        }
+
+        // Then infer the types for each value in the literal, using `GenericInference` to resolve potential generics of the struct
+        let expected_fields = self.ty_ctx.get(struct_id).structural.fields.clone();
+        let mut inference = GenericInference::default();
+        for (ident, field) in fields.iter_mut() {
+            let expected = *expected_fields.get(ident).unwrap();
+            let resolved = inference.resolve_generic_type(&mut self.ty_ctx, expected);
+            // println!("expected: {} - resolved: {}", expected.as_view(&self.ty_ctx), resolved.as_view(&self.ty_ctx));
+            self.check_expression(field, resolved);
+
+            let result = inference.infer_generics(
+                expected.as_view(&self.ty_ctx),
+                field.r#type.as_view(&self.ty_ctx),
+            );
+            if let Err(err) = result {
+                err.write(id, &mut self.diagnostics);
+            }
+        }
+
+        // Once inference is complete, we can check that each type parameter has been inferred
+        let inferred_args = check_inference_types(
+            &mut self.diagnostics,
+            id,
+            inference.into_inferred(),
+            &self.ty_ctx.get(struct_id).type_parameters,
+        );
+
+        // TODO: Resolve the actual expected type using the inferred args and check that it matches the applied type!
+
+        // Now at this point everything has typechecked and we can construct the actual struct type
+        let expected_order = &self.ty_ctx.get(struct_id).structural.fields;
+        let mut fields = fields
+            .iter()
+            .map(|(ident, expr)| (ident.clone(), expr.r#type.computed()))
+            .collect::<Vec<_>>();
+        fields.sort_by_key(|(ident, _)| expected_order.get_index_of(ident).unwrap());
+        let fields = fields.into_iter().collect();
+        let structural = StructuralType { fields };
+
+        let r#struct = self.ty_ctx.get(struct_id);
+        let result = StructType {
+            ident: r#struct.ident.clone(),
+            type_parameters: r#struct.type_parameters.clone(),
+            structural,
+        };
+        let struct_ty = Type::Struct(self.ty_ctx.add(None, result));
+
+        if inferred_args.is_empty() {
+            struct_ty
+        } else {
+            self.ty_ctx.applied_of(struct_ty, inferred_args)
         }
     }
 
@@ -491,18 +553,26 @@ impl Typechecker {
                 fields: struct_literal,
             } => {
                 match expected {
-                    MaybeBounded::Type(Type::Structural(structural_id)) => self
-                        .check_struct_literal(
+                    MaybeBounded::Type(Type::Structural(structural_id)) => {
+                        let Ok(structural) = self.check_struct_literal(
                             id,
                             |ty_ctx| (ty_ctx.get(structural_id), None),
                             struct_literal,
-                        ),
-                    MaybeBounded::Bounded(Bound::Structural(structural_id)) => self
-                        .check_struct_literal(
+                        ) else {
+                            return Type::Error;
+                        };
+                        self.ty_ctx.structural_of(structural)
+                    }
+                    MaybeBounded::Bounded(Bound::Structural(structural_id)) => {
+                        let Ok(structural) = self.check_struct_literal(
                             id,
                             |ty_ctx| (ty_ctx.get(structural_id), None),
                             struct_literal,
-                        ),
+                        ) else {
+                            return Type::Error;
+                        };
+                        self.ty_ctx.structural_of(structural)
+                    }
                     _ => {
                         // the error will be created in check_expression
                         self.infer_constant(id, constant)
@@ -517,18 +587,15 @@ impl Typechecker {
         id: SyntaxId,
         get_expected: impl FnOnce(&TypeContext) -> (&T, Option<SyntaxId>),
         got: &mut Vec<(Spanned<SmallString>, AirExpression)>,
-    ) -> Type {
+    ) -> Result<StructuralType, ()> {
         let (expected, expected_def) = get_expected(&self.ty_ctx);
-        if let Err(()) = check_fields_equal(
+        check_fields_equal(
             &mut self.diagnostics,
             id,
             expected_def,
             expected,
             got.iter().map(|(name, _)| name),
-        ) {
-            return Type::Error;
-        }
-
+        )?;
         let expected_types = expected
             .fields()
             .map(|(ident, ty)| (ident.value.clone(), ty))
@@ -541,7 +608,7 @@ impl Typechecker {
             fields.insert(name.clone(), expression.r#type.computed());
         }
 
-        self.ty_ctx.structural_of(StructuralType { fields })
+        Ok(StructuralType { fields })
     }
 
     fn infer_binary_operator(
@@ -1089,7 +1156,7 @@ fn check_fields_equal<'a>(
     if did_report_error { Err(()) } else { Ok(()) }
 }
 
-fn check_inference_types(
+pub(super) fn check_inference_types(
     diagnostics: &mut Diagnostics,
     id: SyntaxId,
     inferred_types: FastMap<GenericId, Type>,
@@ -1111,4 +1178,19 @@ fn check_inference_types(
     let mut sorted = inferred_types.into_iter().collect::<Vec<_>>();
     sorted.sort_by_key(|(id, _)| id.0);
     sorted.into_iter().map(|(_, ty)| ty).collect()
+}
+
+fn get_producer_and_struct(
+    ty: TypeView,
+) -> Result<(Option<TypeId<ApplicationType>>, TypeId<StructType>), ()> {
+    match ty {
+        TypeView::Struct(struct_view) => Ok((None, struct_view.id)),
+        TypeView::Application(application) => {
+            match application.value.r#type.as_view(application.ctx) {
+                TypeView::Struct(struct_view) => Ok((Some(application.id), struct_view.id)),
+                _ => Err(()),
+            }
+        }
+        _ => Err(()),
+    }
 }

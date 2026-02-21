@@ -18,11 +18,12 @@ use crate::auryn::{
     ast::ast_node::{
         Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
         BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
-        ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition, Ident,
-        IfStatement, IfStatementElse, Item, LoopStatement, NumberLiteral, Parenthesis, Path,
-        PostfixOperation, PostfixOperator, PrefixNot, ReturnStatement, Root, Statement,
-        StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField, StructuralTypeField,
-        Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate, WhileStatement,
+        ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition,
+        GenericParameterList, Ident, IfStatement, IfStatementElse, Item, LoopStatement,
+        NumberLiteral, Parenthesis, Path, PostfixOperation, PostfixOperator, PrefixNot,
+        ReturnStatement, Root, Statement, StringLiteral, Struct, StructBody, StructLiteral,
+        StructLiteralField, StructuralTypeField, Type, TypeAlias, Value, ValueOrPostfix,
+        VariableUpdate, WhileStatement,
     },
     diagnostics::{
         diagnostic::Diagnostics,
@@ -47,7 +48,7 @@ pub fn query_globals(
     ast: Root,
     included_modules: impl IntoIterator<Item = (SmallString, AirModuleId)>,
 ) -> TransformerOutput {
-    let mut transformer = AstTransformer::new(Namespace::with_modules(included_modules));
+    let mut transformer = AstTransformer::new(Namespace::new_with_modules(included_modules));
     transformer.transform_root(ast);
     TransformerOutput {
         globals: transformer.globals,
@@ -323,10 +324,14 @@ impl AstTransformer {
             return;
         };
         let id = TypeId::new(ident.id);
+        let generics = struct_def.maybe_generics().ok().map_or(Vec::new(), |list| {
+            self.transform_generic_parameter_list(list)
+        });
+        let namespace = self.namespace.with_generics(generics.iter().cloned());
         let Ok(body) = struct_def.body() else {
             return;
         };
-        let Ok(fields) = self.transform_struct_body(body) else {
+        let Ok(fields) = self.transform_struct_body(&namespace, body) else {
             return;
         };
         self.globals.types.insert(
@@ -334,6 +339,7 @@ impl AstTransformer {
             AirType::Unresolved(UnresolvedType::Struct {
                 id: id.syntax_id(),
                 ident: ident.text.clone(),
+                generics,
                 fields,
             }),
         );
@@ -341,11 +347,12 @@ impl AstTransformer {
 
     fn transform_struct_body(
         &self,
+        namespace: &Namespace,
         body: StructBody,
     ) -> Result<Vec<(Spanned<SmallString>, UnresolvedType)>, AstError> {
         let fields = body
             .fields()
-            .map(|field| transform_field_to_unresolved(&self.namespace, field))
+            .map(|field| transform_field_to_unresolved(namespace, field))
             .collect::<Result<_, _>>()?;
         Ok(fields)
     }
@@ -359,25 +366,13 @@ impl AstTransformer {
         let generic_parameters = function_definition
             .maybe_generic_parameter_list()
             .ok()
-            .into_iter()
-            .flat_map(|list| {
-                list.parameters().filter_map(|param| {
-                    let ident = param.ident().ok()?;
-                    Some(ident.spanned_text())
-                })
-            })
-            .collect::<Vec<_>>();
+            .map_or(Vec::new(), |list| {
+                self.transform_generic_parameter_list(list)
+            });
 
-        let function_namespace = {
-            let mut namespace = self.namespace.clone();
-            for (index, ident) in generic_parameters.iter().cloned().enumerate() {
-                namespace.types.insert(
-                    ident.value,
-                    UserDefinedTypeId::Generic(types::GenericId(index)),
-                );
-            }
-            namespace
-        };
+        let function_namespace = self
+            .namespace
+            .with_generics(generic_parameters.iter().cloned());
 
         let Ok(parameters) = function_definition.parameter_list() else {
             return;
@@ -429,6 +424,18 @@ impl AstTransformer {
         self.globals
             .statics
             .insert(function_id.0, AirStaticValue::Function(function_id));
+    }
+
+    fn transform_generic_parameter_list(
+        &self,
+        list: GenericParameterList,
+    ) -> Vec<Spanned<SmallString>> {
+        list.parameters()
+            .filter_map(|param| {
+                let ident = param.ident().ok()?;
+                Some(ident.spanned_text())
+            })
+            .collect()
     }
 }
 
@@ -1074,12 +1081,32 @@ fn transform_to_unresolved(
             Err(err) => Err(err),
         },
         Type::UnitType(_) => Ok(UnresolvedType::Unit),
-        Type::Ident(ident) => ident
-            .ident()
-            .map(|token| match namespace.types.get(&token.text) {
+        Type::TypeRef(type_ref) => {
+            let token = type_ref.ident()?;
+            let ty = match namespace.types.get(&token.text) {
                 Some(def_id) => UnresolvedType::DefinedType(*def_id),
                 None => UnresolvedType::Ident(token.id, token.text.clone()),
-            }),
+            };
+
+            let generic_arguments = type_ref
+                .maybe_generic_args()
+                .iter()
+                .flat_map(|generic_args| {
+                    generic_args
+                        .types()
+                        .map(|ty| transform_to_unresolved(namespace, ty))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            if generic_arguments.is_empty() {
+                Ok(ty)
+            } else {
+                Ok(UnresolvedType::Application {
+                    id: type_ref.id(),
+                    r#type: Box::new(ty),
+                    generic_arguments,
+                })
+            }
+        }
     }
 }
 

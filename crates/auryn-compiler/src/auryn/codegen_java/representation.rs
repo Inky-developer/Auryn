@@ -8,7 +8,10 @@ use crate::{
             data::{AirFunction, AirFunctionId},
             typecheck::{
                 type_context::{TypeContext, TypeId},
-                types::{FunctionItemType, StructType, StructuralType, TypeView, TypeViewKind},
+                types::{
+                    ApplicationType, FunctionItemType, GenericId, StructType, StructuralType, Type,
+                    TypeView, TypeViewKind,
+                },
             },
         },
         input_files::InputFiles,
@@ -339,12 +342,23 @@ impl StructuralRepr {
 pub struct RepresentationCtx {
     pub(super) structural_types: FastMap<TypeId<StructuralType>, StructuralRepr>,
     pub(super) struct_types: FastMap<TypeId<StructType>, StructuralRepr>,
+    pub(super) application_types: FastMap<SmallString, StructuralRepr>,
 }
 
 impl RepresentationCtx {
+    pub fn get_representation(&mut self, air_type: TypeView) -> Option<Representation> {
+        self.get_representation_inner(air_type, &|_| {
+            unreachable!("Called with unresolved generic type `{air_type}`")
+        })
+    }
+
     /// Returns the representation of an auryn type for the jvm.
     /// Returns [`None`] if the type is not represented at runtime (because it is a compile time construct or zero-sized)
-    pub fn get_representation(&mut self, air_type: TypeView) -> Option<Representation> {
+    fn get_representation_inner(
+        &mut self,
+        air_type: TypeView,
+        resolve_generic: &impl Fn(GenericId) -> Type,
+    ) -> Option<Representation> {
         use TypeView::*;
         match air_type {
             I32 => Some(Representation::Integer),
@@ -353,7 +367,8 @@ impl RepresentationCtx {
             Bool => Some(Representation::Boolean),
             String => Some(Representation::string()),
             Array(content_type) => {
-                let content_repr = self.get_representation(content_type.element());
+                let content_repr =
+                    self.get_representation_inner(content_type.element(), resolve_generic);
                 match content_repr {
                     Some(repr) => Some(Representation::Array(Box::new(repr))),
                     None => todo!("Add representation for array of zero-sized types"),
@@ -364,10 +379,14 @@ impl RepresentationCtx {
                 .get_structural_repr(structural_type)
                 .to_representation(),
             Struct(struct_type) => self.get_struct_repr(struct_type).to_representation(),
+            Application(application) => self
+                .get_application_repr_inner(application, resolve_generic)
+                .to_representation(),
             FunctionItem(_) | Intrinsic(_) | Meta(_) | Module(_) => None,
-            Generic(_) => {
-                unreachable!("Called with unresolved generic type `{air_type}`")
-            }
+            Generic(view) => self.get_representation_inner(
+                resolve_generic(view.value.id).as_view(view.ctx),
+                resolve_generic,
+            ),
             Error => unreachable!("Called with error type"),
         }
     }
@@ -413,6 +432,82 @@ impl RepresentationCtx {
             self.structural_types.insert(ty.id, repr);
         }
         self.structural_types.get(&ty.id).unwrap()
+    }
+
+    pub fn get_application_repr(
+        &mut self,
+        application: TypeViewKind<'_, ApplicationType>,
+    ) -> &StructuralRepr {
+        self.get_application_repr_inner(application, &|_| panic!("No generics in scope"))
+    }
+
+    fn get_application_repr_inner(
+        &mut self,
+        application: TypeViewKind<'_, ApplicationType>,
+        resolve_generic: &dyn Fn(GenericId) -> Type,
+    ) -> &StructuralRepr {
+        let TypeView::Struct(struct_ty) = application.r#type.as_view(application.ctx) else {
+            unreachable!(
+                "Called with invalid application type {}",
+                application.r#type.as_view(application.ctx)
+            );
+        };
+
+        let resolved_arguments = application
+            .arguments
+            .iter()
+            .map(|ty| {
+                if let TypeView::Generic(generic) = ty.as_view(application.ctx) {
+                    resolve_generic(generic.value.id)
+                } else {
+                    *ty
+                }
+            })
+            .collect::<Vec<_>>();
+        let mut class_name = struct_ty.ident.to_string();
+        for type_arg in &resolved_arguments {
+            let ty_name = self
+                .get_representation(type_arg.as_view(application.ctx))
+                .map(|repr| repr.into_field_descriptor());
+            if let Some(ty_name) = ty_name.as_ref() {
+                write!(class_name, "${}", ty_name.mangled_name()).unwrap();
+            } else {
+                write!(class_name, "$0").unwrap();
+            }
+        }
+        let class_name: SmallString = class_name.into();
+
+        if !self.application_types.contains_key(&class_name) {
+            // We need to already insert something to prevent infinite recursion
+            // It is fine that the fields are empty, since they are not needed to compute the repr
+            self.application_types.insert(
+                class_name.clone(),
+                StructuralRepr {
+                    fields: Vec::new(),
+                    class_name: class_name.clone(),
+                    is_named: true,
+                    is_zero_sized: false,
+                },
+            );
+
+            let resolve_generic = &|id: GenericId| resolved_arguments[id.0];
+            let fields = struct_ty
+                .fields()
+                .flat_map(|(ident, ty)| {
+                    self.get_representation_inner(ty, resolve_generic)
+                        .map(|repr| (ident.value.clone(), repr))
+                })
+                .collect::<Vec<_>>();
+            let repr = StructuralRepr {
+                is_zero_sized: fields.is_empty(),
+                fields,
+                is_named: true,
+                class_name: class_name.clone(),
+            };
+            self.application_types.insert(class_name.clone(), repr);
+        }
+
+        self.application_types.get(&class_name).unwrap()
     }
 
     pub fn get_struct_repr(&mut self, ty: TypeViewKind<'_, StructType>) -> &StructuralRepr {

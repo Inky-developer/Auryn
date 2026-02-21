@@ -15,8 +15,8 @@ use crate::auryn::{
             bounds::{ArrayBound, Bound, StructuralBound},
             type_storage::Types,
             types::{
-                ArrayType, FunctionItemType, GenericType, MetaType, ModuleType, NumberLiteralType,
-                StructuralType, Type,
+                ApplicationType, ArrayType, FunctionItemType, GenericType, MetaType, ModuleType,
+                NumberLiteralType, StructuralType, Type,
             },
         },
     },
@@ -84,6 +84,10 @@ impl TypeContext {
 
     pub fn generic_of(&mut self, generic: GenericType) -> Type {
         Type::Generic(self.add((), generic))
+    }
+
+    pub fn applied_of(&mut self, r#type: Type, arguments: Vec<Type>) -> Type {
+        Type::Application(self.add((), ApplicationType { r#type, arguments }))
     }
 }
 

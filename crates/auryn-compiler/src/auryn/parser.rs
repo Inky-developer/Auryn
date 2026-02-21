@@ -674,6 +674,12 @@ impl Parser<'_> {
 
         self.expect(TokenKind::KeywordStruct)?;
         self.expect(TokenKind::Identifier)?;
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_recoverable(
+                TokenKind::BraceOpen.into(),
+                Self::parse_generic_parameter_list,
+            )?;
+        }
         self.parse_surrounded(
             TokenKind::BraceOpen,
             TokenKind::BraceClose,
@@ -704,7 +710,7 @@ impl Parser<'_> {
             TokenKind::BracketOpen => self.parse_array_type()?,
             TokenKind::ParensOpen => self.parse_unit_type()?,
             TokenKind::BraceOpen => self.parse_structural_type()?,
-            TokenKind::Identifier => self.parse_identifier()?,
+            TokenKind::Identifier => self.parse_type_ref()?,
             _ => {
                 self.push_error(ExpectedType {
                     got: self.peek().text.into(),
@@ -761,6 +767,29 @@ impl Parser<'_> {
         self.expect(TokenKind::ParensClose)?;
 
         self.finish_node(watcher, SyntaxNodeKind::UnitType);
+        Ok(())
+    }
+
+    fn parse_type_ref(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_type_arguments()?;
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::TypeRef);
+        Ok(())
+    }
+
+    fn parse_type_arguments(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.parse_surrounded(TokenKind::BracketOpen, TokenKind::BracketClose, |parser| {
+            parser.parse_separated(TokenKind::BraceClose, TokenKind::Comma, Self::parse_type)
+        })?;
+
+        self.finish_node(watcher, SyntaxNodeKind::TypeArguments);
         Ok(())
     }
 
@@ -1481,6 +1510,19 @@ mod tests {
                 some_value: I32,
                 b: ldaksjf
             }
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            struct Foo[T, U] {
+                some_value: T,
+                b: U
+            }
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            type Foo = []Bar[I32]
             "#
         ));
     }

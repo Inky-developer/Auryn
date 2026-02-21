@@ -13,7 +13,7 @@ syntax_tree:
 ||||Colon `:`
 ||||Whitespace ` `
 ||||16..20 Type
-|||||16..20 Ident
+|||||16..20 TypeRef
 ||||||Identifier `I32`
 ||||||Whitespace ` `
 ||||Equal `=`

@@ -22,7 +22,7 @@ syntax_tree:
 ||||||Colon `:`
 ||||||Whitespace ` `
 ||||||54..57 Type
-|||||||54..57 Ident
+|||||||54..57 TypeRef
 ||||||||Identifier `I32`
 |||||Comma `,`
 |||||Newline `\n`
@@ -32,7 +32,7 @@ syntax_tree:
 ||||||Colon `:`
 ||||||Whitespace ` `
 ||||||78..98 Type
-|||||||78..98 Ident
+|||||||78..98 TypeRef
 ||||||||Identifier `ldaksjf`
 ||||||||Newline `\n`
 ||||||||Whitespace `            `

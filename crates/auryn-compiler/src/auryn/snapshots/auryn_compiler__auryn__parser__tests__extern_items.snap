@@ -52,7 +52,7 @@ syntax_tree:
 |||||||||||Colon `:`
 |||||||||||Whitespace ` `
 |||||||||||161..164 Type
-||||||||||||161..164 Ident
+||||||||||||161..164 TypeRef
 |||||||||||||Identifier `Int`
 ||||||||Newline `\n`
 ||||||||Newline `\n`
@@ -75,7 +75,7 @@ syntax_tree:
 |||||||||||||Colon `:`
 |||||||||||||Whitespace ` `
 |||||||||||||208..211 Type
-||||||||||||||208..211 Ident
+||||||||||||||208..211 TypeRef
 |||||||||||||||Identifier `Int`
 ||||||||||||ParensClose `)`
 ||||||||||||Whitespace ` `
@@ -83,7 +83,7 @@ syntax_tree:
 ||||||||||||Arrow `->`
 ||||||||||||Whitespace ` `
 ||||||||||||216..222 Type
-|||||||||||||216..222 Ident
+|||||||||||||216..222 TypeRef
 ||||||||||||||Identifier `String`
 ||||||||Newline `\n`
 ||||||||Newline `\n`
@@ -144,7 +144,7 @@ syntax_tree:
 |||||||||||Colon `:`
 |||||||||||Whitespace ` `
 |||||||||||424..427 Type
-||||||||||||424..427 Ident
+||||||||||||424..427 TypeRef
 |||||||||||||Identifier `Foo`
 ||||||||Newline `\n`
 ||||||||Whitespace `                `
