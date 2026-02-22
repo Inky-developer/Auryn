@@ -786,7 +786,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.parse_surrounded(TokenKind::BracketOpen, TokenKind::BracketClose, |parser| {
-            parser.parse_separated(TokenKind::BraceClose, TokenKind::Comma, Self::parse_type)
+            parser.parse_separated(TokenKind::BracketClose, TokenKind::Comma, Self::parse_type)
         })?;
 
         self.finish_node(watcher, SyntaxNodeKind::TypeArguments);
@@ -1351,6 +1351,7 @@ mod tests {
     fn test_parse_assignment() {
         insta::assert_debug_snapshot!(verify_block("let helloworld = 1\n"));
         insta::assert_debug_snapshot!(verify_block("let helloworld: I32 = 1\n"));
+        insta::assert_debug_snapshot!(verify_block("let helloworld: I32[] = 1\n"));
     }
 
     #[test]

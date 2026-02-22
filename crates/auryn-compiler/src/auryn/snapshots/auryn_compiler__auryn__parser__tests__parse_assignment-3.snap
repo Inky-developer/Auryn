@@ -1,0 +1,30 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"let helloworld: I32[] = 1\\n\")"
+---
+syntax_tree:
+0..26 Root
+|0..26 Block
+||0..25 Statement
+|||0..25 Assignment
+||||KeywordLet `let`
+||||Whitespace ` `
+||||Identifier `helloworld`
+||||Colon `:`
+||||Whitespace ` `
+||||16..22 Type
+|||||16..22 TypeRef
+||||||Identifier `I32`
+||||||19..22 TypeArguments
+|||||||BracketOpen `[`
+|||||||BracketClose `]`
+|||||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||24..25 Expression
+|||||24..25 Value
+||||||24..25 NumberLiteral
+|||||||NumberLiteral `1`
+||Newline `\n`
+
+diagnostics:
