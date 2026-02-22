@@ -144,8 +144,8 @@ fn gen_to_string_method(info: &StructuralRepr, pool: &mut ConstantPoolBuilder) -
         },
     ]);
 
-    if info.is_named {
-        write_str(&mut assembler, &format!("{} {{ ", info.class_name));
+    if let Some(name) = &info.original_name {
+        write_str(&mut assembler, &format!("{} {{ ", name));
     } else {
         write_str(&mut assembler, "{ ");
     }

@@ -464,28 +464,11 @@ impl Typechecker {
 
         // TODO: Resolve the actual expected type using the inferred args and check that it matches the applied type!
 
-        // Now at this point everything has typechecked and we can construct the actual struct type
-        let expected_order = &self.ty_ctx.get(struct_id).structural.fields;
-        let mut fields = fields
-            .iter()
-            .map(|(ident, expr)| (ident.clone(), expr.r#type.computed()))
-            .collect::<Vec<_>>();
-        fields.sort_by_key(|(ident, _)| expected_order.get_index_of(ident).unwrap());
-        let fields = fields.into_iter().collect();
-        let structural = StructuralType { fields };
-
-        let r#struct = self.ty_ctx.get(struct_id);
-        let result = StructType {
-            ident: r#struct.ident.clone(),
-            type_parameters: r#struct.type_parameters.clone(),
-            structural,
-        };
-        let struct_ty = Type::Struct(self.ty_ctx.add(None, result));
-
         if inferred_args.is_empty() {
-            struct_ty
+            struct_type.computed()
         } else {
-            self.ty_ctx.applied_of(struct_ty, inferred_args)
+            self.ty_ctx
+                .applied_of(struct_type.computed(), inferred_args)
         }
     }
 

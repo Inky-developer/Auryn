@@ -245,7 +245,7 @@ impl Resolver {
                     ident: ident.clone(),
                     structural,
                 };
-                Type::Struct(ctx.ty_ctx.add(Some(*id), r#struct))
+                Type::Struct(ctx.ty_ctx.add(*id, r#struct))
             }
             UnresolvedType::Application {
                 id: _,

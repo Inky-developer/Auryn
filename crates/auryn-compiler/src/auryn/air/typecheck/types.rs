@@ -391,7 +391,7 @@ pub struct StructType {
 }
 
 impl TypeData for StructType {
-    type Storage = CombinedStorage<Self>;
+    type Storage = NominalStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {

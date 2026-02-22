@@ -323,12 +323,16 @@ pub struct MethodRepr {
 #[derive(Debug, Clone)]
 pub struct StructuralRepr {
     pub fields: Vec<(SmallString, Representation)>,
+    pub original_name: Option<SmallString>,
     pub class_name: SmallString,
-    pub is_named: bool,
     pub is_zero_sized: bool,
 }
 
 impl StructuralRepr {
+    pub fn friendly_name(&self) -> &str {
+        &self.original_name.as_ref().unwrap_or(&self.class_name)
+    }
+
     pub fn to_representation(&self) -> Option<Representation> {
         if self.is_zero_sized {
             None
@@ -484,8 +488,8 @@ impl RepresentationCtx {
                 class_name.clone(),
                 StructuralRepr {
                     fields: Vec::new(),
+                    original_name: Some(struct_ty.ident.clone()),
                     class_name: class_name.clone(),
-                    is_named: true,
                     is_zero_sized: false,
                 },
             );
@@ -501,8 +505,8 @@ impl RepresentationCtx {
             let repr = StructuralRepr {
                 is_zero_sized: fields.is_empty(),
                 fields,
-                is_named: true,
                 class_name: class_name.clone(),
+                original_name: Some(struct_ty.ident.clone()),
             };
             self.application_types.insert(class_name.clone(), repr);
         }
@@ -520,7 +524,7 @@ impl RepresentationCtx {
                 StructuralRepr {
                     fields: Vec::new(),
                     class_name: class_name.clone(),
-                    is_named: true,
+                    original_name: Some(class_name.clone()),
                     is_zero_sized: false,
                 },
             );
@@ -534,7 +538,7 @@ impl RepresentationCtx {
             let repr = StructuralRepr {
                 is_zero_sized: fields.is_empty(),
                 fields,
-                is_named: true,
+                original_name: Some(class_name.clone()),
                 class_name,
             };
             self.struct_types.insert(ty.id, repr);
@@ -572,7 +576,7 @@ impl RepresentationCtx {
         StructuralRepr {
             is_zero_sized: fields.is_empty(),
             fields,
-            is_named: false,
+            original_name: None,
             class_name: name.into(),
         }
     }

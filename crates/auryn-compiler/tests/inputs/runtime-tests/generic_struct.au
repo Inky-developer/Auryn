@@ -1,0 +1,15 @@
+// expect-output:
+// Foo { value: Hi }
+// Foo { value: true }
+
+struct Foo[T] {
+	value: T
+}
+
+fn main() {
+	let f = Foo { value: "Hi" }
+	let g: Foo[Bool] = Foo { value: true }
+
+	print(f)
+	print(g)
+}
