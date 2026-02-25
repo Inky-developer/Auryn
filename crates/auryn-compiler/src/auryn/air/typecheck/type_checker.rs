@@ -8,8 +8,8 @@ use crate::auryn::{
             Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirFunctionId, AirGenericArguments, AirLocalValueId,
             AirNode, AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType,
-            AirValueId, Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId,
-            UnaryOperator, Update,
+            AirTypeProducer, AirValueId, Assignment, Call, Globals, Intrinsic, ReturnValue,
+            TypeAliasId, UnaryOperator, Update,
         },
         namespace::UserDefinedTypeId,
         typecheck::{
@@ -22,7 +22,7 @@ use crate::auryn::{
                 StructType, StructuralType, Type, TypeView,
             },
         },
-        unresolved_type::UnresolvedType,
+        unresolved_type::{UnresolvedType, UnresolvedTypeProducer},
     },
     diagnostics::{
         diagnostic::Diagnostics,
@@ -141,6 +141,16 @@ impl Typechecker {
     }
 
     fn compute_defined_types(&mut self, globals: &mut Globals) {
+        for type_producer in globals.type_producers.values_mut() {
+            match type_producer {
+                AirTypeProducer::Unresolved(unresolved) => {
+                    self.resolve_type_producer(unresolved);
+                    *type_producer = AirTypeProducer::Resolved;
+                }
+                AirTypeProducer::Resolved => unreachable!("Huh?"),
+            }
+        }
+
         for r#type in globals.types.values_mut() {
             self.resolve_if_unresolved(r#type);
         }
@@ -176,6 +186,19 @@ impl Typechecker {
 }
 
 impl Typechecker {
+    fn resolve_type_producer(&mut self, producer: &UnresolvedTypeProducer) -> TypeId<StructType> {
+        let mut ctx = resolver::Context {
+            ty_ctx: &mut self.ty_ctx,
+            diagnostics: &mut self.diagnostics,
+            statics: &self.statics,
+            type_aliasses: &self.type_aliasses,
+            type_parameters: &self.function.type_variables,
+        };
+        self.resolver
+            .resolve_type_producer(&mut ctx, producer)
+            .expect("Should not fail")
+    }
+
     fn try_resolve_type(&mut self, unresolved: &UnresolvedType) -> ResolverResult {
         let mut ctx = resolver::Context {
             ty_ctx: &mut self.ty_ctx,
@@ -464,12 +487,7 @@ impl Typechecker {
 
         // TODO: Resolve the actual expected type using the inferred args and check that it matches the applied type!
 
-        if inferred_args.is_empty() {
-            struct_type.computed()
-        } else {
-            self.ty_ctx
-                .applied_of(struct_type.computed(), inferred_args)
-        }
+        self.ty_ctx.applied_of(struct_id, inferred_args)
     }
 
     fn check_constant(
@@ -1165,15 +1183,9 @@ pub(super) fn check_inference_types(
 
 fn get_producer_and_struct(
     ty: TypeView,
-) -> Result<(Option<TypeId<ApplicationType>>, TypeId<StructType>), ()> {
+) -> Result<(TypeId<ApplicationType>, TypeId<StructType>), ()> {
     match ty {
-        TypeView::Struct(struct_view) => Ok((None, struct_view.id)),
-        TypeView::Application(application) => {
-            match application.value.r#type.as_view(application.ctx) {
-                TypeView::Struct(struct_view) => Ok((Some(application.id), struct_view.id)),
-                _ => Err(()),
-            }
-        }
+        TypeView::Application(application) => Ok((application.id, application.value.r#type)),
         _ => Err(()),
     }
 }

@@ -244,6 +244,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

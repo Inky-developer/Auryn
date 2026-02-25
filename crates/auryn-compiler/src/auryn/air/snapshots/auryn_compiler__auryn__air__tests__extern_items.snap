@@ -70,6 +70,7 @@ expression: "compile(\"unsafe extern \\\"java\\\" { [\\\"java/lang/Foo\\\"] type
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {},
         },

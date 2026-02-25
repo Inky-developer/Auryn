@@ -447,6 +447,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

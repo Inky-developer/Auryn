@@ -298,6 +298,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

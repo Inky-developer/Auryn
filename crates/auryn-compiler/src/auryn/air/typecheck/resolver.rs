@@ -14,7 +14,7 @@ use crate::auryn::{
                 GenericType, ModuleType, StructType, StructuralType, Type,
             },
         },
-        unresolved_type::{UnresolvedFunction, UnresolvedType},
+        unresolved_type::{UnresolvedFunction, UnresolvedType, UnresolvedTypeProducer},
     },
     diagnostics::{diagnostic::Diagnostics, errors::UndefinedVariable},
     syntax_id::SyntaxId,
@@ -55,7 +55,10 @@ impl Resolver {
             UnresolvedType::DefinedType(user_defined_type_id) => match user_defined_type_id {
                 UserDefinedTypeId::Extern(type_id) => Type::Extern(*type_id),
                 UserDefinedTypeId::Module(type_id) => Type::Module(*type_id),
-                UserDefinedTypeId::Struct(type_id) => Type::Struct(*type_id),
+                UserDefinedTypeId::Struct(struct_id) => {
+                    // TODO: Verify that the number of generic arguments (And I guess their bounds) are correct
+                    ctx.ty_ctx.applied_of(*struct_id, Vec::new())
+                }
                 UserDefinedTypeId::TypeAlias(id) => match &ctx.type_aliasses[id] {
                     AirType::Inferred => unreachable!(),
                     AirType::Unresolved(_) => {
@@ -215,11 +218,34 @@ impl Resolver {
                 };
                 ctx.ty_ctx.structural_of(ty)
             }
-            UnresolvedType::Struct {
+            UnresolvedType::Application {
+                id: _,
+                r#type,
+                generic_arguments,
+            } => {
+                let generic_type = self.resolve_type_producer(ctx, r#type)?;
+                let generic_arguments = generic_arguments
+                    .iter()
+                    .map(|arg| self.resolve(ctx, arg))
+                    .collect::<Result<Vec<_>, _>>()?;
+                // TODO: Add error message if the type cannot accept the generic arguments
+                ctx.ty_ctx.applied_of(generic_type, generic_arguments)
+            }
+        })
+    }
+
+    pub fn resolve_type_producer(
+        &mut self,
+        ctx: &mut Context,
+        unresolved: &UnresolvedTypeProducer,
+    ) -> Result<TypeId<StructType>, ResolverError> {
+        match unresolved {
+            UnresolvedTypeProducer::DefinedType(type_id) => Ok(*type_id),
+            UnresolvedTypeProducer::Struct {
                 id,
                 ident,
-                fields,
                 generics,
+                fields,
             } => {
                 let generics = generics
                     .iter()
@@ -245,22 +271,9 @@ impl Resolver {
                     ident: ident.clone(),
                     structural,
                 };
-                Type::Struct(ctx.ty_ctx.add(*id, r#struct))
+                Ok(ctx.ty_ctx.add(*id, r#struct))
             }
-            UnresolvedType::Application {
-                id: _,
-                r#type,
-                generic_arguments,
-            } => {
-                let generic_type = self.resolve(ctx, r#type)?;
-                let generic_arguments = generic_arguments
-                    .iter()
-                    .map(|arg| self.resolve(ctx, arg))
-                    .collect::<Result<Vec<_>, _>>()?;
-                // TODO: Add error message if the type cannot accept the generic arguments
-                ctx.ty_ctx.applied_of(generic_type, generic_arguments)
-            }
-        })
+        }
     }
 
     fn resolve_user_defined(

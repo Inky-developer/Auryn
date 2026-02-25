@@ -4,6 +4,7 @@ use crate::auryn::{
     air::{
         data::{FunctionReference, UnresolvedExternMember},
         namespace::{Namespace, UserDefinedTypeId},
+        typecheck::{type_context::TypeId, types::StructType},
     },
     syntax_id::{Spanned, SyntaxId},
 };
@@ -27,13 +28,6 @@ pub enum UnresolvedType {
     Array(SyntaxId, Box<UnresolvedType>),
     /// A structural type like {a: I32, b: I64}
     Structural(Vec<(Spanned<SmallString>, UnresolvedType)>),
-    /// A nominal (named) structural type
-    Struct {
-        id: SyntaxId,
-        ident: SmallString,
-        generics: Vec<Spanned<SmallString>>,
-        fields: Vec<(Spanned<SmallString>, UnresolvedType)>,
-    },
     Unit,
     /// A function type
     Function(UnresolvedFunction),
@@ -50,8 +44,19 @@ pub enum UnresolvedType {
     /// A type constructor that gets called with some arguments, like `Foo[I32]`
     Application {
         id: SyntaxId,
-        r#type: Box<UnresolvedType>,
+        r#type: Box<UnresolvedTypeProducer>,
         generic_arguments: Vec<UnresolvedType>,
+    },
+}
+
+#[derive(Debug)]
+pub enum UnresolvedTypeProducer {
+    DefinedType(TypeId<StructType>),
+    Struct {
+        id: SyntaxId,
+        ident: SmallString,
+        generics: Vec<Spanned<SmallString>>,
+        fields: Vec<(Spanned<SmallString>, UnresolvedType)>,
     },
 }
 
@@ -71,13 +76,7 @@ impl UnresolvedType {
                 namespace: _,
             } => {}
             Array(_, unresolved_type) => unresolved_type.visit_contained_types(visitor),
-            Struct {
-                fields,
-                generics: _,
-                id: _,
-                ident: _,
-            }
-            | Structural(fields) => {
+            Structural(fields) => {
                 for (_, ty) in fields {
                     ty.visit_contained_types(visitor);
                 }
@@ -126,6 +125,24 @@ impl UnresolvedType {
                     arg.visit_contained_types(visitor);
                 }
             }
+        }
+    }
+}
+
+impl UnresolvedTypeProducer {
+    pub fn visit_contained_types(&self, visitor: &mut impl FnMut(&UnresolvedType)) {
+        match self {
+            UnresolvedTypeProducer::Struct {
+                id: _,
+                ident: _,
+                generics: _,
+                fields,
+            } => {
+                for (_, field) in fields {
+                    field.visit_contained_types(visitor);
+                }
+            }
+            UnresolvedTypeProducer::DefinedType(_type_id) => {}
         }
     }
 }

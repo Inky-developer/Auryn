@@ -121,7 +121,10 @@ impl<T> TypeStorage<T> for NominalStorage<T> {
     }
 
     fn get(&self, id: TypeId<T>) -> &T {
-        &self.data[&id]
+        match self.data.get(&id) {
+            Some(value) => value,
+            None => panic!("No entry found for key {id:?}"),
+        }
     }
 }
 

@@ -329,10 +329,6 @@ pub struct StructuralRepr {
 }
 
 impl StructuralRepr {
-    pub fn friendly_name(&self) -> &str {
-        &self.original_name.as_ref().unwrap_or(&self.class_name)
-    }
-
     pub fn to_representation(&self) -> Option<Representation> {
         if self.is_zero_sized {
             None
@@ -382,7 +378,6 @@ impl RepresentationCtx {
             Structural(structural_type) => self
                 .get_structural_repr(structural_type)
                 .to_representation(),
-            Struct(struct_type) => self.get_struct_repr(struct_type).to_representation(),
             Application(application) => self
                 .get_application_repr_inner(application, resolve_generic)
                 .to_representation(),
@@ -450,12 +445,7 @@ impl RepresentationCtx {
         application: TypeViewKind<'_, ApplicationType>,
         resolve_generic: &dyn Fn(GenericId) -> Type,
     ) -> &StructuralRepr {
-        let TypeView::Struct(struct_ty) = application.r#type.as_view(application.ctx) else {
-            unreachable!(
-                "Called with invalid application type {}",
-                application.r#type.as_view(application.ctx)
-            );
-        };
+        let struct_ty = application.ctx.get(application.r#type);
 
         let resolved_arguments = application
             .arguments
@@ -496,9 +486,11 @@ impl RepresentationCtx {
 
             let resolve_generic = &|id: GenericId| resolved_arguments[id.0];
             let fields = struct_ty
-                .fields()
+                .structural
+                .fields
+                .iter()
                 .flat_map(|(ident, ty)| {
-                    self.get_representation_inner(ty, resolve_generic)
+                    self.get_representation_inner(ty.as_view(application.ctx), resolve_generic)
                         .map(|repr| (ident.value.clone(), repr))
                 })
                 .collect::<Vec<_>>();
@@ -512,38 +504,6 @@ impl RepresentationCtx {
         }
 
         self.application_types.get(&class_name).unwrap()
-    }
-
-    pub fn get_struct_repr(&mut self, ty: TypeViewKind<'_, StructType>) -> &StructuralRepr {
-        if !self.struct_types.contains_key(&ty.id) {
-            let class_name = ty.ident.clone();
-            // We need to already insert something to prevent infinite recursion
-            // It is fine that the fields are empty, since they are not needed to compute the repr
-            self.struct_types.insert(
-                ty.id,
-                StructuralRepr {
-                    fields: Vec::new(),
-                    class_name: class_name.clone(),
-                    original_name: Some(class_name.clone()),
-                    is_zero_sized: false,
-                },
-            );
-            let fields = ty
-                .fields()
-                .flat_map(|(ident, ty)| {
-                    self.get_representation(ty)
-                        .map(|repr| (ident.value.clone(), repr))
-                })
-                .collect::<Vec<_>>();
-            let repr = StructuralRepr {
-                is_zero_sized: fields.is_empty(),
-                fields,
-                original_name: Some(class_name.clone()),
-                class_name,
-            };
-            self.struct_types.insert(ty.id, repr);
-        }
-        self.struct_types.get(&ty.id).unwrap()
     }
 
     fn compute_structural_repr(

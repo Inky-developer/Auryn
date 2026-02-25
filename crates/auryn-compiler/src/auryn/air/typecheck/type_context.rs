@@ -16,7 +16,7 @@ use crate::auryn::{
             type_storage::Types,
             types::{
                 ApplicationType, ArrayType, FunctionItemType, GenericType, MetaType, ModuleType,
-                NumberLiteralType, StructuralType, Type,
+                NumberLiteralType, StructType, StructuralType, Type,
             },
         },
     },
@@ -86,7 +86,7 @@ impl TypeContext {
         Type::Generic(self.add((), generic))
     }
 
-    pub fn applied_of(&mut self, r#type: Type, arguments: Vec<Type>) -> Type {
+    pub fn applied_of(&mut self, r#type: TypeId<StructType>, arguments: Vec<Type>) -> Type {
         Type::Application(self.add((), ApplicationType { r#type, arguments }))
     }
 }

@@ -236,6 +236,7 @@ expression: "compile_wrapped(\"print(1)\")"
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

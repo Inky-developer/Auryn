@@ -120,10 +120,6 @@ define_types! {
     /// An application is basically a type-level function call.
     /// For example `Foo[I32]` where `Foo` is a struct.
     Application(ApplicationType),
-    /// The type of the value that gets created when a [`StructItem`] is instantiated.
-    /// The distinction is that a [`StructItem`] has type parameters, while a struct type
-    /// has type arguments.
-    Struct(StructType),
     Module(ModuleType),
     /// Represents the type of a type, also zero sized, because it is a compile-time only construct.
     Meta(MetaType),
@@ -143,8 +139,8 @@ impl Type {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Structural(_) | Struct(_) | Module(_) | Meta(_) | Generic(_)
-            | Application(_) | Error => None,
+            | Extern(_) | Structural(_) | Module(_) | Meta(_) | Generic(_) | Application(_)
+            | Error => None,
         }
     }
 }
@@ -160,9 +156,6 @@ impl<'a> TypeView<'a> {
             TypeView::Structural(structural_type) => structural_type
                 .get_member(ident)
                 .map(|it| it.as_view(structural_type.ctx)),
-            TypeView::Struct(r#struct) => r#struct
-                .get_member(ident)
-                .map(|it| it.as_view(r#struct.ctx)),
             TypeView::Meta(meta_type) => match meta_type.inner() {
                 TypeView::Extern(extern_type) => extern_type
                     .value
@@ -411,19 +404,18 @@ impl StructType {
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct ApplicationType {
-    pub r#type: Type,
+    pub r#type: TypeId<StructType>,
     pub arguments: Vec<Type>,
 }
 
 impl TypeData for ApplicationType {
     type Storage = StructuralStorage<Self>;
 
-    fn visit(&self, visitor: &mut impl FnMut(Type)) {
+    fn visit(&self, _: &mut impl FnMut(Type)) {
         let ApplicationType {
-            r#type,
+            r#type: _,
             arguments: _,
         } = self;
-        visitor(*r#type);
     }
 }
 
@@ -583,17 +575,21 @@ impl<'a> Display for TypeViewKind<'a, StructuralType> {
 
 impl<'a> Display for TypeViewKind<'a, ApplicationType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}[", self.r#type.as_view(self.ctx))?;
+        write!(f, "struct {}", self.ctx.get(self.r#type).ident)?;
 
-        for (index, arg) in self.arguments.iter().enumerate() {
-            if index != 0 {
-                write!(f, ", ")?;
+        if !self.arguments.is_empty() {
+            write!(f, "[")?;
+            for (index, arg) in self.arguments.iter().enumerate() {
+                if index != 0 {
+                    write!(f, ", ")?;
+                }
+
+                write!(f, "{}", arg.as_view(self.ctx))?;
             }
-
-            write!(f, "{}", arg.as_view(self.ctx))?;
+            write!(f, "]")?;
         }
 
-        write!(f, "]")
+        Ok(())
     }
 }
 
@@ -617,7 +613,6 @@ impl Display for TypeView<'_> {
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
             TypeView::Module(module_type) => write!(f, "module {}", module_type.name),
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
-            TypeView::Struct(r#struct) => write!(f, "struct {}", r#struct.value.ident),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Generic(generic) => write!(f, "{}", generic.value.ident.value),
             TypeView::Application(inner) => Display::fmt(&inner, f),

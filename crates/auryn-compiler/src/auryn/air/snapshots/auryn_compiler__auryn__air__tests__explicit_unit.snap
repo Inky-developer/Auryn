@@ -483,6 +483,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

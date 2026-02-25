@@ -95,37 +95,6 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                 },
             },
             types: {
-                Struct(
-                    TypeId {
-                        id: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
-                                ),
-                            ),
-                            number: Some(
-                                69499994249545,
-                            ),
-                        },
-                        kind: "auryn_compiler::auryn::air::typecheck::types::StructType",
-                    },
-                ): Computed(
-                    Struct(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: Some(
-                                    69499994249545,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::StructType",
-                        },
-                    ),
-                ),
                 Module(
                     TypeId {
                         id: SyntaxId {
@@ -157,6 +126,21 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                         },
                     ),
                 ),
+            },
+            type_producers: {
+                TypeId {
+                    id: SyntaxId {
+                        file_id: Some(
+                            FileId(
+                                1,
+                            ),
+                        ),
+                        number: Some(
+                            69499994249545,
+                        ),
+                    },
+                    kind: "auryn_compiler::auryn::air::typecheck::types::StructType",
+                }: Resolved,
             },
             type_aliases: {},
             statics: {

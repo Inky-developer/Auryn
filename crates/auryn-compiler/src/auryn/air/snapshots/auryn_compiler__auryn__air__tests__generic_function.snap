@@ -411,6 +411,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

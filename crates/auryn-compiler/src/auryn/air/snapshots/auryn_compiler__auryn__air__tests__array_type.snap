@@ -307,6 +307,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

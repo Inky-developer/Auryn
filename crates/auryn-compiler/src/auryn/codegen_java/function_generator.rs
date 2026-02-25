@@ -382,7 +382,6 @@ impl FunctionGenerator<'_> {
                 fields,
             } => {
                 let info = match result_type {
-                    TypeView::Struct(ty) => self.repr_ctx.get_struct_repr(ty).clone(),
                     TypeView::Structural(ty) => self.repr_ctx.get_structural_repr(ty).clone(),
                     TypeView::Application(application) => {
                         self.repr_ctx.get_application_repr(application).clone()
@@ -642,7 +641,7 @@ impl FunctionGenerator<'_> {
         let value_repr = self.generate_expression(&accessor.value);
 
         match accessor.value.r#type.as_view(self.parent.ty_ctx()) {
-            TypeView::Structural(_) | TypeView::Struct(_) => {
+            TypeView::Structural(_) => {
                 let Some(result_repr) = result_repr else {
                     if let Some(value_repr) = value_repr {
                         self.assembler.add(Instruction::Pop(value_repr.category()));

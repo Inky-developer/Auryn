@@ -398,6 +398,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

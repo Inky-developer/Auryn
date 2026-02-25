@@ -327,6 +327,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                     ),
                 ),
             },
+            type_producers: {},
             type_aliases: {},
             statics: {
                 AirStaticValueId(

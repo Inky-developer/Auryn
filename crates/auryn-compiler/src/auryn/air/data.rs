@@ -6,10 +6,10 @@ use crate::auryn::{
     air::{
         namespace::UserDefinedTypeId,
         typecheck::{
-            type_context::TypeContext,
-            types::{FunctionItemType, IntrinsicType, Type, TypeView, TypeViewKind},
+            type_context::{TypeContext, TypeId},
+            types::{FunctionItemType, IntrinsicType, StructType, Type, TypeView, TypeViewKind},
         },
-        unresolved_type::UnresolvedType,
+        unresolved_type::{UnresolvedType, UnresolvedTypeProducer},
     },
     file_id::FileId,
     syntax_id::{Spanned, SyntaxId},
@@ -20,6 +20,7 @@ use crate::auryn::{
 pub struct Globals {
     pub functions: FastMap<AirFunctionId, AirFunction>,
     pub types: FastMap<UserDefinedTypeId, AirType>,
+    pub type_producers: FastMap<TypeId<StructType>, AirTypeProducer>,
     pub type_aliases: FastMap<TypeAliasId, AirType>,
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
@@ -29,11 +30,13 @@ impl Globals {
         let Globals {
             functions,
             types,
+            type_producers,
             type_aliases,
             statics,
         } = other;
         self.functions.extend(functions);
         self.types.extend(types);
+        self.type_producers.extend(type_producers);
         self.type_aliases.extend(type_aliases);
         self.statics.extend(statics);
     }
@@ -242,6 +245,12 @@ impl AirType {
             _ => unreachable!("Type should be computed at this point"),
         }
     }
+}
+
+#[derive(Debug)]
+pub enum AirTypeProducer {
+    Unresolved(UnresolvedTypeProducer),
+    Resolved,
 }
 
 #[must_use]

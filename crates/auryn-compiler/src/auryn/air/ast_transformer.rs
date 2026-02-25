@@ -8,12 +8,13 @@ use crate::auryn::{
             self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirGenericArguments, AirLocalValueId, AirModuleId,
             AirNode, AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId,
-            AirType, AirValueId, Call, ExternFunctionKind, FunctionReference, Globals, ReturnValue,
-            TypeAliasId, UnaryOperation, UnaryOperator, UnresolvedExternMember,
+            AirType, AirTypeProducer, AirValueId, Call, ExternFunctionKind, FunctionReference,
+            Globals, ReturnValue, TypeAliasId, UnaryOperation, UnaryOperator,
+            UnresolvedExternMember,
         },
         namespace::{Namespace, UserDefinedTypeId},
         typecheck::{type_context::TypeId, types},
-        unresolved_type::{UnresolvedFunction, UnresolvedType},
+        unresolved_type::{UnresolvedFunction, UnresolvedType, UnresolvedTypeProducer},
     },
     ast::ast_node::{
         Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
@@ -334,9 +335,9 @@ impl AstTransformer {
         let Ok(fields) = self.transform_struct_body(&namespace, body) else {
             return;
         };
-        self.globals.types.insert(
-            UserDefinedTypeId::Struct(id),
-            AirType::Unresolved(UnresolvedType::Struct {
+        self.globals.type_producers.insert(
+            id,
+            AirTypeProducer::Unresolved(UnresolvedTypeProducer::Struct {
                 id: id.syntax_id(),
                 ident: ident.text.clone(),
                 generics,
@@ -1100,9 +1101,12 @@ fn transform_to_unresolved(
             if generic_arguments.is_empty() {
                 Ok(ty)
             } else {
+                let UnresolvedType::DefinedType(UserDefinedTypeId::Struct(struct_id)) = ty else {
+                    todo!("Handle this error case");
+                };
                 Ok(UnresolvedType::Application {
                     id: type_ref.id(),
-                    r#type: Box::new(ty),
+                    r#type: Box::new(UnresolvedTypeProducer::DefinedType(struct_id)),
                     generic_arguments,
                 })
             }
