@@ -16,7 +16,10 @@ use crate::auryn::{
         },
         unresolved_type::{UnresolvedFunction, UnresolvedType, UnresolvedTypeProducer},
     },
-    diagnostics::{diagnostic::Diagnostics, errors::UndefinedVariable},
+    diagnostics::{
+        diagnostic::Diagnostics,
+        errors::{MismatchedTypeArgumentCount, UndefinedVariable},
+    },
     syntax_id::SyntaxId,
 };
 
@@ -35,9 +38,18 @@ pub struct Context<'a> {
     pub type_parameters: &'a Vec<GenericType>,
 }
 
+#[derive(Debug)]
+pub struct TypeProducerInfo {
+    pub parameter_count: usize,
+    pub definition_id: SyntaxId,
+}
+
 #[derive(Debug, Default)]
 pub struct Resolver {
     current_generic_parameters: Vec<GenericType>,
+    /// Info about type producers which might not yet be resolved.
+    /// Must be filled in from the outside for the resolver to able to resolve type applications.
+    pub type_producer_info: FastMap<TypeId<StructType>, TypeProducerInfo>,
 }
 
 impl Resolver {
@@ -219,16 +231,28 @@ impl Resolver {
                 ctx.ty_ctx.structural_of(ty)
             }
             UnresolvedType::Application {
-                id: _,
+                id,
                 r#type,
                 generic_arguments,
             } => {
                 let generic_type = self.resolve_type_producer(ctx, r#type)?;
+                let info = &self.type_producer_info[&generic_type];
+                let provided = generic_arguments.len();
+                if provided != info.parameter_count {
+                    ctx.diagnostics.add(
+                        *id,
+                        MismatchedTypeArgumentCount {
+                            definition_id: info.definition_id,
+                            expected: info.parameter_count,
+                            got: provided,
+                        },
+                    );
+                    return Ok(Type::Error);
+                }
                 let generic_arguments = generic_arguments
                     .iter()
                     .map(|arg| self.resolve(ctx, arg))
                     .collect::<Result<Vec<_>, _>>()?;
-                // TODO: Add error message if the type cannot accept the generic arguments
                 ctx.ty_ctx.applied_of(generic_type, generic_arguments)
             }
         })
@@ -259,6 +283,7 @@ impl Resolver {
                 self.current_generic_parameters.clear();
                 self.current_generic_parameters
                     .extend(generics.iter().cloned());
+
                 let structural = StructuralType {
                     fields: fields
                         .iter()

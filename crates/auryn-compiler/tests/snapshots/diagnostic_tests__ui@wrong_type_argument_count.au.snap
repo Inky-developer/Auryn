@@ -1,0 +1,16 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "struct Pair[A, B] {\n\tfirst: A,\n\tsecond: B\n}\n\nstruct Foo {\n\tvalue: Pair[I32]\n}\n\nfn main() {}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/wrong_type_argument_count.au
+---
+Error: Wrong number of type arguments
+   ╭─[ main:7:9 ]
+   │
+ 1 │ struct Pair[A, B] {
+   │        ──┬─  
+   │          ╰─── Type is defined here with 2 type parameters
+   │ 
+ 7 │     value: Pair[I32]
+   │            ─────┬────  
+   │                 ╰────── Expected 2 type arguments but got 1
+───╯

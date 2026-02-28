@@ -344,3 +344,15 @@ diag! {
         generic_name: SmallString
     }
 }
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Wrong number of type arguments")]
+    #[message("Expected {expected} type argument{} but got {got}", pluralize(*expected, "", "s"))]
+    #[label(Label::new(definition_id).with_message(format!("Type is defined here with {expected} type parameter{}", pluralize(*expected, "", "s"))))]
+    pub struct MismatchedTypeArgumentCount {
+        definition_id: SyntaxId,
+        expected: usize,
+        got: usize,
+    }
+}

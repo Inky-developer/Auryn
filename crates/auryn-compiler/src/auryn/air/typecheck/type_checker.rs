@@ -15,7 +15,7 @@ use crate::auryn::{
         typecheck::{
             bounds::{Bound, BoundView, HasStructuralFields, MaybeBounded},
             generics::GenericInference,
-            resolver::{self, Resolver, ResolverError, ResolverResult},
+            resolver::{self, Resolver, ResolverError, ResolverResult, TypeProducerInfo},
             type_context::{TypeContext, TypeId},
             types::{
                 ApplicationType, FunctionItemType, FunctionParameters, GenericId, GenericType,
@@ -141,6 +141,26 @@ impl Typechecker {
     }
 
     fn compute_defined_types(&mut self, globals: &mut Globals) {
+        for type_producer in globals.type_producers.values() {
+            match type_producer {
+                AirTypeProducer::Unresolved(UnresolvedTypeProducer::Struct {
+                    id,
+                    generics,
+                    ..
+                }) => {
+                    self.resolver.type_producer_info.insert(
+                        TypeId::new(*id),
+                        TypeProducerInfo {
+                            parameter_count: generics.len(),
+                            definition_id: *id,
+                        },
+                    );
+                }
+                AirTypeProducer::Unresolved(UnresolvedTypeProducer::DefinedType(_))
+                | AirTypeProducer::Resolved => {}
+            }
+        }
+
         for type_producer in globals.type_producers.values_mut() {
             match type_producer {
                 AirTypeProducer::Unresolved(unresolved) => {

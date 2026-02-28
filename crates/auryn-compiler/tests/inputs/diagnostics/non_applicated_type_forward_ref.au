@@ -1,0 +1,10 @@
+struct Foo {
+	inner: Bar,
+	value: I32
+}
+
+struct Bar[T] {
+	value: T
+}
+
+fn main() {}

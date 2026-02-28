@@ -1098,17 +1098,15 @@ fn transform_to_unresolved(
                         .map(|ty| transform_to_unresolved(namespace, ty))
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            if generic_arguments.is_empty() {
-                Ok(ty)
-            } else {
-                let UnresolvedType::DefinedType(UserDefinedTypeId::Struct(struct_id)) = ty else {
-                    todo!("Handle this error case");
-                };
+            if let UnresolvedType::DefinedType(UserDefinedTypeId::Struct(struct_id)) = ty {
                 Ok(UnresolvedType::Application {
                     id: type_ref.id(),
                     r#type: Box::new(UnresolvedTypeProducer::DefinedType(struct_id)),
                     generic_arguments,
                 })
+            } else {
+                assert!(generic_arguments.is_empty(), "TODO: Handle this error case");
+                Ok(ty)
             }
         }
     }

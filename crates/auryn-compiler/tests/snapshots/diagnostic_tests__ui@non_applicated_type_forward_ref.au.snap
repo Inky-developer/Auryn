@@ -1,0 +1,16 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "struct Foo {\n\tinner: Bar,\n\tvalue: I32\n}\n\nstruct Bar[T] {\n\tvalue: T\n}\n\nfn main() {}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/non_applicated_type_forward_ref.au
+---
+Error: Wrong number of type arguments
+   ╭─[ main:2:9 ]
+   │
+ 2 │     inner: Bar,
+   │            ─┬─  
+   │             ╰─── Expected 1 type argument but got 0
+   │ 
+ 6 │ struct Bar[T] {
+   │        ─┬─  
+   │         ╰─── Type is defined here with 1 type parameter
+───╯
