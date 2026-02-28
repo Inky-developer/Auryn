@@ -11,6 +11,7 @@ use crate::auryn::{
         data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
         typecheck::{
             bounds::{HasStructuralFields, MaybeBounded},
+            generics::GenericInference,
             type_context::{TypeContext, TypeId},
             type_storage::{CombinedStorage, NominalStorage, StructuralStorage, TypeStorage},
         },
@@ -55,6 +56,20 @@ macro_rules! define_types {
                             value: ty_ctx.get($data),
                             ctx: ty_ctx
                         }))?
+                    ),*
+                }
+            }
+
+            #[allow(non_snake_case, unreachable_code)]
+            pub fn get_member(self, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
+                match self {
+                    $(
+                       Self::$name$(($data))? => {
+                           $(
+                               return TypeData::get_member($data, ty_ctx, member);
+                           )?
+                           return None;
+                       }
                     ),*
                 }
             }
@@ -146,31 +161,6 @@ impl Type {
 }
 
 impl<'a> TypeView<'a> {
-    pub fn get_member(self, ident: &str) -> Option<TypeView<'a>> {
-        match self {
-            TypeView::Extern(extern_type) => extern_type
-                .value
-                .get_member(ident)
-                .map(|it| it.as_view(extern_type.ctx))
-                .take_if(|it| !it.is_static_extern_member()),
-            TypeView::Structural(structural_type) => structural_type
-                .get_member(ident)
-                .map(|it| it.as_view(structural_type.ctx)),
-            TypeView::Meta(meta_type) => match meta_type.inner() {
-                TypeView::Extern(extern_type) => extern_type
-                    .value
-                    .get_member(ident)
-                    .map(|it| it.as_view(extern_type.ctx))
-                    .take_if(|it| it.is_static_extern_member()),
-                TypeView::Module(module) => {
-                    module.get_member(ident).map(|it| it.as_view(module.ctx))
-                }
-                _ => None,
-            },
-            _ => None,
-        }
-    }
-
     pub fn is_erroneous(self) -> bool {
         let mut visited_types = FastSet::default();
         self.visit(&mut visited_types);
@@ -197,6 +187,11 @@ pub trait TypeData: Sized {
     type Storage: TypeStorage<Self>;
 
     fn visit(&self, visitor: &mut impl FnMut(Type));
+
+    #[expect(unused_variables)]
+    fn get_member(this: TypeId<Self>, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
+        None
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
@@ -308,6 +303,13 @@ impl TypeData for ExternType {
             visitor(*r#type);
         }
     }
+
+    fn get_member(this: TypeId<Self>, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
+        ty_ctx
+            .get(this)
+            .get_member(member)
+            .take_if(|it| !it.as_view(ty_ctx).is_static_extern_member())
+    }
 }
 
 impl ExternType {
@@ -335,6 +337,10 @@ impl TypeData for StructuralType {
         for (_, ty) in fields {
             visitor(*ty);
         }
+    }
+
+    fn get_member(this: TypeId<Self>, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
+        ty_ctx.get(this).get_member(member)
     }
 }
 
@@ -417,6 +423,18 @@ impl TypeData for ApplicationType {
             arguments: _,
         } = self;
     }
+
+    fn get_member(this: TypeId<Self>, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
+        let application = ty_ctx.get(this);
+        let member = ty_ctx.get(application.r#type).get_member(member)?;
+        let inference = GenericInference::from_already_inferred(application.arguments.clone());
+        Some(
+            inference
+                .resolve_generic_type(ty_ctx, member)
+                .as_type()
+                .expect("Should be correctly specified!"),
+        )
+    }
 }
 
 #[derive(Debug)]
@@ -451,6 +469,19 @@ impl TypeData for MetaType {
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self { inner } = self;
         visitor(*inner);
+    }
+
+    fn get_member(this: TypeId<Self>, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
+        let meta_type = ty_ctx.get(this);
+
+        match meta_type.inner.as_view(ty_ctx) {
+            TypeView::Extern(extern_type) => extern_type
+                .value
+                .get_member(member)
+                .take_if(|it| it.as_view(ty_ctx).is_static_extern_member()),
+            TypeView::Module(module) => module.get_member(member),
+            _ => None,
+        }
     }
 }
 

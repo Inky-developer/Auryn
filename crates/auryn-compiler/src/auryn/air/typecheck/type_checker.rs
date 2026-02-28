@@ -692,15 +692,15 @@ impl Typechecker {
 
     fn infer_accessor(&mut self, accessor: &mut Accessor) -> Type {
         self.infer_expression(&mut accessor.value);
-        let value_type_view = accessor.value.r#type.as_view(&self.ty_ctx);
-        match value_type_view.get_member(&accessor.ident) {
-            Some(member_type_view) => member_type_view.as_type(),
+        let value_type = accessor.value.r#type.computed();
+        match value_type.get_member(&mut self.ty_ctx, &accessor.ident) {
+            Some(member_type) => member_type,
             None => {
                 self.diagnostics.add(
                     accessor.ident_id,
                     UndefinedProperty {
                         value_id: accessor.value.id,
-                        r#type: value_type_view.as_type(),
+                        r#type: value_type,
                         ident: accessor.ident.clone(),
                     },
                 );
