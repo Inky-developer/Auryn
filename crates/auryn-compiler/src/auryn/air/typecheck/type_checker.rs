@@ -430,7 +430,13 @@ impl Typechecker {
             AirConstant::StructLiteral {
                 struct_type: Some((struct_ident_id, struct_type)),
                 fields,
-            } => self.infer_struct_literal(id, struct_ident_id, struct_type, fields),
+            } => self.check_struct_literal(
+                id,
+                struct_ident_id,
+                struct_type,
+                fields,
+                MaybeBounded::Bounded(Bound::Top),
+            ),
             AirConstant::StructLiteral {
                 struct_type: None,
                 fields: struct_literal,
@@ -445,69 +451,6 @@ impl Typechecker {
                 self.ty_ctx.structural_of(StructuralType { fields: types })
             }
         }
-    }
-
-    fn infer_struct_literal(
-        &mut self,
-        id: SyntaxId,
-        struct_ident_id: &mut SyntaxId,
-        struct_type: &mut AirType,
-        fields: &mut [(Spanned<SmallString>, AirExpression)],
-    ) -> Type {
-        self.resolve_if_unresolved(struct_type);
-        let Ok((_producer_id, struct_id)) =
-            get_producer_and_struct(struct_type.as_view(&self.ty_ctx))
-        else {
-            self.diagnostics.add(
-                *struct_ident_id,
-                ExpectedStruct {
-                    got: struct_type.computed(),
-                },
-            );
-            return Type::Error;
-        };
-
-        // First check that the field names match
-        let result = check_fields_equal(
-            &mut self.diagnostics,
-            id,
-            Some(struct_id.syntax_id()),
-            &self.ty_ctx.get(struct_id).structural,
-            fields.iter().map(|(name, _)| name),
-        );
-        if let Err(()) = result {
-            return Type::Error;
-        }
-
-        // Then infer the types for each value in the literal, using `GenericInference` to resolve potential generics of the struct
-        let expected_fields = self.ty_ctx.get(struct_id).structural.fields.clone();
-        let mut inference = GenericInference::default();
-        for (ident, field) in fields.iter_mut() {
-            let expected = *expected_fields.get(ident).unwrap();
-            let resolved = inference.resolve_generic_type(&mut self.ty_ctx, expected);
-            // println!("expected: {} - resolved: {}", expected.as_view(&self.ty_ctx), resolved.as_view(&self.ty_ctx));
-            self.check_expression(field, resolved);
-
-            let result = inference.infer_generics(
-                expected.as_view(&self.ty_ctx),
-                field.r#type.as_view(&self.ty_ctx),
-            );
-            if let Err(err) = result {
-                err.write(id, &mut self.diagnostics);
-            }
-        }
-
-        // Once inference is complete, we can check that each type parameter has been inferred
-        let inferred_args = check_inference_types(
-            &mut self.diagnostics,
-            id,
-            inference.into_inferred(),
-            &self.ty_ctx.get(struct_id).type_parameters,
-        );
-
-        // TODO: Resolve the actual expected type using the inferred args and check that it matches the applied type!
-
-        self.ty_ctx.applied_of(struct_id, inferred_args)
     }
 
     fn check_constant(
@@ -564,18 +507,17 @@ impl Typechecker {
             }
             AirConstant::String(_) => Type::String,
             AirConstant::Boolean(_) => Type::Bool,
-            // For named structs the type cannot change, so lets just infer it
             AirConstant::StructLiteral {
-                struct_type: Some(_),
-                ..
-            } => self.infer_constant(id, constant),
+                struct_type: Some((struct_ident_id, struct_type)),
+                fields,
+            } => self.check_struct_literal(id, struct_ident_id, struct_type, fields, expected),
             AirConstant::StructLiteral {
                 struct_type: None,
                 fields: struct_literal,
             } => {
                 match expected {
                     MaybeBounded::Type(Type::Structural(structural_id)) => {
-                        let Ok(structural) = self.check_struct_literal(
+                        let Ok(structural) = self.check_structural_literal(
                             id,
                             |ty_ctx| (ty_ctx.get(structural_id), None),
                             struct_literal,
@@ -585,7 +527,7 @@ impl Typechecker {
                         self.ty_ctx.structural_of(structural)
                     }
                     MaybeBounded::Bounded(Bound::Structural(structural_id)) => {
-                        let Ok(structural) = self.check_struct_literal(
+                        let Ok(structural) = self.check_structural_literal(
                             id,
                             |ty_ctx| (ty_ctx.get(structural_id), None),
                             struct_literal,
@@ -603,7 +545,79 @@ impl Typechecker {
         }
     }
 
-    fn check_struct_literal<T: HasStructuralFields>(
+    fn check_struct_literal(
+        &mut self,
+        id: SyntaxId,
+        struct_ident_id: &mut SyntaxId,
+        struct_type: &mut AirType,
+        fields: &mut [(Spanned<SmallString>, AirExpression)],
+        expected: MaybeBounded,
+    ) -> Type {
+        self.resolve_if_unresolved(struct_type);
+        let Ok((_producer_id, struct_id)) =
+            get_producer_and_struct(struct_type.as_view(&self.ty_ctx))
+        else {
+            self.diagnostics.add(
+                *struct_ident_id,
+                ExpectedStruct {
+                    got: struct_type.computed(),
+                },
+            );
+            return Type::Error;
+        };
+
+        // First check that the field names match
+        let result = check_fields_equal(
+            &mut self.diagnostics,
+            id,
+            Some(struct_id.syntax_id()),
+            &self.ty_ctx.get(struct_id).structural,
+            fields.iter().map(|(name, _)| name),
+        );
+        if let Err(()) = result {
+            return Type::Error;
+        }
+
+        // If we already know the expected type, we can use the expected type arguments to improve the type inference
+        let already_inferred_type_arguments = if let MaybeBounded::Type(expected) = expected
+            && let TypeView::Application(application) = expected.as_view(&self.ty_ctx)
+            && application.r#type == struct_id
+        {
+            application.arguments.clone()
+        } else {
+            Vec::new()
+        };
+
+        // Then infer the types for each value in the literal, using `GenericInference` to resolve potential generics of the struct
+        let expected_fields = self.ty_ctx.get(struct_id).structural.fields.clone();
+        let mut inference = GenericInference::new(already_inferred_type_arguments);
+        for (ident, field) in fields.iter_mut() {
+            let expected = *expected_fields.get(ident).unwrap();
+            let resolved = inference.resolve_generic_type(&mut self.ty_ctx, expected);
+            // println!("expected: {} - resolved: {}", expected.as_view(&self.ty_ctx), resolved.as_view(&self.ty_ctx));
+            self.check_expression(field, resolved);
+
+            let result = inference.infer_generics(
+                expected.as_view(&self.ty_ctx),
+                field.r#type.as_view(&self.ty_ctx),
+            );
+            if let Err(err) = result {
+                err.write(id, &mut self.diagnostics);
+            }
+        }
+
+        // Once inference is complete, we can check that each type parameter has been inferred
+        let inferred_args = check_inference_types(
+            &mut self.diagnostics,
+            id,
+            inference.into_inferred(),
+            &self.ty_ctx.get(struct_id).type_parameters,
+        );
+
+        self.ty_ctx.applied_of(struct_id, inferred_args)
+    }
+
+    fn check_structural_literal<T: HasStructuralFields>(
         &mut self,
         id: SyntaxId,
         get_expected: impl FnOnce(&TypeContext) -> (&T, Option<SyntaxId>),

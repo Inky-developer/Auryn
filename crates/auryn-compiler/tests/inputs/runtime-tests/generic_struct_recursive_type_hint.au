@@ -1,0 +1,11 @@
+// expect-output:
+// Foo { inner: [] }
+
+struct Foo[T] {
+	inner: []Foo[T]
+}
+
+fn main() {
+	let f: Foo[Bool] = Foo { inner: arrayOfZeros(0) }
+	print(f)
+}

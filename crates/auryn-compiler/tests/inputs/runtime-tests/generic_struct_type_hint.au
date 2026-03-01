@@ -1,0 +1,19 @@
+// expect-output:
+// Pair { first: [], second: [] }
+// Wrapper { value: [] }
+
+struct Pair[A, B] {
+	first: []A,
+	second: []B
+}
+
+struct Wrapper[T] {
+	value: []T
+}
+
+fn main() {
+	let p: Pair[I32, Bool] = Pair { first: arrayOfZeros(0), second: arrayOfZeros(0) }
+	let w: Wrapper[String] = Wrapper { value: arrayOfZeros(0) }
+	print(p)
+	print(w)
+}

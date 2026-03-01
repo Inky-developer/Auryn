@@ -49,7 +49,7 @@ pub struct GenericInference {
 }
 
 impl GenericInference {
-    pub fn from_already_inferred(monomorphization: Vec<Type>) -> Self {
+    pub fn new(monomorphization: Vec<Type>) -> Self {
         Self {
             inferred: monomorphization
                 .into_iter()

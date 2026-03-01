@@ -427,7 +427,7 @@ impl TypeData for ApplicationType {
     fn get_member(this: TypeId<Self>, ty_ctx: &mut TypeContext, member: &str) -> Option<Type> {
         let application = ty_ctx.get(this);
         let member = ty_ctx.get(application.r#type).get_member(member)?;
-        let inference = GenericInference::from_already_inferred(application.arguments.clone());
+        let inference = GenericInference::new(application.arguments.clone());
         Some(
             inference
                 .resolve_generic_type(ty_ctx, member)
