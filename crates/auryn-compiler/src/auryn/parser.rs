@@ -269,6 +269,22 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// Pushes a new node into the node stack and pushes the current node as its first child
+    fn pop_node_into_new(
+        &mut self,
+        watcher: ParserFrameWatcher,
+        kind: SyntaxNodeKind,
+    ) -> ParserFrameWatcher {
+        let node = self.pop_node(watcher, kind).unwrap();
+        let watcher = self.push_node();
+        self.node_stack
+            .last_mut()
+            .unwrap()
+            .children
+            .push(SyntaxItem::Node(node));
+        watcher
+    }
+
     fn finish_node(&mut self, watcher: ParserFrameWatcher, kind: SyntaxNodeKind) {
         let Some(node) = self.pop_node(watcher, kind) else {
             panic!("Expected node")
@@ -1009,22 +1025,12 @@ impl Parser<'_> {
                 break;
             }
 
-            let node = self
-                .pop_node(watcher, SyntaxNodeKind::Expression)
-                .expect("Node was started");
-            watcher = self.push_node();
-            let parent = self.node_stack.last_mut().expect("Was just pushed");
-            parent.children.push(SyntaxItem::Node(node));
+            watcher = self.pop_node_into_new(watcher, SyntaxNodeKind::Expression);
 
             self.parse_binary_operator_token()?;
             self.parse_expression_pratt(binding_power)?;
 
-            let node = self
-                .pop_node(watcher, SyntaxNodeKind::BinaryOperation)
-                .expect("Node was started");
-            watcher = self.push_node();
-            let parent = self.node_stack.last_mut().expect("Was just pushed");
-            parent.children.push(SyntaxItem::Node(node));
+            watcher = self.pop_node_into_new(watcher, SyntaxNodeKind::BinaryOperation);
         }
 
         Ok(watcher)
@@ -1080,14 +1086,8 @@ impl Parser<'_> {
 
         let mut current_node_kind = SyntaxNodeKind::Value;
         while Self::POSTFIX_START.contains(self.peek().kind) {
-            let postfix_node = self.pop_node(watcher, current_node_kind).unwrap();
-            watcher = self.push_node();
+            watcher = self.pop_node_into_new(watcher, current_node_kind);
             current_node_kind = SyntaxNodeKind::PostfixOperation;
-            self.node_stack
-                .last_mut()
-                .unwrap()
-                .children
-                .push(SyntaxItem::Node(postfix_node));
             self.parse_postfix()?;
         }
 
