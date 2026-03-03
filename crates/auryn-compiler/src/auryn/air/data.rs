@@ -16,18 +16,19 @@ use crate::auryn::{
     tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
 };
 
+/// Globals before type checking. All types are in unresolved form.
 #[derive(Debug, Default)]
-pub struct Globals {
-    pub functions: FastMap<AirFunctionId, AirFunction>,
-    pub types: FastMap<UserDefinedTypeId, AirType>,
-    pub type_producers: FastMap<TypeId<StructType>, AirTypeProducer>,
-    pub type_aliases: FastMap<TypeAliasId, AirType>,
+pub struct UnresolvedGlobals {
+    pub functions: FastMap<AirFunctionId, UnresolvedAirFunction>,
+    pub types: FastMap<UserDefinedTypeId, UnresolvedType>,
+    pub type_producers: FastMap<TypeId<StructType>, UnresolvedTypeProducer>,
+    pub type_aliases: FastMap<TypeAliasId, UnresolvedType>,
     pub statics: FastMap<AirStaticValueId, AirStaticValue>,
 }
 
-impl Globals {
+impl UnresolvedGlobals {
     pub fn merge(&mut self, other: Self) {
-        let Globals {
+        let UnresolvedGlobals {
             functions,
             types,
             type_producers,
@@ -40,6 +41,20 @@ impl Globals {
         self.type_aliases.extend(type_aliases);
         self.statics.extend(statics);
     }
+}
+
+/// A function before type checking. Its type has not been resolved yet.
+#[derive(Debug)]
+pub struct UnresolvedAirFunction {
+    pub unresolved_type: UnresolvedType,
+    pub ident: SmallString,
+    pub blocks: FastMap<AirBlockId, AirBlock>,
+}
+
+/// Globals after type checking. All types are fully resolved.
+#[derive(Debug, Default)]
+pub struct Globals {
+    pub functions: FastMap<AirFunctionId, AirFunction>,
 }
 
 #[derive(Debug)]
@@ -81,10 +96,10 @@ pub struct AirStaticValueId(pub SyntaxId);
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct AirFunctionId(pub AirStaticValueId);
 
+/// A function after type checking. Its type has been fully resolved.
 #[derive(Debug)]
 pub struct AirFunction {
-    pub r#type: AirType,
-    pub unresolved_type: UnresolvedType,
+    pub r#type: Type,
     pub ident: SmallString,
     pub blocks: FastMap<AirBlockId, AirBlock>,
 }
@@ -151,11 +166,12 @@ pub enum UnresolvedExternMember {
     },
 }
 
-#[derive(Debug)]
+/// A function reference in a resolved function type.
+#[derive(Debug, Clone)]
 pub enum FunctionReference {
     UserDefined(AirFunctionId),
     Extern {
-        parent: Box<AirType>,
+        parent: Type,
         kind: ExternFunctionKind,
         extern_name: SmallString,
         syntax_id: SyntaxId,
@@ -167,27 +183,6 @@ impl FunctionReference {
         match self {
             FunctionReference::UserDefined(air_function_id) => air_function_id.0.0,
             FunctionReference::Extern { syntax_id, .. } => *syntax_id,
-        }
-    }
-}
-
-impl Clone for FunctionReference {
-    fn clone(&self) -> Self {
-        match self {
-            FunctionReference::UserDefined(air_function_id) => {
-                FunctionReference::UserDefined(*air_function_id)
-            }
-            FunctionReference::Extern {
-                parent,
-                kind,
-                extern_name,
-                syntax_id,
-            } => FunctionReference::Extern {
-                parent: Box::new(AirType::Computed(parent.computed())),
-                kind: *kind,
-                extern_name: extern_name.clone(),
-                syntax_id: *syntax_id,
-            },
         }
     }
 }
@@ -221,12 +216,26 @@ impl Hash for FunctionReference {
     }
 }
 
+/// A function reference in an unresolved function type (before type checking).
+#[derive(Debug)]
+pub enum UnresolvedFunctionReference {
+    UserDefined(AirFunctionId),
+    Extern {
+        parent: Box<UnresolvedType>,
+        kind: ExternFunctionKind,
+        extern_name: SmallString,
+        syntax_id: SyntaxId,
+    },
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ExternFunctionKind {
     Static,
     Method,
 }
 
+/// The type of an expression during type checking.
+/// Starts as `Inferred` and is filled in with `Computed` by the type checker.
 #[derive(Debug)]
 pub enum AirType {
     Inferred,
@@ -245,12 +254,6 @@ impl AirType {
             _ => unreachable!("Type should be computed at this point"),
         }
     }
-}
-
-#[derive(Debug)]
-pub enum AirTypeProducer {
-    Unresolved(UnresolvedTypeProducer),
-    Resolved,
 }
 
 #[must_use]

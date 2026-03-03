@@ -3,8 +3,8 @@ use stdx::FastMap;
 use crate::auryn::{
     air::{
         data::{
-            AirModuleId, AirStaticValue, AirStaticValueId, AirType, FunctionReference, TypeAliasId,
-            UnresolvedExternMember,
+            AirModuleId, AirStaticValue, AirStaticValueId, FunctionReference, TypeAliasId,
+            UnresolvedExternMember, UnresolvedFunctionReference,
         },
         namespace::UserDefinedTypeId,
         typecheck::{
@@ -30,73 +30,64 @@ pub enum ResolverError {
 
 pub type ResolverResult = Result<Type, ResolverError>;
 
-pub struct Context<'a> {
-    pub ty_ctx: &'a mut TypeContext,
-    pub diagnostics: &'a mut Diagnostics,
-    pub statics: &'a FastMap<AirStaticValueId, AirStaticValue>,
-    pub type_aliasses: &'a FastMap<TypeAliasId, AirType>,
-    pub type_parameters: &'a Vec<GenericType>,
-}
-
 #[derive(Debug)]
 pub struct TypeProducerInfo {
     pub parameter_count: usize,
     pub definition_id: SyntaxId,
 }
 
-#[derive(Debug, Default)]
-pub struct Resolver {
-    current_generic_parameters: Vec<GenericType>,
-    /// Info about type producers which might not yet be resolved.
-    /// Must be filled in from the outside for the resolver to able to resolve type applications.
-    pub type_producer_info: FastMap<TypeId<StructType>, TypeProducerInfo>,
+/// Active resolver for a single resolution pass. Created fresh at each call site
+/// by borrowing individual fields from the `Typechecker`.
+pub struct Resolver<'a> {
+    pub ty_ctx: &'a mut TypeContext,
+    pub diagnostics: &'a mut Diagnostics,
+    pub statics: &'a FastMap<AirStaticValueId, AirStaticValue>,
+    /// Aliases that have already been resolved. An alias absent from this map
+    /// is either still being resolved (i.e. circular) or does not exist.
+    pub resolved_type_aliases: &'a FastMap<TypeAliasId, Type>,
+    pub type_parameters: &'a Vec<GenericType>,
+    pub type_producer_info: &'a FastMap<TypeId<StructType>, TypeProducerInfo>,
+    pub current_generic_parameters: Vec<GenericType>,
 }
 
-impl Resolver {
-    pub fn resolve_type(
-        &mut self,
-        ctx: &mut Context,
-        unresolved: &UnresolvedType,
-    ) -> ResolverResult {
+impl<'a> Resolver<'a> {
+    pub fn resolve_type(&mut self, unresolved: &UnresolvedType) -> ResolverResult {
         self.current_generic_parameters.clear();
-        self.resolve(ctx, unresolved)
+        self.resolve(unresolved)
     }
 
-    fn resolve(&mut self, ctx: &mut Context, unresolved: &UnresolvedType) -> ResolverResult {
+    fn resolve(&mut self, unresolved: &UnresolvedType) -> ResolverResult {
         Ok(match unresolved {
             UnresolvedType::DefinedType(user_defined_type_id) => match user_defined_type_id {
                 UserDefinedTypeId::Extern(type_id) => Type::Extern(*type_id),
                 UserDefinedTypeId::Module(type_id) => Type::Module(*type_id),
                 UserDefinedTypeId::Struct(struct_id) => {
                     // TODO: Verify that the number of generic arguments (And I guess their bounds) are correct
-                    ctx.ty_ctx.applied_of(*struct_id, Vec::new())
+                    self.ty_ctx.applied_of(*struct_id, Vec::new())
                 }
-                UserDefinedTypeId::TypeAlias(id) => match &ctx.type_aliasses[id] {
-                    AirType::Inferred => unreachable!(),
-                    AirType::Unresolved(_) => {
-                        return Err(ResolverError::CircularTypeAlias(id.0));
-                    }
-                    AirType::Computed(ty) => *ty,
+                UserDefinedTypeId::TypeAlias(id) => match self.resolved_type_aliases.get(id) {
+                    Some(ty) => *ty,
+                    None => return Err(ResolverError::CircularTypeAlias(id.0)),
                 },
                 UserDefinedTypeId::Generic(id) => {
                     // Two cases:
                     // - Either we are currently resolving a type signature
                     //   Then the `current_generic_parameters` field is set
-                    // - Or we are currently inside a cotext where this generic is defined
+                    // - Or we are currently inside a context where this generic is defined
                     //   Then we can use the already calculated generic of the ctx scope
                     let generic = if self.current_generic_parameters.is_empty() {
-                        ctx.type_parameters[id.0].clone()
+                        self.type_parameters[id.0].clone()
                     } else {
                         self.current_generic_parameters[id.0].clone()
                     };
-                    ctx.ty_ctx.generic_of(generic)
+                    self.ty_ctx.generic_of(generic)
                 }
             },
-            UnresolvedType::Unit => ctx.ty_ctx.unit_type(),
+            UnresolvedType::Unit => self.ty_ctx.unit_type(),
             UnresolvedType::Ident(id, ident) => match ident.parse() {
                 Ok(r#type) => r#type,
                 Err(_) => {
-                    ctx.diagnostics.add(
+                    self.diagnostics.add(
                         *id,
                         UndefinedVariable {
                             ident: ident.clone(),
@@ -128,13 +119,13 @@ impl Resolver {
 
                 let parameters = parameters
                     .iter()
-                    .map(|param| self.resolve(ctx, param))
+                    .map(|param| self.resolve(param))
                     .collect::<Result<_, _>>()?;
                 let return_type = return_type
                     .as_ref()
-                    .map_or(Ok(ctx.ty_ctx.unit_type()), |ty| self.resolve(ctx, ty))?;
-                let reference = self.resolve_function_reference(ctx, reference)?;
-                Type::FunctionItem(ctx.ty_ctx.add(
+                    .map_or(Ok(self.ty_ctx.unit_type()), |ty| self.resolve(ty))?;
+                let reference = self.resolve_function_reference(reference)?;
+                Type::FunctionItem(self.ty_ctx.add(
                     Some(reference.syntax_id()),
                     FunctionItemType {
                         type_parameters,
@@ -148,8 +139,8 @@ impl Resolver {
                 ))
             }
             UnresolvedType::Array(_id, inner) => {
-                let element_type = self.resolve(ctx, inner)?;
-                ctx.ty_ctx.array_of(element_type)
+                let element_type = self.resolve(inner)?;
+                self.ty_ctx.array_of(element_type)
             }
             // TODO: Prevent infinite recursion and handle recursive definitions
             UnresolvedType::Extern {
@@ -167,21 +158,21 @@ impl Resolver {
                                 ..
                             } => ExternTypeMember {
                                 extern_name: extern_name.clone(),
-                                r#type: self.resolve(ctx, r#type)?,
+                                r#type: self.resolve(r#type)?,
                             },
                             UnresolvedExternMember::Function {
                                 unresolved_type,
                                 extern_name,
                                 ..
                             } => ExternTypeMember {
-                                r#type: self.resolve(ctx, unresolved_type)?,
+                                r#type: self.resolve(unresolved_type)?,
                                 extern_name: extern_name.clone(),
                             },
                         };
                         Ok((ident.clone(), member))
                     })
                     .collect::<Result<_, _>>()?;
-                Type::Extern(ctx.ty_ctx.add(
+                Type::Extern(self.ty_ctx.add(
                     *id,
                     ExternType {
                         extern_name: extern_name.clone(),
@@ -198,15 +189,15 @@ impl Resolver {
                     .types
                     .iter()
                     .map(|(k, v)| {
-                        let ty = self.resolve_user_defined(ctx, *v)?;
-                        Ok((k.clone(), ctx.ty_ctx.meta_of(ty)))
+                        let ty = self.resolve_user_defined(*v)?;
+                        Ok((k.clone(), self.ty_ctx.meta_of(ty)))
                     })
                     .collect::<Result<FastMap<_, _>, _>>()?;
                 members.extend(
                     namespace
                         .statics
                         .iter()
-                        .flat_map(|(k, v)| ctx.statics.get(v).map(|it| (k, it)))
+                        .flat_map(|(k, v)| self.statics.get(v).map(|it| (k, it)))
                         .map(|(k, value)| {
                             let ty = match value {
                                 AirStaticValue::Function(id) => Type::FunctionItem((*id).into()),
@@ -219,27 +210,27 @@ impl Resolver {
                     members,
                 };
                 let id: TypeId<_> = AirModuleId(id.file_id().unwrap()).into();
-                Type::Module(ctx.ty_ctx.add(id.syntax_id(), module))
+                Type::Module(self.ty_ctx.add(id.syntax_id(), module))
             }
             UnresolvedType::Structural(structural_type) => {
                 let ty = StructuralType {
                     fields: structural_type
                         .iter()
-                        .map(|(ident, field)| Ok((ident.clone(), self.resolve(ctx, field)?)))
+                        .map(|(ident, field)| Ok((ident.clone(), self.resolve(field)?)))
                         .collect::<Result<_, _>>()?,
                 };
-                ctx.ty_ctx.structural_of(ty)
+                self.ty_ctx.structural_of(ty)
             }
             UnresolvedType::Application {
                 id,
                 r#type,
                 generic_arguments,
             } => {
-                let generic_type = self.resolve_type_producer(ctx, r#type)?;
+                let generic_type = self.resolve_type_producer(r#type)?;
                 let info = &self.type_producer_info[&generic_type];
                 let provided = generic_arguments.len();
                 if provided != info.parameter_count {
-                    ctx.diagnostics.add(
+                    self.diagnostics.add(
                         *id,
                         MismatchedTypeArgumentCount {
                             definition_id: info.definition_id,
@@ -251,16 +242,15 @@ impl Resolver {
                 }
                 let generic_arguments = generic_arguments
                     .iter()
-                    .map(|arg| self.resolve(ctx, arg))
+                    .map(|arg| self.resolve(arg))
                     .collect::<Result<Vec<_>, _>>()?;
-                ctx.ty_ctx.applied_of(generic_type, generic_arguments)
+                self.ty_ctx.applied_of(generic_type, generic_arguments)
             }
         })
     }
 
     pub fn resolve_type_producer(
         &mut self,
-        ctx: &mut Context,
         unresolved: &UnresolvedTypeProducer,
     ) -> Result<TypeId<StructType>, ResolverError> {
         match unresolved {
@@ -287,7 +277,7 @@ impl Resolver {
                 let structural = StructuralType {
                     fields: fields
                         .iter()
-                        .map(|(ident, field)| Ok((ident.clone(), self.resolve(ctx, field)?)))
+                        .map(|(ident, field)| Ok((ident.clone(), self.resolve(field)?)))
                         .collect::<Result<_, _>>()?,
                 };
 
@@ -296,39 +286,30 @@ impl Resolver {
                     ident: ident.clone(),
                     structural,
                 };
-                Ok(ctx.ty_ctx.add(*id, r#struct))
+                Ok(self.ty_ctx.add(*id, r#struct))
             }
         }
     }
 
-    fn resolve_user_defined(
-        &mut self,
-        ctx: &mut Context,
-        user_defined_id: UserDefinedTypeId,
-    ) -> ResolverResult {
-        self.resolve(ctx, &UnresolvedType::DefinedType(user_defined_id))
+    fn resolve_user_defined(&mut self, user_defined_id: UserDefinedTypeId) -> ResolverResult {
+        self.resolve(&UnresolvedType::DefinedType(user_defined_id))
     }
 
     fn resolve_function_reference(
         &mut self,
-        ctx: &mut Context,
-        reference: &FunctionReference,
+        reference: &UnresolvedFunctionReference,
     ) -> Result<FunctionReference, ResolverError> {
         Ok(match reference {
-            FunctionReference::UserDefined(id) => FunctionReference::UserDefined(*id),
-            FunctionReference::Extern {
+            UnresolvedFunctionReference::UserDefined(id) => FunctionReference::UserDefined(*id),
+            UnresolvedFunctionReference::Extern {
                 parent,
                 kind,
                 extern_name,
                 syntax_id,
             } => {
-                let parent = match parent.as_ref() {
-                    AirType::Inferred => unreachable!(),
-                    AirType::Computed(ty) => *ty,
-                    AirType::Unresolved(unresolved) => self.resolve(ctx, unresolved)?,
-                };
+                let parent = self.resolve(parent)?;
                 FunctionReference::Extern {
-                    parent: Box::new(AirType::Computed(parent)),
+                    parent,
                     kind: *kind,
                     extern_name: extern_name.clone(),
                     syntax_id: *syntax_id,

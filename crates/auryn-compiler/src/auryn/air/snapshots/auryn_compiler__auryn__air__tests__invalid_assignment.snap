@@ -20,54 +20,19 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                         },
                     ),
                 ): AirFunction {
-                    type: Computed(
-                        FunctionItem(
-                            TypeId {
-                                id: SyntaxId {
-                                    file_id: Some(
-                                        FileId(
-                                            1,
-                                        ),
-                                    ),
-                                    number: Some(
-                                        4,
-                                    ),
-                                },
-                                kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                            },
-                        ),
-                    ),
-                    unresolved_type: Function(
-                        UnresolvedFunction {
-                            parameters_reference: SyntaxId {
+                    type: FunctionItem(
+                        TypeId {
+                            id: SyntaxId {
                                 file_id: Some(
                                     FileId(
                                         1,
                                     ),
                                 ),
                                 number: Some(
-                                    105553116266498,
+                                    4,
                                 ),
                             },
-                            type_parameters: [],
-                            parameters: [],
-                            return_type: None,
-                            reference: UserDefined(
-                                AirFunctionId(
-                                    AirStaticValueId(
-                                        SyntaxId {
-                                            file_id: Some(
-                                                FileId(
-                                                    1,
-                                                ),
-                                            ),
-                                            number: Some(
-                                                4,
-                                            ),
-                                        },
-                                    ),
-                                ),
-                            ),
+                            kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
                     ),
                     ident: "main",
@@ -392,70 +357,6 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                         },
                     },
                 },
-            },
-            types: {
-                Module(
-                    TypeId {
-                        id: SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
-                                ),
-                            ),
-                            number: Some(
-                                1,
-                            ),
-                        },
-                        kind: "auryn_compiler::auryn::air::typecheck::types::ModuleType",
-                    },
-                ): Computed(
-                    Module(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: Some(
-                                    1,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::ModuleType",
-                        },
-                    ),
-                ),
-            },
-            type_producers: {},
-            type_aliases: {},
-            statics: {
-                AirStaticValueId(
-                    SyntaxId {
-                        file_id: Some(
-                            FileId(
-                                1,
-                            ),
-                        ),
-                        number: Some(
-                            4,
-                        ),
-                    },
-                ): Function(
-                    AirFunctionId(
-                        AirStaticValueId(
-                            SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: Some(
-                                    4,
-                                ),
-                            },
-                        ),
-                    ),
-                ),
             },
         },
         ty_ctx: TypeContext { .. },

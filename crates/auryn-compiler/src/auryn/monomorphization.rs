@@ -99,7 +99,7 @@ impl FunctionBuilder<'_> {
             .map(|(id, block)| (*id, self.transform_block(block)))
             .collect();
 
-        let Type::FunctionItem(ty) = function.r#type.computed() else {
+        let Type::FunctionItem(ty) = function.r#type else {
             unreachable!("Invalid function type")
         };
         let ty = self.resolve_function_type(ty);
@@ -154,7 +154,7 @@ impl FunctionBuilder<'_> {
                     extern_name,
                     syntax_id,
                 } => FunctionReference::Extern {
-                    parent: Box::new(AirType::Computed(parent.computed())),
+                    parent,
                     kind,
                     extern_name: extern_name.clone(),
                     syntax_id,

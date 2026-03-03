@@ -8,14 +8,14 @@ use crate::auryn::{
             Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirFunctionId, AirGenericArguments, AirLocalValueId,
             AirNode, AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType,
-            AirTypeProducer, AirValueId, Assignment, Call, Globals, Intrinsic, ReturnValue,
-            TypeAliasId, UnaryOperator, Update,
+            AirValueId, Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId,
+            UnaryOperator, UnresolvedAirFunction, UnresolvedGlobals, Update,
         },
         namespace::UserDefinedTypeId,
         typecheck::{
             bounds::{Bound, BoundView, HasStructuralFields, MaybeBounded},
             generics::GenericInference,
-            resolver::{self, Resolver, ResolverError, ResolverResult, TypeProducerInfo},
+            resolver::{Resolver, ResolverError, ResolverResult, TypeProducerInfo},
             type_context::{TypeContext, TypeId},
             types::{
                 ApplicationType, FunctionItemType, FunctionParameters, GenericId, GenericType,
@@ -36,8 +36,11 @@ use crate::auryn::{
     tokenizer::BinaryOperatorToken,
 };
 
-pub fn typecheck_air(globals: Globals, diagnostics: Diagnostics) -> (Air, Diagnostics) {
-    Typechecker::new(diagnostics).infer(globals)
+pub fn typecheck_air(
+    unresolved: UnresolvedGlobals,
+    diagnostics: Diagnostics,
+) -> (Air, Diagnostics) {
+    Typechecker::new(diagnostics).infer(unresolved)
 }
 
 #[derive(Debug)]
@@ -81,8 +84,8 @@ pub struct Typechecker {
     functions: FastMap<AirFunctionId, TypeId<FunctionItemType>>,
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
-    type_aliasses: FastMap<TypeAliasId, AirType>,
-    resolver: Resolver,
+    resolved_type_aliases: FastMap<TypeAliasId, Type>,
+    type_producer_info: FastMap<TypeId<StructType>, TypeProducerInfo>,
     ty_ctx: TypeContext,
     diagnostics: Diagnostics,
 }
@@ -93,95 +96,134 @@ impl Typechecker {
             functions: default(),
             function: default(),
             statics: default(),
-            type_aliasses: default(),
+            resolved_type_aliases: default(),
+            type_producer_info: default(),
             ty_ctx: default(),
-            resolver: default(),
             diagnostics,
         }
     }
 
-    pub fn infer(mut self, mut globals: Globals) -> (Air, Diagnostics) {
-        self.statics = std::mem::take(&mut globals.statics);
-
-        {
-            let type_aliasses = std::mem::take(&mut globals.type_aliases);
-            let alias_order = order_aliasses(&type_aliasses);
-            self.type_aliasses = type_aliasses;
-            for alias_id in alias_order {
-                let mut air_ty = self.type_aliasses.remove(&alias_id).unwrap();
-                if let AirType::Unresolved(unresolved) = &air_ty {
-                    let ty = match self.try_resolve_type(unresolved) {
-                        Ok(ty) => ty,
-                        Err(ResolverError::CircularTypeAlias(circular_type_id)) => {
-                            self.diagnostics.add(
-                                alias_id.0,
-                                CircularTypeAlias {
-                                    circular_type_alias: circular_type_id,
-                                },
-                            );
-                            Type::Error
-                        }
-                    };
-                    air_ty = AirType::Computed(ty);
-                }
-                self.type_aliasses.insert(alias_id, air_ty);
-            }
+    fn resolver(&mut self) -> Resolver<'_> {
+        Resolver {
+            ty_ctx: &mut self.ty_ctx,
+            diagnostics: &mut self.diagnostics,
+            statics: &self.statics,
+            resolved_type_aliases: &self.resolved_type_aliases,
+            type_parameters: &self.function.type_variables,
+            type_producer_info: &self.type_producer_info,
+            current_generic_parameters: Vec::new(),
         }
-        self.compute_defined_types(&mut globals);
-        self.infer_functions(&mut globals);
-
-        globals.statics = self.statics;
-        globals.type_aliases = self.type_aliasses;
-
-        let air = Air {
-            globals,
-            ty_ctx: self.ty_ctx,
-        };
-        (air, self.diagnostics)
     }
 
-    fn compute_defined_types(&mut self, globals: &mut Globals) {
-        for type_producer in globals.type_producers.values() {
-            match type_producer {
-                AirTypeProducer::Unresolved(UnresolvedTypeProducer::Struct {
-                    id,
-                    generics,
-                    ..
-                }) => {
-                    self.resolver.type_producer_info.insert(
-                        TypeId::new(*id),
-                        TypeProducerInfo {
-                            parameter_count: generics.len(),
-                            definition_id: *id,
+    pub fn infer(mut self, unresolved: UnresolvedGlobals) -> (Air, Diagnostics) {
+        let UnresolvedGlobals {
+            functions,
+            types,
+            type_producers,
+            type_aliases,
+            statics,
+        } = unresolved;
+
+        self.statics = statics;
+
+        self.resolve_type_aliases(type_aliases);
+        let mut functions = self.compute_defined_types(functions, type_producers, types);
+        self.infer_functions(&mut functions);
+
+        let globals = Globals { functions };
+        (
+            Air {
+                globals,
+                ty_ctx: self.ty_ctx,
+            },
+            self.diagnostics,
+        )
+    }
+
+    /// Resolves all type aliases in topological order, populating `self.resolved_type_aliases`.
+    fn resolve_type_aliases(&mut self, unresolved: FastMap<TypeAliasId, UnresolvedType>) {
+        let alias_order = order_aliases(&unresolved);
+        for alias_id in alias_order {
+            let unresolved_ty = unresolved.get(&alias_id).unwrap();
+            let ty = match self.try_resolve_type(unresolved_ty) {
+                Ok(ty) => ty,
+                Err(ResolverError::CircularTypeAlias(circular_type_id)) => {
+                    self.diagnostics.add(
+                        alias_id.0,
+                        CircularTypeAlias {
+                            circular_type_alias: circular_type_id,
                         },
                     );
+                    Type::Error
                 }
-                AirTypeProducer::Unresolved(UnresolvedTypeProducer::DefinedType(_))
-                | AirTypeProducer::Resolved => {}
-            }
-        }
-
-        for type_producer in globals.type_producers.values_mut() {
-            match type_producer {
-                AirTypeProducer::Unresolved(unresolved) => {
-                    self.resolve_type_producer(unresolved);
-                    *type_producer = AirTypeProducer::Resolved;
-                }
-                AirTypeProducer::Resolved => unreachable!("Huh?"),
-            }
-        }
-
-        for r#type in globals.types.values_mut() {
-            self.resolve_if_unresolved(r#type);
-        }
-
-        for (id, function) in &mut globals.functions {
-            self.infer_function_signature(*id, function);
+            };
+            self.resolved_type_aliases.insert(alias_id, ty);
         }
     }
 
-    fn infer_functions(&mut self, globals: &mut Globals) {
-        for function in globals.functions.values_mut() {
+    /// Resolves type producers and user-defined types (populating `ty_ctx`), then resolves
+    /// function signatures, returning the fully resolved functions map.
+    fn compute_defined_types(
+        &mut self,
+        unresolved_functions: FastMap<AirFunctionId, UnresolvedAirFunction>,
+        type_producers: FastMap<TypeId<StructType>, UnresolvedTypeProducer>,
+        types: FastMap<UserDefinedTypeId, UnresolvedType>,
+    ) -> FastMap<AirFunctionId, AirFunction> {
+        for producer in type_producers.values() {
+            if let UnresolvedTypeProducer::Struct { id, generics, .. } = producer {
+                self.type_producer_info.insert(
+                    TypeId::new(*id),
+                    TypeProducerInfo {
+                        parameter_count: generics.len(),
+                        definition_id: *id,
+                    },
+                );
+            }
+        }
+
+        for producer in type_producers.into_values() {
+            self.resolve_type_producer(&producer);
+        }
+
+        // Iterate self.unresolved_types using explicit field bindings to avoid
+        // the &mut self conflict that would arise when calling self.resolve_type().
+        let mut resolver = Resolver {
+            ty_ctx: &mut self.ty_ctx,
+            diagnostics: &mut self.diagnostics,
+            statics: &mut self.statics,
+            resolved_type_aliases: &self.resolved_type_aliases,
+            type_parameters: &self.function.type_variables,
+            type_producer_info: &self.type_producer_info,
+            current_generic_parameters: Vec::new(),
+        };
+        for unresolved_ty in types.values() {
+            resolver
+                .resolve_type(unresolved_ty)
+                .expect("Should not fail");
+        }
+
+        unresolved_functions
+            .into_iter()
+            .map(|(id, unresolved_fn)| {
+                let computed_ty = self.resolve_type(&unresolved_fn.unresolved_type);
+                let Type::FunctionItem(function_type) = computed_ty else {
+                    unreachable!("Should compute a function type for a function!");
+                };
+                self.functions.insert(id, function_type);
+                (
+                    id,
+                    AirFunction {
+                        r#type: computed_ty,
+                        ident: unresolved_fn.ident,
+                        blocks: unresolved_fn.blocks,
+                    },
+                )
+            })
+            .collect()
+    }
+
+    fn infer_functions(&mut self, functions: &mut FastMap<AirFunctionId, AirFunction>) {
+        for function in functions.values_mut() {
             self.infer_function_body(function);
         }
     }
@@ -207,33 +249,21 @@ impl Typechecker {
 
 impl Typechecker {
     fn resolve_type_producer(&mut self, producer: &UnresolvedTypeProducer) -> TypeId<StructType> {
-        let mut ctx = resolver::Context {
-            ty_ctx: &mut self.ty_ctx,
-            diagnostics: &mut self.diagnostics,
-            statics: &self.statics,
-            type_aliasses: &self.type_aliasses,
-            type_parameters: &self.function.type_variables,
-        };
-        self.resolver
-            .resolve_type_producer(&mut ctx, producer)
+        self.resolver()
+            .resolve_type_producer(producer)
             .expect("Should not fail")
     }
 
     fn try_resolve_type(&mut self, unresolved: &UnresolvedType) -> ResolverResult {
-        let mut ctx = resolver::Context {
-            ty_ctx: &mut self.ty_ctx,
-            diagnostics: &mut self.diagnostics,
-            statics: &self.statics,
-            type_aliasses: &self.type_aliasses,
-            type_parameters: &self.function.type_variables,
-        };
-        self.resolver.resolve_type(&mut ctx, unresolved)
+        self.resolver().resolve_type(unresolved)
     }
 
     fn resolve_type(&mut self, unresolved: &UnresolvedType) -> Type {
         self.try_resolve_type(unresolved).expect("Should not fail")
     }
 
+    /// Resolves an expression-level `AirType` that may still be `Unresolved`.
+    /// Used for inline type references within expression nodes (e.g. `AirExpressionKind::Type`).
     fn resolve_if_unresolved(&mut self, air_type: &mut AirType) {
         match air_type {
             AirType::Inferred => unreachable!("Cannot infer type of a type definition"),
@@ -243,15 +273,6 @@ impl Typechecker {
             }
             AirType::Computed(_) => {}
         };
-    }
-
-    fn infer_function_signature(&mut self, id: AirFunctionId, function: &mut AirFunction) {
-        let computed_ty = self.resolve_type(&function.unresolved_type);
-        function.r#type = AirType::Computed(computed_ty);
-        let Type::FunctionItem(function_type) = computed_ty else {
-            unreachable!("Should compute a function type for a function!");
-        };
-        self.functions.insert(id, function_type);
     }
 
     fn infer_function_body(&mut self, function: &mut AirFunction) {
@@ -1115,18 +1136,16 @@ impl Typechecker {
     }
 }
 
-/// Because type aliasses can depend on each other (but not recursively),
-/// they need to be sorted and then evaluated in an order that they can depend on each other.
-fn order_aliasses(aliasses: &FastMap<TypeAliasId, AirType>) -> Vec<TypeAliasId> {
+/// Because type aliases can depend on each other (but not recursively),
+/// they need to be sorted and then evaluated in an order where dependencies come first.
+fn order_aliases(aliases: &FastMap<TypeAliasId, UnresolvedType>) -> Vec<TypeAliasId> {
     let mut graph = Graph::default();
-    for (id, ty) in aliasses {
-        if let AirType::Unresolved(unresolved) = &ty {
-            unresolved.visit_contained_types(&mut |ty| {
-                if let UnresolvedType::DefinedType(UserDefinedTypeId::TypeAlias(alias)) = ty {
-                    graph.connect(*id, *alias);
-                }
-            });
-        }
+    for (id, ty) in aliases {
+        ty.visit_contained_types(&mut |ty| {
+            if let UnresolvedType::DefinedType(UserDefinedTypeId::TypeAlias(alias)) = ty {
+                graph.connect(*id, *alias);
+            }
+        });
 
         graph.insert(*id, ty);
     }

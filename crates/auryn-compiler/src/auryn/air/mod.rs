@@ -1,7 +1,7 @@
 use crate::auryn::{
     air::{
         ast_transformer::query_globals,
-        data::{Air, AirModuleId, AirType, Globals},
+        data::{Air, AirModuleId, UnresolvedGlobals},
         namespace::UserDefinedTypeId,
         typecheck::{type_checker::typecheck_air, type_context::TypeId},
         unresolved_type::UnresolvedType,
@@ -21,7 +21,7 @@ pub fn query_air<'a>(
     input_files: impl Iterator<Item = &'a InputFile> + Clone,
 ) -> (Air, Diagnostics) {
     let mut diagnostics = Vec::new();
-    let mut globals = Globals::default();
+    let mut globals = UnresolvedGlobals::default();
 
     let included_modules = input_files
         .clone()
@@ -34,11 +34,11 @@ pub fn query_air<'a>(
 
         globals.types.insert(
             UserDefinedTypeId::Module(AirModuleId(input_file.file_id).into()),
-            AirType::Unresolved(UnresolvedType::Module {
+            UnresolvedType::Module {
                 name: input_file.name.clone(),
                 id: TypeId::from(AirModuleId(input_file.file_id)).syntax_id(),
                 namespace: output.namespace,
-            }),
+            },
         );
     }
 

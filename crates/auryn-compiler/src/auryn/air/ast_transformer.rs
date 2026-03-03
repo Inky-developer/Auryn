@@ -6,11 +6,11 @@ use crate::auryn::{
     air::{
         data::{
             self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-            AirExpressionKind, AirFunction, AirGenericArguments, AirLocalValueId, AirModuleId,
-            AirNode, AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId,
-            AirType, AirTypeProducer, AirValueId, Call, ExternFunctionKind, FunctionReference,
-            Globals, ReturnValue, TypeAliasId, UnaryOperation, UnaryOperator,
-            UnresolvedExternMember,
+            AirExpressionKind, AirGenericArguments, AirLocalValueId, AirModuleId, AirNode,
+            AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType,
+            AirValueId, Call, ExternFunctionKind, ReturnValue, TypeAliasId, UnaryOperation,
+            UnaryOperator, UnresolvedAirFunction, UnresolvedExternMember,
+            UnresolvedFunctionReference, UnresolvedGlobals,
         },
         namespace::{Namespace, UserDefinedTypeId},
         typecheck::{type_context::TypeId, types},
@@ -40,7 +40,7 @@ use crate::auryn::{
 
 #[derive(Debug)]
 pub struct TransformerOutput {
-    pub globals: Globals,
+    pub globals: UnresolvedGlobals,
     pub namespace: Namespace,
     pub diagnostics: Diagnostics,
 }
@@ -60,7 +60,7 @@ pub fn query_globals(
 
 #[derive(Debug)]
 struct AstTransformer {
-    globals: Globals,
+    globals: UnresolvedGlobals,
     namespace: Namespace,
     diagnostics: Diagnostics,
 }
@@ -198,12 +198,14 @@ impl AstTransformer {
                 let extern_members = self.collect_extern_type_members(def_id, extern_body);
 
                 let extern_path = extern_path.string_literal_text().into();
-                let extern_type = AirType::Unresolved(UnresolvedType::Extern {
-                    id: extern_type.id(),
-                    extern_name: extern_path,
-                    members: extern_members,
-                });
-                self.globals.types.insert(def_id, extern_type);
+                self.globals.types.insert(
+                    def_id,
+                    UnresolvedType::Extern {
+                        id: extern_type.id(),
+                        extern_name: extern_path,
+                        members: extern_members,
+                    },
+                );
             }
         }
     }
@@ -284,12 +286,10 @@ impl AstTransformer {
                             type_parameters: Vec::new(),
                             parameters: declared_parameters,
                             return_type: declared_return_type,
-                            reference: FunctionReference::Extern {
+                            reference: UnresolvedFunctionReference::Extern {
                                 extern_name: extern_name.clone(),
                                 kind,
-                                parent: Box::new(AirType::Unresolved(UnresolvedType::DefinedType(
-                                    def_id,
-                                ))),
+                                parent: Box::new(UnresolvedType::DefinedType(def_id)),
                                 syntax_id,
                             },
                         }),
@@ -317,7 +317,7 @@ impl AstTransformer {
         };
         self.globals
             .type_aliases
-            .insert(TypeAliasId(ident.id), AirType::Unresolved(r#type));
+            .insert(TypeAliasId(ident.id), r#type);
     }
 
     fn transform_struct(&mut self, struct_def: Struct) {
@@ -337,12 +337,12 @@ impl AstTransformer {
         };
         self.globals.type_producers.insert(
             id,
-            AirTypeProducer::Unresolved(UnresolvedTypeProducer::Struct {
+            UnresolvedTypeProducer::Struct {
                 id: id.syntax_id(),
                 ident: ident.text.clone(),
                 generics,
                 fields,
-            }),
+            },
         );
     }
 
@@ -408,14 +408,13 @@ impl AstTransformer {
         let blocks = function_transformer.transform_function_body(block);
 
         let function_id = self.namespace.unwrap_function(&ident);
-        let function = AirFunction {
-            r#type: AirType::Inferred,
+        let function = UnresolvedAirFunction {
             unresolved_type: UnresolvedType::Function(UnresolvedFunction {
                 parameters_reference: parameters.id(),
                 type_parameters: generic_parameters,
                 parameters: declared_parameters,
                 return_type: declared_return_type,
-                reference: FunctionReference::UserDefined(function_id),
+                reference: UnresolvedFunctionReference::UserDefined(function_id),
             }),
             ident,
             blocks,

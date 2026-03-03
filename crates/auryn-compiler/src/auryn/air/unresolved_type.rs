@@ -2,7 +2,7 @@ use stdx::{FastMap, SmallString};
 
 use crate::auryn::{
     air::{
-        data::{FunctionReference, UnresolvedExternMember},
+        data::{UnresolvedExternMember, UnresolvedFunctionReference},
         namespace::{Namespace, UserDefinedTypeId},
         typecheck::{type_context::TypeId, types::StructType},
     },
@@ -15,7 +15,7 @@ pub struct UnresolvedFunction {
     pub type_parameters: Vec<Spanned<SmallString>>,
     pub parameters: Vec<UnresolvedType>,
     pub return_type: Option<Box<UnresolvedType>>,
-    pub reference: FunctionReference,
+    pub reference: UnresolvedFunctionReference,
 }
 
 /// Reprsents a type that was written by the user but not resolved yet.
