@@ -84,6 +84,7 @@ pub struct Typechecker {
     functions: FastMap<AirFunctionId, TypeId<FunctionItemType>>,
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
+    unresolved_types: FastMap<UserDefinedTypeId, UnresolvedType>,
     resolved_type_aliases: FastMap<TypeAliasId, Type>,
     type_producer_info: FastMap<TypeId<StructType>, TypeProducerInfo>,
     ty_ctx: TypeContext,
@@ -96,6 +97,7 @@ impl Typechecker {
             functions: default(),
             function: default(),
             statics: default(),
+            unresolved_types: default(),
             resolved_type_aliases: default(),
             type_producer_info: default(),
             ty_ctx: default(),
@@ -125,9 +127,10 @@ impl Typechecker {
         } = unresolved;
 
         self.statics = statics;
+        self.unresolved_types = types;
 
         self.resolve_type_aliases(type_aliases);
-        let mut functions = self.compute_defined_types(functions, type_producers, types);
+        let mut functions = self.compute_defined_types(functions, type_producers);
         self.infer_functions(&mut functions);
 
         let globals = Globals { functions };
@@ -167,19 +170,20 @@ impl Typechecker {
         &mut self,
         unresolved_functions: FastMap<AirFunctionId, UnresolvedAirFunction>,
         type_producers: FastMap<TypeId<StructType>, UnresolvedTypeProducer>,
-        types: FastMap<UserDefinedTypeId, UnresolvedType>,
     ) -> FastMap<AirFunctionId, AirFunction> {
-        for producer in type_producers.values() {
-            if let UnresolvedTypeProducer::Struct { id, generics, .. } = producer {
-                self.type_producer_info.insert(
+        self.type_producer_info = type_producers
+            .values()
+            .filter_map(|val| match val {
+                UnresolvedTypeProducer::Struct { id, generics, .. } => Some((
                     TypeId::new(*id),
                     TypeProducerInfo {
-                        parameter_count: generics.len(),
                         definition_id: *id,
+                        parameter_count: generics.len(),
                     },
-                );
-            }
-        }
+                )),
+                _ => None,
+            })
+            .collect();
 
         for producer in type_producers.into_values() {
             self.resolve_type_producer(&producer);
@@ -196,7 +200,7 @@ impl Typechecker {
             type_producer_info: &self.type_producer_info,
             current_generic_parameters: Vec::new(),
         };
-        for unresolved_ty in types.values() {
+        for unresolved_ty in self.unresolved_types.values() {
             resolver
                 .resolve_type(unresolved_ty)
                 .expect("Should not fail");
