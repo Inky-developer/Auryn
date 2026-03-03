@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main( {\n    print(\"Hi\")\n}\n"
-input_file: tests/inputs/diagnostics/recover_function_def.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/recover_function_def.au
 ---
 Error: Unexpected token
    ╭─[ main:1:10 ]

@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "unsafe extern \"java\" {\n\t[\"foo\"]\n\ttype Foo {\n\t\t[\"bar\"]\n\t\tstatic let bar: Bar\n\t}\n\n\t[\"bar\"]\n\ttype Bar {\n\t\t[\"baz\"]\n\t\tstatic let baz: String\n\t}\n}\n\nfn main() {\n\tprint(Foo.bar.oops)\n}\n"
-input_file: tests/inputs/diagnostics/unknown_property_nested.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/unknown_property_nested.au
 ---
 Error: Undefined property
     ╭─[ main:16:16 ]

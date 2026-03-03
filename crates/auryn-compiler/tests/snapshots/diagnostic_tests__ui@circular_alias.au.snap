@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "type A = B\ntype B = []A\n\nfn main() {}\n"
-input_file: tests/inputs/diagnostics/circular_alias.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/circular_alias.au
 ---
 Error: Circular type alias
    ╭─[ main:1:6 ]

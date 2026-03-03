@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "unsafe extern \"java\" {\n\t[\"foo\"]\n\ttype Foo {\n\t\t[\"bar\"]\n\t\tinvalid item\n\t}\n}\n\nfn main() {\n\tprint(Foo)\n}\n"
-input_file: tests/inputs/diagnostics/recover_newline_separated.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/recover_newline_separated.au
 ---
 Error: Expected extern type body item
    ╭─[ main:5:3 ]

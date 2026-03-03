@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n    bar(\"not a number\")\n}\n\nfn bar(value: I32) {}\n"
-input_file: tests/inputs/diagnostics/type_mismatch_call.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/type_mismatch_call.au
 ---
 Error: Type mismatch
    ╭─[ main:2:9 ]

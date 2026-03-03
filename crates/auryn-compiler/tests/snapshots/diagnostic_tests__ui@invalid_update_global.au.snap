@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n\tfoo = 4\n}\n\nfn foo() {}\n"
-input_file: tests/inputs/diagnostics/invalid_update_global.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_update_global.au
 ---
 Error: Immutable variable
    ╭─[ main:2:2 ]

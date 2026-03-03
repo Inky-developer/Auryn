@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a: {a: I32} = {a: 50, b: 20, c: 30}\n\tprint(a)\n}\n"
-input_file: tests/inputs/diagnostics/unexpected_fields.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/unexpected_fields.au
 ---
 Error: Unexpected fields
    ╭─[ main:2:20 ]

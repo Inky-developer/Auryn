@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n    let a = 1\n    bar(a., 2)\n}\n\nfn bar(a: I32, b: I32) {\n    print(a)\n    print(b)\n}\n"
-input_file: tests/inputs/diagnostics/recover_call.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/recover_call.au
 ---
 Error: Unexpected token
    ╭─[ main:3:11 ]

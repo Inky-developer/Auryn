@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n    bar()\n}\n\nfn bar(value: I32) {}\n"
-input_file: tests/inputs/diagnostics/argument_count_mismatch_under.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/argument_count_mismatch_under.au
 ---
 Error: Mismatched argument count
    ╭─[ main:2:5 ]

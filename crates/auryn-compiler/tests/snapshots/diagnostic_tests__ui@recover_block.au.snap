@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n    let\n}\n\nfn bar() {}"
-input_file: tests/inputs/diagnostics/recover_block.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/recover_block.au
 ---
 Error: Unexpected token
    ╭─[ main:2:8 ]

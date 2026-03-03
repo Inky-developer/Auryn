@@ -1,7 +1,7 @@
 ---
-source: tests/diagnostic_tests.rs
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
 expression: "fn main() {\n\tlet a = ,\n}\n"
-input_file: tests/inputs/diagnostics/recover_expression.au
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/recover_expression.au
 ---
 Error: Expected expression
    ╭─[ main:2:10 ]
