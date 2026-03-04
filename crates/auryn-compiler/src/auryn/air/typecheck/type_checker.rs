@@ -18,8 +18,8 @@ use crate::auryn::{
             resolver::{Resolver, ResolverError, ResolverResult, TypeProducerInfo},
             type_context::{TypeContext, TypeId},
             types::{
-                ApplicationType, FunctionItemType, FunctionParameters, GenericId, GenericType,
-                StructType, StructuralType, Type, TypeView,
+                FunctionItemType, FunctionParameters, GenericId, GenericType, StructType,
+                StructuralType, Type, TypeView,
             },
         },
         unresolved_type::{UnresolvedType, UnresolvedTypeProducer},
@@ -579,9 +579,7 @@ impl Typechecker {
         expected: MaybeBounded,
     ) -> Type {
         self.resolve_if_unresolved(struct_type);
-        let Ok((_producer_id, struct_id)) =
-            get_producer_and_struct(struct_type.as_view(&self.ty_ctx))
-        else {
+        let Type::TypeProducer(struct_id) = struct_type.computed() else {
             self.diagnostics.add(
                 *struct_ident_id,
                 ExpectedStruct {
@@ -1236,13 +1234,4 @@ pub(super) fn check_inference_types(
     let mut sorted = inferred_types.into_iter().collect::<Vec<_>>();
     sorted.sort_by_key(|(id, _)| id.0);
     sorted.into_iter().map(|(_, ty)| ty).collect()
-}
-
-fn get_producer_and_struct(
-    ty: TypeView,
-) -> Result<(TypeId<ApplicationType>, TypeId<StructType>), ()> {
-    match ty {
-        TypeView::Application(application) => Ok((application.id, application.value.r#type)),
-        _ => Err(()),
-    }
 }

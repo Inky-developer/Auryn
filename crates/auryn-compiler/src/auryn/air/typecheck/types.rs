@@ -39,6 +39,7 @@ macro_rules! define_types {
         ///
         /// [`Type`] implements [`Eq`].
         #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+        #[allow(clippy::enum_variant_names)]
         pub enum Type {
             $(
                 $(#[$meta])*
@@ -132,6 +133,10 @@ define_types! {
     Array(ArrayType),
     Extern(ExternType),
     Structural(StructuralType),
+    /// A type level function, returning another type for some parameters
+    /// Currently, this can just be structs (Which can be given generic parameters to return the actual struct)
+    /// An instantiated struct is represent as an [`ApplicationType`] over the type arguments and the struct.
+    TypeProducer(StructType),
     /// An application is basically a type-level function call.
     /// For example `Foo[I32]` where `Foo` is a struct.
     Application(ApplicationType),
@@ -154,8 +159,8 @@ impl Type {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
             NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Structural(_) | Module(_) | Meta(_) | Generic(_) | Application(_)
-            | Error => None,
+            | Extern(_) | Structural(_) | TypeProducer(_) | Module(_) | Meta(_) | Generic(_)
+            | Application(_) | Error => None,
         }
     }
 }
@@ -408,6 +413,12 @@ impl StructType {
     }
 }
 
+impl Display for StructType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "struct {}", self.ident)
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct ApplicationType {
     pub r#type: TypeId<StructType>,
@@ -606,7 +617,7 @@ impl<'a> Display for TypeViewKind<'a, StructuralType> {
 
 impl<'a> Display for TypeViewKind<'a, ApplicationType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "struct {}", self.ctx.get(self.r#type).ident)?;
+        write!(f, "{}", self.ctx.get(self.r#type))?;
 
         if !self.arguments.is_empty() {
             write!(f, "[")?;
@@ -644,6 +655,7 @@ impl Display for TypeView<'_> {
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
             TypeView::Module(module_type) => write!(f, "module {}", module_type.name),
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
+            TypeView::TypeProducer(r#struct) => Display::fmt(r#struct.value, f),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
             TypeView::Generic(generic) => write!(f, "{}", generic.value.ident.value),
             TypeView::Application(inner) => Display::fmt(&inner, f),

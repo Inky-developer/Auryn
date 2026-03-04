@@ -386,6 +386,9 @@ impl RepresentationCtx {
                 resolve_generic(view.value.id).as_view(view.ctx),
                 resolve_generic,
             ),
+            TypeProducer(producer) => {
+                unreachable!("Called with non-applied type producer {producer:?}")
+            }
             Error => unreachable!("Called with error type"),
         }
     }

@@ -61,10 +61,7 @@ impl<'a> Resolver<'a> {
             UnresolvedType::DefinedType(user_defined_type_id) => match user_defined_type_id {
                 UserDefinedTypeId::Extern(type_id) => Type::Extern(*type_id),
                 UserDefinedTypeId::Module(type_id) => Type::Module(*type_id),
-                UserDefinedTypeId::Struct(struct_id) => {
-                    // TODO: Verify that the number of generic arguments (And I guess their bounds) are correct
-                    self.ty_ctx.applied_of(*struct_id, Vec::new())
-                }
+                UserDefinedTypeId::Struct(struct_id) => Type::TypeProducer(*struct_id),
                 UserDefinedTypeId::TypeAlias(id) => match self.resolved_type_aliases.get(id) {
                     Some(ty) => *ty,
                     None => return Err(ResolverError::CircularTypeAlias(id.0)),
