@@ -69,19 +69,25 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                             233259355700033,
                                                         ),
                                                     },
-                                                    Ident(
-                                                        SyntaxId {
+                                                    Application {
+                                                        id: SyntaxId {
                                                             file_id: Some(
                                                                 FileId(
                                                                     1,
                                                                 ),
                                                             ),
                                                             number: Some(
-                                                                233259355700034,
+                                                                233259355700033,
                                                             ),
                                                         },
-                                                        "I64",
-                                                    ),
+                                                        type: Path {
+                                                            base: Resolved(
+                                                                I64,
+                                                            ),
+                                                            segments: [],
+                                                        },
+                                                        generic_arguments: [],
+                                                    },
                                                 ),
                                             ),
                                             expression: AirExpression {

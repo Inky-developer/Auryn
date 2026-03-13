@@ -58,19 +58,25 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                 0,
                                             ),
                                             expected_type: Some(
-                                                Ident(
-                                                    SyntaxId {
+                                                Application {
+                                                    id: SyntaxId {
                                                         file_id: Some(
                                                             FileId(
                                                                 1,
                                                             ),
                                                         ),
                                                         number: Some(
-                                                            230653105915676,
+                                                            230653105915675,
                                                         ),
                                                     },
-                                                    "I64",
-                                                ),
+                                                    type: Path {
+                                                        base: Resolved(
+                                                            I64,
+                                                        ),
+                                                        segments: [],
+                                                    },
+                                                    generic_arguments: [],
+                                                },
                                             ),
                                             expression: AirExpression {
                                                 id: SyntaxId {

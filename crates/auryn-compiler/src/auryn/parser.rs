@@ -789,12 +789,25 @@ impl Parser<'_> {
     fn parse_type_ref(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
-        self.expect(TokenKind::Identifier)?;
+        self.parse_type_path()?;
         if self.peek().kind == TokenKind::BracketOpen {
             self.parse_type_arguments()?;
         }
 
         self.finish_node(watcher, SyntaxNodeKind::TypeRef);
+        Ok(())
+    }
+
+    fn parse_type_path(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+        while self.peek().kind == TokenKind::Dot {
+            self.consume();
+            self.expect(TokenKind::Identifier)?;
+        }
+
+        self.finish_node(watcher, SyntaxNodeKind::TypePath);
         Ok(())
     }
 
@@ -1521,9 +1534,18 @@ mod tests {
             }
             "#
         ));
+    }
+
+    #[test]
+    fn test_types() {
         insta::assert_debug_snapshot!(verify(
             r#"
             type Foo = []Bar[I32]
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            type Foo = Foo.Bar.Baz[Y, Z]
             "#
         ));
     }

@@ -32,7 +32,8 @@ syntax_tree:
 ||||||Whitespace ` `
 ||||||60..61 Type
 |||||||60..61 TypeRef
-||||||||Identifier `T`
+||||||||60..61 TypePath
+|||||||||Identifier `T`
 |||||Comma `,`
 |||||Newline `\n`
 |||||Whitespace `                `
@@ -42,9 +43,10 @@ syntax_tree:
 ||||||Whitespace ` `
 ||||||82..96 Type
 |||||||82..96 TypeRef
-||||||||Identifier `U`
-||||||||Newline `\n`
-||||||||Whitespace `            `
+||||||||82..96 TypePath
+|||||||||Identifier `U`
+|||||||||Newline `\n`
+|||||||||Whitespace `            `
 ||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `

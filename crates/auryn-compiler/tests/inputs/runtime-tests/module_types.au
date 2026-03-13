@@ -1,0 +1,22 @@
+// expect-output:
+// Foo { value: 42 }
+
+// file: main
+fn main() {
+    let f = bar.getFoo()
+    printFoo(f)
+}
+
+fn printFoo(foo: bar.Foo) {
+    print(foo)
+}
+
+// file: bar
+struct Foo {
+    value: I32
+}
+
+fn getFoo() -> Foo {
+    return Foo { value: 42 }
+}
+

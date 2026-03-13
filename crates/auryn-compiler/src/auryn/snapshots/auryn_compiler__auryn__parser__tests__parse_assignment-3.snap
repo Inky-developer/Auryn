@@ -14,7 +14,8 @@ syntax_tree:
 ||||Whitespace ` `
 ||||16..22 Type
 |||||16..22 TypeRef
-||||||Identifier `I32`
+||||||16..19 TypePath
+|||||||Identifier `I32`
 ||||||19..22 TypeArguments
 |||||||BracketOpen `[`
 |||||||BracketClose `]`

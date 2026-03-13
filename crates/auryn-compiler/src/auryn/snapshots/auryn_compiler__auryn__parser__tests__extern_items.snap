@@ -53,7 +53,8 @@ syntax_tree:
 |||||||||||Whitespace ` `
 |||||||||||161..164 Type
 ||||||||||||161..164 TypeRef
-|||||||||||||Identifier `Int`
+|||||||||||||161..164 TypePath
+||||||||||||||Identifier `Int`
 ||||||||Newline `\n`
 ||||||||Newline `\n`
 ||||||||Whitespace `                    `
@@ -76,7 +77,8 @@ syntax_tree:
 |||||||||||||Whitespace ` `
 |||||||||||||208..211 Type
 ||||||||||||||208..211 TypeRef
-|||||||||||||||Identifier `Int`
+|||||||||||||||208..211 TypePath
+||||||||||||||||Identifier `Int`
 ||||||||||||ParensClose `)`
 ||||||||||||Whitespace ` `
 |||||||||||213..222 ReturnType
@@ -84,7 +86,8 @@ syntax_tree:
 ||||||||||||Whitespace ` `
 ||||||||||||216..222 Type
 |||||||||||||216..222 TypeRef
-||||||||||||||Identifier `String`
+||||||||||||||216..222 TypePath
+|||||||||||||||Identifier `String`
 ||||||||Newline `\n`
 ||||||||Newline `\n`
 ||||||||Whitespace `                    `
@@ -145,7 +148,8 @@ syntax_tree:
 |||||||||||Whitespace ` `
 |||||||||||424..427 Type
 ||||||||||||424..427 TypeRef
-|||||||||||||Identifier `Foo`
+|||||||||||||424..427 TypePath
+||||||||||||||Identifier `Foo`
 ||||||||Newline `\n`
 ||||||||Whitespace `                `
 ||||||||BraceClose `}`

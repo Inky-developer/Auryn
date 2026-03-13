@@ -24,7 +24,8 @@ syntax_tree:
 |||||||Whitespace ` `
 |||||||30..33 Type
 ||||||||30..33 TypeRef
-|||||||||Identifier `I32`
+|||||||||30..33 TypePath
+||||||||||Identifier `I32`
 ||||||Comma `,`
 ||||||Whitespace ` `
 ||||||35..42 StructuralTypeField
@@ -33,7 +34,8 @@ syntax_tree:
 |||||||Whitespace ` `
 |||||||38..42 Type
 ||||||||38..42 TypeRef
-|||||||||Identifier `Bool`
+|||||||||38..42 TypePath
+||||||||||Identifier `Bool`
 ||||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `

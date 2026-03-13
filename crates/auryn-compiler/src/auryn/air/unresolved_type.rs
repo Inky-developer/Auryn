@@ -4,7 +4,7 @@ use crate::auryn::{
     air::{
         data::{UnresolvedExternMember, UnresolvedFunctionReference},
         namespace::{Namespace, UserDefinedTypeId},
-        typecheck::{type_context::TypeId, types::StructType},
+        typecheck::types::Type,
     },
     syntax_id::{Spanned, SyntaxId},
 };
@@ -23,8 +23,11 @@ pub struct UnresolvedFunction {
 pub enum UnresolvedType {
     /// A type that was defined by the user, identified by its `syntax_id`
     DefinedType(UserDefinedTypeId),
-    /// A type not defined by the user (so probably built-in, like `String`)
-    Ident(SyntaxId, SmallString),
+    Resolved(Type),
+    Path {
+        base: Box<UnresolvedType>,
+        segments: Vec<Spanned<SmallString>>,
+    },
     Array(SyntaxId, Box<UnresolvedType>),
     /// A structural type like {a: I32, b: I64}
     Structural(Vec<(Spanned<SmallString>, UnresolvedType)>),
@@ -44,14 +47,13 @@ pub enum UnresolvedType {
     /// A type constructor that gets called with some arguments, like `Foo[I32]`
     Application {
         id: SyntaxId,
-        r#type: Box<UnresolvedTypeProducer>,
+        r#type: Box<UnresolvedType>,
         generic_arguments: Vec<UnresolvedType>,
     },
 }
 
 #[derive(Debug)]
 pub enum UnresolvedTypeProducer {
-    DefinedType(TypeId<StructType>),
     Struct {
         id: SyntaxId,
         ident: SmallString,
@@ -61,6 +63,13 @@ pub enum UnresolvedTypeProducer {
 }
 
 impl UnresolvedType {
+    pub fn namespace(&self) -> Option<&Namespace> {
+        match self {
+            UnresolvedType::Module { namespace, .. } => Some(namespace),
+            _ => None,
+        }
+    }
+
     pub fn visit_contained_types(&self, visitor: &mut impl FnMut(&UnresolvedType)) {
         use UnresolvedType::*;
 
@@ -68,13 +77,16 @@ impl UnresolvedType {
 
         match self {
             DefinedType(_)
-            | Ident(_, _)
+            | Resolved(_)
             | Unit
             | Module {
                 name: _,
                 id: _,
                 namespace: _,
             } => {}
+            Path { base, segments: _ } => {
+                base.visit_contained_types(visitor);
+            }
             Array(_, unresolved_type) => unresolved_type.visit_contained_types(visitor),
             Structural(fields) => {
                 for (_, ty) in fields {
@@ -125,24 +137,6 @@ impl UnresolvedType {
                     arg.visit_contained_types(visitor);
                 }
             }
-        }
-    }
-}
-
-impl UnresolvedTypeProducer {
-    pub fn visit_contained_types(&self, visitor: &mut impl FnMut(&UnresolvedType)) {
-        match self {
-            UnresolvedTypeProducer::Struct {
-                id: _,
-                ident: _,
-                generics: _,
-                fields,
-            } => {
-                for (_, field) in fields {
-                    field.visit_contained_types(visitor);
-                }
-            }
-            UnresolvedTypeProducer::DefinedType(_type_id) => {}
         }
     }
 }

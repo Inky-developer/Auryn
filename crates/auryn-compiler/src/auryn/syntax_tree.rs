@@ -40,6 +40,7 @@ pub enum SyntaxNodeKind {
     ArrayType,
     UnitType,
     TypeRef,
+    TypePath,
     TypeArguments,
     Struct,
     StructBody,

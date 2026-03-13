@@ -23,7 +23,8 @@ syntax_tree:
 ||||||Whitespace ` `
 ||||||54..57 Type
 |||||||54..57 TypeRef
-||||||||Identifier `I32`
+||||||||54..57 TypePath
+|||||||||Identifier `I32`
 |||||Comma `,`
 |||||Newline `\n`
 |||||Whitespace `                `
@@ -33,9 +34,10 @@ syntax_tree:
 ||||||Whitespace ` `
 ||||||78..98 Type
 |||||||78..98 TypeRef
-||||||||Identifier `ldaksjf`
-||||||||Newline `\n`
-||||||||Whitespace `            `
+||||||||78..98 TypePath
+|||||||||Identifier `ldaksjf`
+|||||||||Newline `\n`
+|||||||||Whitespace `            `
 ||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `

@@ -151,19 +151,25 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                 0,
                                             ),
                                             expected_type: Some(
-                                                Ident(
-                                                    SyntaxId {
+                                                Application {
+                                                    id: SyntaxId {
                                                         file_id: Some(
                                                             FileId(
                                                                 1,
                                                             ),
                                                         ),
                                                         number: Some(
-                                                            212618500926376,
+                                                            212618500926375,
                                                         ),
                                                     },
-                                                    "I64",
-                                                ),
+                                                    type: Path {
+                                                        base: Resolved(
+                                                            I64,
+                                                        ),
+                                                        segments: [],
+                                                    },
+                                                    generic_arguments: [],
+                                                },
                                             ),
                                             expression: AirExpression {
                                                 id: SyntaxId {

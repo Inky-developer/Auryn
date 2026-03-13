@@ -240,7 +240,9 @@ impl AstTransformer {
                         continue;
                     };
 
-                    let Ok(unresolved) = transform_to_unresolved(&self.namespace, r#type) else {
+                    let Ok(unresolved) =
+                        transform_to_unresolved(&mut self.diagnostics, &self.namespace, r#type)
+                    else {
                         continue;
                     };
                     let member = UnresolvedExternMember::StaticLet {
@@ -262,17 +264,19 @@ impl AstTransformer {
                     let declared_parameters = parameters
                         .parameters()
                         .filter_map(|param| {
-                            param
-                                .r#type()
-                                .ok()
-                                .and_then(|ty| transform_to_unresolved(&self.namespace, ty).ok())
+                            param.r#type().ok().and_then(|ty| {
+                                transform_to_unresolved(&mut self.diagnostics, &self.namespace, ty)
+                                    .ok()
+                            })
                         })
                         .collect();
                     let declared_return_type = function
                         .return_type()
                         .ok()
                         .and_then(|ty| ty.r#type().ok())
-                        .and_then(|ty| transform_to_unresolved(&self.namespace, ty).ok())
+                        .and_then(|ty| {
+                            transform_to_unresolved(&mut self.diagnostics, &self.namespace, ty).ok()
+                        })
                         .map(Box::new);
                     let kind = if function.is_static() {
                         ExternFunctionKind::Static
@@ -312,7 +316,8 @@ impl AstTransformer {
             return;
         };
 
-        let Ok(r#type) = transform_to_unresolved(&self.namespace, r#type) else {
+        let Ok(r#type) = transform_to_unresolved(&mut self.diagnostics, &self.namespace, r#type)
+        else {
             return;
         };
         self.globals
@@ -347,13 +352,13 @@ impl AstTransformer {
     }
 
     fn transform_struct_body(
-        &self,
+        &mut self,
         namespace: &Namespace,
         body: StructBody,
     ) -> Result<Vec<(Spanned<SmallString>, UnresolvedType)>, AstError> {
         let fields = body
             .fields()
-            .map(|field| transform_field_to_unresolved(namespace, field))
+            .map(|field| transform_field_to_unresolved(&mut self.diagnostics, namespace, field))
             .collect::<Result<_, _>>()?;
         Ok(fields)
     }
@@ -380,17 +385,18 @@ impl AstTransformer {
         let declared_parameters = parameters
             .parameters()
             .filter_map(|param| {
-                param
-                    .r#type()
-                    .ok()
-                    .and_then(|ty| transform_to_unresolved(&function_namespace, ty).ok())
+                param.r#type().ok().and_then(|ty| {
+                    transform_to_unresolved(&mut self.diagnostics, &function_namespace, ty).ok()
+                })
             })
             .collect::<Vec<_>>();
         let declared_return_type = function_definition
             .return_type()
             .ok()
             .and_then(|r#type| r#type.r#type().ok())
-            .and_then(|r#type| transform_to_unresolved(&function_namespace, r#type).ok())
+            .and_then(|r#type| {
+                transform_to_unresolved(&mut self.diagnostics, &function_namespace, r#type).ok()
+            })
             .map(Box::new);
 
         let parameter_idents = parameters
@@ -609,7 +615,7 @@ impl FunctionTransformer<'_> {
 
         let expected_type = assignment
             .r#type()
-            .and_then(|r#type| transform_to_unresolved(self.namespace, r#type))
+            .and_then(|r#type| transform_to_unresolved(self.diagnostics, self.namespace, r#type))
             .ok();
 
         let expression = self.transform_expression(expression);
@@ -1061,6 +1067,7 @@ impl FunctionTransformer<'_> {
 }
 
 fn transform_to_unresolved(
+    diagnostics: &mut Diagnostics,
     namespace: &Namespace,
     r#type: Type,
 ) -> Result<UnresolvedType, AstError> {
@@ -1068,49 +1075,59 @@ fn transform_to_unresolved(
         Type::StructuralType(structural) => {
             let fields = structural
                 .fields()
-                .map(|field| transform_field_to_unresolved(namespace, field))
+                .map(|field| transform_field_to_unresolved(diagnostics, namespace, field))
                 .collect::<Result<_, _>>()?;
             Ok(UnresolvedType::Structural(fields))
         }
         Type::ArrayType(inner) => match inner.r#type() {
             Ok(r#type) => Ok(UnresolvedType::Array(
                 r#type.id(),
-                Box::new(transform_to_unresolved(namespace, r#type)?),
+                Box::new(transform_to_unresolved(diagnostics, namespace, r#type)?),
             )),
             Err(err) => Err(err),
         },
         Type::UnitType(_) => Ok(UnresolvedType::Unit),
         Type::TypeRef(type_ref) => {
-            let token = type_ref.ident()?;
-            let ty = match namespace.types.get(&token.text) {
-                Some(def_id) => UnresolvedType::DefinedType(*def_id),
-                None => UnresolvedType::Ident(token.id, token.text.clone()),
+            let mut path_idents = type_ref.path()?.idents();
+            let first_ident = path_idents.next().ok_or(AstError)?;
+            let base_ty = if let Ok(primitive_type) = first_ident.text.parse() {
+                UnresolvedType::Resolved(primitive_type)
+            } else if let Some(def_id) = namespace.types.get(&first_ident.text) {
+                UnresolvedType::DefinedType(*def_id)
+            } else {
+                diagnostics.add(
+                    first_ident.id,
+                    UndefinedVariable {
+                        ident: first_ident.text.clone(),
+                    },
+                );
+                UnresolvedType::Resolved(types::Type::Error)
             };
 
-            let generic_arguments = type_ref
-                .generic_args()
-                .iter()
-                .flat_map(|generic_args| {
-                    generic_args
-                        .types()
-                        .map(|ty| transform_to_unresolved(namespace, ty))
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            if let UnresolvedType::DefinedType(UserDefinedTypeId::Struct(struct_id)) = ty {
-                Ok(UnresolvedType::Application {
-                    id: type_ref.id(),
-                    r#type: Box::new(UnresolvedTypeProducer::DefinedType(struct_id)),
-                    generic_arguments,
-                })
-            } else {
-                assert!(generic_arguments.is_empty(), "TODO: Handle this error case");
-                Ok(ty)
-            }
+            let segments = path_idents.map(|it| it.spanned_text()).collect::<Vec<_>>();
+            let ty = UnresolvedType::Path {
+                base: Box::new(base_ty),
+                segments,
+            };
+
+            let generic_arguments = match type_ref.generic_args() {
+                Some(generic_args) => generic_args
+                    .types()
+                    .map(|ty| transform_to_unresolved(diagnostics, namespace, ty))
+                    .collect::<Result<Vec<_>, _>>()?,
+                None => Vec::new(),
+            };
+            Ok(UnresolvedType::Application {
+                id: type_ref.id(),
+                r#type: Box::new(ty),
+                generic_arguments,
+            })
         }
     }
 }
 
 fn transform_field_to_unresolved(
+    diagnostics: &mut Diagnostics,
     namespace: &Namespace,
     field: StructuralTypeField,
 ) -> Result<(Spanned<SmallString>, UnresolvedType), AstError> {
@@ -1119,6 +1136,6 @@ fn transform_field_to_unresolved(
 
     Ok((
         ident.spanned_text(),
-        transform_to_unresolved(namespace, ty)?,
+        transform_to_unresolved(diagnostics, namespace, ty)?,
     ))
 }

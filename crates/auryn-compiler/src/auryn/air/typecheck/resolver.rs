@@ -6,7 +6,7 @@ use crate::auryn::{
             AirModuleId, AirStaticValue, AirStaticValueId, FunctionReference, TypeAliasId,
             UnresolvedExternMember, UnresolvedFunctionReference,
         },
-        namespace::UserDefinedTypeId,
+        namespace::{Namespace, UserDefinedTypeId},
         typecheck::{
             type_context::{TypeContext, TypeId},
             types::{
@@ -16,10 +16,7 @@ use crate::auryn::{
         },
         unresolved_type::{UnresolvedFunction, UnresolvedType, UnresolvedTypeProducer},
     },
-    diagnostics::{
-        diagnostic::Diagnostics,
-        errors::{MismatchedTypeArgumentCount, UndefinedVariable},
-    },
+    diagnostics::{diagnostic::Diagnostics, errors::MismatchedTypeArgumentCount},
     syntax_id::SyntaxId,
 };
 
@@ -42,6 +39,7 @@ pub struct Resolver<'a> {
     pub ty_ctx: &'a mut TypeContext,
     pub diagnostics: &'a mut Diagnostics,
     pub statics: &'a FastMap<AirStaticValueId, AirStaticValue>,
+    pub unresolved_types: &'a FastMap<UserDefinedTypeId, UnresolvedType>,
     /// Aliases that have already been resolved. An alias absent from this map
     /// is either still being resolved (i.e. circular) or does not exist.
     pub resolved_type_aliases: &'a FastMap<TypeAliasId, Type>,
@@ -80,19 +78,22 @@ impl<'a> Resolver<'a> {
                     self.ty_ctx.generic_of(generic)
                 }
             },
+            UnresolvedType::Resolved(ty) => *ty,
             UnresolvedType::Unit => self.ty_ctx.unit_type(),
-            UnresolvedType::Ident(id, ident) => match ident.parse() {
-                Ok(r#type) => r#type,
-                Err(_) => {
-                    self.diagnostics.add(
-                        *id,
-                        UndefinedVariable {
-                            ident: ident.clone(),
-                        },
-                    );
-                    Type::Error
+            UnresolvedType::Path { base, segments } => {
+                let mut ty = self.resolve(base)?;
+                for segment in segments {
+                    let Some(namespace) = self.get_namespace(ty) else {
+                        todo!();
+                    };
+                    let Some(member) = namespace.types.get(&segment.value) else {
+                        todo!();
+                    };
+                    ty = self.resolve(&UnresolvedType::DefinedType(*member))?;
                 }
-            },
+
+                ty
+            }
             UnresolvedType::Function(UnresolvedFunction {
                 parameters_reference,
                 type_parameters,
@@ -223,7 +224,11 @@ impl<'a> Resolver<'a> {
                 r#type,
                 generic_arguments,
             } => {
-                let generic_type = self.resolve_type_producer(r#type)?;
+                let ty = self.resolve(r#type)?;
+                let Type::TypeProducer(generic_type) = ty else {
+                    assert!(generic_arguments.is_empty(), "TODO add error");
+                    return Ok(ty);
+                };
                 let info = &self.type_producer_info[&generic_type];
                 let provided = generic_arguments.len();
                 if provided != info.parameter_count {
@@ -251,7 +256,6 @@ impl<'a> Resolver<'a> {
         unresolved: &UnresolvedTypeProducer,
     ) -> Result<TypeId<StructType>, ResolverError> {
         match unresolved {
-            UnresolvedTypeProducer::DefinedType(type_id) => Ok(*type_id),
             UnresolvedTypeProducer::Struct {
                 id,
                 ident,
@@ -313,5 +317,13 @@ impl<'a> Resolver<'a> {
                 }
             }
         })
+    }
+
+    fn get_namespace(&self, ty: Type) -> Option<&Namespace> {
+        let type_id = match ty {
+            Type::Module(id) => UserDefinedTypeId::Module(id),
+            _ => return None,
+        };
+        self.unresolved_types[&type_id].namespace()
     }
 }

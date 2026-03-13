@@ -110,6 +110,7 @@ impl Typechecker {
             ty_ctx: &mut self.ty_ctx,
             diagnostics: &mut self.diagnostics,
             statics: &self.statics,
+            unresolved_types: &self.unresolved_types,
             resolved_type_aliases: &self.resolved_type_aliases,
             type_parameters: &self.function.type_variables,
             type_producer_info: &self.type_producer_info,
@@ -173,15 +174,14 @@ impl Typechecker {
     ) -> FastMap<AirFunctionId, AirFunction> {
         self.type_producer_info = type_producers
             .values()
-            .filter_map(|val| match val {
-                UnresolvedTypeProducer::Struct { id, generics, .. } => Some((
+            .map(|val| match val {
+                UnresolvedTypeProducer::Struct { id, generics, .. } => (
                     TypeId::new(*id),
                     TypeProducerInfo {
                         definition_id: *id,
                         parameter_count: generics.len(),
                     },
-                )),
-                _ => None,
+                ),
             })
             .collect();
 
@@ -195,6 +195,7 @@ impl Typechecker {
             ty_ctx: &mut self.ty_ctx,
             diagnostics: &mut self.diagnostics,
             statics: &mut self.statics,
+            unresolved_types: &self.unresolved_types,
             resolved_type_aliases: &self.resolved_type_aliases,
             type_parameters: &self.function.type_variables,
             type_producer_info: &self.type_producer_info,

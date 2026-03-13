@@ -21,12 +21,14 @@ syntax_tree:
 ||||||BracketClose `]`
 ||||||26..34 Type
 |||||||26..34 TypeRef
-||||||||Identifier `Bar`
+||||||||26..29 TypePath
+|||||||||Identifier `Bar`
 ||||||||29..34 TypeArguments
 |||||||||BracketOpen `[`
 |||||||||30..33 Type
 ||||||||||30..33 TypeRef
-|||||||||||Identifier `I32`
+|||||||||||30..33 TypePath
+||||||||||||Identifier `I32`
 |||||||||BracketClose `]`
 ||Newline `\n`
 ||Whitespace `            `

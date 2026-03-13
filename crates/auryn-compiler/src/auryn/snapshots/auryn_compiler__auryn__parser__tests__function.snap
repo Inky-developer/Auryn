@@ -18,7 +18,8 @@ syntax_tree:
 ||||||Whitespace ` `
 ||||||10..13 Type
 |||||||10..13 TypeRef
-||||||||Identifier `Int`
+||||||||10..13 TypePath
+|||||||||Identifier `Int`
 |||||Comma `,`
 |||||Newline `\n`
 |||||15..26 ParameterDefinition
@@ -31,7 +32,8 @@ syntax_tree:
 ||||||||BracketClose `]`
 ||||||||20..26 Type
 |||||||||20..26 TypeRef
-||||||||||Identifier `String`
+||||||||||20..26 TypePath
+|||||||||||Identifier `String`
 |||||Comma `,`
 |||||Whitespace ` `
 |||||28..33 ParameterDefinition
@@ -49,8 +51,9 @@ syntax_tree:
 |||||Whitespace ` `
 |||||38..43 Type
 ||||||38..43 TypeRef
-|||||||Identifier `Null`
-|||||||Whitespace ` `
+|||||||38..43 TypePath
+||||||||Identifier `Null`
+||||||||Whitespace ` `
 ||||BraceOpen `{`
 ||||Whitespace ` `
 ||||45..57 Block

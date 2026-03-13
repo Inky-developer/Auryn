@@ -22,8 +22,9 @@ syntax_tree:
 |||||Whitespace ` `
 |||||14..19 Type
 ||||||14..19 TypeRef
-|||||||Identifier `Null`
-|||||||Whitespace ` `
+|||||||14..19 TypePath
+||||||||Identifier `Null`
+||||||||Whitespace ` `
 ||||BraceOpen `{`
 ||||20..20 Block ''
 ||||BraceClose `}`

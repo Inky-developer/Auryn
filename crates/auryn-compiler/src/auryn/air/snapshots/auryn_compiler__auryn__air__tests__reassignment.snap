@@ -58,19 +58,25 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 0,
                                             ),
                                             expected_type: Some(
-                                                Ident(
-                                                    SyntaxId {
+                                                Application {
+                                                    id: SyntaxId {
                                                         file_id: Some(
                                                             FileId(
                                                                 1,
                                                             ),
                                                         ),
                                                         number: Some(
-                                                            226917481224765,
+                                                            226917481224764,
                                                         ),
                                                     },
-                                                    "I32",
-                                                ),
+                                                    type: Path {
+                                                        base: Resolved(
+                                                            I32,
+                                                        ),
+                                                        segments: [],
+                                                    },
+                                                    generic_arguments: [],
+                                                },
                                             ),
                                             expression: AirExpression {
                                                 id: SyntaxId {
@@ -202,19 +208,25 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                             expected_type: Some(
-                                                Ident(
-                                                    SyntaxId {
+                                                Application {
+                                                    id: SyntaxId {
                                                         file_id: Some(
                                                             FileId(
                                                                 1,
                                                             ),
                                                         ),
                                                         number: Some(
-                                                            236980501225478,
+                                                            236980501225477,
                                                         ),
                                                     },
-                                                    "I32",
-                                                ),
+                                                    type: Path {
+                                                        base: Resolved(
+                                                            I32,
+                                                        ),
+                                                        segments: [],
+                                                    },
+                                                    generic_arguments: [],
+                                                },
                                             ),
                                             expression: AirExpression {
                                                 id: SyntaxId {

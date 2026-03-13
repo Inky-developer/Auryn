@@ -149,6 +149,12 @@ macro_rules! gen_ast_node_inner {
             self.0.nodes().filter_map(<$children_type>::new)
         }
     };
+
+    (impl ...token $children_name:ident: $token_kind:expr ) => {
+        pub fn $children_name(self) -> impl Iterator<Item = &'a SyntaxToken> {
+            self.0.tokens().filter(|it| it.kind == $token_kind)
+        }
+    };
 }
 
 ast_node! {
@@ -285,7 +291,11 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct TypeRef = SyntaxNodeKind::TypeRef as { token ident: TokenKind::Identifier, optional generic_args: TypeArguments, }
+    pub struct TypeRef = SyntaxNodeKind::TypeRef as { path: TypePath, optional generic_args: TypeArguments, }
+}
+
+ast_node! {
+    pub struct TypePath = SyntaxNodeKind::TypePath as { ...token idents: TokenKind::Identifier }
 }
 
 ast_node! {

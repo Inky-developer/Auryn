@@ -1,0 +1,42 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            type Foo = Foo.Bar.Baz[Y, Z]\n            \"#)"
+---
+syntax_tree:
+0..54 Root
+|0..54 File
+||Newline `\n`
+||Whitespace `            `
+||13..41 Item
+|||13..41 TypeAlias
+||||KeywordType `type`
+||||Whitespace ` `
+||||Identifier `Foo`
+||||Whitespace ` `
+||||Equal `=`
+||||Whitespace ` `
+||||24..41 Type
+|||||24..41 TypeRef
+||||||24..35 TypePath
+|||||||Identifier `Foo`
+|||||||Dot `.`
+|||||||Identifier `Bar`
+|||||||Dot `.`
+|||||||Identifier `Baz`
+||||||35..41 TypeArguments
+|||||||BracketOpen `[`
+|||||||36..37 Type
+||||||||36..37 TypeRef
+|||||||||36..37 TypePath
+||||||||||Identifier `Y`
+|||||||Comma `,`
+|||||||Whitespace ` `
+|||||||39..40 Type
+||||||||39..40 TypeRef
+|||||||||39..40 TypePath
+||||||||||Identifier `Z`
+|||||||BracketClose `]`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:
