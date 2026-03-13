@@ -129,6 +129,18 @@ impl Typechecker {
 
         self.statics = statics;
         self.unresolved_types = types;
+        self.type_producer_info = type_producers
+            .values()
+            .map(|val| match val {
+                UnresolvedTypeProducer::Struct { id, generics, .. } => (
+                    TypeId::new(*id),
+                    TypeProducerInfo {
+                        definition_id: *id,
+                        parameter_count: generics.len(),
+                    },
+                ),
+            })
+            .collect();
 
         self.resolve_type_aliases(type_aliases);
         let mut functions = self.compute_defined_types(functions, type_producers);
@@ -172,23 +184,9 @@ impl Typechecker {
         unresolved_functions: FastMap<AirFunctionId, UnresolvedAirFunction>,
         type_producers: FastMap<TypeId<StructType>, UnresolvedTypeProducer>,
     ) -> FastMap<AirFunctionId, AirFunction> {
-        self.type_producer_info = type_producers
-            .values()
-            .map(|val| match val {
-                UnresolvedTypeProducer::Struct { id, generics, .. } => (
-                    TypeId::new(*id),
-                    TypeProducerInfo {
-                        definition_id: *id,
-                        parameter_count: generics.len(),
-                    },
-                ),
-            })
-            .collect();
-
         for producer in type_producers.into_values() {
             self.resolve_type_producer(&producer);
         }
-
         // Iterate self.unresolved_types using explicit field bindings to avoid
         // the &mut self conflict that would arise when calling self.resolve_type().
         let mut resolver = Resolver {
