@@ -325,7 +325,7 @@ impl AstTransformer {
             return;
         };
         let id = TypeId::new(ident.id);
-        let generics = struct_def.maybe_generics().ok().map_or(Vec::new(), |list| {
+        let generics = struct_def.generics().map_or(Vec::new(), |list| {
             self.transform_generic_parameter_list(list)
         });
         let namespace = self.namespace.with_generics(generics.iter().cloned());
@@ -365,8 +365,7 @@ impl AstTransformer {
         let ident = ident.text.clone();
 
         let generic_parameters = function_definition
-            .maybe_generic_parameter_list()
-            .ok()
+            .generic_parameter_list()
             .map_or(Vec::new(), |list| {
                 self.transform_generic_parameter_list(list)
             });
@@ -855,7 +854,7 @@ impl FunctionTransformer<'_> {
     ) -> AirExpression {
         match value_or_postfix {
             ValueOrPostfix::Value(value) => self.transform_value(value),
-            ValueOrPostfix::Postfix(postfix_operation) => {
+            ValueOrPostfix::PostfixOperation(postfix_operation) => {
                 self.transform_postfix_operation(postfix_operation)
             }
         }
@@ -1089,7 +1088,7 @@ fn transform_to_unresolved(
             };
 
             let generic_arguments = type_ref
-                .maybe_generic_args()
+                .generic_args()
                 .iter()
                 .flat_map(|generic_args| {
                     generic_args

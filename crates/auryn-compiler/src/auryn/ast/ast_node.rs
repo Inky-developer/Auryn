@@ -87,6 +87,34 @@ macro_rules! ast_node {
             }
         }
     };
+
+    (pub enum $name:ident = inline $(|)? $($syntax_node_ty:path as $node_ty:ident)|*) => {
+        #[derive(Debug, Clone, Copy)]
+        pub enum $name<'a> {
+            $(
+                $node_ty($node_ty<'a>)
+            ),*
+        }
+
+        impl<'a> $name<'a> {
+            pub(super) fn new(syntax_node: &'a SyntaxNode) -> Option<Self> {
+                match syntax_node.kind {$(
+                        $syntax_node_ty => <$node_ty>::new(syntax_node).map(Self::$node_ty),
+                    )*
+                    _ => None
+                }
+            }
+
+            #[allow(dead_code)]
+            pub fn id(&self) -> SyntaxId {
+                match self {
+                    $(
+                        Self::$node_ty(value) => value.id(),
+                    )*
+                }
+            }
+        }
+    };
 }
 
 macro_rules! gen_ast_node_inner {
@@ -101,6 +129,14 @@ macro_rules! gen_ast_node_inner {
     (impl $ident:ident: $kind:tt, $($rest:tt)*) => {
         pub fn $ident(self) -> AstResult<$kind<'a>> {
             self.0.nodes().find_map(<$kind>::new).ok_or(AstError)
+        }
+
+        gen_ast_node_inner!{impl $($rest)*}
+    };
+
+    (impl optional $ident:ident: $kind:tt, $($rest:tt)*) => {
+        pub fn $ident(self) -> Option<$kind<'a>> {
+            self.0.nodes().find_map(<$kind>::new)
         }
 
         gen_ast_node_inner!{impl $($rest)*}
@@ -185,7 +221,7 @@ impl ExternTypeFunction<'_> {
 ast_node! {
     pub struct FunctionDefinition = SyntaxNodeKind::FunctionDefinition as {
         token ident: TokenKind::Identifier,
-        maybe_generic_parameter_list: GenericParameterList,
+        optional generic_parameter_list: GenericParameterList,
         parameter_list: ParameterList,
         return_type: ReturnType,
         block: Block,
@@ -217,7 +253,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct Struct = SyntaxNodeKind::Struct as { token ident: TokenKind::Identifier, maybe_generics: GenericParameterList, body: StructBody, }
+    pub struct Struct = SyntaxNodeKind::Struct as { token ident: TokenKind::Identifier, optional generics: GenericParameterList, body: StructBody, }
 }
 
 ast_node! {
@@ -249,7 +285,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct TypeRef = SyntaxNodeKind::TypeRef as { token ident: TokenKind::Identifier, maybe_generic_args: TypeArguments, }
+    pub struct TypeRef = SyntaxNodeKind::TypeRef as { token ident: TokenKind::Identifier, optional generic_args: TypeArguments, }
 }
 
 ast_node! {
@@ -357,28 +393,10 @@ ast_node! {
     pub struct PostfixOperation = SyntaxNodeKind::PostfixOperation as { value: ValueOrPostfix, operator: PostfixOperator, }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum ValueOrPostfix<'a> {
-    Value(Value<'a>),
-    Postfix(PostfixOperation<'a>),
-}
-
-impl<'a> ValueOrPostfix<'a> {
-    pub fn new(node: &'a SyntaxNode) -> Option<Self> {
-        match node.kind {
-            SyntaxNodeKind::Value => Value::new(node).map(Self::Value),
-            SyntaxNodeKind::PostfixOperation => PostfixOperation::new(node).map(Self::Postfix),
-            _ => None,
-        }
-    }
-
-    #[expect(dead_code)]
-    pub fn id(&self) -> SyntaxId {
-        match self {
-            ValueOrPostfix::Value(value) => value.id(),
-            ValueOrPostfix::Postfix(postfix_operation) => postfix_operation.id(),
-        }
-    }
+ast_node! {
+    pub enum ValueOrPostfix = inline
+        | SyntaxNodeKind::Value as Value
+        | SyntaxNodeKind::PostfixOperation as PostfixOperation
 }
 
 ast_node! {
