@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "\nfn main() {}\n\ntype Invalid = I32[String]\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_application.au
+---
+Error: Unexpected type arguments
+   ╭─[ main:4:16 ]
+   │
+ 4 │ type Invalid = I32[String]
+   │                ─────┬─────  
+   │                     ╰─────── `I32` does not accept any type arguments
+───╯

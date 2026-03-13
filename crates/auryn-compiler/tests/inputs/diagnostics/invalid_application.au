@@ -1,0 +1,4 @@
+
+fn main() {}
+
+type Invalid = I32[String]

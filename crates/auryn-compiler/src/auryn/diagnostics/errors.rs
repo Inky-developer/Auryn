@@ -347,6 +347,15 @@ diag! {
 
 diag! {
     #[level(DiagnosticLevel::Error)]
+    #[code("Unexpected type arguments")]
+    #[message("`{type}` does not accept any type arguments")]
+    pub struct UnexpectedTypeArguments {
+        r#type: Type,
+    }
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
     #[code("Wrong number of type arguments")]
     #[message("Expected {expected} type argument{} but got {got}", pluralize(*expected, "", "s"))]
     #[label(Label::new(definition_id).with_message(format!("Type is defined here with {expected} type parameter{}", pluralize(*expected, "", "s"))))]

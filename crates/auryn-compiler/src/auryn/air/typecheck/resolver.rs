@@ -16,7 +16,10 @@ use crate::auryn::{
         },
         unresolved_type::{UnresolvedFunction, UnresolvedType, UnresolvedTypeProducer},
     },
-    diagnostics::{diagnostic::Diagnostics, errors::MismatchedTypeArgumentCount},
+    diagnostics::{
+        diagnostic::Diagnostics,
+        errors::{MismatchedTypeArgumentCount, UnexpectedTypeArguments},
+    },
     syntax_id::SyntaxId,
 };
 
@@ -226,7 +229,10 @@ impl<'a> Resolver<'a> {
             } => {
                 let ty = self.resolve(r#type)?;
                 let Type::TypeProducer(generic_type) = ty else {
-                    assert!(generic_arguments.is_empty(), "TODO add error");
+                    if !generic_arguments.is_empty() {
+                        self.diagnostics
+                            .add(*id, UnexpectedTypeArguments { r#type: ty });
+                    }
                     return Ok(ty);
                 };
                 let info = &self.type_producer_info[&generic_type];
