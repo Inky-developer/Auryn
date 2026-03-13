@@ -149,6 +149,20 @@ impl GenericInference {
                     }
                 }
             }
+            (TypeView::Application(expected_app), TypeView::Application(received_app))
+                if expected_app.r#type == received_app.r#type =>
+            {
+                for (expected_arg, received_arg) in expected_app
+                    .arguments
+                    .iter()
+                    .zip(received_app.arguments.iter())
+                {
+                    self.infer_generics(
+                        expected_arg.as_view(expected_app.ctx),
+                        received_arg.as_view(expected_app.ctx),
+                    )?;
+                }
+            }
             (TypeView::Generic(generic), _) => {
                 self.add_generic(generic.value, received.as_type())?;
             }

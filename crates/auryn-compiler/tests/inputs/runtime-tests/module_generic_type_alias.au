@@ -1,0 +1,21 @@
+// expect-output:
+// Foo { value: Hi }
+
+// file: main
+type Foo = foo.Foo[String]
+
+fn main() {
+	let f = Foo {
+		value: "Hi"
+	}
+	test(f)
+}
+
+fn test[T](val: foo.Foo[T]) {
+	print(val)
+}
+
+// file: foo
+struct Foo[T] {
+	value: T
+}

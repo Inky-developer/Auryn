@@ -569,6 +569,20 @@ impl Typechecker {
         }
     }
 
+    /// Given a type that should refer to a struct, returns the struct id and any
+    /// concrete type arguments. Accepts both `TypeProducer` (e.g. `Foo`) and
+    /// `Application` (e.g. `Foo[I32]`).
+    fn get_struct_and_arguments(&self, ty: Type) -> Option<(TypeId<StructType>, Vec<Type>)> {
+        match ty {
+            Type::TypeProducer(struct_id) => Some((struct_id, Vec::new())),
+            Type::Application(app_id) => {
+                let app = self.ty_ctx.get(app_id);
+                Some((app.r#type, app.arguments.clone()))
+            }
+            _ => None,
+        }
+    }
+
     fn check_struct_literal(
         &mut self,
         id: SyntaxId,
@@ -578,7 +592,9 @@ impl Typechecker {
         expected: MaybeBounded,
     ) -> Type {
         self.resolve_if_unresolved(struct_type);
-        let Type::TypeProducer(struct_id) = struct_type.computed() else {
+        let Some((struct_id, concrete_type_arguments)) =
+            self.get_struct_and_arguments(struct_type.computed())
+        else {
             self.diagnostics.add(
                 *struct_ident_id,
                 ExpectedStruct {
@@ -600,8 +616,11 @@ impl Typechecker {
             return Type::Error;
         }
 
-        // If we already know the expected type, we can use the expected type arguments to improve the type inference
-        let already_inferred_type_arguments = if let MaybeBounded::Type(expected) = expected
+        // If we already know the type arguments (from the type itself or the expected type),
+        // use them to improve the type inference
+        let already_inferred_type_arguments = if !concrete_type_arguments.is_empty() {
+            concrete_type_arguments
+        } else if let MaybeBounded::Type(expected) = expected
             && let TypeView::Application(application) = expected.as_view(&self.ty_ctx)
             && application.r#type == struct_id
         {
