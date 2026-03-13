@@ -1,9 +1,9 @@
 use std::{path::PathBuf, process::Stdio};
 
-use auryn_compiler::{compile_str, run};
+use auryn_compiler::{compile_in_memory, run};
 use insta::glob;
 
-use crate::common::log_test;
+use crate::common::{log_test, parse_project_tree};
 
 mod common;
 
@@ -50,7 +50,8 @@ fn runtime_tests() {
         let content = std::fs::read_to_string(path).unwrap();
         let expected_output = parse_expected_output(&content);
 
-        let output = match compile_str(&content) {
+        let project_tree = parse_project_tree(&content);
+        let output = match compile_in_memory(project_tree) {
             Ok(output) => output,
             Err(error) => {
                 eprintln!("{error}");

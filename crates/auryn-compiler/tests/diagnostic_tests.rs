@@ -1,13 +1,14 @@
 use std::fs;
 
-use crate::common::log_test;
-use auryn_compiler::{AurynError, DisplayOptions, compile_str};
+use crate::common::{log_test, parse_project_tree};
+use auryn_compiler::{AurynError, DisplayOptions, compile_in_memory};
 use insta::{assert_snapshot, glob};
 
 mod common;
 
 fn compile_diagnostics(input: &str) -> String {
-    let Err(AurynError::CompilerError(diagnostics)) = compile_str(input) else {
+    let project_tree = parse_project_tree(input);
+    let Err(AurynError::CompilerError(diagnostics)) = compile_in_memory(project_tree) else {
         panic!("Input compiled successfully, but expected diagnostics!");
     };
 

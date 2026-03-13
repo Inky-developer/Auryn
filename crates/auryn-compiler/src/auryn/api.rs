@@ -14,14 +14,14 @@ use crate::auryn::{
         diagnostic::Diagnostics,
         diagnostic_display::{DiagnosticCollectionDisplay, DiagnosticLevel},
     },
-    environment::{Environment, FilesystemEnvironment, ProjectTree},
+    environment::{Environment, FilesystemEnvironment},
     file_id::FileId,
     input_files::InputFiles,
     monomorphization::monomorphize,
     world::World,
 };
 
-pub use crate::auryn::diagnostics::diagnostic_display::DisplayOptions;
+pub use crate::auryn::{diagnostics::diagnostic_display::DisplayOptions, environment::ProjectTree};
 
 #[derive(Debug)]
 pub enum AurynError {
