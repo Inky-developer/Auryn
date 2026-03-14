@@ -1,0 +1,53 @@
+// expect-output:
+// List { items: [], len: 0 }
+// List { items: [Hi!, null, null, null], len: 1 }
+// List { items: [Hi!, World!, null, null], len: 2 }
+// List { items: [Hi!, World!, Foo, Bar, Baz, null, null, null], len: 5 }
+
+struct List[T] {
+	items: []T,
+	len: I32
+}
+
+fn List_new[T]() -> List[T] {
+	return List {
+		items: arrayOfZeros(0),
+		len: 0
+	}
+}
+
+fn List_add[T](list: List[T], item: T) {
+	if list.len >= arrayLen(list.items) {
+		List_grow(list)
+	}
+	arraySet(list.items, list.len, item)
+	list.len += 1
+}
+
+fn List_grow[T](list: List[T]) {
+	let new_capacity = arrayLen(list.items) * 2
+	if new_capacity == 0 {
+		new_capacity = 4
+	}
+
+	let old_items = list.items
+	list.items = arrayOfZeros(new_capacity)
+	let i: I32 = 0
+	while i < arrayLen(old_items) {
+		arraySet(list.items, i, arrayGet(old_items, i))
+		i += 1
+	}
+}
+
+fn main() {
+	let l: List[String] = List_new()
+	print(l)
+	List_add(l, "Hi!")
+	print(l)
+	List_add(l, "World!")
+	print(l)
+	List_add(l, "Foo")
+	List_add(l, "Bar")
+	List_add(l, "Baz")
+	print(l)
+}
