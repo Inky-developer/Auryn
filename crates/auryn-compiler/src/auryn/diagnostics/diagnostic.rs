@@ -122,7 +122,7 @@ impl Diagnostic {
         self.kind.build(&mut builder, ctx);
 
         if ctx.options.write_debug_info {
-            builder.with_info(format!("This diagnostic was emmited at {}", self.location));
+            builder.with_info(format!("This diagnostic was emitted at {}", self.location));
         }
 
         builder
