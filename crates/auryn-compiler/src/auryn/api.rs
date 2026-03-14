@@ -15,7 +15,6 @@ use crate::auryn::{
         diagnostic_display::{DiagnosticCollectionDisplay, DiagnosticLevel},
     },
     environment::{Environment, FilesystemEnvironment},
-    file_id::FileId,
     input_files::InputFiles,
     monomorphization::monomorphize,
     world::World,
@@ -134,7 +133,7 @@ fn compile(
 ) -> Result<CodegenOutput, AurynError> {
     let mut world = World::new(environment, main_file)?;
 
-    let (mut air, diagnostics) = world.query_air(FileId::MAIN_FILE);
+    let (mut air, diagnostics) = world.query_air();
     if !diagnostics.is_empty() {
         let should_abort = diagnostics
             .iter()

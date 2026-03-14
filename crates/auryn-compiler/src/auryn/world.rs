@@ -6,7 +6,7 @@ use crate::auryn::{
     diagnostics::diagnostic::Diagnostics,
     environment::Environment,
     file_id::FileId,
-    input_files::{InputFile, InputFiles},
+    input_files::InputFiles,
 };
 
 pub struct World {
@@ -28,10 +28,6 @@ impl World {
         })
     }
 
-    pub fn file(&self, id: FileId) -> &InputFile {
-        self.input_files.get(id)
-    }
-
     pub fn input_files(&self) -> &InputFiles {
         &self.input_files
     }
@@ -40,9 +36,12 @@ impl World {
         self.input_files
     }
 
-    pub fn query_air(&mut self, file: FileId) -> (Air, Diagnostics) {
-        let file = self.file(file);
-        let mut diagnostics = file.syntax_tree().collect_diagnostics();
+    pub fn query_air(&mut self) -> (Air, Diagnostics) {
+        let mut diagnostics = self
+            .input_files
+            .iter()
+            .flat_map(|(_id, file)| file.syntax_tree().collect_diagnostics())
+            .collect::<Vec<_>>();
 
         let included_modules = self.input_files.iter().map(|(_id, file)| file);
 

@@ -1,0 +1,13 @@
+// Tests that syntax errors in modules other than the main module are reported.
+// I may have actually forgotten to do that...
+
+// file: main
+fn main() {
+	foo.foo()
+}
+
+
+// file: foo
+fn foo() {
+	}
+}

@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "// Tests that syntax errors in modules other than the main module are reported.\n// I may have actually forgotten to do that...\n\n// file: main\nfn main() {\n\tfoo.foo()\n}\n\n\n// file: foo\nfn foo() {\n\t}\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/module_syntax_error.au
+---
+Error: Expected item
+   ╭─[ foo:3:1 ]
+   │
+ 3 │ }
+   │ │ 
+   │ ╰─ got "}"
+───╯
