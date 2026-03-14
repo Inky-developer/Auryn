@@ -1,11 +1,15 @@
-use std::{io::Write, path::Path, process::Stdio};
+use std::{
+    io::Write,
+    path::Path,
+    process::{ExitCode, Stdio},
+};
 
 use auryn_compiler::{compile_file, compile_str, run};
 use yansi::Paint;
 
 const BUILD_DIR: &str = "build";
 
-fn main() -> std::io::Result<()> {
+fn main() -> ExitCode {
     let mut args = std::env::args();
     args.next().unwrap();
     if let Some(filename) = args.next() {
@@ -17,13 +21,16 @@ fn main() -> std::io::Result<()> {
                 }
                 print!("{}", run(class, BUILD_DIR, Stdio::inherit()));
             }
-            Err(err) => eprintln!("{err}"),
+            Err(err) => {
+                eprintln!("{err}");
+                return ExitCode::FAILURE;
+            }
         }
     } else {
         repl();
     }
 
-    Ok(())
+    ExitCode::SUCCESS
 }
 
 fn repl() {
