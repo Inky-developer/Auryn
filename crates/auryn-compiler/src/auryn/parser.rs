@@ -593,6 +593,9 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.expect(TokenKind::KeywordFn)?;
+        if self.peek().kind == TokenKind::ParensOpen {
+            self.parse_receiver_definition()?;
+        }
         self.expect(TokenKind::Identifier)?;
         if self.peek().kind == TokenKind::BracketOpen {
             self.parse_recoverable(
@@ -610,6 +613,19 @@ impl Parser<'_> {
         self.parse_braced_block()?;
 
         self.finish_node(watcher, SyntaxNodeKind::FunctionDefinition);
+        Ok(())
+    }
+
+    fn parse_receiver_definition(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.parse_surrounded(
+            TokenKind::ParensOpen,
+            TokenKind::ParensClose,
+            Self::parse_type,
+        )?;
+
+        self.finish_node(watcher, SyntaxNodeKind::Receiver);
         Ok(())
     }
 
@@ -641,6 +657,17 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         self.parse_surrounded(TokenKind::ParensOpen, TokenKind::ParensClose, |parser| {
+            let next = parser.peek();
+            if next.kind == TokenKind::Identifier && next.text == "self" {
+                let watcher = parser.push_node();
+                parser.consume();
+                parser.finish_node(watcher, SyntaxNodeKind::SelfParameterDefinition);
+                if parser.peek().kind == TokenKind::Comma {
+                    parser.consume();
+                } else {
+                    return Ok(());
+                }
+            }
             parser.parse_separated(
                 TokenKind::ParensClose,
                 TokenKind::Comma,
@@ -1415,6 +1442,8 @@ mod tests {
         ));
         insta::assert_debug_snapshot!(verify("fn foo[]() -> Null {}"));
         insta::assert_debug_snapshot!(verify("fn foo[T, Uvw]() {}"));
+        insta::assert_debug_snapshot!(verify("fn foo(self, foo: I32) {}"));
+        insta::assert_debug_snapshot!(verify("fn (ty) foo[T](self) {}"));
     }
 
     #[test]

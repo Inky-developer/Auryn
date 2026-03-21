@@ -58,8 +58,7 @@ impl<'a> FunctionGenerator<'a> {
         let mut variable_index = 0;
         for (parameter, argument_id) in function_type
             .parameters()
-            .iter()
-            .zip(function_type.argument_ids())
+            .zip(function_type.parameter_ids())
         {
             if let Some(primitive) =
                 repr_ctx.get_representation(parameter.as_view(&parent.air.ty_ctx))
@@ -336,7 +335,8 @@ impl FunctionGenerator<'_> {
                 call,
                 expression.r#type.computed().as_view(self.parent.ty_ctx()),
             ),
-            expr @ (AirExpressionKind::Synthetic | AirExpressionKind::Error(_)) => {
+            AirExpressionKind::Synthetic => {}
+            expr @ AirExpressionKind::Error(_) => {
                 unreachable!("Codegen was started with invalid air: {expr:?}")
             }
         };

@@ -399,7 +399,6 @@ impl RepresentationCtx {
     ) -> MethodDescriptor {
         let parameters = ty
             .parameters()
-            .iter()
             .flat_map(|it| {
                 self.get_representation(it.as_view(ty.ctx))
                     .map(|it| it.into_field_descriptor())

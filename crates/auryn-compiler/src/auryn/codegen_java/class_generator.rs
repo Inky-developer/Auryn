@@ -491,6 +491,27 @@ mod tests {
     }
 
     #[test]
+    fn test_receiver_function() {
+        insta::assert_debug_snapshot!(generate_classes(
+            r#"
+            // main
+            struct Foo[T] {
+                inner: []T
+            }
+
+            fn (Foo[T]) len[T](self) -> I32 {
+                return arrayLen(self.inner)
+            }
+            
+            fn main() {
+                let f = Foo { inner: arrayOf("Foo", "Bar", "Baz") }
+                print(f.len())
+            }
+            "#
+        ))
+    }
+
+    #[test]
     #[should_panic]
     fn test_reject_invalid_variable() {
         insta::assert_debug_snapshot!(generate_class_wrapped("let a = a"));

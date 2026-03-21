@@ -128,6 +128,7 @@ impl FunctionBuilder<'_> {
     fn resolve_function_type(&mut self, ty: TypeId<FunctionItemType>) -> TypeId<FunctionItemType> {
         let FunctionItemType {
             type_parameters: _,
+            receiver,
             parameters,
             return_type,
             reference,
@@ -140,8 +141,10 @@ impl FunctionBuilder<'_> {
                 .map(|ty| self.resolve_type(*ty))
                 .collect(),
         };
+        let receiver = receiver.map(|it| it.map(|ty| self.resolve_type(ty)));
         let function = FunctionItemType {
             type_parameters: Vec::new(),
+            receiver,
             parameters,
             return_type: self.resolve_type(return_type),
             reference: match reference {

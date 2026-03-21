@@ -12,6 +12,7 @@ use crate::auryn::{
 #[derive(Debug)]
 pub struct UnresolvedFunction {
     pub parameters_reference: SyntaxId,
+    pub receiver: Option<Box<Spanned<UnresolvedType>>>,
     pub type_parameters: Vec<Spanned<SmallString>>,
     pub parameters: Vec<UnresolvedType>,
     pub return_type: Option<Box<UnresolvedType>>,
@@ -94,12 +95,16 @@ impl UnresolvedType {
                 }
             }
             Function(UnresolvedFunction {
+                receiver,
                 parameters_reference: _,
                 type_parameters: _,
                 parameters,
                 return_type,
                 reference: _,
             }) => {
+                if let Some(receiver) = receiver {
+                    receiver.visit_contained_types(visitor);
+                }
                 for param in parameters {
                     param.visit_contained_types(visitor);
                 }

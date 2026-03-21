@@ -1,0 +1,36 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(\"fn (ty) foo[T](self) {}\")"
+---
+syntax_tree:
+0..23 Root
+|0..23 File
+||0..23 Item
+|||0..23 FunctionDefinition
+||||KeywordFn `fn`
+||||Whitespace ` `
+||||3..8 Receiver
+|||||ParensOpen `(`
+|||||4..6 Type
+||||||4..6 TypeRef
+|||||||4..6 TypePath
+||||||||Identifier `ty`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||Identifier `foo`
+||||11..14 GenericParameterList
+|||||BracketOpen `[`
+|||||12..13 GenericParameterDefinition
+||||||Identifier `T`
+|||||BracketClose `]`
+||||14..21 ParameterList
+|||||ParensOpen `(`
+|||||15..19 SelfParameterDefinition
+||||||Identifier `self`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||BraceOpen `{`
+||||22..22 Block ''
+||||BraceClose `}`
+
+diagnostics:

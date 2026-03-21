@@ -69,10 +69,48 @@ impl Debug for SyntaxId {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Spanned<T> {
-    pub value: T,
+#[derive(Debug, Clone, Copy)]
+pub struct Spanned<T: ?Sized> {
     pub syntax_id: SyntaxId,
+    pub value: T,
+}
+
+impl<T> Spanned<T> {
+    pub fn map<U>(self, map: impl FnOnce(T) -> U) -> Spanned<U> {
+        Spanned {
+            value: map(self.value),
+            syntax_id: self.syntax_id,
+        }
+    }
+
+    pub fn map_ref<U>(&self, map: impl FnOnce(&T) -> U) -> Spanned<U> {
+        Spanned {
+            value: map(&self.value),
+            syntax_id: self.syntax_id,
+        }
+    }
+}
+
+impl<T, E> Spanned<Result<T, E>> {
+    pub fn transpose(self) -> Result<Spanned<T>, E> {
+        match self.value {
+            Ok(value) => Ok(Spanned {
+                value,
+                syntax_id: self.syntax_id,
+            }),
+            Err(err) => Err(err),
+        }
+    }
+}
+
+impl<T> Spanned<Option<T>> {
+    pub fn transpose(self) -> Option<Spanned<T>> {
+        let value = self.value?;
+        Some(Spanned {
+            value,
+            syntax_id: self.syntax_id,
+        })
+    }
 }
 
 impl<T: PartialEq> PartialEq for Spanned<T> {
@@ -118,6 +156,19 @@ impl<T> Deref for Spanned<T> {
 impl<T> DerefMut for Spanned<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
+    }
+}
+
+pub trait SpanExt {
+    fn with_span(self, syntax_id: SyntaxId) -> Spanned<Self>;
+}
+
+impl<T> SpanExt for T {
+    fn with_span(self, syntax_id: SyntaxId) -> Spanned<Self> {
+        Spanned {
+            value: self,
+            syntax_id,
+        }
     }
 }
 

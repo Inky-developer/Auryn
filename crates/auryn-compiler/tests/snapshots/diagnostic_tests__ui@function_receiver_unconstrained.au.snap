@@ -1,0 +1,24 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn (T) prinln[T](self) {\n\tprint(self)\n}\n\nfn main() {\n\t\"Hello, World!\".println()\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/function_receiver_unconstrained.au
+---
+Error: The receiver type is too generic
+   ╭─[ main:1:5 ]
+   │
+ 1 │ fn (T) prinln[T](self) {
+   │     ┬  
+   │     ╰── The receiver contains a generic type
+   │ 
+   │ Note: This limitation may be lifted in the future
+───╯
+
+Error: Undefined property
+   ╭─[ main:6:18 ]
+   │
+ 6 │     "Hello, World!".println()
+   │     ───────┬─────── ───┬───  
+   │            ╰───────────────── Value has type `String`
+   │                        │     
+   │                        ╰───── Unknown property `println`
+───╯

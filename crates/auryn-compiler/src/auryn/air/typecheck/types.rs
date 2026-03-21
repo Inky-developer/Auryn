@@ -215,6 +215,7 @@ impl TypeData for NumberLiteralType {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FunctionItemType {
     pub type_parameters: Vec<GenericType>,
+    pub receiver: Option<Spanned<Type>>,
     pub parameters: FunctionParameters,
     pub return_type: Type,
     pub reference: FunctionReference,
@@ -226,10 +227,14 @@ impl TypeData for FunctionItemType {
     fn visit(&self, visitor: &mut impl FnMut(Type)) {
         let Self {
             type_parameters,
+            receiver,
             parameters,
             return_type,
             reference: _,
         } = self;
+        if let Some(receiver) = receiver {
+            visitor(receiver.value);
+        }
         for type_parameter in type_parameters {
             type_parameter.visit(visitor);
         }
@@ -239,17 +244,18 @@ impl TypeData for FunctionItemType {
 }
 
 impl FunctionItemType {
-    pub fn parameters(&self) -> &[Type] {
-        &self.parameters.parameters
+    pub fn parameters(&self) -> impl Iterator<Item = Type> {
+        self.receiver
+            .iter()
+            .map(|spanned| spanned.value)
+            .chain(self.parameters.parameters.iter().copied())
     }
 
     /// Returns value ids for the arguments.
     /// The value ids increment for each argument.
-    pub fn argument_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
-        self.parameters()
-            .iter()
-            .enumerate()
-            .map(|(index, _)| AirLocalValueId(index))
+    pub fn parameter_ids(&self) -> impl Iterator<Item = AirLocalValueId> {
+        let num_parameters = self.parameters().count();
+        (0..num_parameters).map(AirLocalValueId)
     }
 }
 
@@ -387,7 +393,7 @@ impl StructuralType {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone)]
 pub struct StructType {
     pub ident: SmallString,
     pub type_parameters: Vec<GenericType>,
@@ -583,7 +589,7 @@ impl<'a, T> Deref for TypeViewKind<'a, T> {
 impl<'a> Display for TypeViewKind<'a, FunctionItemType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;
-        for (index, parameter) in self.parameters().iter().enumerate() {
+        for (index, parameter) in self.parameters().enumerate() {
             if index != 0 {
                 f.write_str(",")?;
             }

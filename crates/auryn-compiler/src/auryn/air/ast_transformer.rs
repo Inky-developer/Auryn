@@ -6,10 +6,10 @@ use crate::auryn::{
     air::{
         data::{
             self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
-            AirExpressionKind, AirGenericArguments, AirLocalValueId, AirModuleId, AirNode,
-            AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType,
-            AirValueId, Call, ExternFunctionKind, ReturnValue, TypeAliasId, UnaryOperation,
-            UnaryOperator, UnresolvedAirFunction, UnresolvedExternMember,
+            AirExpressionKind, AirFunctionId, AirGenericArguments, AirLocalValueId, AirModuleId,
+            AirNode, AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId,
+            AirType, AirValueId, Call, ExternFunctionKind, ReturnValue, TypeAliasId,
+            UnaryOperation, UnaryOperator, UnresolvedAirFunction, UnresolvedExternMember,
             UnresolvedFunctionReference, UnresolvedGlobals,
         },
         namespace::{Namespace, UserDefinedTypeId},
@@ -34,7 +34,7 @@ use crate::auryn::{
             UnexpectedExternTarget,
         },
     },
-    syntax_id::{Spanned, SyntaxId},
+    syntax_id::{SpanExt, Spanned, SyntaxId},
     syntax_tree::SyntaxToken,
 };
 
@@ -104,10 +104,12 @@ impl AstTransformer {
             return;
         };
 
-        self.namespace.statics.insert(
-            ident.text.clone(),
-            AirStaticValueId(function_definition.id()),
-        );
+        if function_definition.receiver().is_none() {
+            self.namespace.statics.insert(
+                ident.text.clone(),
+                AirStaticValueId(function_definition.id()),
+            );
+        }
     }
 
     fn register_extern_block(&mut self, block: ExternBlock) {
@@ -286,6 +288,7 @@ impl AstTransformer {
 
                     let member = UnresolvedExternMember::Function {
                         unresolved_type: UnresolvedType::Function(UnresolvedFunction {
+                            receiver: None,
                             parameters_reference: parameters.id(),
                             type_parameters: Vec::new(),
                             parameters: declared_parameters,
@@ -379,6 +382,16 @@ impl AstTransformer {
             .namespace
             .with_generics(generic_parameters.iter().cloned());
 
+        let receiver = function_definition
+            .receiver()
+            .and_then(|receiver| receiver.r#type().ok())
+            .and_then(|ty| {
+                transform_to_unresolved(&mut self.diagnostics, &function_namespace, ty)
+                    .ok()
+                    .with_span(ty.id())
+                    .transpose()
+            });
+
         let Ok(parameters) = function_definition.parameter_list() else {
             return;
         };
@@ -390,6 +403,7 @@ impl AstTransformer {
                 })
             })
             .collect::<Vec<_>>();
+        let self_param = parameters.self_parameter().and_then(|it| it.ident().ok());
         let declared_return_type = function_definition
             .return_type()
             .ok()
@@ -399,9 +413,14 @@ impl AstTransformer {
             })
             .map(Box::new);
 
-        let parameter_idents = parameters
-            .parameters()
-            .filter_map(|param| param.ident().ok().map(|ident| ident.text.clone()))
+        let parameter_idents = self_param
+            .into_iter()
+            .chain(
+                parameters
+                    .parameters()
+                    .filter_map(|param| param.ident().ok()),
+            )
+            .map(|token| token.text.clone())
             .collect::<Vec<_>>();
 
         let function_transformer =
@@ -412,9 +431,10 @@ impl AstTransformer {
         };
         let blocks = function_transformer.transform_function_body(block);
 
-        let function_id = self.namespace.unwrap_function(&ident);
+        let function_id = AirFunctionId(AirStaticValueId(function_definition.id()));
         let function = UnresolvedAirFunction {
             unresolved_type: UnresolvedType::Function(UnresolvedFunction {
+                receiver: receiver.map(Box::new),
                 parameters_reference: parameters.id(),
                 type_parameters: generic_parameters,
                 parameters: declared_parameters,

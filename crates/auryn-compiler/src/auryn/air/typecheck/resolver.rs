@@ -53,7 +53,6 @@ pub struct Resolver<'a> {
 
 impl<'a> Resolver<'a> {
     pub fn resolve_type(&mut self, unresolved: &UnresolvedType) -> ResolverResult {
-        self.current_generic_parameters.clear();
         self.resolve(unresolved)
     }
 
@@ -98,6 +97,7 @@ impl<'a> Resolver<'a> {
                 ty
             }
             UnresolvedType::Function(UnresolvedFunction {
+                receiver,
                 parameters_reference,
                 type_parameters,
                 parameters,
@@ -118,6 +118,10 @@ impl<'a> Resolver<'a> {
                 self.current_generic_parameters
                     .extend(type_parameters.iter().cloned());
 
+                let receiver = receiver
+                    .as_ref()
+                    .map(|receiver| receiver.map_ref(|ty| self.resolve_type(ty)).transpose())
+                    .transpose()?;
                 let parameters = parameters
                     .iter()
                     .map(|param| self.resolve(param))
@@ -130,6 +134,7 @@ impl<'a> Resolver<'a> {
                     Some(reference.syntax_id()),
                     FunctionItemType {
                         type_parameters,
+                        receiver,
                         parameters: FunctionParameters {
                             parameters,
                             parameters_reference: *parameters_reference,

@@ -2,7 +2,7 @@ use stdx::{FastMap, SmallString, default};
 
 use crate::auryn::{
     air::{
-        data::{AirFunctionId, AirModuleId, AirStaticValueId, TypeAliasId},
+        data::{AirModuleId, AirStaticValueId, TypeAliasId},
         typecheck::{
             type_context::TypeId,
             types::{ExternType, GenericId, ModuleType, StructType},
@@ -56,11 +56,5 @@ impl Namespace {
 
     pub fn get(&self, ident: &str) -> Option<AirStaticValueId> {
         self.statics.get(ident).copied()
-    }
-
-    /// Assumes the value with the given ident to exist and to be a function
-    /// and returns the id
-    pub fn unwrap_function(&self, ident: &str) -> AirFunctionId {
-        AirFunctionId(self.get(ident).expect("ident should be in this namespace"))
     }
 }

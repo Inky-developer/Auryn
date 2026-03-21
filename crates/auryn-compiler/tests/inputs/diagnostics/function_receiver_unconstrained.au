@@ -1,0 +1,7 @@
+fn (T) prinln[T](self) {
+	print(self)
+}
+
+fn main() {
+	"Hello, World!".println()
+}

@@ -1,0 +1,36 @@
+// expect-output:
+// 2
+// { data: [Hello, World] }
+// 2
+// Foo { data: [Hello, World] }
+// 2
+
+struct Foo {
+	data: []String
+}
+
+fn (Foo) len(self) -> I32 {
+	return arrayLen(self.data)
+}
+
+fn ({data: []String}) len(self) -> I32 {
+	return arrayLen(self.data)
+}
+
+fn ([]String) len(self) -> I32 {
+	return arrayLen(self)
+}
+
+fn main() {
+	let data = arrayOf("Hello", "World")
+
+	print(data.len())
+
+	let structural = { data: data }
+	print(structural)
+	print(structural.len())
+
+	let foo = Foo { data: data }
+	print(foo)
+	print(foo.len())
+}

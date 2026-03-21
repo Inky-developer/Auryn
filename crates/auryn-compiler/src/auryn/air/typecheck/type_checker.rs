@@ -15,6 +15,7 @@ use crate::auryn::{
         typecheck::{
             bounds::{Bound, BoundView, HasStructuralFields, MaybeBounded},
             generics::GenericInference,
+            implementations::{Implementations, InsertionError},
             resolver::{Resolver, ResolverError, ResolverResult, TypeProducerInfo},
             type_context::{TypeContext, TypeId},
             types::{
@@ -28,8 +29,9 @@ use crate::auryn::{
         diagnostic::Diagnostics,
         errors::{
             CircularTypeAlias, ExpectedFunction, ExpectedStruct, InferenceFailed, InvalidCast,
-            MismatchedArgumentCount, MissingFields, NonInferredGenericType, TypeMismatch,
-            UndefinedProperty, UnexpectedFields, UnsupportedOperationWithType, ValueOutsideRange,
+            MismatchedArgumentCount, MissingFields, NonInferredGenericType, ReceiverIsTooGeneric,
+            TypeMismatch, UndefinedProperty, UnexpectedFields, UnsupportedOperationWithType,
+            ValueOutsideRange,
         },
     },
     syntax_id::{Spanned, SyntaxId},
@@ -82,6 +84,7 @@ impl FunctionContext {
 #[derive(Debug, Default)]
 pub struct Typechecker {
     functions: FastMap<AirFunctionId, TypeId<FunctionItemType>>,
+    implementations: Implementations,
     function: FunctionContext,
     statics: FastMap<AirStaticValueId, AirStaticValue>,
     unresolved_types: FastMap<UserDefinedTypeId, UnresolvedType>,
@@ -94,14 +97,8 @@ pub struct Typechecker {
 impl Typechecker {
     pub fn new(diagnostics: Diagnostics) -> Self {
         Self {
-            functions: default(),
-            function: default(),
-            statics: default(),
-            unresolved_types: default(),
-            resolved_type_aliases: default(),
-            type_producer_info: default(),
-            ty_ctx: default(),
             diagnostics,
+            ..default()
         }
     }
 
@@ -212,6 +209,23 @@ impl Typechecker {
                 let Type::FunctionItem(function_type) = computed_ty else {
                     unreachable!("Should compute a function type for a function!");
                 };
+                if let Some(receiver) = self.ty_ctx.get(function_type).receiver {
+                    match self.implementations.add(
+                        receiver.value,
+                        &self.ty_ctx,
+                        unresolved_fn.ident.clone(),
+                        id,
+                    ) {
+                        Ok(prev) => assert_eq!(
+                            prev, None,
+                            "TODO: Add error message for multiple functions with the same name"
+                        ),
+                        Err(InsertionError::TypeIsTooGeneric) => {
+                            self.diagnostics
+                                .add(receiver.syntax_id, ReceiverIsTooGeneric {});
+                        }
+                    };
+                }
                 self.functions.insert(id, function_type);
                 (
                     id,
@@ -288,10 +302,10 @@ impl Typechecker {
             .type_variables
             .extend(function_type.type_parameters.iter().cloned());
         for (id, r#type) in function_type
-            .argument_ids()
-            .zip(function_type.value.parameters().iter())
+            .parameter_ids()
+            .zip(function_type.value.parameters())
         {
-            self.function.variables.insert(id, *r#type);
+            self.function.variables.insert(id, r#type);
         }
 
         let mut visited_blocks = FastSet::default();
@@ -768,7 +782,8 @@ impl Typechecker {
     fn infer_accessor(&mut self, accessor: &mut Accessor) -> Type {
         self.infer_expression(&mut accessor.value);
         let value_type = accessor.value.r#type.computed();
-        match value_type.get_member(&mut self.ty_ctx, &accessor.ident) {
+        let member = self.get_member(value_type, &accessor.ident);
+        match member {
             Some(member_type) => member_type,
             None => {
                 self.diagnostics.add(
@@ -782,6 +797,22 @@ impl Typechecker {
                 Type::Error
             }
         }
+    }
+
+    fn get_member(&mut self, ty: Type, member: &str) -> Option<Type> {
+        // TODO: Remove the `Type::get_member` method and move everything to implementation blocks
+        if let Some(inherent_member) = ty.get_member(&mut self.ty_ctx, member) {
+            return Some(inherent_member);
+        }
+
+        let impl_blocks = self.implementations.get(ty.as_view(&self.ty_ctx));
+        if let Some(function_id) = impl_blocks.get(member)
+            && let Some(type_id) = self.functions.get(&function_id)
+        {
+            return Some(Type::FunctionItem(*type_id));
+        }
+
+        None
     }
 
     fn typecheck_call(
@@ -823,9 +854,23 @@ impl Typechecker {
         let return_type = function_type.return_type;
 
         let FunctionParameters {
-            parameters,
+            mut parameters,
             parameters_reference,
         } = function_type.parameters.clone();
+
+        if let Some(receiver) = function_type.receiver {
+            parameters.insert(0, receiver.value);
+
+            // make sure that codegen does not do anything when resolving the function
+            let placeholder = AirExpressionKind::Synthetic;
+            let AirExpressionKind::Accessor(accessor) =
+                std::mem::replace(&mut call.function.kind, placeholder)
+            else {
+                unreachable!("Can only call functions with self params via accessor path");
+            };
+            call.arguments.insert(0, *accessor.value);
+        };
+
         if parameters.len() != call.arguments.len() {
             self.diagnostics.add(
                 id,

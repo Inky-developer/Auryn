@@ -126,6 +126,14 @@ macro_rules! gen_ast_node_inner {
         gen_ast_node_inner!{impl $($rest)*}
     };
 
+    (impl optional token $ident:ident: $kind:path, $($rest:tt)*) => {
+        pub fn $ident(self) -> Option<&'a SyntaxToken> {
+            self.0.get_token_by_kind($kind)
+        }
+
+        gen_ast_node_inner!{impl $($rest)*}
+    };
+
     (impl $ident:ident: $kind:tt, $($rest:tt)*) => {
         pub fn $ident(self) -> AstResult<$kind<'a>> {
             self.0.nodes().find_map(<$kind>::new).ok_or(AstError)
@@ -227,11 +235,16 @@ impl ExternTypeFunction<'_> {
 ast_node! {
     pub struct FunctionDefinition = SyntaxNodeKind::FunctionDefinition as {
         token ident: TokenKind::Identifier,
+        optional receiver: Receiver,
         optional generic_parameter_list: GenericParameterList,
         parameter_list: ParameterList,
         return_type: ReturnType,
         block: Block,
     }
+}
+
+ast_node! {
+    pub struct Receiver = SyntaxNodeKind::Receiver as { r#type: Type, }
 }
 
 ast_node! {
@@ -243,7 +256,11 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct ParameterList = SyntaxNodeKind::ParameterList as { ...parameters: Parameter }
+    pub struct ParameterList = SyntaxNodeKind::ParameterList as { optional self_parameter: SelfParameter, ...parameters: Parameter }
+}
+
+ast_node! {
+    pub struct SelfParameter = SyntaxNodeKind::SelfParameterDefinition as { token ident: TokenKind::Identifier, }
 }
 
 ast_node! {

@@ -289,7 +289,7 @@ pub enum AirExpressionKind {
     Type(AirType),
     Accessor(Accessor),
     Call(Call),
-    /// Only used internally during typechecking, never emitted
+    /// Sometimes used internally during typechecking, codegen should generate noops for it
     Synthetic,
     Error(&'static Location<'static>),
 }

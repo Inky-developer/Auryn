@@ -8,7 +8,7 @@ use stdx::SmallString;
 
 use crate::auryn::{
     diagnostics::{diagnostic::Diagnostic, diagnostic_display::ComputedSpan},
-    syntax_id::{Spanned, SyntaxId},
+    syntax_id::{SpanExt, Spanned, SyntaxId},
     tokenizer::TokenKind,
 };
 
@@ -28,9 +28,11 @@ pub enum SyntaxNodeKind {
     ExternTypeFunction,
     ItemMetadata,
     FunctionDefinition,
+    Receiver,
     GenericParameterList,
     GenericParameterDefinition,
     ParameterList,
+    SelfParameterDefinition,
     ParameterDefinition,
     ReturnType,
     TypeAlias,
@@ -179,10 +181,7 @@ impl SyntaxToken {
     }
 
     pub fn spanned_text(&self) -> Spanned<SmallString> {
-        Spanned {
-            value: self.text.clone(),
-            syntax_id: self.id,
-        }
+        self.text.clone().with_span(self.id)
     }
 }
 

@@ -365,3 +365,11 @@ diag! {
         got: usize,
     }
 }
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("The receiver type is too generic")]
+    #[message("The receiver contains a generic type")]
+    #[info("This limitation may be lifted in the future")]
+    pub struct ReceiverIsTooGeneric { }
+}
