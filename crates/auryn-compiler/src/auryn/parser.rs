@@ -1583,4 +1583,22 @@ mod tests {
     fn test_reject_extra_input() {
         insta::assert_debug_snapshot!(verify_block("1 1 1 1 11 1"));
     }
+
+    #[test]
+    fn test_reject_receiver_without_parenthesis() {
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            fn []Foo test() {
+                print("hi")
+            }
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            fn Foo test() {
+                print("hi")
+            }
+            "#
+        ));
+    }
 }

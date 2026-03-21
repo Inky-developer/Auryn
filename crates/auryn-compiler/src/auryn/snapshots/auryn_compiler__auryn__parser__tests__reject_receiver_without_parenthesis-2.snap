@@ -1,0 +1,55 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            fn Foo test() {\n                print(\"hi\")\n            }\n            \"#)"
+---
+syntax_tree:
+0..83 Root
+|0..83 File
+||Newline `\n`
+||Whitespace `            `
+||13..70 Item
+|||13..70 FunctionDefinition
+||||KeywordFn `fn`
+||||Whitespace ` `
+||||Identifier `Foo`
+||||Whitespace ` `
+||||20..27 ParameterList
+|||||ERROR Unexpected token
+|||||Identifier `test`
+|||||ParensOpen `(`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||BraceOpen `{`
+||||Newline `\n`
+||||Whitespace `                `
+||||45..69 Block
+|||||45..56 Statement
+||||||45..56 Expression
+|||||||45..56 PostfixOperation
+||||||||45..50 Value
+|||||||||45..50 Ident
+||||||||||Identifier `print`
+||||||||50..56 PostfixOperator
+|||||||||50..56 ArgumentList
+||||||||||ParensOpen `(`
+||||||||||51..55 Expression
+|||||||||||51..55 Value
+||||||||||||51..55 StringLiteral
+|||||||||||||StringLiteral `\"hi\"`
+||||||||||ParensClose `)`
+|||||Newline `\n`
+|||||Whitespace `            `
+||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:
+Error: Unexpected token
+   ╭─[ main:2:20 ]
+   │
+ 2 │             fn Foo test() {
+   │                    │ 
+   │                    ╰─ got "test"
+   │ 
+   │ Note: Expected `(`
+───╯

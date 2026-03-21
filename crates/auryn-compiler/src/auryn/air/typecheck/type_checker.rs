@@ -771,12 +771,12 @@ impl Typechecker {
                 .function
                 .variables
                 .get(local_value_id)
-                .expect("Should have type for value"),
+                .unwrap_or(&Type::Error),
             AirValueId::Global(global_value_id) => {
-                let AirStaticValue::Function(function_id) = self
-                    .statics
-                    .get(global_value_id)
-                    .expect("Should have type for value");
+                let Some(AirStaticValue::Function(function_id)) = self.statics.get(global_value_id)
+                else {
+                    return Type::Error;
+                };
                 let function = self.functions[function_id];
                 Type::FunctionItem(function)
             }

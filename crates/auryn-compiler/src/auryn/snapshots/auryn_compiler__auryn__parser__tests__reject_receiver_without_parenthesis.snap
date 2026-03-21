@@ -1,0 +1,68 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            fn []Foo test() {\n                print(\"hi\")\n            }\n            \"#)"
+---
+syntax_tree:
+0..85 Root
+|0..85 File
+||Newline `\n`
+||Whitespace `            `
+||13..72 Item
+|||13..72 FunctionDefinition
+||||KeywordFn `fn`
+||||Whitespace ` `
+||||ERROR Unexpected token
+||||BracketOpen `[`
+||||BracketClose `]`
+||||Identifier `Foo`
+||||Whitespace ` `
+||||22..29 ParameterList
+|||||ERROR Unexpected token
+|||||Identifier `test`
+|||||ParensOpen `(`
+|||||ParensClose `)`
+|||||Whitespace ` `
+||||BraceOpen `{`
+||||Newline `\n`
+||||Whitespace `                `
+||||47..71 Block
+|||||47..58 Statement
+||||||47..58 Expression
+|||||||47..58 PostfixOperation
+||||||||47..52 Value
+|||||||||47..52 Ident
+||||||||||Identifier `print`
+||||||||52..58 PostfixOperator
+|||||||||52..58 ArgumentList
+||||||||||ParensOpen `(`
+||||||||||53..57 Expression
+|||||||||||53..57 Value
+||||||||||||53..57 StringLiteral
+|||||||||||||StringLiteral `\"hi\"`
+||||||||||ParensClose `)`
+|||||Newline `\n`
+|||||Whitespace `            `
+||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:
+Error: Unexpected token
+   ╭─[ main:2:16 ]
+   │
+ 2 │             fn []Foo test() {
+   │                │ 
+   │                ╰─ got "["
+   │ 
+   │ Note: Expected `<identifier>`
+───╯
+
+Error: Unexpected token
+   ╭─[ main:2:22 ]
+   │
+ 2 │             fn []Foo test() {
+   │                      │ 
+   │                      ╰─ got "test"
+   │ 
+   │ Note: Expected `(`
+───╯
