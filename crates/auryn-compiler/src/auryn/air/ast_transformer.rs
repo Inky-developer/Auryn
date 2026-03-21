@@ -105,10 +105,9 @@ impl AstTransformer {
         };
 
         if function_definition.receiver().is_none() {
-            self.namespace.statics.insert(
-                ident.text.clone(),
-                AirStaticValueId(function_definition.id()),
-            );
+            self.namespace
+                .statics
+                .insert(ident.text.clone(), AirStaticValueId(ident.id));
         }
     }
 
@@ -370,6 +369,7 @@ impl AstTransformer {
         let Ok(ident) = function_definition.ident() else {
             return;
         };
+        let ident_id = ident.id;
         let ident = ident.text.clone();
 
         let generic_parameters = function_definition
@@ -431,7 +431,7 @@ impl AstTransformer {
         };
         let blocks = function_transformer.transform_function_body(block);
 
-        let function_id = AirFunctionId(AirStaticValueId(function_definition.id()));
+        let function_id = AirFunctionId(AirStaticValueId(ident_id));
         let function = UnresolvedAirFunction {
             unresolved_type: UnresolvedType::Function(UnresolvedFunction {
                 receiver: receiver.map(Box::new),

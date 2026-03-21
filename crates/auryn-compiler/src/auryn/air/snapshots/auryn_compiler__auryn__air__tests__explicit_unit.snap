@@ -15,7 +15,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                 ),
                             ),
                             number: Some(
-                                62549994824592,
+                                68804994307051,
                             ),
                         },
                     ),
@@ -29,7 +29,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                     ),
                                 ),
                                 number: Some(
-                                    62549994824592,
+                                    68804994307051,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -100,7 +100,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                             ),
                                                                         ),
                                                                         number: Some(
-                                                                            187649984473768,
+                                                                            193904983956227,
                                                                         ),
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -117,7 +117,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                             ),
                                                                         ),
                                                                         number: Some(
-                                                                            187649984473768,
+                                                                            193904983956227,
                                                                         ),
                                                                     },
                                                                 ),
@@ -181,7 +181,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                 ),
                             ),
                             number: Some(
-                                187649984473768,
+                                193904983956227,
                             ),
                         },
                     ),
@@ -195,7 +195,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                     ),
                                 ),
                                 number: Some(
-                                    187649984473768,
+                                    193904983956227,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",

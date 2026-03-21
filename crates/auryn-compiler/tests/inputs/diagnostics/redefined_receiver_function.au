@@ -1,0 +1,12 @@
+fn (I32) foo(self) {
+	print("Foo")
+}
+
+fn (I32) foo(self) {
+	print("Bar")
+}
+
+fn main() {
+	let value: I32 = 42
+	value.foo()
+}

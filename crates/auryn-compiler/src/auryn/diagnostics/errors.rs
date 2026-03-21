@@ -373,3 +373,13 @@ diag! {
     #[info("This limitation may be lifted in the future")]
     pub struct ReceiverIsTooGeneric { }
 }
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Redefined function")]
+    #[message("This function has been defined multiple times")]
+    #[label(Label::new(prev_definition).with_message("Previous definition here"))]
+    pub struct RedefinedFunction {
+        prev_definition: SyntaxId
+    }
+}

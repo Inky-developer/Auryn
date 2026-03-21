@@ -15,7 +15,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                 ),
                             ),
                             number: Some(
-                                4,
+                                56294995342135,
                             ),
                         },
                     ),
@@ -29,7 +29,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                     ),
                                 ),
                                 number: Some(
-                                    4,
+                                    56294995342135,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",

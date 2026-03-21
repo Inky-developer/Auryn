@@ -1,0 +1,16 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn (I32) foo(self) {\n\tprint(\"Foo\")\n}\n\nfn (I32) foo(self) {\n\tprint(\"Bar\")\n}\n\nfn main() {\n\tlet value: I32 = 42\n\tvalue.foo()\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/redefined_receiver_function.au
+---
+Error: Redefined function
+   ╭─[ main:1:10 ]
+   │
+ 1 │ fn (I32) foo(self) {
+   │          ─┬─  
+   │           ╰─── This function has been defined multiple times
+   │ 
+ 5 │ fn (I32) foo(self) {
+   │          ─┬─  
+   │           ╰─── Previous definition here
+───╯

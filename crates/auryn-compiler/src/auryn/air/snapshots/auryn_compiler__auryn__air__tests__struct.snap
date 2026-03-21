@@ -15,7 +15,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                                 ),
                             ),
                             number: Some(
-                                187649984473768,
+                                196585698020137,
                             ),
                         },
                     ),
@@ -29,7 +29,7 @@ expression: "compile(r#\"\n            struct Foo {\n                a: I32,\n  
                                     ),
                                 ),
                                 number: Some(
-                                    187649984473768,
+                                    196585698020137,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",

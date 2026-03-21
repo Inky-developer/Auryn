@@ -15,7 +15,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                 ),
                             ),
                             number: Some(
-                                62549994824592,
+                                68236357990463,
                             ),
                         },
                     ),
@@ -29,7 +29,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                     ),
                                 ),
                                 number: Some(
-                                    62549994824592,
+                                    68236357990463,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -108,7 +108,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                 ),
                             ),
                             number: Some(
-                                187649984473768,
+                                194599983898721,
                             ),
                         },
                     ),
@@ -122,7 +122,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                     ),
                                 ),
                                 number: Some(
-                                    187649984473768,
+                                    194599983898721,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -208,7 +208,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                                 ),
                                                                             ),
                                                                             number: Some(
-                                                                                62549994824592,
+                                                                                68236357990463,
                                                                             ),
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -225,7 +225,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                                 ),
                                                                             ),
                                                                             number: Some(
-                                                                                62549994824592,
+                                                                                68236357990463,
                                                                             ),
                                                                         },
                                                                     ),

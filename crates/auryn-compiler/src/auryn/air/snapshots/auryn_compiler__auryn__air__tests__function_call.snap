@@ -15,7 +15,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                 ),
                             ),
                             number: Some(
-                                187649984473772,
+                                208499982748635,
                             ),
                         },
                     ),
@@ -29,7 +29,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                     ),
                                 ),
                                 number: Some(
-                                    187649984473772,
+                                    208499982748635,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -168,7 +168,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                 ),
                             ),
                             number: Some(
-                                4,
+                                23456248059225,
                             ),
                         },
                     ),
@@ -182,7 +182,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                     ),
                                 ),
                                 number: Some(
-                                    4,
+                                    23456248059225,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -243,7 +243,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                             ),
                                                                         ),
                                                                         number: Some(
-                                                                            187649984473772,
+                                                                            208499982748635,
                                                                         ),
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
@@ -260,7 +260,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                             ),
                                                                         ),
                                                                         number: Some(
-                                                                            187649984473772,
+                                                                            208499982748635,
                                                                         ),
                                                                     },
                                                                 ),

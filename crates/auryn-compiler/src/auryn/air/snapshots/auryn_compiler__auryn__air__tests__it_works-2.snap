@@ -15,7 +15,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                 ),
                             ),
                             number: Some(
-                                4,
+                                70368744177667,
                             ),
                         },
                     ),
@@ -29,7 +29,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                     ),
                                 ),
                                 number: Some(
-                                    4,
+                                    70368744177667,
                                 ),
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",

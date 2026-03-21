@@ -30,8 +30,8 @@ use crate::auryn::{
         errors::{
             CircularTypeAlias, ExpectedFunction, ExpectedStruct, InferenceFailed, InvalidCast,
             MismatchedArgumentCount, MissingFields, NonInferredGenericType, ReceiverIsTooGeneric,
-            TypeMismatch, UndefinedProperty, UnexpectedFields, UnsupportedOperationWithType,
-            ValueOutsideRange,
+            RedefinedFunction, TypeMismatch, UndefinedProperty, UnexpectedFields,
+            UnsupportedOperationWithType, ValueOutsideRange,
         },
     },
     syntax_id::{Spanned, SyntaxId},
@@ -216,10 +216,15 @@ impl Typechecker {
                         unresolved_fn.ident.clone(),
                         id,
                     ) {
-                        Ok(prev) => assert_eq!(
-                            prev, None,
-                            "TODO: Add error message for multiple functions with the same name"
-                        ),
+                        Ok(None) => {}
+                        Ok(Some(prev)) => {
+                            self.diagnostics.add(
+                                function_type.syntax_id(),
+                                RedefinedFunction {
+                                    prev_definition: self.functions[&prev].syntax_id(),
+                                },
+                            );
+                        }
                         Err(InsertionError::TypeIsTooGeneric) => {
                             self.diagnostics
                                 .add(receiver.syntax_id, ReceiverIsTooGeneric {});
