@@ -38,19 +38,23 @@ pub enum InsertionError {
 pub struct Implementations {
     /// Stores implementations for a concrete block
     by_type: FastMap<Type, ImplementationBlock>,
+    /// Implementations for all arrays
+    arrays: ImplementationBlock,
 }
 
 impl Implementations {
     pub fn get<'a>(&'a self, ty: TypeView<'_>) -> ImplementationInfo<'a, 2> {
         let by_type = self.by_type.get(&ty.as_type());
-        let by_type_producer = if let TypeView::Application(application) = ty {
-            let type_producer = Type::TypeProducer(application.r#type);
-            self.by_type.get(&type_producer)
-        } else {
-            None
+        let by_type_class = match ty {
+            TypeView::Application(application) => {
+                let type_producer = Type::TypeProducer(application.r#type);
+                self.by_type.get(&type_producer)
+            }
+            TypeView::Array(_) => Some(&self.arrays),
+            _ => None,
         };
         ImplementationInfo {
-            implementations: [by_type, by_type_producer],
+            implementations: [by_type, by_type_class],
         }
     }
 
@@ -63,6 +67,17 @@ impl Implementations {
         ident: SmallString,
         id: AirFunctionId,
     ) -> Result<Option<AirFunctionId>, InsertionError> {
+        Ok(self
+            .get_implementation_block(ty, ty_ctx)?
+            .functions
+            .insert(ident, id))
+    }
+
+    fn get_implementation_block(
+        &mut self,
+        ty: Type,
+        ty_ctx: &TypeContext,
+    ) -> Result<&mut ImplementationBlock, InsertionError> {
         let effective_type = match ty {
             Type::Application(application)
                 if ty_ctx
@@ -73,25 +88,23 @@ impl Implementations {
             {
                 Type::TypeProducer(ty_ctx.get(application).r#type)
             }
-            _ => ty,
+            Type::Array(array) if matches!(ty_ctx.get(array).element_type, Type::Generic(_)) => {
+                return Ok(&mut self.arrays);
+            }
+            _ => {
+                // Since the lookup is by exact type, we cannot add generic types here, because they would not match.
+                // Instead supported generic types are special cased, like application types above
+                let mut visited_types = default();
+                ty.as_view(ty_ctx).visit(&mut visited_types);
+                if visited_types
+                    .iter()
+                    .any(|it| matches!(it, Type::Generic(_)))
+                {
+                    return Err(InsertionError::TypeIsTooGeneric);
+                }
+                ty
+            }
         };
-
-        // Since the lookup is by exact type, we cannot add generic types here, because they would not match.
-        // Instead supported generic types are special cased, like application types above
-        let mut visited_types = default();
-        ty.as_view(ty_ctx).visit(&mut visited_types);
-        if visited_types
-            .iter()
-            .any(|it| matches!(it, Type::Generic(_)))
-        {
-            return Err(InsertionError::TypeIsTooGeneric);
-        }
-
-        Ok(self
-            .by_type
-            .entry(effective_type)
-            .or_default()
-            .functions
-            .insert(ident, id))
+        Ok(self.by_type.entry(effective_type).or_default())
     }
 }
