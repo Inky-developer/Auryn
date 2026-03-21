@@ -1,0 +1,11 @@
+fn foo() {
+	print("Foo")
+}
+
+fn foo() {
+	print("Bar")
+}
+
+fn main() {
+	foo()
+}

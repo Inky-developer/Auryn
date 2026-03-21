@@ -30,8 +30,8 @@ use crate::auryn::{
         diagnostic::Diagnostics,
         errors::{
             BreakOutsideLoop, ContinueOutsideLoop, ExternTypeRequiresMetadata,
-            ImmutableVariableUpdate, InvalidNumber, InvalidPlace, UndefinedVariable,
-            UnexpectedExternTarget,
+            ImmutableVariableUpdate, InvalidNumber, InvalidPlace, RedefinedFunction,
+            UndefinedVariable, UnexpectedExternTarget,
         },
     },
     syntax_id::{SpanExt, Spanned, SyntaxId},
@@ -105,9 +105,18 @@ impl AstTransformer {
         };
 
         if function_definition.receiver().is_none() {
-            self.namespace
+            let prev = self
+                .namespace
                 .statics
                 .insert(ident.text.clone(), AirStaticValueId(ident.id));
+            if let Some(prev) = prev {
+                self.diagnostics.add(
+                    ident.id,
+                    RedefinedFunction {
+                        prev_definition: prev.0,
+                    },
+                );
+            }
         }
     }
 

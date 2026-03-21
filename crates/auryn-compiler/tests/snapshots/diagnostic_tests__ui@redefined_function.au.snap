@@ -1,0 +1,16 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "fn foo() {\n\tprint(\"Foo\")\n}\n\nfn foo() {\n\tprint(\"Bar\")\n}\n\nfn main() {\n\tfoo()\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/redefined_function.au
+---
+Error: Redefined function
+   ╭─[ main:5:4 ]
+   │
+ 1 │ fn foo() {
+   │    ─┬─  
+   │     ╰─── Previous definition here
+   │ 
+ 5 │ fn foo() {
+   │    ─┬─  
+   │     ╰─── This function has been defined multiple times
+───╯
