@@ -1,0 +1,22 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "unsafe extern \"java\" {\n\t#[\"Some attribute\"]\n\ttype Foo {}\n}\n\nfn main() {\n\tlet f: Foo = unsafeTransmute({test: \"test\"})\n\tprint(f)\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_extern_attribute.au
+---
+Error: Expected extern item
+   ╭─[ main:2:2 ]
+   │
+ 2 │     #["Some attribute"]
+   │     │ 
+   │     ╰─ got "#"
+───╯
+
+Error: Extern type requires metadata
+   ╭─[ main:3:2 ]
+   │
+ 3 │     type Foo {}
+   │     ─────┬─────  
+   │          ╰─────── Here
+   │ 
+   │ Help: Add metadata before to declare its extern name `["extern_name"]`
+───╯

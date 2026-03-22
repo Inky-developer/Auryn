@@ -197,17 +197,19 @@ impl AstTransformer {
                     return;
                 };
                 let extern_path = item.metadata().and_then(|metadata| metadata.value());
-                let Ok(extern_path) = extern_path else {
+                let extern_path = if let Ok(extern_path) = extern_path {
+                    extern_path.string_literal_text().into()
+                } else {
                     self.diagnostics.add(item.id(), ExternTypeRequiresMetadata);
-                    return;
-                };
-                let Ok(extern_body) = extern_type.body() else {
-                    return;
+                    "".into()
                 };
                 let def_id = self.namespace.types[&ident.text];
-                let extern_members = self.collect_extern_type_members(def_id, extern_body);
+                let extern_members = if let Ok(extern_body) = extern_type.body() {
+                    self.collect_extern_type_members(def_id, extern_body)
+                } else {
+                    default()
+                };
 
-                let extern_path = extern_path.string_literal_text().into();
                 self.globals.types.insert(
                     def_id,
                     UnresolvedType::Extern {

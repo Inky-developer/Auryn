@@ -1,0 +1,9 @@
+unsafe extern "java" {
+	#["Some attribute"]
+	type Foo {}
+}
+
+fn main() {
+	let f: Foo = unsafeTransmute({test: "test"})
+	print(f)
+}
