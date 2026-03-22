@@ -1,0 +1,67 @@
+---
+source: crates/auryn-compiler/src/auryn/codegen_java/class_generator.rs
+expression: "generate_class(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/String\"]\n                type JavaString {}\n            }\n\n            fn main() {\n                let data = arrayOf(\"TestString\")\n                let transmuted: JavaString = unsafeTransmute(data)\n            }\n            \"#)"
+---
+ClassData
+  this_class:		#2	Main
+  super_class:		#20	java/lang/Object
+Constant pool:
+  #01 = Utf8			Main
+  #02 = Class		#1	Main
+  #03 = Utf8			main$main
+  #04 = Utf8			()V
+  #05 = Utf8			[Ljava/lang/String;
+  #06 = Class		#5	[Ljava/lang/String;
+  #07 = Utf8			java/lang/String
+  #08 = Class		#7	java/lang/String
+  #09 = Integer			1
+  #10 = Integer			0
+  #11 = Utf8			TestString
+  #12 = String		#11	TestString
+  #13 = Utf8			Code
+  #14 = Utf8			StackMapTable
+  #15 = Utf8			main
+  #16 = Utf8			([Ljava/lang/String;)V
+  #17 = NameAndType	#3:#4	main$main:()V
+  #18 = MethodRef	#2.#17	Main:main$main:()V
+  #19 = Utf8			java/lang/Object
+  #20 = Class		#19	java/lang/Object
+
+{
+  fn main$main {
+    descriptor: ()V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 4, locals = 3
+       0: LoadConstant		#9	1
+       2: ANewArray		#8	java/lang/String
+       5: Dup
+       6: LoadConstant		#10	0
+       8: LoadConstant		#12	TestString
+      10: AAStore
+      11: AStore			0
+      13: ALoad			0
+      15: AStore			1
+      17: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [  ]
+          Stack = [  ]
+  }
+
+  fn main {
+    descriptor: ([Ljava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 0, locals = 2
+      0: InvokeStatic		#18	Main:main$main:()V
+      3: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;' ]
+          Stack = [  ]
+  }
+
+}

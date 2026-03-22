@@ -807,20 +807,40 @@ impl FunctionGenerator<'_> {
         target_type: TypeView,
         arguments: &[AirExpression],
     ) {
+        /// Gets the target class from target and does some basic checks that
+        /// this transmute will not cause an immediate jvm error
+        fn get_target_class(
+            source: Option<Representation>,
+            target: Option<Representation>,
+        ) -> Option<SmallString> {
+            match (source, target) {
+                (Some(source), Some(target)) => {
+                    let source = source.into_primitive_type_or_object();
+                    let target = target.into_primitive_type_or_object();
+                    if matches!(source, PrimitiveOrObject::Object(_))
+                        && let PrimitiveOrObject::Object(target) = target
+                    {
+                        Some(target)
+                    } else {
+                        panic!("Transmute can never succeed! From {source:?} to {target:?}");
+                    }
+                }
+                (None, None) => None,
+                (source, target) => {
+                    panic!("Transmute can never succeed! from {source:?} to {target:?}")
+                }
+            }
+        }
+
         let [expression] = arguments else {
             panic!("Invalid transmute call");
         };
         let repr = self.generate_expression(expression);
 
-        if let Some(Representation::Object(_)) = repr
-            && let Some(Representation::Object(to)) = self.repr_ctx.get_representation(target_type)
-        {
-            self.assembler.add(Instruction::Transmute(to));
-        } else {
-            panic!(
-                "Transmute can never succeed: Tried to transmute from {repr:?} to {target_type}",
-            );
-        };
+        let target_class = get_target_class(repr, self.repr_ctx.get_representation(target_type));
+        if let Some(target_class) = target_class {
+            self.assembler.add(Instruction::Transmute(target_class));
+        }
     }
 
     fn generate_intrinsic_cast(&mut self, target_type: TypeView, argument: &[AirExpression]) {

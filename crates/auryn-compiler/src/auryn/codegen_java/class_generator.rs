@@ -512,6 +512,23 @@ mod tests {
     }
 
     #[test]
+    fn test_array_transmute() {
+        insta::assert_debug_snapshot!(generate_class(
+            r#"
+            unsafe extern "java" {
+                ["java/lang/String"]
+                type JavaString {}
+            }
+
+            fn main() {
+                let data = arrayOf("TestString")
+                let transmuted: JavaString = unsafeTransmute(data)
+            }
+            "#
+        ))
+    }
+
+    #[test]
     #[should_panic]
     fn test_reject_invalid_variable() {
         insta::assert_debug_snapshot!(generate_class_wrapped("let a = a"));
