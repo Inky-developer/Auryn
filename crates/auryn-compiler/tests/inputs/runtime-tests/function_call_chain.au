@@ -1,0 +1,15 @@
+// expect-output:
+// 0
+// 2
+// 4
+
+fn (I32) plusOne(self) -> I32 {
+	return self + 1
+}
+
+fn main() {
+	let val: I32 = 0
+	print(val)
+	print(val.plusOne().plusOne())
+	print(val.plusOne().plusOne().plusOne().plusOne())
+}

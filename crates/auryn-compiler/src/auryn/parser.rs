@@ -1385,6 +1385,7 @@ mod tests {
         insta::assert_debug_snapshot!(verify_block("print(\n1)"));
         insta::assert_debug_snapshot!(verify_block("print(1)\n"));
         insta::assert_debug_snapshot!(verify_block("print()"));
+        insta::assert_debug_snapshot!(verify_block("val.plusOne().plusOne()"));
     }
 
     #[test]

@@ -1,0 +1,34 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify_block(\"val.plusOne().plusOne()\")"
+---
+syntax_tree:
+0..23 Root
+|0..23 Block
+||0..23 Statement
+|||0..23 Expression
+||||0..23 PostfixOperation
+|||||0..21 PostfixOperation
+||||||0..13 PostfixOperation
+|||||||0..11 PostfixOperation
+||||||||0..3 Value
+|||||||||0..3 Ident
+||||||||||Identifier `val`
+||||||||3..11 PostfixOperator
+|||||||||3..11 Accessor
+||||||||||Dot `.`
+||||||||||Identifier `plusOne`
+|||||||11..13 PostfixOperator
+||||||||11..13 ArgumentList
+|||||||||ParensOpen `(`
+|||||||||ParensClose `)`
+||||||13..21 PostfixOperator
+|||||||13..21 Accessor
+||||||||Dot `.`
+||||||||Identifier `plusOne`
+|||||21..23 PostfixOperator
+||||||21..23 ArgumentList
+|||||||ParensOpen `(`
+|||||||ParensClose `)`
+
+diagnostics:

@@ -410,6 +410,9 @@ impl Typechecker {
     }
 
     fn infer_expression(&mut self, expression: &mut AirExpression) {
+        if matches!(expression.r#type, AirType::Computed(_)) {
+            return;
+        }
         let expression_type = match &mut expression.kind {
             AirExpressionKind::Constant(constant) => self.infer_constant(expression.id, constant),
             AirExpressionKind::BinaryOperator(binary_operator) => self.infer_binary_operator(
@@ -436,6 +439,10 @@ impl Typechecker {
     }
 
     fn check_expression(&mut self, expression: &mut AirExpression, expected: MaybeBounded) {
+        if matches!(&expression.r#type, AirType::Computed(_)) {
+            return;
+        }
+
         let inferred_type = match &mut expression.kind {
             AirExpressionKind::Constant(constant) => {
                 self.check_constant(expression.id, constant, expected)
