@@ -235,6 +235,7 @@ impl AssemblyContext<'_> {
                 locals: evaluator.locals,
                 stack: evaluator.stack,
             };
+            // dbg!((id, &frame_at_end_of_block, block));
 
             visited_blocks.insert(
                 id,

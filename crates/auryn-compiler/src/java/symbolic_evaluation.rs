@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{cmp::Ordering, fmt::Debug};
 
 use crate::{
     auryn::codegen_java::representation::ReturnDescriptor,
@@ -173,17 +173,33 @@ impl SymbolicEvaluator {
                 self.stack.push(expected);
             }
             Instruction::Store(id) => {
+                /// Converts a variable id into an index into the locals array
+                fn id_to_index(locals: &[VerificationTypeInfo], id: u16) -> usize {
+                    let mut byte_offset: u16 = 0;
+                    for (index, local) in locals.iter().enumerate() {
+                        if byte_offset == id {
+                            return index;
+                        }
+                        byte_offset += local.category().stack_size();
+                    }
+                    panic!("Invalid id {id} for {locals:?}")
+                }
+
                 let verification_type = id.r#type.clone().into_verification_type(pool);
                 assert_eq!(self.stack.pop(), Some(verification_type));
-                // FIXME: Probably need to rework the whole locals allocation system :(
-                let is_new_allocation = id.index
-                    == self
-                        .locals
-                        .iter()
-                        .map(|l| l.category().stack_size())
-                        .sum::<u16>();
+                let current_slot_count: u16 =
+                    self.locals.iter().map(|l| l.category().stack_size()).sum();
+                let is_new_allocation = id.index >= current_slot_count;
                 if is_new_allocation {
+                    // Since locals is an array containing information about all variables,
+                    // we need to fill in the predecessors of the current variable first
+                    for _ in current_slot_count..id.index {
+                        self.locals.push(VerificationTypeInfo::Top);
+                    }
                     self.locals.push(verification_type);
+                } else {
+                    let index = id_to_index(&self.locals, id.index);
+                    self.locals[index] = verification_type;
                 }
             }
             Instruction::Load(id) => {
@@ -283,22 +299,71 @@ pub struct Frame {
 
 impl Frame {
     pub fn combine(self, other: &Frame) -> Frame {
-        for (a, b) in self.locals.iter().zip(other.locals.iter()) {
-            assert_eq!(a, b);
+        let locals = Self::combine_locals(&self.locals, &other.locals);
+        // No need for combing the stacks, because the stack must always be in the same state,
+        // independent of the previous block.
+        let stack = self.stack;
+        assert_eq!(&stack, &other.stack);
+        Frame { locals, stack }
+    }
+
+    fn combine_locals<'a>(
+        lhs: &'a [VerificationTypeInfo],
+        rhs: &'a [VerificationTypeInfo],
+    ) -> Vec<VerificationTypeInfo> {
+        let mut result = Vec::new();
+        let mut lhs_index = 0_usize;
+        let mut rhs_index = 0_usize;
+        loop {
+            let lhs = lhs.get(lhs_index);
+            let rhs = rhs.get(rhs_index);
+            let (Some(lhs), Some(rhs)) = (lhs, rhs) else {
+                break;
+            };
+
+            if lhs == rhs {
+                result.push(*lhs);
+            } else {
+                // For two different types, use n instances of the top type to fill the array.
+                // n is the size of the biggest type found.
+                let n = u16::max(lhs.category().stack_size(), rhs.category().stack_size());
+                for _ in 0..n {
+                    result.push(VerificationTypeInfo::Top);
+                }
+                // Then update the index of the smaller type to match the index of the bigger type.
+                // For example, if lhs has size 1 and rhs has size 2, then lhs should be logically [Top, Top].
+                // So the index needs to be increased by 1 to match rhs again.
+                match lhs
+                    .category()
+                    .stack_size()
+                    .cmp(&rhs.category().stack_size())
+                {
+                    Ordering::Equal => {}
+                    Ordering::Greater => {
+                        rhs_index +=
+                            (lhs.category().stack_size() - rhs.category().stack_size()) as usize;
+                    }
+                    Ordering::Less => {
+                        lhs_index +=
+                            (rhs.category().stack_size() - lhs.category().stack_size()) as usize;
+                    }
+                }
+            }
+
+            // Finally advance to the next index
+            lhs_index += 1;
+            rhs_index += 1;
         }
 
-        // FIXME: The locals handling does not seem entirely correct. TODO: Read up on it is supposed to work.
-        let locals = if self.locals.len() < other.locals.len() {
-            self.locals
-        } else {
-            other.locals.clone()
-        };
-
-        assert_eq!(self.stack, other.stack);
-        Frame {
-            locals,
-            stack: self.stack,
+        // Then, extend the result by Top types until it matches the size of the larger locals array
+        let lhs_size: u16 = lhs.iter().map(|it| it.category().stack_size()).sum();
+        let rhs_size: u16 = rhs.iter().map(|it| it.category().stack_size()).sum();
+        let diff = lhs_size.abs_diff(rhs_size);
+        for _ in 0..diff {
+            result.push(VerificationTypeInfo::Top);
         }
+
+        result
     }
 }
 
@@ -308,5 +373,60 @@ impl From<&SymbolicEvaluator> for Frame {
             locals: value.locals.clone(),
             stack: value.stack.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::java::{class::VerificationTypeInfo, symbolic_evaluation::Frame};
+
+    #[test]
+    fn test_combine_locals() {
+        use VerificationTypeInfo::*;
+
+        assert_eq!(Frame::combine_locals(&[], &[]), vec![]);
+        assert_eq!(Frame::combine_locals(&[Top], &[]), vec![Top]);
+        assert_eq!(Frame::combine_locals(&[], &[Top]), vec![Top]);
+        assert_eq!(Frame::combine_locals(&[Top], &[Top]), vec![Top]);
+
+        assert_eq!(
+            Frame::combine_locals(&[Double], &[Top, Top]),
+            vec![Top, Top]
+        );
+        assert_eq!(
+            Frame::combine_locals(&[Double, Integer], &[Top, Top, Integer]),
+            vec![Top, Top, Integer]
+        );
+    }
+
+    #[test]
+    fn store_updates_top_local() {
+        use crate::{
+            auryn::codegen_java::representation::Representation,
+            java::{
+                constant_pool_builder::ConstantPoolBuilder,
+                function_assembler::{Instruction, VariableId},
+                symbolic_evaluation::SymbolicEvaluator,
+            },
+        };
+        use VerificationTypeInfo::*;
+
+        // Simulate a block where local 1 is Top (only initialized on one branch),
+        // and we store an Integer into it.
+        let mut pool = ConstantPoolBuilder::default();
+        let mut evaluator = SymbolicEvaluator {
+            locals: vec![Integer, Top],
+            stack: vec![Integer],
+        };
+
+        evaluator.eval(
+            &Instruction::Store(VariableId {
+                index: 1,
+                r#type: Representation::Integer,
+            }),
+            &mut pool,
+        );
+
+        assert_eq!(evaluator.locals, vec![Integer, Integer]);
     }
 }

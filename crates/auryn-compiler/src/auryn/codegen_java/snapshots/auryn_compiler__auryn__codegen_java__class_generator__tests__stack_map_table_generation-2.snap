@@ -56,7 +56,7 @@ Constant pool:
           Stack = [  ]
         Full
           offset_delta = 2
-          locals = [  ]
+          locals = [ Top ]
           Stack = [  ]
   }
 

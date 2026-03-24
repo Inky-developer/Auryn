@@ -1,0 +1,25 @@
+// expect-output:
+// No verification errors!
+
+// This code previously caused verification errors,
+// because the compiler did not properly handle
+// merging of locals in stack map frames.
+// This is the minimal reproducible example.
+
+fn parseColumn(lines: []String) {
+	while true {
+		let char = ""
+		if true {
+			char
+		}
+		break
+	}
+
+	let operator = lines
+}
+
+fn main() {
+    parseColumn(arrayOfZeros(0))
+	print("No verification errors!")
+}
+
