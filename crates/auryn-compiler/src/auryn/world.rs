@@ -1,35 +1,21 @@
-use stdx::{FastMap, SmallString};
-
 use crate::auryn::{
     air::{data::Air, query_air},
     api::AurynError,
     diagnostics::diagnostic::Diagnostics,
     environment::Environment,
-    file_id::FileId,
     input_files::InputFiles,
 };
 
+#[derive(Debug, Default)]
 pub struct World {
-    input_files: InputFiles,
-    _module_name_to_file_id: FastMap<SmallString, FileId>,
+    pub input_files: InputFiles,
 }
 
 impl World {
     pub fn new(environment: &mut impl Environment, main_file: &str) -> Result<Self, AurynError> {
         let input_files = InputFiles::new(environment.load_project(), main_file)?;
-        let module_name_to_file_id = input_files
-            .iter()
-            .map(|(_, file)| (file.name.clone(), file.file_id))
-            .collect();
 
-        Ok(Self {
-            input_files,
-            _module_name_to_file_id: module_name_to_file_id,
-        })
-    }
-
-    pub fn input_files(&self) -> &InputFiles {
-        &self.input_files
+        Ok(Self { input_files })
     }
 
     pub fn into_input_files(self) -> InputFiles {

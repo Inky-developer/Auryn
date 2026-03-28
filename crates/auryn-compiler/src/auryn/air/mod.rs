@@ -32,11 +32,12 @@ pub fn query_air<'a>(
         diagnostics.extend(output.diagnostics.take());
         globals.merge(output.globals);
 
+        let module_id = TypeId::from(input_file.file_id);
         globals.types.insert(
-            UserDefinedTypeId::Module(AirModuleId(input_file.file_id).into()),
+            UserDefinedTypeId::Module(module_id),
             UnresolvedType::Module {
                 name: input_file.name.clone(),
-                id: TypeId::from(AirModuleId(input_file.file_id)).syntax_id(),
+                id: module_id.syntax_id(),
                 namespace: output.namespace,
             },
         );

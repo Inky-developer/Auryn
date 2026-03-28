@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
     panic::Location,
-    rc::Rc,
 };
 
 use crate::auryn::{
@@ -24,7 +23,9 @@ pub struct DiagnosticContext<'a> {
     pub options: DisplayOptions,
 }
 
-pub trait DiagnosticKind {
+pub trait DiagnosticKind: Send {
+    fn clone(&self) -> Box<dyn DiagnosticKind>;
+
     fn code(&self) -> &'static str;
 
     fn level(&self) -> DiagnosticLevel;
@@ -36,9 +37,15 @@ pub trait DiagnosticKind {
     }
 }
 
+impl Clone for Box<dyn DiagnosticKind> {
+    fn clone(&self) -> Self {
+        DiagnosticKind::clone(self.as_ref())
+    }
+}
+
 #[derive(Clone)]
 pub struct Diagnostic {
-    pub kind: Rc<dyn DiagnosticKind>,
+    pub kind: Box<dyn DiagnosticKind>,
     pub syntax_id: SyntaxId,
     pub location: &'static Location<'static>,
 }
@@ -47,7 +54,7 @@ impl Diagnostic {
     #[track_caller]
     pub fn new(syntax_id: SyntaxId, kind: impl DiagnosticKind + 'static) -> Self {
         Diagnostic {
-            kind: Rc::new(kind),
+            kind: Box::new(kind),
             syntax_id,
             location: Location::caller(),
         }
@@ -224,6 +231,7 @@ macro_rules! diag {
             ),* $(,)?
         }
     ) => {
+        #[derive(Debug, Clone)]
         $vis struct $name {
             $(
                 pub $field_name: $field_type
@@ -240,6 +248,7 @@ macro_rules! diag {
         $(#[$($meta:tt)*])*
         $vis:vis struct $name:ident;
     ) => {
+        #[derive(Debug, Clone)]
         $vis struct $name;
 
         diag! {
@@ -260,6 +269,10 @@ macro_rules! diag {
         }
     ) => {
         impl $crate::auryn::diagnostics::diagnostic::DiagnosticKind for $name {
+            fn clone(&self) -> Box<dyn $crate::auryn::diagnostics::diagnostic::DiagnosticKind> {
+                Box::new(Clone::clone(self))
+            }
+
             fn code(&self) -> &'static str {
                 $code
             }

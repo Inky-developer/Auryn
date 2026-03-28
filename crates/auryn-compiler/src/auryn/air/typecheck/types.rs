@@ -6,17 +6,20 @@ use std::{
 
 use stdx::{FastIndexMap, FastMap, FastSet, SmallString, fast_map::FastHasher};
 
-use crate::auryn::{
-    air::{
-        data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
-        typecheck::{
-            bounds::{HasStructuralFields, MaybeBounded},
-            generics::GenericInference,
-            type_context::{TypeContext, TypeId},
-            type_storage::{CombinedStorage, NominalStorage, StructuralStorage, TypeStorage},
+use crate::{
+    FileId,
+    auryn::{
+        air::{
+            data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
+            typecheck::{
+                bounds::{HasStructuralFields, MaybeBounded},
+                generics::GenericInference,
+                type_context::{TypeContext, TypeId},
+                type_storage::{CombinedStorage, NominalStorage, StructuralStorage, TypeStorage},
+            },
         },
+        syntax_id::{Spanned, SyntaxId},
     },
-    syntax_id::{Spanned, SyntaxId},
 };
 
 /// Defines the types of this programming language.
@@ -472,6 +475,12 @@ impl TypeData for ModuleType {
 impl ModuleType {
     pub fn get_member(&self, member: &str) -> Option<Type> {
         self.members.get(member).copied()
+    }
+}
+
+impl From<FileId> for TypeId<ModuleType> {
+    fn from(value: FileId) -> Self {
+        TypeId::new(SyntaxId::new_unset(Some(value)))
     }
 }
 

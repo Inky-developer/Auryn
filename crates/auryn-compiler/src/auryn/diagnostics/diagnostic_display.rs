@@ -13,6 +13,8 @@ use crate::auryn::{
     syntax_id::SyntaxId,
 };
 
+///  Stores a range in a given file.
+/// `offset` and `len` are byte indexes into the file content.
 #[derive(Debug, Clone, Copy)]
 pub struct ComputedSpan {
     pub file_id: FileId,
@@ -33,9 +35,9 @@ pub enum LabelKind {
 
 #[derive(Debug)]
 pub struct Label {
-    id: SyntaxId,
-    message: String,
-    kind: LabelKind,
+    pub id: SyntaxId,
+    pub message: String,
+    pub kind: LabelKind,
 }
 
 impl Label {
@@ -60,12 +62,12 @@ impl Label {
 
 #[derive(Debug)]
 pub struct DiagnosticDisplay {
-    code: &'static str,
-    main_label: Label,
-    labels: Vec<Label>,
-    infos: Vec<String>,
-    helps: Vec<String>,
-    level: DiagnosticLevel,
+    pub code: &'static str,
+    pub main_label: Label,
+    pub labels: Vec<Label>,
+    pub infos: Vec<String>,
+    pub helps: Vec<String>,
+    pub level: DiagnosticLevel,
 }
 
 impl DiagnosticDisplay {
@@ -131,7 +133,7 @@ impl Default for DisplayOptions {
 }
 
 pub struct DiagnosticCollectionDisplay<'a> {
-    displays: Vec<DiagnosticDisplay>,
+    pub displays: Vec<DiagnosticDisplay>,
     opts: DisplayOptions,
     cache: implementation::InputFilesCache<'a>,
 }

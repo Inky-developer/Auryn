@@ -1273,7 +1273,6 @@ impl Parser<'_> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        DisplayOptions,
         auryn::{
             air::typecheck::type_context::TypeContext,
             diagnostics::{
@@ -1285,6 +1284,7 @@ mod tests {
             parser::{Parser, ParserOutput},
             tokenizer::TokenKind,
         },
+        diagnostics::DisplayOptions,
     };
     use std::fmt::Debug;
     use stdx::bitset;

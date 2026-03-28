@@ -7,20 +7,38 @@ use std::{
 
 use stdx::default;
 
-use crate::auryn::{
-    air::typecheck::type_context::TypeContext,
-    codegen_java::codegen::{CodegenOutput, codegen},
-    diagnostics::{
-        diagnostic::Diagnostics,
-        diagnostic_display::{DiagnosticCollectionDisplay, DiagnosticLevel},
+use crate::{
+    auryn::{
+        air::typecheck::type_context::TypeContext,
+        codegen_java::codegen::{CodegenOutput, codegen},
+        diagnostics::{
+            diagnostic::Diagnostics,
+            diagnostic_display::{DiagnosticCollectionDisplay, DiagnosticLevel},
+        },
+        environment::{Environment, FilesystemEnvironment},
+        input_files::InputFiles,
+        monomorphization::monomorphize,
     },
-    environment::{Environment, FilesystemEnvironment},
-    input_files::InputFiles,
-    monomorphization::monomorphize,
-    world::World,
+    diagnostics::DisplayOptions,
 };
 
-pub use crate::auryn::{diagnostics::diagnostic_display::DisplayOptions, environment::ProjectTree};
+pub use crate::auryn::{
+    air::data::Air, environment::ProjectTree, file_id::FileId, syntax_id::SyntaxId, world::World,
+};
+
+pub mod diagnostics {
+    pub use crate::auryn::diagnostics::{
+        diagnostic::{Diagnostic, DiagnosticKind, Diagnostics},
+        diagnostic_display::{ComputedSpan, DiagnosticDisplay, DiagnosticLevel, DisplayOptions},
+    };
+}
+
+pub mod types {
+    pub use crate::auryn::air::typecheck::{
+        type_context::{TypeContext, TypeId},
+        types::*,
+    };
+}
 
 #[derive(Debug)]
 pub enum AurynError {
@@ -149,7 +167,7 @@ fn compile(
         }
     }
     let monomorphizations = monomorphize(&mut air);
-    Ok(codegen(world.input_files(), &air, &monomorphizations))
+    Ok(codegen(&world.input_files, &air, &monomorphizations))
 }
 
 /// Runs a program and returns its output.

@@ -77,6 +77,17 @@ impl InputFiles {
         &self.data[&file_id]
     }
 
+    pub fn update(&mut self, file_id: FileId, new_content: Box<str>) {
+        let InputFile {
+            name: _,
+            source,
+            file_id: _,
+            parser_output,
+        } = self.data.get_mut(&file_id).expect("Invalid file id");
+        *source = new_content;
+        *parser_output = default();
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (FileId, &InputFile)> + Clone {
         self.data.iter().map(|(file_id, file)| (*file_id, file))
     }

@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::common::{log_test, parse_project_tree};
-use auryn_compiler::{AurynError, DisplayOptions, compile_in_memory};
+use auryn_compiler::{AurynError, compile_in_memory, diagnostics::DisplayOptions};
 use insta::{assert_snapshot, glob};
 
 mod common;

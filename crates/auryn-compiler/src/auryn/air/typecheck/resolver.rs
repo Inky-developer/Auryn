@@ -3,7 +3,7 @@ use stdx::FastMap;
 use crate::auryn::{
     air::{
         data::{
-            AirModuleId, AirStaticValue, AirStaticValueId, FunctionReference, TypeAliasId,
+            AirStaticValue, AirStaticValueId, FunctionReference, TypeAliasId,
             UnresolvedExternMember, UnresolvedFunctionReference,
         },
         namespace::{Namespace, UserDefinedTypeId},
@@ -215,7 +215,7 @@ impl<'a> Resolver<'a> {
                     name: name.clone(),
                     members,
                 };
-                let id: TypeId<_> = AirModuleId(id.file_id().unwrap()).into();
+                let id: TypeId<_> = id.file_id().unwrap().into();
                 Type::Module(self.ty_ctx.add(id.syntax_id(), module))
             }
             UnresolvedType::Structural(structural_type) => {

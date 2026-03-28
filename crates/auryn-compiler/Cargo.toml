@@ -1,10 +1,12 @@
 [package]
 name = "auryn-compiler"
 version = "0.1.0"
-edition = "2024"
-rust-version = "1.93"
-description = "The auryn language"
+edition.workspace = true
+rust-version.workspace = true
+description = "The auryn programming language"
 repository = "https://github.com/Inky-developer/Auryn"
+
+default-run = "auryn-compiler"
 
 [dependencies]
 stdx.workspace = true

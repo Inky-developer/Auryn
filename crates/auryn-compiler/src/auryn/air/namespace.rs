@@ -37,7 +37,7 @@ impl Namespace {
             statics: default(),
             types: modules
                 .into_iter()
-                .map(|(name, file_id)| (name, UserDefinedTypeId::Module(file_id.into())))
+                .map(|(name, file_id)| (name, UserDefinedTypeId::Module(file_id.0.into())))
                 .collect(),
         }
     }

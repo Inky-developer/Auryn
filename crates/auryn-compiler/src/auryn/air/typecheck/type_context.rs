@@ -2,7 +2,6 @@ use std::{
     fmt::Debug,
     hash::Hash,
     marker::PhantomData,
-    num::NonZeroU64,
     ops::{Deref, DerefMut},
 };
 
@@ -10,12 +9,12 @@ use stdx::default;
 
 use crate::auryn::{
     air::{
-        data::{AirFunctionId, AirModuleId},
+        data::AirFunctionId,
         typecheck::{
             bounds::{ArrayBound, Bound, StructuralBound},
             type_storage::Types,
             types::{
-                ApplicationType, ArrayType, FunctionItemType, GenericType, MetaType, ModuleType,
+                ApplicationType, ArrayType, FunctionItemType, GenericType, MetaType,
                 NumberLiteralType, StructType, StructuralType, Type,
             },
         },
@@ -161,12 +160,6 @@ impl<T> Eq for TypeId<T> {}
 impl<T> Hash for TypeId<T> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.hash(state);
-    }
-}
-
-impl From<AirModuleId> for TypeId<ModuleType> {
-    fn from(value: AirModuleId) -> Self {
-        TypeId::new(SyntaxId::new(Some(value.0), NonZeroU64::new(1).unwrap()))
     }
 }
 
