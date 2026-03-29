@@ -597,7 +597,7 @@ impl<'a, T> Deref for TypeViewKind<'a, T> {
 
 impl<'a> Display for TypeViewKind<'a, FunctionItemType> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("(")?;
+        f.write_str("fn (")?;
         for (index, parameter) in self.parameters().enumerate() {
             if index != 0 {
                 f.write_str(",")?;
@@ -605,8 +605,11 @@ impl<'a> Display for TypeViewKind<'a, FunctionItemType> {
             Display::fmt(&parameter.as_view(self.ctx), f)?;
         }
 
-        f.write_str(" -> ")?;
-        Display::fmt(&self.value.return_type.as_view(self.ctx), f)?;
+        f.write_str(")")?;
+        if self.return_type != self.ctx.unit_type() {
+            f.write_str(" -> ")?;
+            Display::fmt(&self.value.return_type.as_view(self.ctx), f)?;
+        }
 
         Ok(())
     }
