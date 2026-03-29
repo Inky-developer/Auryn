@@ -14,7 +14,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                     1,
                                 ),
                             ),
-                            number: 70368744177666,
+                            number: 39275578145670,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                         1,
                                     ),
                                 ),
-                                number: 70368744177666,
+                                number: 39275578145670,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 211106232532992,
+                                        number: 98188945364175,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -61,7 +61,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 242381229945282,
+                                                    number: 189831961037405,
                                                 },
                                                 type: Computed(
                                                     Structural(
@@ -83,7 +83,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 242381229945285,
+                                                                number: 209469750110240,
                                                             },
                                                             type: Computed(
                                                                 Intrinsic(
@@ -110,7 +110,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 244824589118120,
+                                                                    number: 248745328255910,
                                                                 },
                                                                 type: Computed(
                                                                     NumberLiteral(
@@ -148,7 +148,7 @@ expression: "compile_wrapped(\"let a: () = print(1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 211106232532990,
+                                        number: 85097085982285,
                                     },
                                 ),
                             ),

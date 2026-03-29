@@ -86,9 +86,9 @@ pub struct SyntaxNode {
     pub id: SyntaxId,
     /// The length in bytes of the source code that represents this node
     pub len: u32,
-    /// The total number of children, recursively.
+    /// The total number of children, recursively, including this node.
     /// This is used for initial syntax id assignment.
-    pub total_children_count: u32,
+    pub descendants: u32,
     pub children: Box<[SyntaxItem]>,
 }
 
@@ -103,25 +103,20 @@ impl SyntaxNode {
         }
     }
 
-    /// Assigns ids so that `self.id.number()` does not return null.
+    /// Assigns ids so that has a unique id.
     pub(super) fn assign_ids(&mut self, mut range: Range<u64>) {
-        self.id.set_number(range.start);
-
-        if self.children.is_empty() {
-            return;
+        let available_space = range.end - range.start;
+        let stride = available_space / (self.descendants as u64);
+        if stride == 0 {
+            panic!("Ran out of ids D:");
         }
 
-        range.start = range.start.checked_add(1).unwrap();
-        assert!(!range.is_empty(), "Range should not be empty");
-        let available_space = range.end - range.start;
-        assert!(
-            available_space as usize > self.children.len(),
-            "Ran out of ids D:"
-        );
-        let stepsize = available_space / self.children.len() as u64;
+        // calculate own syntax id
+        self.id.set_number(range.start);
+        range.start += stride;
 
         for child in &mut self.children {
-            let end = range.start.checked_add(stepsize).unwrap();
+            let end = range.start + child.descendants() as u64 * stride;
             child.assign_ids(range.start..end);
             range.start = end;
         }
@@ -232,10 +227,10 @@ impl SyntaxItem {
         self.len() == 0
     }
 
-    pub fn total_children_count(&self) -> u32 {
+    pub fn descendants(&self) -> u32 {
         match self {
-            SyntaxItem::Node(syntax_node) => syntax_node.total_children_count,
-            SyntaxItem::Token(_) | SyntaxItem::Error(_) => 0,
+            SyntaxItem::Node(syntax_node) => syntax_node.descendants,
+            SyntaxItem::Token(_) | SyntaxItem::Error(_) => 1,
         }
     }
 

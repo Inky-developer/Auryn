@@ -9,8 +9,6 @@ use std::{
 use stdx::SmallString;
 
 /// Consists of a 16 bit file id and an 48 bit id that uniquely represents a [`super::syntax_tree::SyntaxItem`].
-/// Tries to be somewhat stable after file modifications to increase the amount of cached data
-/// that can be reused.
 /// Heavily inspired by typst's `Span` type.
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct SyntaxId(NonZeroU64);

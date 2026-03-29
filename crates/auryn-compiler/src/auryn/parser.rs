@@ -96,7 +96,7 @@ impl<'a> Parser<'a> {
                 kind: SyntaxNodeKind::Root,
                 id: SyntaxId::new_unset(Some(self.file_id)),
                 len: 0,
-                total_children_count: 0,
+                descendants: 1,
                 children: Box::new([]),
             },
         };
@@ -265,10 +265,7 @@ impl<'a> Parser<'a> {
             id: SyntaxId::new_unset(Some(self.file_id)),
             len,
             kind,
-            total_children_count: children
-                .iter()
-                .map(|it| it.total_children_count() + 1)
-                .sum(),
+            descendants: children.iter().map(|it| it.descendants()).sum::<u32>() + 1,
             children: children.into_boxed_slice(),
         })
     }

@@ -14,7 +14,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                     1,
                                 ),
                             ),
-                            number: 194599983898720,
+                            number: 162501017482440,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                         1,
                                     ),
                                 ),
-                                number: 194599983898720,
+                                number: 162501017482440,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                 1,
                                             ),
                                         ),
-                                        number: 211974982461102,
+                                        number: 191519056318590,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -59,7 +59,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 212618500926374,
+                                                        number: 211831683503895,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -68,7 +68,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 212618500926376,
+                                                            number: 217635291271125,
                                                         },
                                                         base: Resolved(
                                                             I64,
@@ -85,7 +85,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 213004612005536,
+                                                    number: 232144310689200,
                                                 },
                                                 type: Computed(
                                                     I64,
@@ -99,7 +99,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 213004612005539,
+                                                                number: 240849722340045,
                                                             },
                                                             type: Computed(
                                                                 FunctionItem(
@@ -110,7 +110,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: 68236357990462,
+                                                                            number: 23214431068920,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                                                                     },
@@ -125,7 +125,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: 68236357990462,
+                                                                            number: 23214431068920,
                                                                         },
                                                                     ),
                                                                 ),
@@ -139,7 +139,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 213090414467575,
+                                                                    number: 258260545641735,
                                                                 },
                                                                 type: Computed(
                                                                     I64,
@@ -171,7 +171,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                 1,
                                             ),
                                         ),
-                                        number: 211974982461100,
+                                        number: 185715448551360,
                                     },
                                 ),
                             ),
@@ -186,7 +186,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                     1,
                                 ),
                             ),
-                            number: 68236357990462,
+                            number: 23214431068920,
                         },
                     ),
                 ): AirFunction {
@@ -198,7 +198,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                         1,
                                     ),
                                 ),
-                                number: 68236357990462,
+                                number: 23214431068920,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -218,7 +218,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                     1,
                                                 ),
                                             ),
-                                            number: 88770447200551,
+                                            number: 130581174762675,
                                         },
                                         type: Computed(
                                             Generic(
@@ -254,7 +254,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                 1,
                                             ),
                                         ),
-                                        number: 88138629071007,
+                                        number: 107366743693755,
                                     },
                                 ),
                             ),

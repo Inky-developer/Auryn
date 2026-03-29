@@ -14,7 +14,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                     1,
                                 ),
                             ),
-                            number: 70368744177666,
+                            number: 34466323678854,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                         1,
                                     ),
                                 ),
-                                number: 70368744177666,
+                                number: 34466323678854,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 211106232532992,
+                                        number: 86165809197135,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -59,7 +59,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 217621856993884,
+                                                        number: 126376520155798,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -68,7 +68,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 217621856993886,
+                                                            number: 137865294715416,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -85,7 +85,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 221531231670419,
+                                                    number: 172331618394270,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -106,7 +106,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 234562480592212,
+                                        number: 195309167513506,
                                     },
                                     kind: Update(
                                         Update {
@@ -117,7 +117,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 234562480592213,
+                                                    number: 201053554793315,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -136,7 +136,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 243358573614421,
+                                                    number: 258497427591405,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -159,7 +159,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na += 2\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 211106232532990,
+                                        number: 74677034637517,
                                     },
                                 ),
                             ),

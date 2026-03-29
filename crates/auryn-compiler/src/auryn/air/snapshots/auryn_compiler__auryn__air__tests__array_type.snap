@@ -14,7 +14,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                                     1,
                                 ),
                             ),
-                            number: 208499982748634,
+                            number: 27686063283012,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,53 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                                         1,
                                     ),
                                 ),
-                                number: 208499982748634,
+                                number: 27686063283012,
+                            },
+                            kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
+                        },
+                    ),
+                    ident: "main",
+                    blocks: {
+                        AirBlockId(
+                            0,
+                        ): AirBlock {
+                            nodes: [],
+                            finalizer: Return(
+                                Null(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: 55372126566024,
+                                    },
+                                ),
+                            ),
+                        },
+                    },
+                },
+                AirFunctionId(
+                    AirStaticValueId(
+                        SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: 87672533729538,
+                        },
+                    ),
+                ): AirFunction {
+                    type: FunctionItem(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: 87672533729538,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -46,7 +92,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                                                     1,
                                                 ),
                                             ),
-                                            number: 267574977860747,
+                                            number: 267631945069116,
                                         },
                                         type: Computed(
                                             Array(
@@ -82,53 +128,7 @@ expression: "compile(\"fn main() {}\\nfn foo(array: []I32) -> []I32 { return arr
                                                 1,
                                             ),
                                         ),
-                                        number: 260624978435789,
-                                    },
-                                ),
-                            ),
-                        },
-                    },
-                },
-                AirFunctionId(
-                    AirStaticValueId(
-                        SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
-                                ),
-                            ),
-                            number: 26807140639112,
-                        },
-                    ),
-                ): AirFunction {
-                    type: FunctionItem(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: 26807140639112,
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                        },
-                    ),
-                    ident: "main",
-                    blocks: {
-                        AirBlockId(
-                            0,
-                        ): AirBlock {
-                            nodes: [],
-                            finalizer: Return(
-                                Null(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: 67017851597774,
+                                        number: 230717194025100,
                                     },
                                 ),
                             ),

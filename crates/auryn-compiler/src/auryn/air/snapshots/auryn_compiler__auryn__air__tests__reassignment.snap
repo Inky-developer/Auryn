@@ -14,7 +14,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                     1,
                                 ),
                             ),
-                            number: 56294995342134,
+                            number: 21110623253298,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                         1,
                                     ),
                                 ),
-                                number: 56294995342134,
+                                number: 21110623253298,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: 225179981368526,
+                                        number: 59813432551011,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -59,7 +59,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 226917481224763,
+                                                        number: 84442493013192,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -68,7 +68,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 226917481224765,
+                                                            number: 91479367430958,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -85,7 +85,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 227959981138505,
+                                                    number: 112589990684256,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -108,7 +108,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: 235344355527522,
+                                        number: 147774362773086,
                                     },
                                     type: Computed(
                                         Bool,
@@ -138,7 +138,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: 243944979815903,
+                                        number: 267401227875108,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -148,7 +148,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                         1,
                                                     ),
                                                 ),
-                                                number: 243944979815903,
+                                                number: 267401227875108,
                                             },
                                             type: Computed(
                                                 I32,
@@ -172,7 +172,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: 225179981368524,
+                                        number: 52776558133245,
                                     },
                                 ),
                             ),
@@ -188,7 +188,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: 236908105398134,
+                                        number: 175921860444150,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -203,7 +203,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 236980501225476,
+                                                        number: 200550920906331,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -212,7 +212,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 236980501225478,
+                                                            number: 207587795324097,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -229,7 +229,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 237023938721881,
+                                                    number: 228698418577395,
                                                 },
                                                 type: Computed(
                                                     I32,

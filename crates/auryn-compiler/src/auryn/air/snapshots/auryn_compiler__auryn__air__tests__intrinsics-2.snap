@@ -14,7 +14,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                     1,
                                 ),
                             ),
-                            number: 70368744177666,
+                            number: 28624573902774,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                         1,
                                     ),
                                 ),
-                                number: 70368744177666,
+                                number: 28624573902774,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 211106232532992,
+                                        number: 71561434756935,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -59,7 +59,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 233259355700032,
+                                                        number: 124039820245354,
                                                     },
                                                     Application {
                                                         id: SyntaxId {
@@ -68,7 +68,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 233259355700032,
+                                                            number: 124039820245354,
                                                         },
                                                         type: Path {
                                                             base_id: SyntaxId {
@@ -77,7 +77,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 233259355700034,
+                                                                number: 133581344879612,
                                                             },
                                                             base: Resolved(
                                                                 I64,
@@ -95,7 +95,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 242381229945282,
+                                                    number: 157435156465257,
                                                 },
                                                 type: Computed(
                                                     Array(
@@ -117,7 +117,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 242381229945285,
+                                                                number: 171747443416644,
                                                             },
                                                             type: Computed(
                                                                 Intrinsic(
@@ -144,7 +144,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 244531386017380,
+                                                                    number: 200372017319418,
                                                                 },
                                                                 type: Computed(
                                                                     I64,
@@ -162,7 +162,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 245117792218858,
+                                                                    number: 228996591222192,
                                                                 },
                                                                 type: Computed(
                                                                     I64,
@@ -180,7 +180,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 245704198420336,
+                                                                    number: 257621165124966,
                                                                 },
                                                                 type: Computed(
                                                                     I64,
@@ -210,7 +210,7 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 211106232532990,
+                                        number: 62019910122677,
                                     },
                                 ),
                             ),
