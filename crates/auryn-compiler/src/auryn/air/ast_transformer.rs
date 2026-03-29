@@ -108,7 +108,7 @@ impl AstTransformer {
             let prev = self
                 .namespace
                 .statics
-                .insert(ident.text.clone(), AirStaticValueId(ident.id));
+                .insert(ident.spanned_text(), AirStaticValueId(ident.id));
             if let Some(prev) = prev {
                 self.diagnostics.add(
                     ident.id,
@@ -138,7 +138,7 @@ impl AstTransformer {
                 };
 
                 self.namespace.types.insert(
-                    ident.text.clone(),
+                    ident.spanned_text(),
                     UserDefinedTypeId::Extern(TypeId::new(extern_type.id())),
                 );
             }
@@ -150,7 +150,7 @@ impl AstTransformer {
             return;
         };
         self.namespace.types.insert(
-            ident.text.clone(),
+            ident.spanned_text(),
             UserDefinedTypeId::TypeAlias(TypeAliasId(ident.id)),
         );
     }
@@ -160,7 +160,7 @@ impl AstTransformer {
             return;
         };
         self.namespace.types.insert(
-            ident.text.clone(),
+            ident.spanned_text(),
             UserDefinedTypeId::Struct(TypeId::new(ident.id)),
         );
     }

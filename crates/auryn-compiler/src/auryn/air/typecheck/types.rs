@@ -460,7 +460,7 @@ impl TypeData for ApplicationType {
 #[derive(Debug)]
 pub struct ModuleType {
     pub name: SmallString,
-    pub members: FastMap<SmallString, Type>,
+    pub members: FastMap<Spanned<SmallString>, Type>,
 }
 
 impl TypeData for ModuleType {

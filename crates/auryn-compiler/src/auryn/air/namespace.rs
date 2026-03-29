@@ -1,14 +1,17 @@
 use stdx::{FastMap, SmallString, default};
 
-use crate::auryn::{
-    air::{
-        data::{AirModuleId, AirStaticValueId, TypeAliasId},
-        typecheck::{
-            type_context::TypeId,
-            types::{ExternType, GenericId, ModuleType, StructType},
+use crate::{
+    SyntaxId,
+    auryn::{
+        air::{
+            data::{AirModuleId, AirStaticValueId, TypeAliasId},
+            typecheck::{
+                type_context::TypeId,
+                types::{ExternType, GenericId, ModuleType, StructType},
+            },
         },
+        syntax_id::{SpanExt, Spanned},
     },
-    syntax_id::Spanned,
 };
 
 /// Represents a type that was defined by the user.
@@ -27,8 +30,8 @@ pub enum UserDefinedTypeId {
 /// because at that point everything is identified using ids.
 #[derive(Debug, Clone)]
 pub struct Namespace {
-    pub types: FastMap<SmallString, UserDefinedTypeId>,
-    pub statics: FastMap<SmallString, AirStaticValueId>,
+    pub types: FastMap<Spanned<SmallString>, UserDefinedTypeId>,
+    pub statics: FastMap<Spanned<SmallString>, AirStaticValueId>,
 }
 
 impl Namespace {
@@ -37,7 +40,12 @@ impl Namespace {
             statics: default(),
             types: modules
                 .into_iter()
-                .map(|(name, file_id)| (name, UserDefinedTypeId::Module(file_id.0.into())))
+                .map(|(name, file_id)| {
+                    (
+                        name.with_span(SyntaxId::new_unset(Some(file_id.0))),
+                        UserDefinedTypeId::Module(file_id.0.into()),
+                    )
+                })
                 .collect(),
         }
     }
@@ -48,7 +56,7 @@ impl Namespace {
         for (index, ident) in generics.into_iter().enumerate() {
             result
                 .types
-                .insert(ident.value, UserDefinedTypeId::Generic(GenericId(index)));
+                .insert(ident, UserDefinedTypeId::Generic(GenericId(index)));
         }
 
         result

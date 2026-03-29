@@ -4,7 +4,9 @@ use auryn_compiler::{
     types::{Type, TypeId},
 };
 use stdx::default;
-use tower_lsp_server::ls_types::{CompletionItem, CompletionItemKind, Range, Uri};
+use tower_lsp_server::ls_types::{
+    CompletionItem, CompletionItemKind, Location, Range, SymbolInformation, SymbolKind, Uri,
+};
 
 use crate::cursor::Cursor;
 
@@ -76,9 +78,44 @@ impl Analyzer {
                     _ => CompletionItemKind::CLASS,
                 };
                 CompletionItem {
-                    label: name.as_ref().into(),
+                    label: name.value.as_ref().into(),
                     kind: Some(kind),
                     ..default()
+                }
+            })
+            .collect()
+    }
+
+    pub fn get_document_symbols(&mut self) -> Vec<SymbolInformation> {
+        let Some(data) = &self.current_data else {
+            return Vec::new();
+        };
+        let ty_ctx = &data.air.ty_ctx;
+        let main_module = ty_ctx.get(TypeId::from(FileId::MAIN_FILE));
+        main_module
+            .members
+            .iter()
+            .filter(|(name, _)| name.syntax_id.number().is_some())
+            .map(|(name, ty)| {
+                let kind = match *ty {
+                    Type::FunctionItem(_) => SymbolKind::FUNCTION,
+                    Type::Module(_) => SymbolKind::MODULE,
+                    _ => SymbolKind::STRUCT,
+                };
+                let range = self.map_span(name.syntax_id);
+                // TODO: Use the file id to get uri
+                let location = Location {
+                    uri: self.current_file.clone(),
+                    range,
+                };
+                SymbolInformation {
+                    name: name.value.to_string(),
+                    kind,
+                    tags: None,
+                    #[expect(deprecated)]
+                    deprecated: None,
+                    location,
+                    container_name: None,
                 }
             })
             .collect()

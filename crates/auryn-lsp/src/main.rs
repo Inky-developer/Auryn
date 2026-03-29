@@ -37,6 +37,7 @@ impl LanguageServer for Backend {
                     trigger_characters: None,
                     ..default()
                 }),
+                document_symbol_provider: Some(OneOf::Left(true)),
                 workspace: Some(WorkspaceServerCapabilities {
                     workspace_folders: Some(WorkspaceFoldersServerCapabilities {
                         supported: Some(true),
@@ -84,6 +85,15 @@ impl LanguageServer for Backend {
             ..default()
         }]);
         Ok(Some(CompletionResponse::Array(completions)))
+    }
+
+    async fn document_symbol(
+        &self,
+        _params: DocumentSymbolParams,
+    ) -> Result<Option<DocumentSymbolResponse>> {
+        // TODO: Respect the document in params
+        let symbols = self.analyzer().get_document_symbols();
+        Ok(Some(DocumentSymbolResponse::Flat(symbols)))
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
