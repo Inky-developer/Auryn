@@ -14,9 +14,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                208499982748635,
-                            ),
+                            number: 208499982748634,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    208499982748635,
-                                ),
+                                number: 208499982748634,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -48,9 +44,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            260624978435793,
-                                        ),
+                                        number: 260624978435792,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -60,18 +54,14 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    260624978435793,
-                                                ),
+                                                number: 260624978435792,
                                             },
                                             type: Computed(
                                                 Structural(
                                                     TypeId {
                                                         id: SyntaxId {
                                                             file_id: None,
-                                                            number: Some(
-                                                                1,
-                                                            ),
+                                                            number: 1,
                                                         },
                                                         kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                     },
@@ -86,18 +76,14 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                260624978435796,
-                                                            ),
+                                                            number: 260624978435795,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
                                                                 TypeId {
                                                                     id: SyntaxId {
                                                                         file_id: None,
-                                                                        number: Some(
-                                                                            1,
-                                                                        ),
+                                                                        number: 1,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                 },
@@ -117,9 +103,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    267140602896689,
-                                                                ),
+                                                                number: 267140602896688,
                                                             },
                                                             type: Computed(
                                                                 I32,
@@ -150,9 +134,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            260624978435790,
-                                        ),
+                                        number: 260624978435789,
                                     },
                                 ),
                             ),
@@ -167,9 +149,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                23456248059225,
-                            ),
+                            number: 23456248059224,
                         },
                     ),
                 ): AirFunction {
@@ -181,9 +161,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    23456248059225,
-                                ),
+                                number: 23456248059224,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -201,9 +179,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            70368744177668,
-                                        ),
+                                        number: 70368744177667,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -213,9 +189,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    70368744177668,
-                                                ),
+                                                number: 70368744177667,
                                             },
                                             type: Computed(
                                                 I32,
@@ -229,9 +203,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                70368744177671,
-                                                            ),
+                                                            number: 70368744177670,
                                                         },
                                                         type: Computed(
                                                             FunctionItem(
@@ -242,9 +214,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                                 1,
                                                                             ),
                                                                         ),
-                                                                        number: Some(
-                                                                            208499982748635,
-                                                                        ),
+                                                                        number: 208499982748634,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                                                                 },
@@ -259,9 +229,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                                 1,
                                                                             ),
                                                                         ),
-                                                                        number: Some(
-                                                                            208499982748635,
-                                                                        ),
+                                                                        number: 208499982748634,
                                                                     },
                                                                 ),
                                                             ),
@@ -275,9 +243,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    77698821696176,
-                                                                ),
+                                                                number: 77698821696175,
                                                             },
                                                             type: Computed(
                                                                 I32,
@@ -306,9 +272,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            70368744177665,
-                                        ),
+                                        number: 70368744177664,
                                     },
                                 ),
                             ),
@@ -328,9 +292,7 @@ expression: "compile(\"fn main() { foo(1) }\\nfn foo(bar: I32) -> I32 { print(ba
                             1,
                         ),
                     ),
-                    number: Some(
-                        260624978435790,
-                    ),
+                    number: 260624978435789,
                 },
                 kind: "Type mismatch",
                 ..

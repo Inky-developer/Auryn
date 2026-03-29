@@ -4,7 +4,6 @@ pub mod ast;
 pub mod codegen_java;
 pub mod diagnostics;
 pub mod environment;
-pub mod file_id;
 pub mod input_files;
 pub mod monomorphization;
 pub mod parser;

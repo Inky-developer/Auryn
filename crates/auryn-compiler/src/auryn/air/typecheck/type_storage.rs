@@ -1,4 +1,4 @@
-use std::{hash::Hash, num::NonZeroU64};
+use std::hash::Hash;
 
 use stdx::{BidirectionalMap, FastMap, default};
 
@@ -139,7 +139,7 @@ impl<T> Default for NominalStorage<T> {
 /// will be re-used
 pub struct StructuralStorage<T> {
     data: BidirectionalMap<TypeId<T>, T>,
-    next_id: NonZeroU64,
+    next_id: u64,
 }
 
 impl<T> TypeStorage<T> for StructuralStorage<T>

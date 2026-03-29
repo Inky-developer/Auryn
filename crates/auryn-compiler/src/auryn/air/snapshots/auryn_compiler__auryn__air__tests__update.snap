@@ -14,9 +14,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                70368744177667,
-                            ),
+                            number: 70368744177666,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    70368744177667,
-                                ),
+                                number: 70368744177666,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -48,9 +44,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532993,
-                                        ),
+                                        number: 211106232532992,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -65,9 +59,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: Some(
-                                                            217621856993885,
-                                                        ),
+                                                        number: 217621856993884,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -76,9 +68,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                217621856993887,
-                                                            ),
+                                                            number: 217621856993886,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -95,9 +85,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        221531231670420,
-                                                    ),
+                                                    number: 221531231670419,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -118,9 +106,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            234562480592213,
-                                        ),
+                                        number: 234562480592212,
                                     },
                                     kind: Update(
                                         Update {
@@ -131,9 +117,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        234562480592214,
-                                                    ),
+                                                    number: 234562480592213,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -152,9 +136,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        243358573614422,
-                                                    ),
+                                                    number: 243358573614421,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -177,9 +159,7 @@ expression: "compile_wrapped(\"let a: I32 = 1\\na = 2\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532991,
-                                        ),
+                                        number: 211106232532990,
                                     },
                                 ),
                             ),

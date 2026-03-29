@@ -14,9 +14,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                56294995342135,
-                            ),
+                            number: 56294995342134,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    56294995342135,
-                                ),
+                                number: 56294995342134,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -48,9 +44,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            225179981368527,
-                                        ),
+                                        number: 225179981368526,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -65,9 +59,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: Some(
-                                                            226917481224764,
-                                                        ),
+                                                        number: 226917481224763,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -76,9 +68,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                226917481224766,
-                                                            ),
+                                                            number: 226917481224765,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -95,9 +85,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        227959981138506,
-                                                    ),
+                                                    number: 227959981138505,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -120,9 +108,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            235344355527523,
-                                        ),
+                                        number: 235344355527522,
                                     },
                                     type: Computed(
                                         Bool,
@@ -152,9 +138,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            243944979815904,
-                                        ),
+                                        number: 243944979815903,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -164,9 +148,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    243944979815904,
-                                                ),
+                                                number: 243944979815903,
                                             },
                                             type: Computed(
                                                 I32,
@@ -190,9 +172,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            225179981368525,
-                                        ),
+                                        number: 225179981368524,
                                     },
                                 ),
                             ),
@@ -208,9 +188,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            236908105398135,
-                                        ),
+                                        number: 236908105398134,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -225,9 +203,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: Some(
-                                                            236980501225477,
-                                                        ),
+                                                        number: 236980501225476,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -236,9 +212,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                236980501225479,
-                                                            ),
+                                                            number: 236980501225478,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -255,9 +229,7 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        237023938721882,
-                                                    ),
+                                                    number: 237023938721881,
                                                 },
                                                 type: Computed(
                                                     I32,

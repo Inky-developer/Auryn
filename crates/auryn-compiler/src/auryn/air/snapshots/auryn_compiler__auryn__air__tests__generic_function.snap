@@ -14,9 +14,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                68236357990463,
-                            ),
+                            number: 194599983898720,
                         },
                     ),
                 ): AirFunction {
@@ -28,102 +26,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    68236357990463,
-                                ),
-                            },
-                            kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
-                        },
-                    ),
-                    ident: "identity",
-                    blocks: {
-                        AirBlockId(
-                            0,
-                        ): AirBlock {
-                            nodes: [],
-                            finalizer: Return(
-                                Expression(
-                                    AirExpression {
-                                        id: SyntaxId {
-                                            file_id: Some(
-                                                FileId(
-                                                    1,
-                                                ),
-                                            ),
-                                            number: Some(
-                                                88770447200552,
-                                            ),
-                                        },
-                                        type: Computed(
-                                            Generic(
-                                                TypeId {
-                                                    id: SyntaxId {
-                                                        file_id: None,
-                                                        number: Some(
-                                                            1,
-                                                        ),
-                                                    },
-                                                    kind: "auryn_compiler::auryn::air::typecheck::types::GenericType",
-                                                },
-                                            ),
-                                        ),
-                                        kind: Variable(
-                                            Local(
-                                                AirLocalValueId(
-                                                    0,
-                                                ),
-                                            ),
-                                        ),
-                                    },
-                                ),
-                            ),
-                        },
-                        AirBlockId(
-                            1,
-                        ): AirBlock {
-                            nodes: [],
-                            finalizer: Return(
-                                Null(
-                                    SyntaxId {
-                                        file_id: Some(
-                                            FileId(
-                                                1,
-                                            ),
-                                        ),
-                                        number: Some(
-                                            88138629071008,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        },
-                    },
-                },
-                AirFunctionId(
-                    AirStaticValueId(
-                        SyntaxId {
-                            file_id: Some(
-                                FileId(
-                                    1,
-                                ),
-                            ),
-                            number: Some(
-                                194599983898721,
-                            ),
-                        },
-                    ),
-                ): AirFunction {
-                    type: FunctionItem(
-                        TypeId {
-                            id: SyntaxId {
-                                file_id: Some(
-                                    FileId(
-                                        1,
-                                    ),
-                                ),
-                                number: Some(
-                                    194599983898721,
-                                ),
+                                number: 194599983898720,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -141,9 +44,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211974982461103,
-                                        ),
+                                        number: 211974982461102,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -158,9 +59,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: Some(
-                                                            212618500926375,
-                                                        ),
+                                                        number: 212618500926374,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -169,9 +68,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                212618500926377,
-                                                            ),
+                                                            number: 212618500926376,
                                                         },
                                                         base: Resolved(
                                                             I64,
@@ -188,9 +85,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        213004612005537,
-                                                    ),
+                                                    number: 213004612005536,
                                                 },
                                                 type: Computed(
                                                     I64,
@@ -204,9 +99,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    213004612005540,
-                                                                ),
+                                                                number: 213004612005539,
                                                             },
                                                             type: Computed(
                                                                 FunctionItem(
@@ -217,9 +110,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: Some(
-                                                                                68236357990463,
-                                                                            ),
+                                                                            number: 68236357990462,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                                                                     },
@@ -234,9 +125,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: Some(
-                                                                                68236357990463,
-                                                                            ),
+                                                                            number: 68236357990462,
                                                                         },
                                                                     ),
                                                                 ),
@@ -250,9 +139,7 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: Some(
-                                                                        213090414467576,
-                                                                    ),
+                                                                    number: 213090414467575,
                                                                 },
                                                                 type: Computed(
                                                                     I64,
@@ -284,9 +171,90 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211974982461101,
+                                        number: 211974982461100,
+                                    },
+                                ),
+                            ),
+                        },
+                    },
+                },
+                AirFunctionId(
+                    AirStaticValueId(
+                        SyntaxId {
+                            file_id: Some(
+                                FileId(
+                                    1,
+                                ),
+                            ),
+                            number: 68236357990462,
+                        },
+                    ),
+                ): AirFunction {
+                    type: FunctionItem(
+                        TypeId {
+                            id: SyntaxId {
+                                file_id: Some(
+                                    FileId(
+                                        1,
+                                    ),
+                                ),
+                                number: 68236357990462,
+                            },
+                            kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
+                        },
+                    ),
+                    ident: "identity",
+                    blocks: {
+                        AirBlockId(
+                            0,
+                        ): AirBlock {
+                            nodes: [],
+                            finalizer: Return(
+                                Expression(
+                                    AirExpression {
+                                        id: SyntaxId {
+                                            file_id: Some(
+                                                FileId(
+                                                    1,
+                                                ),
+                                            ),
+                                            number: 88770447200551,
+                                        },
+                                        type: Computed(
+                                            Generic(
+                                                TypeId {
+                                                    id: SyntaxId {
+                                                        file_id: None,
+                                                        number: 1,
+                                                    },
+                                                    kind: "auryn_compiler::auryn::air::typecheck::types::GenericType",
+                                                },
+                                            ),
                                         ),
+                                        kind: Variable(
+                                            Local(
+                                                AirLocalValueId(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                        AirBlockId(
+                            1,
+                        ): AirBlock {
+                            nodes: [],
+                            finalizer: Return(
+                                Null(
+                                    SyntaxId {
+                                        file_id: Some(
+                                            FileId(
+                                                1,
+                                            ),
+                                        ),
+                                        number: 88138629071007,
                                     },
                                 ),
                             ),

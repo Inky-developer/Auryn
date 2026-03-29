@@ -14,9 +14,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                68804994307051,
-                            ),
+                            number: 68804994307050,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    68804994307051,
-                                ),
+                                number: 68804994307050,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -48,9 +44,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            87569992754428,
-                                        ),
+                                        number: 87569992754427,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -60,18 +54,14 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    87569992754428,
-                                                ),
+                                                number: 87569992754427,
                                             },
                                             type: Computed(
                                                 Structural(
                                                     TypeId {
                                                         id: SyntaxId {
                                                             file_id: None,
-                                                            number: Some(
-                                                                1,
-                                                            ),
+                                                            number: 1,
                                                         },
                                                         kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                     },
@@ -86,9 +76,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                87569992754431,
-                                                            ),
+                                                            number: 87569992754430,
                                                         },
                                                         type: Computed(
                                                             FunctionItem(
@@ -99,9 +87,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                                 1,
                                                                             ),
                                                                         ),
-                                                                        number: Some(
-                                                                            193904983956227,
-                                                                        ),
+                                                                        number: 193904983956226,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                                                                 },
@@ -116,9 +102,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                                 1,
                                                                             ),
                                                                         ),
-                                                                        number: Some(
-                                                                            193904983956227,
-                                                                        ),
+                                                                        number: 193904983956226,
                                                                     },
                                                                 ),
                                                             ),
@@ -132,9 +116,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    88264992696924,
-                                                                ),
+                                                                number: 88264992696923,
                                                             },
                                                             type: Computed(
                                                                 I32,
@@ -163,9 +145,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            87569992754425,
-                                        ),
+                                        number: 87569992754424,
                                     },
                                 ),
                             ),
@@ -180,9 +160,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                193904983956227,
-                            ),
+                            number: 193904983956226,
                         },
                     ),
                 ): AirFunction {
@@ -194,9 +172,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    193904983956227,
-                                ),
+                                number: 193904983956226,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -215,9 +191,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            212930607382039,
-                                        ),
+                                        number: 212930607382038,
                                     },
                                     type: Computed(
                                         Bool,
@@ -231,9 +205,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        212930607382043,
-                                                    ),
+                                                    number: 212930607382042,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -253,9 +225,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        213028341748951,
-                                                    ),
+                                                    number: 213028341748950,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -290,9 +260,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            212669982403601,
-                                        ),
+                                        number: 212669982403600,
                                     },
                                 ),
                             ),
@@ -310,18 +278,14 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                     1,
                                                 ),
                                             ),
-                                            number: Some(
-                                                213480815669845,
-                                            ),
+                                            number: 213480815669844,
                                         },
                                         type: Computed(
                                             Structural(
                                                 TypeId {
                                                     id: SyntaxId {
                                                         file_id: None,
-                                                        number: Some(
-                                                            1,
-                                                        ),
+                                                        number: 1,
                                                     },
                                                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                 },

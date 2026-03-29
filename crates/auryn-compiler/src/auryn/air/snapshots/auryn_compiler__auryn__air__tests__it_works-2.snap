@@ -14,9 +14,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                70368744177667,
-                            ),
+                            number: 70368744177666,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    70368744177667,
-                                ),
+                                number: 70368744177666,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -49,9 +45,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            218924981886068,
-                                        ),
+                                        number: 218924981886067,
                                     },
                                     type: Computed(
                                         Bool,
@@ -82,9 +76,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532991,
-                                        ),
+                                        number: 211106232532990,
                                     },
                                 ),
                             ),
@@ -100,9 +92,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            230653105915677,
-                                        ),
+                                        number: 230653105915676,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -112,18 +102,14 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    230653105915677,
-                                                ),
+                                                number: 230653105915676,
                                             },
                                             type: Computed(
                                                 Structural(
                                                     TypeId {
                                                         id: SyntaxId {
                                                             file_id: None,
-                                                            number: Some(
-                                                                1,
-                                                            ),
+                                                            number: 1,
                                                         },
                                                         kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                     },
@@ -138,18 +124,14 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                230653105915680,
-                                                            ),
+                                                            number: 230653105915679,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
                                                                 TypeId {
                                                                     id: SyntaxId {
                                                                         file_id: None,
-                                                                        number: Some(
-                                                                            1,
-                                                                        ),
+                                                                        number: 1,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                 },
@@ -169,18 +151,14 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    233096465088514,
-                                                                ),
+                                                                number: 233096465088513,
                                                             },
                                                             type: Computed(
                                                                 NumberLiteral(
                                                                     TypeId {
                                                                         id: SyntaxId {
                                                                             file_id: None,
-                                                                            number: Some(
-                                                                                1,
-                                                                            ),
+                                                                            number: 1,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::NumberLiteralType",
                                                                     },
@@ -219,9 +197,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            244615158331874,
-                                        ),
+                                        number: 244615158331873,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -231,18 +207,14 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    244615158331874,
-                                                ),
+                                                number: 244615158331873,
                                             },
                                             type: Computed(
                                                 Structural(
                                                     TypeId {
                                                         id: SyntaxId {
                                                             file_id: None,
-                                                            number: Some(
-                                                                1,
-                                                            ),
+                                                            number: 1,
                                                         },
                                                         kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                     },
@@ -257,18 +229,14 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                244615158331877,
-                                                            ),
+                                                            number: 244615158331876,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
                                                                 TypeId {
                                                                     id: SyntaxId {
                                                                         file_id: None,
-                                                                        number: Some(
-                                                                            1,
-                                                                        ),
+                                                                        number: 1,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                 },
@@ -288,18 +256,14 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    244964209642279,
-                                                                ),
+                                                                number: 244964209642278,
                                                             },
                                                             type: Computed(
                                                                 NumberLiteral(
                                                                     TypeId {
                                                                         id: SyntaxId {
                                                                             file_id: None,
-                                                                            number: Some(
-                                                                                2,
-                                                                            ),
+                                                                            number: 2,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::NumberLiteralType",
                                                                     },

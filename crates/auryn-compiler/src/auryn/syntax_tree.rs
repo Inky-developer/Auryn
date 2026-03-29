@@ -1,6 +1,5 @@
 use std::{
     fmt::{Debug, Display},
-    num::NonZeroU64,
     ops::Range,
 };
 
@@ -105,7 +104,7 @@ impl SyntaxNode {
     }
 
     /// Assigns ids so that `self.id.number()` does not return null.
-    pub(super) fn assign_ids(&mut self, mut range: Range<NonZeroU64>) {
+    pub(super) fn assign_ids(&mut self, mut range: Range<u64>) {
         self.id.set_number(range.start);
 
         if self.children.is_empty() {
@@ -114,7 +113,7 @@ impl SyntaxNode {
 
         range.start = range.start.checked_add(1).unwrap();
         assert!(!range.is_empty(), "Range should not be empty");
-        let available_space = range.end.get() - range.start.get();
+        let available_space = range.end - range.start;
         assert!(
             available_space as usize > self.children.len(),
             "Ran out of ids D:"
@@ -262,7 +261,7 @@ impl SyntaxItem {
         }
     }
 
-    fn assign_ids(&mut self, range: Range<NonZeroU64>) {
+    fn assign_ids(&mut self, range: Range<u64>) {
         match self {
             SyntaxItem::Node(syntax_node) => syntax_node.assign_ids(range),
             SyntaxItem::Token(SyntaxToken { id, .. }) => {
@@ -321,15 +320,6 @@ impl SyntaxTree {
     }
 
     pub fn get_span(&self, syntax_id: SyntaxId) -> ComputedSpan {
-        if syntax_id.number().is_none() {
-            return ComputedSpan {
-                file_id: syntax_id
-                    .file_id()
-                    .expect("Should only be called with a valid syntax id"),
-                offset: 0,
-                len: self.root_node.len,
-            };
-        }
         self.root_node.get_span(syntax_id, 0)
     }
 }

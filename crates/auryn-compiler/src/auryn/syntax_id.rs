@@ -17,12 +17,11 @@ pub struct SyntaxId(NonZeroU64);
 
 impl SyntaxId {
     pub const NUMBER_BITS: u64 = 48;
-    pub const MAX_NUMBER: NonZeroU64 = NonZeroU64::new((1 << Self::NUMBER_BITS) - 1).unwrap();
-    pub const NUMBER_RANGE: Range<NonZeroU64> = NonZeroU64::new(1).unwrap()..Self::MAX_NUMBER;
+    pub const MAX_NUMBER: u64 = (1 << Self::NUMBER_BITS) - 1;
+    pub const NUMBER_RANGE: Range<u64> = 0..Self::MAX_NUMBER;
 
-    // TODO: Make file_id required
-    pub fn new(file_id: Option<FileId>, number: NonZeroU64) -> Self {
-        Self::new_internal(file_id, number.get())
+    pub fn new(file_id: Option<FileId>, number: u64) -> Self {
+        Self::new_internal(file_id, number)
     }
 
     fn new_internal(file_id: Option<FileId>, number: u64) -> Self {
@@ -52,11 +51,11 @@ impl SyntaxId {
         FileId::new(NonZeroU16::new(value).unwrap())
     }
 
-    pub fn number(self) -> Option<NonZeroU64> {
-        NonZeroU64::new(self.0.get() & Self::MAX_NUMBER.get())
+    pub fn number(self) -> u64 {
+        self.0.get() & Self::MAX_NUMBER
     }
 
-    pub fn set_number(&mut self, number: NonZeroU64) {
+    pub fn set_number(&mut self, number: u64) {
         *self = Self::new(self.file_id(), number)
     }
 }
@@ -202,29 +201,23 @@ mod tests {
             999.try_into().unwrap(),
         );
         assert_eq!(syntax_id.file_id(), Some(FileId(42.try_into().unwrap())));
-        assert_eq!(syntax_id.number().unwrap().get(), 999);
+        assert_eq!(syntax_id.number(), 999);
 
-        let syntax_id = SyntaxId::new(
-            Some(FileId(1.try_into().unwrap())),
-            ((1 << 48) - 1).try_into().unwrap(),
-        );
+        let syntax_id = SyntaxId::new(Some(FileId(1.try_into().unwrap())), (1 << 48) - 1);
         assert_eq!(syntax_id.file_id(), Some(FileId(1.try_into().unwrap())));
-        assert_eq!(syntax_id.number().unwrap().get(), (1 << 48) - 1);
+        assert_eq!(syntax_id.number(), (1 << 48) - 1);
     }
 
     #[test]
     fn test_unset() {
         let id = SyntaxId::new_unset(None);
         assert_eq!(id.file_id(), None);
-        assert_eq!(id.number(), None)
+        assert_eq!(id.number(), 0)
     }
 
     #[test]
     #[should_panic]
     fn test_too_big_number() {
-        SyntaxId::new(
-            Some(FileId(42.try_into().unwrap())),
-            (1 << 48).try_into().unwrap(),
-        );
+        SyntaxId::new(Some(FileId(42.try_into().unwrap())), 1 << 48);
     }
 }

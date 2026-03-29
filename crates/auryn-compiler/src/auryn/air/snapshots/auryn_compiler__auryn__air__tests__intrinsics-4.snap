@@ -14,9 +14,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                70368744177667,
-                            ),
+                            number: 70368744177666,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    70368744177667,
-                                ),
+                                number: 70368744177666,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -48,9 +44,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532993,
-                                        ),
+                                        number: 211106232532992,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -65,9 +59,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: Some(
-                                                            230653105915675,
-                                                        ),
+                                                        number: 230653105915674,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -76,9 +68,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                230653105915677,
-                                                            ),
+                                                            number: 230653105915676,
                                                         },
                                                         base: Resolved(
                                                             I64,
@@ -95,9 +85,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        242381229945283,
-                                                    ),
+                                                    number: 242381229945282,
                                                 },
                                                 type: Computed(
                                                     I64,
@@ -111,18 +99,14 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    242381229945286,
-                                                                ),
+                                                                number: 242381229945285,
                                                             },
                                                             type: Computed(
                                                                 Intrinsic(
                                                                     TypeId {
                                                                         id: SyntaxId {
                                                                             file_id: None,
-                                                                            number: Some(
-                                                                                1,
-                                                                            ),
+                                                                            number: 1,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                     },
@@ -142,18 +126,14 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: Some(
-                                                                        244615158331877,
-                                                                    ),
+                                                                    number: 244615158331876,
                                                                 },
                                                                 type: Computed(
                                                                     Array(
                                                                         TypeId {
                                                                             id: SyntaxId {
                                                                                 file_id: None,
-                                                                                number: Some(
-                                                                                    1,
-                                                                                ),
+                                                                                number: 1,
                                                                             },
                                                                             kind: "auryn_compiler::auryn::air::typecheck::types::ArrayType",
                                                                         },
@@ -168,18 +148,14 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                                         1,
                                                                                     ),
                                                                                 ),
-                                                                                number: Some(
-                                                                                    244615158331880,
-                                                                                ),
+                                                                                number: 244615158331879,
                                                                             },
                                                                             type: Computed(
                                                                                 Intrinsic(
                                                                                     TypeId {
                                                                                         id: SyntaxId {
                                                                                             file_id: None,
-                                                                                            number: Some(
-                                                                                                2,
-                                                                                            ),
+                                                                                            number: 2,
                                                                                         },
                                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                                     },
@@ -199,9 +175,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                                             1,
                                                                                         ),
                                                                                     ),
-                                                                                    number: Some(
-                                                                                        244801319030761,
-                                                                                    ),
+                                                                                    number: 244801319030760,
                                                                                 },
                                                                                 type: Computed(
                                                                                     I32,
@@ -226,9 +200,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: Some(
-                                                                        245452881476847,
-                                                                    ),
+                                                                    number: 245452881476846,
                                                                 },
                                                                 type: Computed(
                                                                     I32,
@@ -258,9 +230,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532991,
-                                        ),
+                                        number: 211106232532990,
                                     },
                                 ),
                             ),

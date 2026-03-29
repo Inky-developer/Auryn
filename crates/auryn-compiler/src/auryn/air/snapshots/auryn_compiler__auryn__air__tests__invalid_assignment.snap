@@ -14,9 +14,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                     1,
                                 ),
                             ),
-                            number: Some(
-                                70368744177667,
-                            ),
+                            number: 70368744177666,
                         },
                     ),
                 ): AirFunction {
@@ -28,9 +26,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                         1,
                                     ),
                                 ),
-                                number: Some(
-                                    70368744177667,
-                                ),
+                                number: 70368744177666,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -48,9 +44,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532993,
-                                        ),
+                                        number: 211106232532992,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -65,9 +59,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: Some(
-                                                            217621856993885,
-                                                        ),
+                                                        number: 217621856993884,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -76,9 +68,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                217621856993887,
-                                                            ),
+                                                            number: 217621856993886,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -95,18 +85,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: Some(
-                                                        221531231670419,
-                                                    ),
+                                                    number: 221531231670418,
                                                 },
                                                 type: Computed(
                                                     Structural(
                                                         TypeId {
                                                             id: SyntaxId {
                                                                 file_id: None,
-                                                                number: Some(
-                                                                    1,
-                                                                ),
+                                                                number: 1,
                                                             },
                                                             kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                         },
@@ -121,18 +107,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    221531231670422,
-                                                                ),
+                                                                number: 221531231670421,
                                                             },
                                                             type: Computed(
                                                                 Intrinsic(
                                                                     TypeId {
                                                                         id: SyntaxId {
                                                                             file_id: None,
-                                                                            number: Some(
-                                                                                1,
-                                                                            ),
+                                                                            number: 1,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                     },
@@ -152,18 +134,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: Some(
-                                                                        222399981598540,
-                                                                    ),
+                                                                    number: 222399981598539,
                                                                 },
                                                                 type: Computed(
                                                                     NumberLiteral(
                                                                         TypeId {
                                                                             id: SyntaxId {
                                                                                 file_id: None,
-                                                                                number: Some(
-                                                                                    1,
-                                                                                ),
+                                                                                number: 1,
                                                                             },
                                                                             kind: "auryn_compiler::auryn::air::typecheck::types::NumberLiteralType",
                                                                         },
@@ -192,9 +170,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            234562480592214,
-                                        ),
+                                        number: 234562480592213,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -204,18 +180,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                         1,
                                                     ),
                                                 ),
-                                                number: Some(
-                                                    234562480592214,
-                                                ),
+                                                number: 234562480592213,
                                             },
                                             type: Computed(
                                                 Structural(
                                                     TypeId {
                                                         id: SyntaxId {
                                                             file_id: None,
-                                                            number: Some(
-                                                                1,
-                                                            ),
+                                                            number: 1,
                                                         },
                                                         kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                     },
@@ -230,18 +202,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: Some(
-                                                                234562480592217,
-                                                            ),
+                                                            number: 234562480592216,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
                                                                 TypeId {
                                                                     id: SyntaxId {
                                                                         file_id: None,
-                                                                        number: Some(
-                                                                            1,
-                                                                        ),
+                                                                        number: 1,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::IntrinsicType",
                                                                 },
@@ -261,18 +229,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: Some(
-                                                                    241892558110721,
-                                                                ),
+                                                                number: 241892558110720,
                                                             },
                                                             type: Computed(
                                                                 Structural(
                                                                     TypeId {
                                                                         id: SyntaxId {
                                                                             file_id: None,
-                                                                            number: Some(
-                                                                                1,
-                                                                            ),
+                                                                            number: 1,
                                                                         },
                                                                         kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                                     },
@@ -287,18 +251,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: Some(
-                                                                                241892558110725,
-                                                                            ),
+                                                                            number: 241892558110724,
                                                                         },
                                                                         type: Computed(
                                                                             Structural(
                                                                                 TypeId {
                                                                                     id: SyntaxId {
                                                                                         file_id: None,
-                                                                                        number: Some(
-                                                                                            1,
-                                                                                        ),
+                                                                                        number: 1,
                                                                                     },
                                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                                                 },
@@ -319,18 +279,14 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: Some(
-                                                                                242992069738496,
-                                                                            ),
+                                                                            number: 242992069738495,
                                                                         },
                                                                         type: Computed(
                                                                             Structural(
                                                                                 TypeId {
                                                                                     id: SyntaxId {
                                                                                         file_id: None,
-                                                                                        number: Some(
-                                                                                            1,
-                                                                                        ),
+                                                                                        number: 1,
                                                                                     },
                                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::StructuralType",
                                                                                 },
@@ -364,9 +320,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: Some(
-                                            211106232532991,
-                                        ),
+                                        number: 211106232532990,
                                     },
                                 ),
                             ),
@@ -386,9 +340,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                             1,
                         ),
                     ),
-                    number: Some(
-                        221531231670419,
-                    ),
+                    number: 221531231670418,
                 },
                 kind: "Type mismatch",
                 ..
@@ -400,9 +352,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                             1,
                         ),
                     ),
-                    number: Some(
-                        241892558110725,
-                    ),
+                    number: 241892558110724,
                 },
                 kind: "Type mismatch",
                 ..
@@ -414,9 +364,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                             1,
                         ),
                     ),
-                    number: Some(
-                        242992069738496,
-                    ),
+                    number: 242992069738495,
                 },
                 kind: "Type mismatch",
                 ..
