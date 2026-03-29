@@ -2,20 +2,18 @@ use std::{
     borrow::Borrow,
     fmt::Debug,
     hash::Hash,
-    num::NonZeroU64,
+    num::{NonZeroU16, NonZeroU64},
     ops::{Deref, DerefMut, Range},
 };
 
 use stdx::SmallString;
-
-use crate::auryn::file_id::FileId;
 
 /// Consists of a 16 bit file id and an 48 bit id that uniquely represents a [`super::syntax_tree::SyntaxItem`].
 /// Tries to be somewhat stable after file modifications to increase the amount of cached data
 /// that can be reused.
 /// Heavily inspired by typst's `Span` type.
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub struct SyntaxId(u64);
+pub struct SyntaxId(NonZeroU64);
 
 impl SyntaxId {
     pub const NUMBER_BITS: u64 = 48;
@@ -36,8 +34,10 @@ impl SyntaxId {
         );
         const _: () =
             const { assert!(std::mem::size_of::<FileId>() == 2, "FileID must be 16 bits") };
-        let file_number: u16 = file_id.map_or(0, |it| it.0.get());
-        Self((u64::from(file_number) << Self::NUMBER_BITS) | number)
+        let file_number = file_id.map_or(FileId::NO_FILE_VALUE, |id| id.0.get());
+        let number = (u64::from(file_number) << Self::NUMBER_BITS) | number;
+        // Because `FileId` itself is NonZero, this can never panic
+        Self(NonZeroU64::new(number).unwrap())
     }
 
     /// Creates a new span which has no number assigned to it yet.
@@ -46,13 +46,14 @@ impl SyntaxId {
     }
 
     pub fn file_id(self) -> Option<FileId> {
-        let value = self.0 >> Self::NUMBER_BITS;
+        let value = self.0.get() >> Self::NUMBER_BITS;
         let value: u16 = value.try_into().unwrap();
-        value.try_into().ok().map(FileId)
+        // value is nonzero because file id itself is nonzero and the none case is mapped to a nonzero value
+        FileId::new(NonZeroU16::new(value).unwrap())
     }
 
     pub fn number(self) -> Option<NonZeroU64> {
-        NonZeroU64::new(self.0 & Self::MAX_NUMBER.get())
+        NonZeroU64::new(self.0.get() & Self::MAX_NUMBER.get())
     }
 
     pub fn set_number(&mut self, number: NonZeroU64) {
@@ -66,6 +67,24 @@ impl Debug for SyntaxId {
             .field("file_id", &self.file_id())
             .field("number", &self.number())
             .finish()
+    }
+}
+
+/// Identifies a single source file
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct FileId(NonZeroU16);
+
+impl FileId {
+    /// The file id of the main input file
+    pub const MAIN_FILE: Self = Self::new(NonZeroU16::new(1).unwrap()).unwrap();
+    /// Used by [`SyntaxId`] to represent unset files
+    pub(super) const NO_FILE_VALUE: u16 = u16::MAX;
+
+    pub(super) const fn new(id: NonZeroU16) -> Option<Self> {
+        if id.get() == Self::NO_FILE_VALUE {
+            return None;
+        }
+        Some(Self(id))
     }
 }
 
@@ -174,7 +193,7 @@ impl<T> SpanExt for T {
 
 #[cfg(test)]
 mod tests {
-    use crate::auryn::{file_id::FileId, syntax_id::SyntaxId};
+    use crate::auryn::syntax_id::{FileId, SyntaxId};
 
     #[test]
     fn test_roundtrip() {

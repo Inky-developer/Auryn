@@ -51,8 +51,8 @@ mod tests {
     use crate::auryn::{
         air::{data::Air, query_air},
         diagnostics::diagnostic::Diagnostics,
-        file_id::FileId,
         input_files::InputFiles,
+        syntax_id::FileId,
     };
 
     #[track_caller]

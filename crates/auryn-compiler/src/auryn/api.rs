@@ -24,8 +24,7 @@ use crate::{
 pub use crate::auryn::{
     air::data::Air,
     environment::{Environment, FilesystemEnvironment, ProjectTree},
-    file_id::FileId,
-    syntax_id::SyntaxId,
+    syntax_id::{FileId, Spanned, SyntaxId},
     world::World,
 };
 

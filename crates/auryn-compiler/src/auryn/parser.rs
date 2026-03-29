@@ -10,8 +10,7 @@ use crate::auryn::{
             ExpectedNewline, ExpectedType, ExpectedValue, UnexpectedToken,
         },
     },
-    file_id::FileId,
-    syntax_id::SyntaxId,
+    syntax_id::{FileId, SyntaxId},
     syntax_tree::{ErrorNode, SyntaxItem, SyntaxNode, SyntaxNodeKind, SyntaxToken, SyntaxTree},
     tokenizer::{Token, TokenKind, TokenSet, Tokenizer, UpdateOperatorToken},
 };
@@ -97,6 +96,7 @@ impl<'a> Parser<'a> {
                 kind: SyntaxNodeKind::Root,
                 id: SyntaxId::new_unset(Some(self.file_id)),
                 len: 0,
+                total_children_count: 0,
                 children: Box::new([]),
             },
         };
@@ -265,6 +265,10 @@ impl<'a> Parser<'a> {
             id: SyntaxId::new_unset(Some(self.file_id)),
             len,
             kind,
+            total_children_count: children
+                .iter()
+                .map(|it| it.total_children_count() + 1)
+                .sum(),
             children: children.into_boxed_slice(),
         })
     }
@@ -1279,9 +1283,9 @@ mod tests {
                 diagnostic::{Diagnostic, DiagnosticContext},
                 diagnostic_display::DiagnosticCollectionDisplay,
             },
-            file_id::FileId,
             input_files::InputFiles,
             parser::{Parser, ParserOutput},
+            syntax_id::FileId,
             tokenizer::TokenKind,
         },
         diagnostics::DisplayOptions,

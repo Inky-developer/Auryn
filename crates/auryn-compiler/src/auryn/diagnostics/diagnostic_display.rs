@@ -9,8 +9,7 @@ use crate::auryn::{
     diagnostics::{
         diagnostic::DiagnosticContext, diagnostic_display::implementation::InputFilesCache,
     },
-    file_id::FileId,
-    syntax_id::SyntaxId,
+    syntax_id::{FileId, SyntaxId},
 };
 
 ///  Stores a range in a given file.
@@ -210,9 +209,8 @@ mod implementation {
         diagnostics::diagnostic_display::{
             ComputedSpan, DiagnosticCollectionDisplay, DiagnosticLevel, LabelKind,
         },
-        file_id::FileId,
         input_files::InputFiles,
-        syntax_id::SyntaxId,
+        syntax_id::{FileId, SyntaxId},
     };
 
     // TODO: some syntax highlighting would be nice.

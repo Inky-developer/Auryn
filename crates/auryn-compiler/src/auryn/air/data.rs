@@ -11,8 +11,7 @@ use crate::auryn::{
         },
         unresolved_type::{UnresolvedType, UnresolvedTypeProducer},
     },
-    file_id::FileId,
-    syntax_id::{Spanned, SyntaxId},
+    syntax_id::{FileId, Spanned, SyntaxId},
     tokenizer::{BinaryOperatorToken, UpdateOperatorToken},
 };
 

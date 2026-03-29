@@ -6,20 +6,17 @@ use std::{
 
 use stdx::{FastIndexMap, FastMap, FastSet, SmallString, fast_map::FastHasher};
 
-use crate::{
-    FileId,
-    auryn::{
-        air::{
-            data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
-            typecheck::{
-                bounds::{HasStructuralFields, MaybeBounded},
-                generics::GenericInference,
-                type_context::{TypeContext, TypeId},
-                type_storage::{CombinedStorage, NominalStorage, StructuralStorage, TypeStorage},
-            },
+use crate::auryn::{
+    air::{
+        data::{AirLocalValueId, ExternFunctionKind, FunctionReference, Intrinsic},
+        typecheck::{
+            bounds::{HasStructuralFields, MaybeBounded},
+            generics::GenericInference,
+            type_context::{TypeContext, TypeId},
+            type_storage::{CombinedStorage, NominalStorage, StructuralStorage, TypeStorage},
         },
-        syntax_id::{Spanned, SyntaxId},
     },
+    syntax_id::{FileId, Spanned, SyntaxId},
 };
 
 /// Defines the types of this programming language.

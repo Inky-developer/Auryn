@@ -87,6 +87,9 @@ pub struct SyntaxNode {
     pub id: SyntaxId,
     /// The length in bytes of the source code that represents this node
     pub len: u32,
+    /// The total number of children, recursively.
+    /// This is used for initial syntax id assignment.
+    pub total_children_count: u32,
     pub children: Box<[SyntaxItem]>,
 }
 
@@ -217,6 +220,7 @@ impl SyntaxItem {
         }
     }
 
+    /// Length of the source code of this node in bytes
     pub fn len(&self) -> u32 {
         match self {
             SyntaxItem::Node(node) => node.len,
@@ -227,6 +231,13 @@ impl SyntaxItem {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn total_children_count(&self) -> u32 {
+        match self {
+            SyntaxItem::Node(syntax_node) => syntax_node.total_children_count,
+            SyntaxItem::Token(_) | SyntaxItem::Error(_) => 0,
+        }
     }
 
     pub fn as_node(&self) -> Option<&SyntaxNode> {

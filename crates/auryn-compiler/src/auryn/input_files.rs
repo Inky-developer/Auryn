@@ -6,9 +6,8 @@ use crate::auryn::{
     api::AurynError,
     diagnostics::diagnostic_display::ComputedSpan,
     environment::ProjectTree,
-    file_id::FileId,
     parser::{Parser, ParserOutput},
-    syntax_id::SyntaxId,
+    syntax_id::{FileId, SyntaxId},
     syntax_tree::SyntaxTree,
 };
 
@@ -67,7 +66,7 @@ impl InputFiles {
     }
 
     pub fn add(&mut self, name: SmallString, source: Box<str>) -> FileId {
-        let file_id = FileId(self.file_id_counter);
+        let file_id = FileId::new(self.file_id_counter).expect("Could not create file id");
         self.file_name_to_id.insert(name.clone(), file_id);
         self.data
             .insert(file_id, InputFile::new(file_id, name, source));
