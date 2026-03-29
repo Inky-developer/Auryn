@@ -310,6 +310,15 @@ impl SyntaxTree {
     }
 
     pub fn get_span(&self, syntax_id: SyntaxId) -> ComputedSpan {
+        if syntax_id.number().is_none() {
+            return ComputedSpan {
+                file_id: syntax_id
+                    .file_id()
+                    .expect("Should only be called with a valid syntax id"),
+                offset: 0,
+                len: self.root_node.len,
+            };
+        }
         self.root_node.get_span(syntax_id, 0)
     }
 }

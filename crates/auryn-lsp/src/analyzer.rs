@@ -114,7 +114,7 @@ impl Analyzer {
         file_module
             .members
             .iter()
-            .filter(|(name, _)| name.syntax_id.number().is_some())
+            .filter(move |(name, _)| name.syntax_id.file_id().is_some_and(|it| it == file_id))
             .filter(move |(name, _)| filter.is_none_or(|filter| name.contains(filter)))
             .map(move |(name, ty)| {
                 let kind = TypeCategory::from(ty.as_view(ty_ctx)).into();
