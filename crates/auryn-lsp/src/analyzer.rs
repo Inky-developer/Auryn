@@ -109,13 +109,26 @@ impl Analyzer {
         data: &Outputs,
         filter: Option<&str>,
     ) -> impl Iterator<Item = SymbolInformation> {
+        // Auryn only allows ascii identifiers
+        fn contains_ignoring_ascii_case(haystack: &str, needle: &str) -> bool {
+            let haystack = haystack.as_bytes();
+            let needle = needle.as_bytes();
+            if needle.is_empty() {
+                return true;
+            }
+            haystack
+                .windows(needle.len())
+                .any(|window| window.eq_ignore_ascii_case(needle))
+        }
         let ty_ctx = &data.air.ty_ctx;
         let file_module = ty_ctx.get(TypeId::from(file_id));
         file_module
             .members
             .iter()
             .filter(move |(name, _)| name.syntax_id.file_id().is_some_and(|it| it == file_id))
-            .filter(move |(name, _)| filter.is_none_or(|filter| name.contains(filter)))
+            .filter(move |(name, _)| {
+                filter.is_none_or(|filter| contains_ignoring_ascii_case(name, filter))
+            })
             .map(move |(name, ty)| {
                 let kind = TypeCategory::from(ty.as_view(ty_ctx)).into();
                 let range = self.map_span(name.syntax_id);
