@@ -1,9 +1,11 @@
-use crate::auryn::{
-    air::{data::Air, query_air},
-    api::AurynError,
-    diagnostics::diagnostic::Diagnostics,
-    environment::Environment,
-    input_files::InputFiles,
+use crate::{
+    ProjectTree,
+    auryn::{
+        air::{data::Air, query_air},
+        api::AurynError,
+        diagnostics::diagnostic::Diagnostics,
+        input_files::InputFiles,
+    },
 };
 
 #[derive(Debug, Default)]
@@ -12,8 +14,8 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(environment: &mut impl Environment, main_file: &str) -> Result<Self, AurynError> {
-        let input_files = InputFiles::new(environment.load_project(), main_file)?;
+    pub fn new(project_tree: ProjectTree, main_file: &str) -> Result<Self, AurynError> {
+        let input_files = InputFiles::new(project_tree, main_file)?;
 
         Ok(Self { input_files })
     }

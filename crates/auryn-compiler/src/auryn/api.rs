@@ -15,7 +15,6 @@ use crate::{
             diagnostic::Diagnostics,
             diagnostic_display::{DiagnosticCollectionDisplay, DiagnosticLevel},
         },
-        environment::{Environment, FilesystemEnvironment},
         input_files::InputFiles,
         monomorphization::monomorphize,
     },
@@ -23,7 +22,11 @@ use crate::{
 };
 
 pub use crate::auryn::{
-    air::data::Air, environment::ProjectTree, file_id::FileId, syntax_id::SyntaxId, world::World,
+    air::data::Air,
+    environment::{Environment, FilesystemEnvironment, ProjectTree},
+    file_id::FileId,
+    syntax_id::SyntaxId,
+    world::World,
 };
 
 pub mod diagnostics {
@@ -149,7 +152,7 @@ fn compile(
     main_file: &str,
     environment: &mut impl Environment,
 ) -> Result<CodegenOutput, AurynError> {
-    let mut world = World::new(environment, main_file)?;
+    let mut world = World::new(environment.load_project(), main_file)?;
 
     let (mut air, diagnostics) = world.query_air();
     if !diagnostics.is_empty() {

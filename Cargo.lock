@@ -83,6 +83,7 @@ version = "0.1.0"
 dependencies = [
  "auryn-compiler",
  "blocking",
+ "dashmap",
  "futures-lite",
  "stdx",
  "tower-lsp-server",

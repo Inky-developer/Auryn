@@ -45,6 +45,7 @@ impl InputFile {
 #[derive(Debug)]
 pub struct InputFiles {
     data: FastMap<FileId, InputFile>,
+    file_name_to_id: FastMap<SmallString, FileId>,
     file_id_counter: NonZeroU16,
 }
 
@@ -67,6 +68,7 @@ impl InputFiles {
 
     pub fn add(&mut self, name: SmallString, source: Box<str>) -> FileId {
         let file_id = FileId(self.file_id_counter);
+        self.file_name_to_id.insert(name.clone(), file_id);
         self.data
             .insert(file_id, InputFile::new(file_id, name, source));
         self.file_id_counter = self.file_id_counter.checked_add(1).unwrap();
@@ -75,6 +77,10 @@ impl InputFiles {
 
     pub fn get(&self, file_id: FileId) -> &InputFile {
         &self.data[&file_id]
+    }
+
+    pub fn get_id(&self, name: &str) -> Option<FileId> {
+        self.file_name_to_id.get(name).copied()
     }
 
     pub fn update(&mut self, file_id: FileId, new_content: Box<str>) {
@@ -102,6 +108,7 @@ impl Default for InputFiles {
     fn default() -> Self {
         Self {
             data: default(),
+            file_name_to_id: default(),
             file_id_counter: 1.try_into().unwrap(),
         }
     }
