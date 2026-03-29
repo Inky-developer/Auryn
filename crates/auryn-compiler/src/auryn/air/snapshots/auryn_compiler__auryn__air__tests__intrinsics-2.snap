@@ -81,6 +81,16 @@ expression: "compile_wrapped(\"let a: []I64 = arrayOf(1, 2, 3)\")"
                                                             ),
                                                         },
                                                         type: Path {
+                                                            base_id: SyntaxId {
+                                                                file_id: Some(
+                                                                    FileId(
+                                                                        1,
+                                                                    ),
+                                                                ),
+                                                                number: Some(
+                                                                    233259355700035,
+                                                                ),
+                                                            },
                                                             base: Resolved(
                                                                 I64,
                                                             ),

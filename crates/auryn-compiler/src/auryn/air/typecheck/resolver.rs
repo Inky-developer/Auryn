@@ -18,7 +18,7 @@ use crate::auryn::{
     },
     diagnostics::{
         diagnostic::Diagnostics,
-        errors::{MismatchedTypeArgumentCount, UnexpectedTypeArguments},
+        errors::{MismatchedTypeArgumentCount, UndefinedProperty, UnexpectedTypeArguments},
     },
     syntax_id::SyntaxId,
 };
@@ -82,16 +82,31 @@ impl<'a> Resolver<'a> {
             },
             UnresolvedType::Resolved(ty) => *ty,
             UnresolvedType::Unit => self.ty_ctx.unit_type(),
-            UnresolvedType::Path { base, segments } => {
+            UnresolvedType::Path {
+                base_id,
+                base,
+                segments,
+            } => {
+                let mut pred_id = *base_id;
                 let mut ty = self.resolve(base)?;
                 for segment in segments {
-                    let Some(namespace) = self.get_namespace(ty) else {
-                        todo!();
-                    };
-                    let Some(member) = namespace.types.get(&segment.value) else {
-                        todo!();
-                    };
-                    ty = self.resolve(&UnresolvedType::DefinedType(*member))?;
+                    if let Some(namespace) = self.get_namespace(ty)
+                        && let Some(member) = namespace.types.get(&segment.value)
+                    {
+                        ty = self.resolve(&UnresolvedType::DefinedType(*member))?;
+                        pred_id = segment.syntax_id;
+                    } else {
+                        self.diagnostics.add(
+                            segment.syntax_id,
+                            UndefinedProperty {
+                                value_id: pred_id,
+                                r#type: ty,
+                                ident: segment.value.clone(),
+                            },
+                        );
+                        ty = Type::Error;
+                        break;
+                    }
                 }
 
                 ty

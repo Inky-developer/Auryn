@@ -170,6 +170,10 @@ impl Type {
 
 impl<'a> TypeView<'a> {
     pub fn is_erroneous(self) -> bool {
+        let can_be_erroneous = !matches!(self, TypeView::Module(_));
+        if !can_be_erroneous {
+            return false;
+        }
         let mut visited_types = FastSet::default();
         self.visit(&mut visited_types);
         visited_types.iter().any(|it| matches!(it, Type::Error))

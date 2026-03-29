@@ -1,0 +1,14 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "\n// file: main\ntype Foo = foo.Xyz\n\nfn main() {}\n\n// file: foo\nstruct Zyx {}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/path_missing_property.au
+---
+Error: Undefined property
+   ╭─[ main:1:16 ]
+   │
+ 1 │ type Foo = foo.Xyz
+   │            ─┬─ ─┬─  
+   │             ╰─────── Value has type `module foo`
+   │                 │   
+   │                 ╰─── Unknown property `Xyz`
+───╯

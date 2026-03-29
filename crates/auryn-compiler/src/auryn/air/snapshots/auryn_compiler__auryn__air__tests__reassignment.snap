@@ -70,6 +70,16 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                         ),
                                                     },
                                                     type: Path {
+                                                        base_id: SyntaxId {
+                                                            file_id: Some(
+                                                                FileId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                            number: Some(
+                                                                226917481224766,
+                                                            ),
+                                                        },
                                                         base: Resolved(
                                                             I32,
                                                         ),
@@ -220,6 +230,16 @@ expression: "compile_wrapped(r#\"\n            let a: I32 = 0\n            if tr
                                                         ),
                                                     },
                                                     type: Path {
+                                                        base_id: SyntaxId {
+                                                            file_id: Some(
+                                                                FileId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                            number: Some(
+                                                                236980501225479,
+                                                            ),
+                                                        },
                                                         base: Resolved(
                                                             I32,
                                                         ),

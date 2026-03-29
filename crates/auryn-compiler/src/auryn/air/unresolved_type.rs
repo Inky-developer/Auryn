@@ -26,6 +26,7 @@ pub enum UnresolvedType {
     DefinedType(UserDefinedTypeId),
     Resolved(Type),
     Path {
+        base_id: SyntaxId,
         base: Box<UnresolvedType>,
         segments: Vec<Spanned<SmallString>>,
     },
@@ -85,7 +86,11 @@ impl UnresolvedType {
                 id: _,
                 namespace: _,
             } => {}
-            Path { base, segments: _ } => {
+            Path {
+                base_id: _,
+                base,
+                segments: _,
+            } => {
                 base.visit_contained_types(visitor);
             }
             Array(_, unresolved_type) => unresolved_type.visit_contained_types(visitor),

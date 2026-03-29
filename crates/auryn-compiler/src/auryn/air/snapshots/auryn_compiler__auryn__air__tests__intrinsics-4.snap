@@ -70,6 +70,16 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                         ),
                                                     },
                                                     type: Path {
+                                                        base_id: SyntaxId {
+                                                            file_id: Some(
+                                                                FileId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                            number: Some(
+                                                                230653105915677,
+                                                            ),
+                                                        },
                                                         base: Resolved(
                                                             I64,
                                                         ),

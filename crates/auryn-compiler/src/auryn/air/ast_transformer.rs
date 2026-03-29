@@ -1137,6 +1137,7 @@ fn transform_to_unresolved(
 
             let segments = path_idents.map(|it| it.spanned_text()).collect::<Vec<_>>();
             let ty = UnresolvedType::Path {
+                base_id: first_ident.id,
                 base: Box::new(base_ty),
                 segments,
             };

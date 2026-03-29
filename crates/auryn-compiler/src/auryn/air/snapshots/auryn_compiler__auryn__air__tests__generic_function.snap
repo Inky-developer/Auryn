@@ -163,6 +163,16 @@ expression: "compile(r#\"\n            fn identity[T](value: T) -> T {\n        
                                                         ),
                                                     },
                                                     type: Path {
+                                                        base_id: SyntaxId {
+                                                            file_id: Some(
+                                                                FileId(
+                                                                    1,
+                                                                ),
+                                                            ),
+                                                            number: Some(
+                                                                212618500926377,
+                                                            ),
+                                                        },
                                                         base: Resolved(
                                                             I64,
                                                         ),
