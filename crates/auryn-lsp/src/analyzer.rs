@@ -103,20 +103,20 @@ impl Analyzer {
             .collect()
     }
 
-    pub fn get_document_symbols(&mut self, file: &str) -> Vec<SymbolInformation> {
-        let Some(data) = &self.current_data else {
-            return Vec::new();
-        };
-        let Some(file_id) = self.get_file_id(file) else {
-            return Vec::new();
-        };
+    fn get_symbols(
+        &self,
+        file_id: FileId,
+        data: &Outputs,
+        filter: Option<&str>,
+    ) -> impl Iterator<Item = SymbolInformation> {
         let ty_ctx = &data.air.ty_ctx;
         let file_module = ty_ctx.get(TypeId::from(file_id));
         file_module
             .members
             .iter()
             .filter(|(name, _)| name.syntax_id.number().is_some())
-            .map(|(name, ty)| {
+            .filter(move |(name, _)| filter.is_none_or(|filter| name.contains(filter)))
+            .map(move |(name, ty)| {
                 let kind = TypeCategory::from(ty.as_view(ty_ctx)).into();
                 let range = self.map_span(name.syntax_id);
                 let location = Location {
@@ -133,6 +133,26 @@ impl Analyzer {
                     container_name: None,
                 }
             })
+    }
+
+    pub fn get_document_symbols(&self, file: &str) -> Vec<SymbolInformation> {
+        let Some(data) = &self.current_data else {
+            return Vec::new();
+        };
+        let Some(file_id) = self.get_file_id(file) else {
+            return Vec::new();
+        };
+        self.get_symbols(file_id, data, None).collect()
+    }
+
+    pub fn get_workspace_symbols(&self, query: &str) -> Vec<SymbolInformation> {
+        let Some(data) = &self.current_data else {
+            return Vec::new();
+        };
+        self.world
+            .input_files
+            .iter()
+            .flat_map(|(file_id, _)| self.get_symbols(file_id, data, Some(query)))
             .collect()
     }
 

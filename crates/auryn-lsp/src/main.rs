@@ -49,6 +49,7 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
+                workspace_symbol_provider: Some(OneOf::Left(true)),
                 ..default()
             },
             offset_encoding: None,
@@ -100,9 +101,29 @@ impl LanguageServer for Backend {
         params: DocumentSymbolParams,
     ) -> Result<Option<DocumentSymbolResponse>> {
         let data = self.workspaces.get(&params.text_document.uri)?;
-        let mut workspace = data.lock();
+        let workspace = data.lock();
         let symbols = workspace.analyzer.get_document_symbols(&data.file);
         Ok(Some(DocumentSymbolResponse::Flat(symbols)))
+    }
+
+    async fn symbol(
+        &self,
+        params: WorkspaceSymbolParams,
+    ) -> Result<Option<WorkspaceSymbolResponse>> {
+        let symbols = self
+            .workspaces
+            .data
+            .iter()
+            .flat_map(|it| {
+                it.value()
+                    .lock()
+                    .unwrap()
+                    .analyzer
+                    .get_workspace_symbols(&params.query)
+                    .into_iter()
+            })
+            .collect();
+        Ok(Some(WorkspaceSymbolResponse::Flat(symbols)))
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
@@ -148,7 +169,9 @@ impl LanguageServer for Backend {
     async fn did_change(&self, mut params: DidChangeTextDocumentParams) {
         assert_eq!(params.content_changes.len(), 1);
         let Ok(data) = self.workspaces.get(&params.text_document.uri) else {
-            eprintln!("Error on did change");
+            self.client
+                .log_message(MessageType::WARNING, "Error on did change")
+                .await;
             return;
         };
 
