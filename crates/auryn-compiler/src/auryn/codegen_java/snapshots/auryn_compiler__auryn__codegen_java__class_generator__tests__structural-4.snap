@@ -11,18 +11,18 @@ Constant pool:
   #02 = Class		#1	Main
   #03 = Utf8			main$main
   #04 = Utf8			()V
-  #05 = Utf8			Structural$1I
-  #06 = Class		#5	Structural$1I
+  #05 = Utf8			Structural$1$aI
+  #06 = Class		#5	Structural$1$aI
   #07 = Utf8			java/io/PrintStream
   #08 = Class		#7	java/io/PrintStream
   #09 = Utf8			<init>
   #10 = NameAndType	#9:#4	<init>:()V
-  #11 = MethodRef	#6.#10	Structural$1I:<init>:()V
+  #11 = MethodRef	#6.#10	Structural$1$aI:<init>:()V
   #12 = Integer			42
   #13 = Utf8			a
   #14 = Utf8			I
   #15 = NameAndType	#13:#14	a:I
-  #16 = FieldRef	#6.#15	Structural$1I.a:I
+  #16 = FieldRef	#6.#15	Structural$1$aI.a:I
   #17 = Utf8			java/lang/System
   #18 = Class		#17	java/lang/System
   #19 = Utf8			out
@@ -50,16 +50,16 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 3, locals = 2
-       0: New			#6	Structural$1I
+       0: New			#6	Structural$1$aI
        3: Dup
-       4: InvokeSpecial		#11	Structural$1I:<init>:()V
+       4: InvokeSpecial		#11	Structural$1$aI:<init>:()V
        7: Dup
        8: LoadConstant		#12	42
-      10: PutField		#16	Structural$1I.a:I
+      10: PutField		#16	Structural$1$aI.a:I
       13: AStore			0
       15: GetStatic		#22	java/lang/System.out:Ljava/io/PrintStream;
       18: ALoad			0
-      20: GetField		#16	Structural$1I.a:I
+      20: GetField		#16	Structural$1$aI.a:I
       23: InvokeVirtual		#26	java/io/PrintStream:println:(I)V
       26: Return
       StackMapTable:
@@ -87,13 +87,13 @@ Constant pool:
 
 -----
 
-Structural$1I:
+Structural$1$aI:
 ClassData
-  this_class:		#2	Structural$1I
+  this_class:		#2	Structural$1$aI
   super_class:		#6	java/lang/Object
 Constant pool:
-  #01 = Utf8			Structural$1I
-  #02 = Class		#1	Structural$1I
+  #01 = Utf8			Structural$1$aI
+  #02 = Class		#1	Structural$1$aI
   #03 = Utf8			<init>
   #04 = Utf8			()V
   #05 = Utf8			java/lang/Object
@@ -120,7 +120,7 @@ Constant pool:
   #26 = Utf8			a
   #27 = Utf8			I
   #28 = NameAndType	#26:#27	a:I
-  #29 = FieldRef	#2.#28	Structural$1I.a:I
+  #29 = FieldRef	#2.#28	Structural$1$aI.a:I
   #30 = Utf8			(I)Ljava/lang/StringBuilder;
   #31 = NameAndType	#20:#30	append:(I)Ljava/lang/StringBuilder;
   #32 = MethodRef	#14.#31	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
@@ -160,7 +160,7 @@ Constant pool:
       12: LoadConstant		#25	a: 
       14: InvokeVirtual		#23	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
       17: ALoad			0
-      19: GetField		#29	Structural$1I.a:I
+      19: GetField		#29	Structural$1$aI.a:I
       22: InvokeVirtual		#32	java/lang/StringBuilder:append:(I)Ljava/lang/StringBuilder;
       25: LoadConstant		#34	 }
       27: InvokeVirtual		#23	java/lang/StringBuilder:append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -169,7 +169,7 @@ Constant pool:
       StackMapTable:
         Full
           offset_delta = 0
-          locals = [ Object 'Structural$1I' ]
+          locals = [ Object 'Structural$1$aI' ]
           Stack = [  ]
   }
 

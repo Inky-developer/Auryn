@@ -1,0 +1,13 @@
+// expect-output:
+// 1
+// 2
+
+// tests for a bug where the compiler emitted the same class for these two types,
+// but still accessed them using the names given in the code
+fn main() {
+	let a: { x: I64, y: String } = { x: 1, y: "a" }
+	print(a.x)
+
+	let b: { p: I64, q: String } = { p: 2, q: "b" }
+	print(b.p)
+}

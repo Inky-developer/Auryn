@@ -514,7 +514,8 @@ impl RepresentationCtx {
         ty: &StructuralType,
     ) -> StructuralRepr {
         let mut name = format!("Structural${}", ty.fields.len());
-        for (_, ty) in &ty.fields {
+        for (field_name, ty) in &ty.fields {
+            write!(name, "${}", field_name.value).unwrap();
             let ty = ty.as_view(ty_ctx);
             let ty_name = self
                 .get_representation(ty)
