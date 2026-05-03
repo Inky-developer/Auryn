@@ -339,7 +339,7 @@ pub enum Instruction {
     /// Load a Long from a local variable
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.lload>
     LLoad(u16),
-    /// Converts from a Long to an In
+    /// Converts from a Long to an Int
     /// <https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html#jvms-6.5.l2i>
     L2I,
     /// Compares two Long values and pushes the integer -1, 0, or 1 to the stack
