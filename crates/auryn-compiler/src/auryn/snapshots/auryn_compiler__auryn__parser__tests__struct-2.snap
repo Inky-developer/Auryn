@@ -8,46 +8,47 @@ syntax_tree:
 ||Newline `\n`
 ||Whitespace `            `
 ||13..97 Item
-|||13..97 Struct
-||||KeywordStruct `struct`
-||||Whitespace ` `
-||||Identifier `Foo`
-||||23..30 GenericParameterList
-|||||BracketOpen `[`
-|||||24..25 GenericParameterDefinition
-||||||Identifier `T`
-|||||Comma `,`
+|||13..97 ItemKind
+||||13..97 Struct
+|||||KeywordStruct `struct`
 |||||Whitespace ` `
-|||||27..28 GenericParameterDefinition
-||||||Identifier `U`
-|||||BracketClose `]`
-|||||Whitespace ` `
-||||BraceOpen `{`
-||||Newline `\n`
-||||Whitespace `                `
-||||48..96 StructBody
-|||||48..61 StructuralTypeField
-||||||Identifier `some_value`
-||||||Colon `:`
+|||||Identifier `Foo`
+|||||23..30 GenericParameterList
+||||||BracketOpen `[`
+||||||24..25 GenericParameterDefinition
+|||||||Identifier `T`
+||||||Comma `,`
 ||||||Whitespace ` `
-||||||60..61 Type
-|||||||60..61 TypeRef
-||||||||60..61 TypePath
-|||||||||Identifier `T`
-|||||Comma `,`
+||||||27..28 GenericParameterDefinition
+|||||||Identifier `U`
+||||||BracketClose `]`
+||||||Whitespace ` `
+|||||BraceOpen `{`
 |||||Newline `\n`
 |||||Whitespace `                `
-|||||79..96 StructuralTypeField
-||||||Identifier `b`
-||||||Colon `:`
-||||||Whitespace ` `
-||||||82..96 Type
-|||||||82..96 TypeRef
-||||||||82..96 TypePath
-|||||||||Identifier `U`
-|||||||||Newline `\n`
-|||||||||Whitespace `            `
-||||BraceClose `}`
+|||||48..96 StructBody
+||||||48..61 StructuralTypeField
+|||||||Identifier `some_value`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||60..61 Type
+||||||||60..61 TypeRef
+|||||||||60..61 TypePath
+||||||||||Identifier `T`
+||||||Comma `,`
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||79..96 StructuralTypeField
+|||||||Identifier `b`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||82..96 Type
+||||||||82..96 TypeRef
+|||||||||82..96 TypePath
+||||||||||Identifier `U`
+||||||||||Newline `\n`
+||||||||||Whitespace `            `
+|||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `
 

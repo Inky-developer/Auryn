@@ -174,7 +174,19 @@ ast_node! {
 }
 
 ast_node! {
-    pub enum Item = SyntaxNodeKind::Item as
+    pub struct ItemAttribute = SyntaxNodeKind::ItemAttribute as { ...functions: ItemAttributeFunction }
+}
+
+ast_node! {
+    pub struct ItemAttributeFunction = SyntaxNodeKind::ItemAttributeFn as { token ident: TokenKind::Identifier, argument: StringLiteral, }
+}
+
+ast_node! {
+    pub struct Item = SyntaxNodeKind::Item as { optional attribute: ItemAttribute, kind: ItemKind, }
+}
+
+ast_node! {
+    pub enum ItemKind = SyntaxNodeKind::ItemKind as
         | SyntaxNodeKind::ExternBlock as ExternBlock
         | SyntaxNodeKind::FunctionDefinition as FunctionDefinition
         | SyntaxNodeKind::TypeAlias as TypeAlias
@@ -190,7 +202,7 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct ExternBlockItemMetadata = SyntaxNodeKind::ItemMetadata as { token value: TokenKind::StringLiteral, }
+    pub struct ExternBlockItemMetadata = SyntaxNodeKind::ExternItemMetadata as { token value: TokenKind::StringLiteral, }
 }
 
 ast_node! {

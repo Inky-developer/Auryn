@@ -438,9 +438,44 @@ impl Parser<'_> {
         Ok(())
     }
 
+    fn parse_item_attribute(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.parse_surrounded(TokenKind::BracketOpen, TokenKind::BracketClose, |parser| {
+            parser.parse_separated(
+                TokenKind::BracketClose,
+                TokenKind::Comma,
+                Self::parse_item_attribute_fn,
+            )
+        })?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ItemAttribute);
+        Ok(())
+    }
+
+    fn parse_item_attribute_fn(&mut self) -> ParseResult {
+        let watcher = self.push_node();
+
+        self.expect(TokenKind::Identifier)?;
+        self.parse_surrounded(
+            TokenKind::ParensOpen,
+            TokenKind::ParensClose,
+            Self::parse_string_literal,
+        )?;
+
+        self.finish_node(watcher, SyntaxNodeKind::ItemAttributeFn);
+        Ok(())
+    }
+
     fn parse_item(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_recoverable(bitset![TokenKind::BracketClose], Self::parse_item_attribute)?;
+            self.consume_whitespace_and_newlines();
+        }
+
+        let inner_watcher = self.push_node();
         match self.multipeek() {
             [TokenKind::KeywordUnsafe, TokenKind::KeywordExtern] => self.parse_extern_block()?,
             [TokenKind::KeywordFn, ..] => self.parse_function_definition()?,
@@ -453,6 +488,7 @@ impl Parser<'_> {
             }
         }
 
+        self.finish_node(inner_watcher, SyntaxNodeKind::ItemKind);
         self.finish_node(watcher, SyntaxNodeKind::Item);
         Ok(())
     }
@@ -476,7 +512,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         if self.peek().kind == TokenKind::BracketOpen {
-            self.parse_item_metadata()?;
+            self.parse_extern_item_metadata()?;
             self.consume_whitespace_and_newlines();
         }
 
@@ -523,7 +559,7 @@ impl Parser<'_> {
         let watcher = self.push_node();
 
         if self.peek().kind == TokenKind::BracketOpen {
-            self.parse_item_metadata()?;
+            self.parse_extern_item_metadata()?;
             self.consume_whitespace_and_newlines();
         }
 
@@ -579,14 +615,14 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_item_metadata(&mut self) -> ParseResult {
+    fn parse_extern_item_metadata(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
         self.expect(TokenKind::BracketOpen)?;
         self.expect(TokenKind::StringLiteral)?;
         self.expect(TokenKind::BracketClose)?;
 
-        self.finish_node(watcher, SyntaxNodeKind::ItemMetadata);
+        self.finish_node(watcher, SyntaxNodeKind::ExternItemMetadata);
         Ok(())
     }
 

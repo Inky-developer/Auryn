@@ -1,0 +1,4 @@
+[thisAttributeIsNotSupported("Some argument")]
+fn main() {
+	
+}

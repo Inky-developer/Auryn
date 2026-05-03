@@ -8,28 +8,29 @@ syntax_tree:
 ||Newline `\n`
 ||Whitespace `            `
 ||13..34 Item
-|||13..34 TypeAlias
-||||KeywordType `type`
-||||Whitespace ` `
-||||Identifier `Foo`
-||||Whitespace ` `
-||||Equal `=`
-||||Whitespace ` `
-||||24..34 Type
-|||||24..34 ArrayType
-||||||BracketOpen `[`
-||||||BracketClose `]`
-||||||26..34 Type
-|||||||26..34 TypeRef
-||||||||26..29 TypePath
-|||||||||Identifier `Bar`
-||||||||29..34 TypeArguments
-|||||||||BracketOpen `[`
-|||||||||30..33 Type
-||||||||||30..33 TypeRef
-|||||||||||30..33 TypePath
-||||||||||||Identifier `I32`
-|||||||||BracketClose `]`
+|||13..34 ItemKind
+||||13..34 TypeAlias
+|||||KeywordType `type`
+|||||Whitespace ` `
+|||||Identifier `Foo`
+|||||Whitespace ` `
+|||||Equal `=`
+|||||Whitespace ` `
+|||||24..34 Type
+||||||24..34 ArrayType
+|||||||BracketOpen `[`
+|||||||BracketClose `]`
+|||||||26..34 Type
+||||||||26..34 TypeRef
+|||||||||26..29 TypePath
+||||||||||Identifier `Bar`
+|||||||||29..34 TypeArguments
+||||||||||BracketOpen `[`
+||||||||||30..33 Type
+|||||||||||30..33 TypeRef
+||||||||||||30..33 TypePath
+|||||||||||||Identifier `I32`
+||||||||||BracketClose `]`
 ||Newline `\n`
 ||Whitespace `            `
 

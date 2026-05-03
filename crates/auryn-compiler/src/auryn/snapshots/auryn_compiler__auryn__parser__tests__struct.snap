@@ -8,37 +8,38 @@ syntax_tree:
 ||Newline `\n`
 ||Whitespace `            `
 ||13..99 Item
-|||13..99 Struct
-||||KeywordStruct `struct`
-||||Whitespace ` `
-||||Identifier `Foo`
-||||Whitespace ` `
-||||BraceOpen `{`
-||||Newline `\n`
-||||Whitespace `                `
-||||42..98 StructBody
-|||||42..57 StructuralTypeField
-||||||Identifier `some_value`
-||||||Colon `:`
-||||||Whitespace ` `
-||||||54..57 Type
-|||||||54..57 TypeRef
-||||||||54..57 TypePath
-|||||||||Identifier `I32`
-|||||Comma `,`
+|||13..99 ItemKind
+||||13..99 Struct
+|||||KeywordStruct `struct`
+|||||Whitespace ` `
+|||||Identifier `Foo`
+|||||Whitespace ` `
+|||||BraceOpen `{`
 |||||Newline `\n`
 |||||Whitespace `                `
-|||||75..98 StructuralTypeField
-||||||Identifier `b`
-||||||Colon `:`
-||||||Whitespace ` `
-||||||78..98 Type
-|||||||78..98 TypeRef
-||||||||78..98 TypePath
-|||||||||Identifier `ldaksjf`
-|||||||||Newline `\n`
-|||||||||Whitespace `            `
-||||BraceClose `}`
+|||||42..98 StructBody
+||||||42..57 StructuralTypeField
+|||||||Identifier `some_value`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||54..57 Type
+||||||||54..57 TypeRef
+|||||||||54..57 TypePath
+||||||||||Identifier `I32`
+||||||Comma `,`
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||75..98 StructuralTypeField
+|||||||Identifier `b`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||78..98 Type
+||||||||78..98 TypeRef
+|||||||||78..98 TypePath
+||||||||||Identifier `ldaksjf`
+||||||||||Newline `\n`
+||||||||||Whitespace `            `
+|||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `
 

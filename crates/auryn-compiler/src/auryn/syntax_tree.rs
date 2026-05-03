@@ -15,6 +15,9 @@ use crate::auryn::{
 pub enum SyntaxNodeKind {
     Root,
     File,
+    ItemAttribute,
+    ItemAttributeFn,
+    ItemKind,
     Item,
     ExternBlock,
     ExternBlockItem,
@@ -25,7 +28,7 @@ pub enum SyntaxNodeKind {
     ExternTypeBodyItemKind,
     ExternTypeStaticLet,
     ExternTypeFunction,
-    ItemMetadata,
+    ExternItemMetadata,
     FunctionDefinition,
     Receiver,
     GenericParameterList,

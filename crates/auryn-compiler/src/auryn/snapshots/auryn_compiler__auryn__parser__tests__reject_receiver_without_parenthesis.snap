@@ -8,41 +8,42 @@ syntax_tree:
 ||Newline `\n`
 ||Whitespace `            `
 ||13..72 Item
-|||13..72 FunctionDefinition
-||||KeywordFn `fn`
-||||Whitespace ` `
-||||ERROR Unexpected token
-||||BracketOpen `[`
-||||BracketClose `]`
-||||Identifier `Foo`
-||||Whitespace ` `
-||||22..29 ParameterList
-|||||ERROR Unexpected token
-|||||Identifier `test`
-|||||ParensOpen `(`
-|||||ParensClose `)`
+|||13..72 ItemKind
+||||13..72 FunctionDefinition
+|||||KeywordFn `fn`
 |||||Whitespace ` `
-||||BraceOpen `{`
-||||Newline `\n`
-||||Whitespace `                `
-||||47..71 Block
-|||||47..58 Statement
-||||||47..58 Expression
-|||||||47..58 PostfixOperation
-||||||||47..52 Value
-|||||||||47..52 Ident
-||||||||||Identifier `print`
-||||||||52..58 PostfixOperator
-|||||||||52..58 ArgumentList
-||||||||||ParensOpen `(`
-||||||||||53..57 Expression
-|||||||||||53..57 Value
-||||||||||||53..57 StringLiteral
-|||||||||||||StringLiteral `\"hi\"`
-||||||||||ParensClose `)`
+|||||ERROR Unexpected token
+|||||BracketOpen `[`
+|||||BracketClose `]`
+|||||Identifier `Foo`
+|||||Whitespace ` `
+|||||22..29 ParameterList
+||||||ERROR Unexpected token
+||||||Identifier `test`
+||||||ParensOpen `(`
+||||||ParensClose `)`
+||||||Whitespace ` `
+|||||BraceOpen `{`
 |||||Newline `\n`
-|||||Whitespace `            `
-||||BraceClose `}`
+|||||Whitespace `                `
+|||||47..71 Block
+||||||47..58 Statement
+|||||||47..58 Expression
+||||||||47..58 PostfixOperation
+|||||||||47..52 Value
+||||||||||47..52 Ident
+|||||||||||Identifier `print`
+|||||||||52..58 PostfixOperator
+||||||||||52..58 ArgumentList
+|||||||||||ParensOpen `(`
+|||||||||||53..57 Expression
+||||||||||||53..57 Value
+|||||||||||||53..57 StringLiteral
+||||||||||||||StringLiteral `\"hi\"`
+|||||||||||ParensClose `)`
+||||||Newline `\n`
+||||||Whitespace `            `
+|||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `
 

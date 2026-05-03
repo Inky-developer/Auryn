@@ -100,6 +100,13 @@ diag! {
 
 diag! {
     #[level(DiagnosticLevel::Error)]
+    #[code("Unsupported Attribute")]
+    #[info("Attributes are not yet supported at all")]
+    pub struct UnsupportedAttribute;
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
     #[code("Unknown extern target")]
     pub struct UnexpectedExternTarget;
 }

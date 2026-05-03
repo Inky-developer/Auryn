@@ -14,7 +14,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                     1,
                                 ),
                             ),
-                            number: 25206714332292,
+                            number: 28975365249621,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                         1,
                                     ),
                                 ),
-                                number: 25206714332292,
+                                number: 28975365249621,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -45,7 +45,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 84022381107640,
+                                        number: 86926095748863,
                                     },
                                     type: Computed(
                                         Bool,
@@ -76,7 +76,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 54614547719966,
+                                        number: 57950730499242,
                                     },
                                 ),
                             ),
@@ -92,7 +92,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 117631333550696,
+                                        number: 120040798891287,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -102,7 +102,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                         1,
                                                     ),
                                                 ),
-                                                number: 117631333550696,
+                                                number: 120040798891287,
                                             },
                                             type: Computed(
                                                 Structural(
@@ -124,7 +124,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 130234690716842,
+                                                            number: 132458812569696,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
@@ -151,7 +151,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 155441405049134,
+                                                                number: 157294839926514,
                                                             },
                                                             type: Computed(
                                                                 NumberLiteral(
@@ -197,7 +197,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 214257071824482,
+                                        number: 215245570425756,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -207,7 +207,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                         1,
                                                     ),
                                                 ),
-                                                number: 214257071824482,
+                                                number: 215245570425756,
                                             },
                                             type: Computed(
                                                 Structural(
@@ -229,7 +229,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 226860428990628,
+                                                            number: 227663584104165,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
@@ -256,7 +256,7 @@ expression: "compile_wrapped(\"if false { print(0) } else { print(1) }\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 252067143322920,
+                                                                number: 252499611460983,
                                                             },
                                                             type: Computed(
                                                                 NumberLiteral(

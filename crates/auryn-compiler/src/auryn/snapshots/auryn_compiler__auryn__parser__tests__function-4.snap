@@ -6,28 +6,29 @@ syntax_tree:
 0..25 Root
 |0..25 File
 ||0..25 Item
-|||0..25 FunctionDefinition
-||||KeywordFn `fn`
-||||Whitespace ` `
-||||Identifier `foo`
-||||6..23 ParameterList
-|||||ParensOpen `(`
-|||||7..11 SelfParameterDefinition
-||||||Identifier `self`
-|||||Comma `,`
+|||0..25 ItemKind
+||||0..25 FunctionDefinition
+|||||KeywordFn `fn`
 |||||Whitespace ` `
-|||||13..21 ParameterDefinition
-||||||Identifier `foo`
-||||||Colon `:`
+|||||Identifier `foo`
+|||||6..23 ParameterList
+||||||ParensOpen `(`
+||||||7..11 SelfParameterDefinition
+|||||||Identifier `self`
+||||||Comma `,`
 ||||||Whitespace ` `
-||||||18..21 Type
-|||||||18..21 TypeRef
-||||||||18..21 TypePath
-|||||||||Identifier `I32`
-|||||ParensClose `)`
-|||||Whitespace ` `
-||||BraceOpen `{`
-||||24..24 Block ''
-||||BraceClose `}`
+||||||13..21 ParameterDefinition
+|||||||Identifier `foo`
+|||||||Colon `:`
+|||||||Whitespace ` `
+|||||||18..21 Type
+||||||||18..21 TypeRef
+|||||||||18..21 TypePath
+||||||||||Identifier `I32`
+||||||ParensClose `)`
+||||||Whitespace ` `
+|||||BraceOpen `{`
+|||||24..24 Block ''
+|||||BraceClose `}`
 
 diagnostics:

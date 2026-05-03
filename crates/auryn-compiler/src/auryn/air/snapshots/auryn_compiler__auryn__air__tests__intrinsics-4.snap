@@ -14,7 +14,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                     1,
                                 ),
                             ),
-                            number: 29118101039028,
+                            number: 33395336219903,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                         1,
                                     ),
                                 ),
-                                number: 29118101039028,
+                                number: 33395336219903,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 72795252597570,
+                                        number: 76332197074064,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -59,7 +59,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 106766370476436,
+                                                        number: 109727533293967,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -68,7 +68,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 116472404156112,
+                                                            number: 119269057928225,
                                                         },
                                                         base: Resolved(
                                                             I64,
@@ -85,7 +85,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 140737488355302,
+                                                    number: 143122869513870,
                                                 },
                                                 type: Computed(
                                                     I64,
@@ -99,7 +99,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 155296538874816,
+                                                                number: 157435156465257,
                                                             },
                                                             type: Computed(
                                                                 Intrinsic(
@@ -126,7 +126,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 179561623074006,
+                                                                    number: 181288968050902,
                                                                 },
                                                                 type: Computed(
                                                                     Array(
@@ -148,7 +148,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                                         1,
                                                                                     ),
                                                                                 ),
-                                                                                number: 194120673593520,
+                                                                                number: 195601255002289,
                                                                             },
                                                                             type: Computed(
                                                                                 Intrinsic(
@@ -175,7 +175,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                                             1,
                                                                                         ),
                                                                                     ),
-                                                                                    number: 223238774632548,
+                                                                                    number: 224225828905063,
                                                                                 },
                                                                                 type: Computed(
                                                                                     I32,
@@ -200,7 +200,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 257209892511414,
+                                                                    number: 257621165124966,
                                                                 },
                                                                 type: Computed(
                                                                     I32,
@@ -230,7 +230,7 @@ expression: "compile_wrapped(\"let a: I64 = arrayGet(arrayOfZeros(3), 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 63089218917894,
+                                        number: 66790672439806,
                                     },
                                 ),
                             ),

@@ -6,27 +6,28 @@ syntax_tree:
 0..21 Root
 |0..21 File
 ||0..21 Item
-|||0..21 FunctionDefinition
-||||KeywordFn `fn`
-||||Whitespace ` `
-||||Identifier `foo`
-||||6..8 GenericParameterList
-|||||BracketOpen `[`
-|||||BracketClose `]`
-||||8..11 ParameterList
-|||||ParensOpen `(`
-|||||ParensClose `)`
+|||0..21 ItemKind
+||||0..21 FunctionDefinition
+|||||KeywordFn `fn`
 |||||Whitespace ` `
-||||11..19 ReturnType
-|||||Arrow `->`
-|||||Whitespace ` `
-|||||14..19 Type
-||||||14..19 TypeRef
-|||||||14..19 TypePath
-||||||||Identifier `Null`
-||||||||Whitespace ` `
-||||BraceOpen `{`
-||||20..20 Block ''
-||||BraceClose `}`
+|||||Identifier `foo`
+|||||6..8 GenericParameterList
+||||||BracketOpen `[`
+||||||BracketClose `]`
+|||||8..11 ParameterList
+||||||ParensOpen `(`
+||||||ParensClose `)`
+||||||Whitespace ` `
+|||||11..19 ReturnType
+||||||Arrow `->`
+||||||Whitespace ` `
+||||||14..19 Type
+|||||||14..19 TypeRef
+||||||||14..19 TypePath
+|||||||||Identifier `Null`
+|||||||||Whitespace ` `
+|||||BraceOpen `{`
+|||||20..20 Block ''
+|||||BraceClose `}`
 
 diagnostics:

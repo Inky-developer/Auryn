@@ -11,41 +11,42 @@ syntax_tree:
 ||Newline `\n`
 ||Whitespace `            `
 ||54..251 Item
-|||54..251 FunctionDefinition
-||||KeywordFn `fn`
-||||Whitespace ` `
-||||Identifier `main`
-||||61..64 ParameterList
-|||||ParensOpen `(`
-|||||ParensClose `)`
+|||54..251 ItemKind
+||||54..251 FunctionDefinition
+|||||KeywordFn `fn`
 |||||Whitespace ` `
-||||BraceOpen `{`
-||||Newline `\n`
-||||Whitespace `                `
-||||Comment `// We will now initialize a variable called \'a\' to 1`
-||||Newline `\n`
-||||Whitespace `                `
-||||151..250 Block
-|||||151..161 Statement
-||||||151..161 Assignment
-|||||||KeywordLet `let`
-|||||||Whitespace ` `
-|||||||Identifier `a`
-|||||||Whitespace ` `
-|||||||Equal `=`
-|||||||Whitespace ` `
-|||||||159..161 Expression
-||||||||159..161 Value
-|||||||||159..161 NumberLiteral
-||||||||||NumberLiteral `1`
-||||||||||Whitespace ` `
-|||||Comment `// this is the assignment`
+|||||Identifier `main`
+|||||61..64 ParameterList
+||||||ParensOpen `(`
+||||||ParensClose `)`
+||||||Whitespace ` `
+|||||BraceOpen `{`
 |||||Newline `\n`
 |||||Whitespace `                `
-|||||Comment `// This is the end of the function`
+|||||Comment `// We will now initialize a variable called \'a\' to 1`
 |||||Newline `\n`
-|||||Whitespace `            `
-||||BraceClose `}`
+|||||Whitespace `                `
+|||||151..250 Block
+||||||151..161 Statement
+|||||||151..161 Assignment
+||||||||KeywordLet `let`
+||||||||Whitespace ` `
+||||||||Identifier `a`
+||||||||Whitespace ` `
+||||||||Equal `=`
+||||||||Whitespace ` `
+||||||||159..161 Expression
+|||||||||159..161 Value
+||||||||||159..161 NumberLiteral
+|||||||||||NumberLiteral `1`
+|||||||||||Whitespace ` `
+||||||Comment `// this is the assignment`
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||Comment `// This is the end of the function`
+||||||Newline `\n`
+||||||Whitespace `            `
+|||||BraceClose `}`
 ||Newline `\n`
 ||Whitespace `            `
 

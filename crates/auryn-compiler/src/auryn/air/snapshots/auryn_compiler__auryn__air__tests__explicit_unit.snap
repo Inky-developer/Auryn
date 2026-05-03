@@ -14,7 +14,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                     1,
                                 ),
                             ),
-                            number: 122055520874511,
+                            number: 124828033149936,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                         1,
                                     ),
                                 ),
-                                number: 122055520874511,
+                                number: 124828033149936,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -45,7 +45,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: 196783390797681,
+                                        number: 198256287944016,
                                     },
                                     type: Computed(
                                         Bool,
@@ -59,7 +59,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 206747106787437,
+                                                    number: 208046721916560,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -79,7 +79,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 221692680772071,
+                                                    number: 222732372875376,
                                                 },
                                                 type: Computed(
                                                     I32,
@@ -114,7 +114,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: 181837816813047,
+                                        number: 183570636985200,
                                     },
                                 ),
                             ),
@@ -132,7 +132,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                     1,
                                                 ),
                                             ),
-                                            number: 254074757738778,
+                                            number: 254551283286144,
                                         },
                                         type: Computed(
                                             Structural(
@@ -185,7 +185,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                     1,
                                 ),
                             ),
-                            number: 19927431979512,
+                            number: 22028476438224,
                         },
                     ),
                 ): AirFunction {
@@ -197,7 +197,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                         1,
                                     ),
                                 ),
-                                number: 19927431979512,
+                                number: 22028476438224,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -215,7 +215,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: 67255082930853,
+                                        number: 68533037807808,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -225,7 +225,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                         1,
                                                     ),
                                                 ),
-                                                number: 67255082930853,
+                                                number: 68533037807808,
                                             },
                                             type: Computed(
                                                 Structural(
@@ -247,7 +247,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 74727869923170,
+                                                            number: 75875863287216,
                                                         },
                                                         type: Computed(
                                                             FunctionItem(
@@ -258,7 +258,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                                 1,
                                                                             ),
                                                                         ),
-                                                                        number: 122055520874511,
+                                                                        number: 124828033149936,
                                                                     },
                                                                     kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                                                                 },
@@ -273,7 +273,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                                 1,
                                                                             ),
                                                                         ),
-                                                                        number: 122055520874511,
+                                                                        number: 124828033149936,
                                                                     },
                                                                 ),
                                                             ),
@@ -287,7 +287,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 89673443907804,
+                                                                number: 90561514246032,
                                                             },
                                                             type: Computed(
                                                                 I32,
@@ -316,7 +316,7 @@ expression: "compile(r#\"\n                fn main() -> {} {\n                  
                                                 1,
                                             ),
                                         ),
-                                        number: 59782295938536,
+                                        number: 61190212328400,
                                     },
                                 ),
                             ),

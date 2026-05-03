@@ -14,7 +14,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                     1,
                                 ),
                             ),
-                            number: 25206714332292,
+                            number: 28975365249621,
                         },
                     ),
                 ): AirFunction {
@@ -26,7 +26,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                         1,
                                     ),
                                 ),
-                                number: 25206714332292,
+                                number: 28975365249621,
                             },
                             kind: "auryn_compiler::auryn::air::typecheck::types::FunctionItemType",
                         },
@@ -44,7 +44,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 63016785830730,
+                                        number: 66229406284848,
                                     },
                                     kind: Assignment(
                                         Assignment {
@@ -59,7 +59,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                 1,
                                                             ),
                                                         ),
-                                                        number: 92424619218404,
+                                                        number: 95204771534469,
                                                     },
                                                     type: Path {
                                                         base_id: SyntaxId {
@@ -68,7 +68,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 100826857329168,
+                                                            number: 103483447320075,
                                                         },
                                                         base: Resolved(
                                                             I32,
@@ -85,7 +85,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                             1,
                                                         ),
                                                     ),
-                                                    number: 121832452606078,
+                                                    number: 124180136784090,
                                                 },
                                                 type: Computed(
                                                     Structural(
@@ -107,7 +107,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 134435809772224,
+                                                                number: 136598150462499,
                                                             },
                                                             type: Computed(
                                                                 Intrinsic(
@@ -134,7 +134,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    number: 159642524104516,
+                                                                    number: 161434177819317,
                                                                 },
                                                                 type: Computed(
                                                                     NumberLiteral(
@@ -170,7 +170,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 184849238436808,
+                                        number: 186270205176135,
                                     },
                                     kind: Expression(
                                         AirExpression {
@@ -180,7 +180,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                         1,
                                                     ),
                                                 ),
-                                                number: 184849238436808,
+                                                number: 186270205176135,
                                             },
                                             type: Computed(
                                                 Structural(
@@ -202,7 +202,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                     1,
                                                                 ),
                                                             ),
-                                                            number: 197452595602954,
+                                                            number: 198688218854544,
                                                         },
                                                         type: Computed(
                                                             Intrinsic(
@@ -229,7 +229,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                         1,
                                                                     ),
                                                                 ),
-                                                                number: 218458190879864,
+                                                                number: 219384908318559,
                                                             },
                                                             type: Computed(
                                                                 Structural(
@@ -251,7 +251,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: 235262667101392,
+                                                                            number: 235942259889771,
                                                                         },
                                                                         type: Computed(
                                                                             Structural(
@@ -279,7 +279,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                                                     1,
                                                                                 ),
                                                                             ),
-                                                                            number: 260469381433684,
+                                                                            number: 260778287246589,
                                                                         },
                                                                         type: Computed(
                                                                             Structural(
@@ -320,7 +320,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                                                 1,
                                             ),
                                         ),
-                                        number: 54614547719966,
+                                        number: 57950730499242,
                                     },
                                 ),
                             ),
@@ -340,7 +340,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                             1,
                         ),
                     ),
-                    number: 121832452606078,
+                    number: 124180136784090,
                 },
                 kind: "Type mismatch",
                 ..
@@ -352,7 +352,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                             1,
                         ),
                     ),
-                    number: 235262667101392,
+                    number: 235942259889771,
                 },
                 kind: "Type mismatch",
                 ..
@@ -364,7 +364,7 @@ expression: "compile_wrapped(\"let a: I32 = print(1)\\nprint(a + 1)\")"
                             1,
                         ),
                     ),
-                    number: 260469381433684,
+                    number: 260778287246589,
                 },
                 kind: "Type mismatch",
                 ..

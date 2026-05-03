@@ -1,0 +1,14 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "[thisAttributeIsNotSupported(\"Some argument\")]\nfn main() {\n\t\n}\n"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/unsupported_attribute.au
+---
+Error: Unsupported Attribute
+   ╭─[ main:1:1 ]
+   │
+ 1 │ [thisAttributeIsNotSupported("Some argument")]
+   │ ───────────────────────┬──────────────────────  
+   │                        ╰──────────────────────── Here
+   │ 
+   │ Note: Attributes are not yet supported at all
+───╯

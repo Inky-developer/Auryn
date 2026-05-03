@@ -20,7 +20,7 @@ use crate::auryn::{
         Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
         BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
         ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition,
-        GenericParameterList, Ident, IfStatement, IfStatementElse, Item, LoopStatement,
+        GenericParameterList, Ident, IfStatement, IfStatementElse, Item, ItemKind, LoopStatement,
         NumberLiteral, Parenthesis, Path, PostfixOperation, PostfixOperator, PrefixNot,
         ReturnStatement, Root, Statement, StringLiteral, Struct, StructBody, StructLiteral,
         StructLiteralField, StructuralTypeField, Type, TypeAlias, Value, ValueOrPostfix,
@@ -31,7 +31,7 @@ use crate::auryn::{
         errors::{
             BreakOutsideLoop, ContinueOutsideLoop, ExternTypeRequiresMetadata,
             ImmutableVariableUpdate, InvalidNumber, InvalidPlace, RedefinedFunction,
-            UndefinedVariable, UnexpectedExternTarget,
+            UndefinedVariable, UnexpectedExternTarget, UnsupportedAttribute,
         },
     },
     syntax_id::{SpanExt, Spanned, SyntaxId},
@@ -89,13 +89,14 @@ impl AstTransformer {
     }
 
     fn register_item(&mut self, item: Item) {
-        match item {
-            Item::FunctionDefinition(function_definition) => {
+        let Ok(kind) = item.kind() else { return };
+        match kind {
+            ItemKind::FunctionDefinition(function_definition) => {
                 self.register_function(function_definition)
             }
-            Item::ExternBlock(block) => self.register_extern_block(block),
-            Item::TypeAlias(type_alias) => self.register_type_alias(type_alias),
-            Item::Struct(struct_definition) => self.register_struct(struct_definition),
+            ItemKind::ExternBlock(block) => self.register_extern_block(block),
+            ItemKind::TypeAlias(type_alias) => self.register_type_alias(type_alias),
+            ItemKind::Struct(struct_definition) => self.register_struct(struct_definition),
         }
     }
 
@@ -166,13 +167,26 @@ impl AstTransformer {
     }
 
     fn transform_item(&mut self, item: Item) {
-        match item {
-            Item::FunctionDefinition(function_definition) => {
+        let Ok(kind) = item.kind() else {
+            return;
+        };
+
+        if let Some(attribute) = item.attribute() {
+            // Pretty ugly but hides the unused warnings for now
+            attribute.functions().for_each(|func| {
+                let _ = func.argument();
+                let _ = func.ident();
+            });
+            self.diagnostics.add(attribute.id(), UnsupportedAttribute);
+        }
+
+        match kind {
+            ItemKind::FunctionDefinition(function_definition) => {
                 self.transform_function(function_definition)
             }
-            Item::TypeAlias(type_alias) => self.transform_type_alias(type_alias),
-            Item::Struct(struct_def) => self.transform_struct(struct_def),
-            Item::ExternBlock(block) => self.transform_extern_block(block),
+            ItemKind::TypeAlias(type_alias) => self.transform_type_alias(type_alias),
+            ItemKind::Struct(struct_def) => self.transform_struct(struct_def),
+            ItemKind::ExternBlock(block) => self.transform_extern_block(block),
         }
     }
 
