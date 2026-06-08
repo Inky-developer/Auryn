@@ -1,0 +1,38 @@
+unsafe extern "intrinsics" {
+	["print"]
+	fn print[T](value: T)
+
+	["unsafeTransmute"]
+	fn unsafeTransmute[T, U](value: T) -> U
+
+	["unsafeCast"]
+	fn unsafeCast[T, U](value: T) -> U
+
+	["arrayOfZeros"]
+	fn arrayOfZeros[T](n: I32) -> []T
+
+	["arrayGet"]
+	fn arrayGet[T](array: []T, index: I32) -> T
+
+	["arraySet"]
+	fn arraySet[T](array: []T, index: I32, value: T)
+
+	["arrayLen"]
+	fn arrayLen[T](array: []T) -> I32
+}
+
+fn i32ToI64(value: I32) -> I64 {
+    return unsafeCast(value)
+}
+
+fn boolToI64(value: Bool) -> I64 {
+    return unsafeCast(value)
+}
+
+fn i64ToI32(value: I64) -> I32 {
+    return unsafeCast(value)
+}
+
+fn boolToI32(value: Bool) -> I32 {
+    return unsafeCast(value)
+}

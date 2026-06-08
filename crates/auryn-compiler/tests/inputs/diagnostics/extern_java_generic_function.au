@@ -1,0 +1,5 @@
+unsafe extern "java" {
+    fn hi[T]()
+}
+
+fn main() {}

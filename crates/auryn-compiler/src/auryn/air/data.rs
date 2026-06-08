@@ -7,7 +7,7 @@ use crate::auryn::{
         namespace::UserDefinedTypeId,
         typecheck::{
             type_context::{TypeContext, TypeId},
-            types::{FunctionItemType, IntrinsicType, StructType, Type, TypeView, TypeViewKind},
+            types::{FunctionItemType, StructType, Type, TypeView, TypeViewKind},
         },
         unresolved_type::{UnresolvedType, UnresolvedTypeProducer},
     },
@@ -78,9 +78,11 @@ impl Air {
     }
 }
 
+// TODO: Simplify this enum. It seems like the whole enum could be removed and we could store a TypeId instead.
 #[derive(Debug, Clone)]
 pub enum AirStaticValue {
     Function(AirFunctionId),
+    ExternFunction(TypeId<FunctionItemType>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -116,11 +118,12 @@ pub struct AirBlock {
     pub finalizer: AirBlockFinalizer,
 }
 
+/// A value id that either points to a variable in the local namespace or
+/// a variable in the static [`UnresolvedGlobals`]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AirValueId {
     Local(AirLocalValueId),
     Global(AirStaticValueId),
-    Intrinsic(Intrinsic),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -170,7 +173,7 @@ pub enum UnresolvedExternMember {
 pub enum FunctionReference {
     UserDefined(AirFunctionId),
     Extern {
-        parent: Type,
+        parent: Option<Type>,
         kind: ExternFunctionKind,
         extern_name: SmallString,
         syntax_id: SyntaxId,
@@ -220,9 +223,13 @@ impl Hash for FunctionReference {
 pub enum UnresolvedFunctionReference {
     UserDefined(AirFunctionId),
     Extern {
-        parent: Box<UnresolvedType>,
+        /// The parent type
+        parent: Option<Box<UnresolvedType>>,
+        /// The kind of extern function
         kind: ExternFunctionKind,
+        /// The name of the function in the extern system
         extern_name: SmallString,
+        /// The id of the extern item
         syntax_id: SyntaxId,
     },
 }
@@ -231,6 +238,7 @@ pub enum UnresolvedFunctionReference {
 pub enum ExternFunctionKind {
     Static,
     Method,
+    Intrinsic(Intrinsic),
 }
 
 /// The type of an expression during type checking.
@@ -365,18 +373,12 @@ pub struct Call {
     pub generic_arguments: AirGenericArguments,
 }
 
-pub enum CallKind<'a> {
-    FunctionItem(TypeViewKind<'a, FunctionItemType>),
-    Intrinsic(TypeViewKind<'a, IntrinsicType>),
-}
-
 impl Call {
     /// Should be called from codegen
-    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> CallKind<'a> {
+    pub fn function_type<'a>(&self, ty_ctx: &'a TypeContext) -> TypeViewKind<'a, FunctionItemType> {
         let computed_type = self.function.r#type.computed().as_view(ty_ctx);
         match computed_type {
-            TypeView::FunctionItem(function_type) => CallKind::FunctionItem(function_type),
-            TypeView::Intrinsic(intrinsic_type) => CallKind::Intrinsic(intrinsic_type),
+            TypeView::FunctionItem(function_type) => function_type,
             other => panic!("invalid function type {other}"),
         }
     }
@@ -387,18 +389,11 @@ impl Call {
 pub enum Intrinsic {
     Print,
     UnsafeTransmute,
-    Cast,
-    ArrayOf,
+    UnsafeCast,
     ArrayOfZeros,
     ArrayGet,
     ArraySet,
     ArrayLen,
-}
-
-impl Intrinsic {
-    pub fn r#type(self, ty_ctx: &mut TypeContext) -> Type {
-        Type::Intrinsic(ty_ctx.add((), IntrinsicType { intrinsic: self }))
-    }
 }
 
 impl FromStr for Intrinsic {
@@ -408,8 +403,7 @@ impl FromStr for Intrinsic {
         Ok(match s {
             "print" => Intrinsic::Print,
             "unsafeTransmute" => Intrinsic::UnsafeTransmute,
-            "cast" => Intrinsic::Cast,
-            "arrayOf" => Intrinsic::ArrayOf,
+            "unsafeCast" => Intrinsic::UnsafeCast,
             "arrayOfZeros" => Intrinsic::ArrayOfZeros,
             "arrayGet" => Intrinsic::ArrayGet,
             "arraySet" => Intrinsic::ArraySet,

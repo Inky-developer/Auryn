@@ -4,8 +4,8 @@ use crate::auryn::air::{
     data::{
         Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
         AirExpressionKind, AirFunction, AirFunctionId, AirGenericArguments, AirNode, AirNodeKind,
-        AirPlace, AirPlaceKind, AirType, Assignment, BinaryOperation, Call, CallKind,
-        FunctionReference, Globals, ReturnValue, UnaryOperation, Update,
+        AirPlace, AirPlaceKind, AirType, Assignment, BinaryOperation, Call, FunctionReference,
+        Globals, ReturnValue, UnaryOperation, Update,
     },
     typecheck::{
         bounds::MaybeBounded,
@@ -334,16 +334,11 @@ impl FunctionBuilder<'_> {
             generic_arguments: AirGenericArguments::Computed(generic_args.clone()),
         };
 
-        match transformed_call.function_type(self.ty_ctx) {
-            CallKind::FunctionItem(type_view_kind) => match &type_view_kind.value.reference {
-                FunctionReference::UserDefined(air_function_id) => {
-                    self.queue.add(*air_function_id, generic_args)
-                }
-                FunctionReference::Extern { .. } => {}
-            },
-            CallKind::Intrinsic(_) => {
-                // Nothing needs to be done about intrinsics, they are evaluate in place anyways
+        match &transformed_call.function_type(self.ty_ctx).value.reference {
+            FunctionReference::UserDefined(air_function_id) => {
+                self.queue.add(*air_function_id, generic_args)
             }
+            FunctionReference::Extern { .. } => {}
         }
 
         transformed_call

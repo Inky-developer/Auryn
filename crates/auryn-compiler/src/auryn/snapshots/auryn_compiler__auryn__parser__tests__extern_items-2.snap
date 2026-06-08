@@ -1,0 +1,43 @@
+---
+source: crates/auryn-compiler/src/auryn/parser.rs
+expression: "verify(r#\"\n            unsafe extern \"intrinsic\" {\n                [\"foo\"]\n                fn foo()\n            }\n            \"#)"
+---
+syntax_tree:
+0..116 Root
+|0..116 File
+||Newline `\n`
+||Whitespace `            `
+||13..103 Item
+|||13..103 ItemKind
+||||13..103 ExternBlock
+|||||KeywordUnsafe `unsafe`
+|||||Whitespace ` `
+|||||KeywordExtern `extern`
+|||||Whitespace ` `
+|||||StringLiteral `\"intrinsic\"`
+|||||Whitespace ` `
+|||||BraceOpen `{`
+|||||Newline `\n`
+|||||Whitespace `                `
+|||||57..89 ExternBlockItem
+||||||57..64 ExternItemMetadata
+|||||||BracketOpen `[`
+|||||||StringLiteral `\"foo\"`
+|||||||BracketClose `]`
+||||||Newline `\n`
+||||||Whitespace `                `
+||||||81..89 ExternBlockItemKind
+|||||||81..89 ExternFunction
+||||||||KeywordFn `fn`
+||||||||Whitespace ` `
+||||||||Identifier `foo`
+||||||||87..89 ParameterList
+|||||||||ParensOpen `(`
+|||||||||ParensClose `)`
+|||||Newline `\n`
+|||||Whitespace `            `
+|||||BraceClose `}`
+||Newline `\n`
+||Whitespace `            `
+
+diagnostics:

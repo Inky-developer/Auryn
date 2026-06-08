@@ -60,6 +60,7 @@ impl<'a> Resolver<'a> {
         Ok(match unresolved {
             UnresolvedType::DefinedType(user_defined_type_id) => match user_defined_type_id {
                 UserDefinedTypeId::Extern(type_id) => Type::Extern(*type_id),
+                UserDefinedTypeId::ExternFunction(type_id) => Type::FunctionItem(*type_id),
                 UserDefinedTypeId::Module(type_id) => Type::Module(*type_id),
                 UserDefinedTypeId::Struct(struct_id) => Type::TypeProducer(*struct_id),
                 UserDefinedTypeId::TypeAlias(id) => match self.resolved_type_aliases.get(id) {
@@ -222,6 +223,7 @@ impl<'a> Resolver<'a> {
                         .map(|(k, value)| {
                             let ty = match value {
                                 AirStaticValue::Function(id) => Type::FunctionItem((*id).into()),
+                                AirStaticValue::ExternFunction(ty) => Type::FunctionItem(*ty),
                             };
                             (k.clone(), ty)
                         }),
@@ -334,7 +336,10 @@ impl<'a> Resolver<'a> {
                 extern_name,
                 syntax_id,
             } => {
-                let parent = self.resolve(parent)?;
+                let parent = parent
+                    .as_ref()
+                    .map(|parent| self.resolve(parent))
+                    .transpose()?;
                 FunctionReference::Extern {
                     parent,
                     kind: *kind,

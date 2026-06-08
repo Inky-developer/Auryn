@@ -208,6 +208,7 @@ ast_node! {
 ast_node! {
     pub enum ExternBlockItemKind = SyntaxNodeKind::ExternBlockItemKind as
         | SyntaxNodeKind::ExternType as ExternType
+        | SyntaxNodeKind::ExternFunction as ExternFunction
 }
 
 ast_node! {
@@ -225,7 +226,7 @@ ast_node! {
 ast_node! {
     pub enum ExternTypeBodyItemKind = SyntaxNodeKind::ExternTypeBodyItemKind as
         | SyntaxNodeKind::ExternTypeStaticLet as ExternTypeStaticLet
-        | SyntaxNodeKind::ExternTypeFunction as ExternTypeFunction
+        | SyntaxNodeKind::ExternFunction as ExternFunction
 }
 
 ast_node! {
@@ -233,10 +234,15 @@ ast_node! {
 }
 
 ast_node! {
-    pub struct ExternTypeFunction = SyntaxNodeKind::ExternTypeFunction as { token ident: TokenKind::Identifier, parameters: ParameterList, return_type: ReturnType, }
+    pub struct ExternFunction = SyntaxNodeKind::ExternFunction as {
+        token ident: TokenKind::Identifier,
+        optional generic_parameter_list: GenericParameterList,
+        parameters: ParameterList,
+        return_type: ReturnType,
+    }
 }
 
-impl ExternTypeFunction<'_> {
+impl ExternFunction<'_> {
     pub fn is_static(&self) -> bool {
         self.0
             .tokens()

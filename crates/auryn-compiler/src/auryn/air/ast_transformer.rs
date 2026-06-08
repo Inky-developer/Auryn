@@ -8,10 +8,11 @@ use crate::auryn::{
             self, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunctionId, AirGenericArguments, AirLocalValueId, AirModuleId,
             AirNode, AirNodeKind, AirPlace, AirPlaceKind, AirStaticValue, AirStaticValueId,
-            AirType, AirValueId, Call, ExternFunctionKind, ReturnValue, TypeAliasId,
+            AirType, AirValueId, Call, ExternFunctionKind, Intrinsic, ReturnValue, TypeAliasId,
             UnaryOperation, UnaryOperator, UnresolvedAirFunction, UnresolvedExternMember,
             UnresolvedFunctionReference, UnresolvedGlobals,
         },
+        extern_target::ExternTarget,
         namespace::{Namespace, UserDefinedTypeId},
         typecheck::{type_context::TypeId, types},
         unresolved_type::{UnresolvedFunction, UnresolvedType, UnresolvedTypeProducer},
@@ -19,12 +20,12 @@ use crate::auryn::{
     ast::ast_node::{
         Accessor, ArgumentList, Assignment, AstError, BinaryOperation, Block, BooleanLiteral,
         BreakStatement, ContinueStatement, Expression, ExternBlock, ExternBlockItem,
-        ExternBlockItemKind, ExternTypeBody, ExternTypeBodyItemKind, FunctionDefinition,
-        GenericParameterList, Ident, IfStatement, IfStatementElse, Item, ItemKind, LoopStatement,
-        NumberLiteral, Parenthesis, Path, PostfixOperation, PostfixOperator, PrefixNot,
-        ReturnStatement, Root, Statement, StringLiteral, Struct, StructBody, StructLiteral,
-        StructLiteralField, StructuralTypeField, Type, TypeAlias, Value, ValueOrPostfix,
-        VariableUpdate, WhileStatement,
+        ExternBlockItemKind, ExternFunction, ExternTypeBody, ExternTypeBodyItemKind,
+        FunctionDefinition, GenericParameterList, Ident, IfStatement, IfStatementElse, Item,
+        ItemKind, LoopStatement, NumberLiteral, ParameterList, Parenthesis, Path, PostfixOperation,
+        PostfixOperator, PrefixNot, Receiver, ReturnStatement, ReturnType, Root, Statement,
+        StringLiteral, Struct, StructBody, StructLiteral, StructLiteralField, StructuralTypeField,
+        Type, TypeAlias, Value, ValueOrPostfix, VariableUpdate, WhileStatement,
     },
     diagnostics::{
         diagnostic::Diagnostics,
@@ -32,6 +33,7 @@ use crate::auryn::{
             BreakOutsideLoop, ContinueOutsideLoop, ExternTypeRequiresMetadata,
             ImmutableVariableUpdate, InvalidNumber, InvalidPlace, RedefinedFunction,
             UndefinedVariable, UnexpectedExternTarget, UnsupportedAttribute,
+            UnsupportedExternTargetFunction, UnsupportedExternTargetType,
         },
     },
     syntax_id::{SpanExt, Spanned, SyntaxId},
@@ -143,6 +145,15 @@ impl AstTransformer {
                     UserDefinedTypeId::Extern(TypeId::new(extern_type.id())),
                 );
             }
+            ExternBlockItemKind::ExternFunction(extern_fn) => {
+                let Ok(ident) = extern_fn.ident() else {
+                    return;
+                };
+
+                self.namespace
+                    .statics
+                    .insert(ident.spanned_text(), AirStaticValueId(ident.id));
+            }
         }
     }
 
@@ -191,35 +202,43 @@ impl AstTransformer {
     }
 
     fn transform_extern_block(&mut self, block: ExternBlock) {
-        if let Ok(target) = block.extern_target()
-            && target.string_literal_text().as_str() != "java"
-        {
-            self.diagnostics.add(target.id, UnexpectedExternTarget);
+        let target = block
+            .extern_target()
+            .ok()
+            .map(|target| ExternTarget::from_str(&target.string_literal_text()))
+            .unwrap_or(ExternTarget::Unknown);
+        if matches!(target, ExternTarget::Unknown) {
+            let id = block.extern_target().map_or(block.id(), |it| it.id);
+            self.diagnostics.add(id, UnexpectedExternTarget);
         }
         for item in block.items() {
-            self.transform_extern_block_item(item);
+            self.transform_extern_block_item(target, item);
         }
     }
 
-    fn transform_extern_block_item(&mut self, item: ExternBlockItem) {
+    fn transform_extern_block_item(&mut self, target: ExternTarget, item: ExternBlockItem) {
         let Ok(kind) = item.kind() else {
             return;
         };
+        let extern_name = item.metadata().and_then(|metadata| metadata.value());
+        let extern_name = if let Ok(extern_name) = extern_name {
+            extern_name.string_literal_text().into()
+        } else {
+            self.diagnostics.add(item.id(), ExternTypeRequiresMetadata);
+            "".into()
+        };
         match kind {
             ExternBlockItemKind::ExternType(extern_type) => {
+                if !target.supports_extern_types() {
+                    self.diagnostics
+                        .add(extern_type.id(), UnsupportedExternTargetType);
+                }
                 let Ok(ident) = extern_type.ident() else {
                     return;
                 };
-                let extern_path = item.metadata().and_then(|metadata| metadata.value());
-                let extern_path = if let Ok(extern_path) = extern_path {
-                    extern_path.string_literal_text().into()
-                } else {
-                    self.diagnostics.add(item.id(), ExternTypeRequiresMetadata);
-                    "".into()
-                };
                 let def_id = self.namespace.types[&ident.text];
                 let extern_members = if let Ok(extern_body) = extern_type.body() {
-                    self.collect_extern_type_members(def_id, extern_body)
+                    self.collect_extern_type_members(def_id, extern_body, target)
                 } else {
                     default()
                 };
@@ -228,18 +247,138 @@ impl AstTransformer {
                     def_id,
                     UnresolvedType::Extern {
                         id: extern_type.id(),
-                        extern_name: extern_path,
+                        extern_name,
                         members: extern_members,
                     },
                 );
             }
+            ExternBlockItemKind::ExternFunction(extern_function) => {
+                if !target.supports_extern_functions() {
+                    self.diagnostics
+                        .add(extern_function.id(), UnsupportedExternTargetFunction)
+                }
+
+                let Some((ident, func)) =
+                    self.collect_extern_function(None, extern_name, extern_function, target)
+                else {
+                    return;
+                };
+                let type_id = TypeId::new(ident.syntax_id);
+                self.globals
+                    .types
+                    .insert(UserDefinedTypeId::ExternFunction(type_id), func);
+                let static_value_id = AirStaticValueId(ident.syntax_id);
+                self.globals
+                    .statics
+                    .insert(static_value_id, AirStaticValue::ExternFunction(type_id));
+            }
         }
+    }
+
+    /// Helper method for converting a function signature to an unresolved function.
+    /// Used for normal functions and extern functions (which don't have a body)
+    fn collect_function_signature(
+        &mut self,
+        receiver: Option<Receiver>,
+        parameters: ParameterList,
+        type_parameters: Option<GenericParameterList>,
+        return_type: Option<ReturnType>,
+        reference: UnresolvedFunctionReference,
+    ) -> (UnresolvedFunction, Namespace) {
+        let type_parameters = type_parameters.map_or(Vec::new(), |list| {
+            self.transform_generic_parameter_list(list)
+        });
+
+        let function_namespace = self
+            .namespace
+            .with_generics(type_parameters.iter().cloned());
+
+        let receiver = receiver
+            .and_then(|receiver| receiver.r#type().ok())
+            .and_then(|ty| {
+                transform_to_unresolved(&mut self.diagnostics, &function_namespace, ty)
+                    .ok()
+                    .with_span(ty.id())
+                    .transpose()
+            });
+
+        let declared_parameters = parameters
+            .parameters()
+            .filter_map(|param| {
+                param.r#type().ok().and_then(|ty| {
+                    transform_to_unresolved(&mut self.diagnostics, &function_namespace, ty).ok()
+                })
+            })
+            .collect::<Vec<_>>();
+        let declared_return_type = return_type
+            .and_then(|r#type| r#type.r#type().ok())
+            .and_then(|r#type| {
+                transform_to_unresolved(&mut self.diagnostics, &function_namespace, r#type).ok()
+            })
+            .map(Box::new);
+
+        let func = UnresolvedFunction {
+            receiver: receiver.map(Box::new),
+            parameters_reference: parameters.id(),
+            type_parameters,
+            parameters: declared_parameters,
+            return_type: declared_return_type,
+            reference,
+        };
+        (func, function_namespace)
+    }
+
+    fn collect_extern_function(
+        &mut self,
+        parent: Option<UnresolvedType>,
+        extern_name: SmallString,
+        function: ExternFunction,
+        target: ExternTarget,
+    ) -> Option<(Spanned<SmallString>, UnresolvedType)> {
+        let ident = function.ident().ok()?.spanned_text();
+        let kind = if target.is_intrinsic() {
+            let intrinsic = match Intrinsic::from_str(&extern_name) {
+                Ok(intrinsic) => intrinsic,
+                Err(()) => panic!(
+                    "Internal compiler error: Invalid intrinsic name specified '{extern_name}'"
+                ),
+            };
+            ExternFunctionKind::Intrinsic(intrinsic)
+        } else if function.is_static() {
+            ExternFunctionKind::Static
+        } else {
+            ExternFunctionKind::Method
+        };
+        let reference = UnresolvedFunctionReference::Extern {
+            parent: parent.map(Box::new),
+            extern_name,
+            kind,
+            syntax_id: ident.syntax_id,
+        };
+        let type_parameters = function.generic_parameter_list();
+        if let Some(params) = type_parameters
+            && !target.supports_type_parameters()
+            && params.parameters().next().is_some()
+        {
+            todo!("Throw error message");
+        }
+        let (unresolved_function, _) = self.collect_function_signature(
+            None,
+            function.parameters().ok()?,
+            type_parameters,
+            function.return_type().ok(),
+            reference,
+        );
+
+        let member = UnresolvedType::Function(unresolved_function);
+        Some((ident, member))
     }
 
     fn collect_extern_type_members(
         &mut self,
         def_id: UserDefinedTypeId,
         body: ExternTypeBody,
+        extern_target: ExternTarget,
     ) -> FastMap<SmallString, UnresolvedExternMember> {
         let mut result = FastMap::default();
 
@@ -277,57 +416,22 @@ impl AstTransformer {
                     };
                     result.insert(ident.text.clone(), member);
                 }
-                ExternTypeBodyItemKind::ExternTypeFunction(function) => {
-                    let Ok(ident) = function.ident() else {
+                ExternTypeBodyItemKind::ExternFunction(function) => {
+                    let Some((ident, ty)) = self.collect_extern_function(
+                        Some(UnresolvedType::DefinedType(def_id)),
+                        extern_name.clone(),
+                        function,
+                        extern_target,
+                    ) else {
                         continue;
                     };
-                    let Ok(parameters) = function.parameters() else {
-                        continue;
-                    };
-
-                    let syntax_id = ident.id;
-                    let ident = ident.text.clone();
-                    let declared_parameters = parameters
-                        .parameters()
-                        .filter_map(|param| {
-                            param.r#type().ok().and_then(|ty| {
-                                transform_to_unresolved(&mut self.diagnostics, &self.namespace, ty)
-                                    .ok()
-                            })
-                        })
-                        .collect();
-                    let declared_return_type = function
-                        .return_type()
-                        .ok()
-                        .and_then(|ty| ty.r#type().ok())
-                        .and_then(|ty| {
-                            transform_to_unresolved(&mut self.diagnostics, &self.namespace, ty).ok()
-                        })
-                        .map(Box::new);
-                    let kind = if function.is_static() {
-                        ExternFunctionKind::Static
-                    } else {
-                        ExternFunctionKind::Method
-                    };
-
-                    let member = UnresolvedExternMember::Function {
-                        unresolved_type: UnresolvedType::Function(UnresolvedFunction {
-                            receiver: None,
-                            parameters_reference: parameters.id(),
-                            type_parameters: Vec::new(),
-                            parameters: declared_parameters,
-                            return_type: declared_return_type,
-                            reference: UnresolvedFunctionReference::Extern {
-                                extern_name: extern_name.clone(),
-                                kind,
-                                parent: Box::new(UnresolvedType::DefinedType(def_id)),
-                                syntax_id,
-                            },
-                        }),
-                        extern_name,
-                    };
-
-                    result.insert(ident, member);
+                    result.insert(
+                        ident.value,
+                        UnresolvedExternMember::Function {
+                            unresolved_type: ty,
+                            extern_name,
+                        },
+                    );
                 }
             }
         }
@@ -394,79 +498,41 @@ impl AstTransformer {
         let Ok(ident) = function_definition.ident() else {
             return;
         };
-        let ident_id = ident.id;
-        let ident = ident.text.clone();
-
-        let generic_parameters = function_definition
-            .generic_parameter_list()
-            .map_or(Vec::new(), |list| {
-                self.transform_generic_parameter_list(list)
-            });
-
-        let function_namespace = self
-            .namespace
-            .with_generics(generic_parameters.iter().cloned());
-
-        let receiver = function_definition
-            .receiver()
-            .and_then(|receiver| receiver.r#type().ok())
-            .and_then(|ty| {
-                transform_to_unresolved(&mut self.diagnostics, &function_namespace, ty)
-                    .ok()
-                    .with_span(ty.id())
-                    .transpose()
-            });
-
-        let Ok(parameters) = function_definition.parameter_list() else {
+        let ident = ident.spanned_text();
+        let function_id = AirFunctionId(AirStaticValueId(ident.syntax_id));
+        let Ok(parameter_list) = function_definition.parameter_list() else {
             return;
         };
-        let declared_parameters = parameters
-            .parameters()
-            .filter_map(|param| {
-                param.r#type().ok().and_then(|ty| {
-                    transform_to_unresolved(&mut self.diagnostics, &function_namespace, ty).ok()
-                })
-            })
-            .collect::<Vec<_>>();
-        let self_param = parameters.self_parameter().and_then(|it| it.ident().ok());
-        let declared_return_type = function_definition
-            .return_type()
-            .ok()
-            .and_then(|r#type| r#type.r#type().ok())
-            .and_then(|r#type| {
-                transform_to_unresolved(&mut self.diagnostics, &function_namespace, r#type).ok()
-            })
-            .map(Box::new);
 
-        let parameter_idents = self_param
+        let (unresolved_function, function_namespace) = self.collect_function_signature(
+            function_definition.receiver(),
+            parameter_list,
+            function_definition.generic_parameter_list(),
+            function_definition.return_type().ok(),
+            UnresolvedFunctionReference::UserDefined(function_id),
+        );
+
+        let parameter_idents = parameter_list
+            .self_parameter()
             .into_iter()
+            .filter_map(|param| param.ident().ok())
             .chain(
-                parameters
+                parameter_list
                     .parameters()
                     .filter_map(|param| param.ident().ok()),
             )
             .map(|token| token.text.clone())
             .collect::<Vec<_>>();
-
         let function_transformer =
             FunctionTransformer::new(parameter_idents, &mut self.diagnostics, &function_namespace);
-
         let Ok(block) = function_definition.block() else {
             return;
         };
         let blocks = function_transformer.transform_function_body(block);
 
-        let function_id = AirFunctionId(AirStaticValueId(ident_id));
         let function = UnresolvedAirFunction {
-            unresolved_type: UnresolvedType::Function(UnresolvedFunction {
-                receiver: receiver.map(Box::new),
-                parameters_reference: parameters.id(),
-                type_parameters: generic_parameters,
-                parameters: declared_parameters,
-                return_type: declared_return_type,
-                reference: UnresolvedFunctionReference::UserDefined(function_id),
-            }),
-            ident,
+            unresolved_type: UnresolvedType::Function(unresolved_function),
+            ident: ident.value,
             blocks,
         };
 
@@ -605,7 +671,7 @@ impl FunctionTransformer<'_> {
         // The Return(None) is just a placeholder, could also be replaced with an actual error variant
         self.finish_block(
             block_id,
-            AirBlockFinalizer::Return(data::ReturnValue::Null(block.id())),
+            AirBlockFinalizer::Return(ReturnValue::Null(block.id())),
         );
         assert!(self.block_builders.is_empty());
         self.finished_blocks
@@ -794,7 +860,7 @@ impl FunctionTransformer<'_> {
             dead_code_block,
             AirBlockFinalizer::Return(
                 expression.map_or(ReturnValue::Null(r#return.id()), |expr| {
-                    data::ReturnValue::Expression(expr)
+                    ReturnValue::Expression(expr)
                 }),
             ),
         );
@@ -833,7 +899,7 @@ impl FunctionTransformer<'_> {
         let kind = match expression.kind {
             AirExpressionKind::Variable(id) => match id {
                 AirValueId::Local(local_id) => AirPlaceKind::Variable(local_id),
-                AirValueId::Global(_) | AirValueId::Intrinsic(_) => {
+                AirValueId::Global(_) => {
                     self.diagnostics.add(path.id(), ImmutableVariableUpdate);
                     return Err(AstError);
                 }
@@ -1033,13 +1099,6 @@ impl FunctionTransformer<'_> {
                 AirExpressionKind::Variable(AirValueId::Global(variable_id)),
             );
         }
-
-        if let Ok(intrinsic) = ident.text.parse() {
-            return AirExpression::new(
-                ident.id,
-                AirExpressionKind::Variable(AirValueId::Intrinsic(intrinsic)),
-            );
-        };
 
         if let Some(type_id) = self.namespace.types.get(&ident.text) {
             return AirExpression::new(

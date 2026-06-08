@@ -112,16 +112,19 @@ impl DiagnosticDisplay {
 pub struct DisplayOptions {
     pub use_color: bool,
     pub write_debug_info: bool,
+    pub filter_diagnostics: bool,
 }
 
 impl DisplayOptions {
     pub const FOR_TESTING: Self = Self {
         use_color: false,
         write_debug_info: false,
+        filter_diagnostics: true,
     };
     pub const DEFAULT: Self = Self {
         use_color: true,
         write_debug_info: cfg!(debug_assertions),
+        filter_diagnostics: true,
     };
 }
 

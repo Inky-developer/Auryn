@@ -100,7 +100,7 @@ impl Diagnostics {
         display.extend(
             self.diagnostics
                 .iter()
-                .filter(|it| it.kind.is_valid(&ctx))
+                .filter(|it| !ctx.options.filter_diagnostics || it.kind.is_valid(&ctx))
                 .map(|it| it.display(&ctx)),
         );
         display

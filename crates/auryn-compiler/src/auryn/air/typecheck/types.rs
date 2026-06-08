@@ -128,8 +128,6 @@ define_types! {
     String,
     /// A zero-sized type of a concrete function item
     FunctionItem(FunctionItemType),
-    /// A function defined & implemented by the compiler
-    Intrinsic(IntrinsicType),
     Array(ArrayType),
     Extern(ExternType),
     Structural(StructuralType),
@@ -158,8 +156,8 @@ impl Type {
         match self {
             I32 => Some(i32::MIN as i128..=i32::MAX as i128),
             I64 => Some(i64::MIN as i128..=i64::MAX as i128),
-            NumberLiteral(_) | Bool | String | FunctionItem(_) | Intrinsic(_) | Array(_)
-            | Extern(_) | Structural(_) | TypeProducer(_) | Module(_) | Meta(_) | Generic(_)
+            NumberLiteral(_) | Bool | String | FunctionItem(_) | Array(_) | Extern(_)
+            | Structural(_) | TypeProducer(_) | Module(_) | Meta(_) | Generic(_)
             | Application(_) | Error => None,
         }
     }
@@ -669,7 +667,6 @@ impl Display for TypeView<'_> {
             TypeView::Bool => f.write_str("Bool"),
             TypeView::String => f.write_str("String"),
             TypeView::FunctionItem(function_type) => Display::fmt(&function_type, f),
-            TypeView::Intrinsic(intrinsic) => Debug::fmt(intrinsic.value, f),
             TypeView::Array(array_type) => Display::fmt(&array_type, f),
             TypeView::Extern(extern_type) => Display::fmt(&extern_type, f),
             TypeView::Module(module_type) => write!(f, "module {}", module_type.name),

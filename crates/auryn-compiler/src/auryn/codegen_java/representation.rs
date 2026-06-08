@@ -381,7 +381,7 @@ impl RepresentationCtx {
             Application(application) => self
                 .get_application_repr_inner(application, resolve_generic)
                 .to_representation(),
-            FunctionItem(_) | Intrinsic(_) | Meta(_) | Module(_) => None,
+            FunctionItem(_) | Meta(_) | Module(_) => None,
             Generic(view) => self.get_representation_inner(
                 resolve_generic(view.value.id).as_view(view.ctx),
                 resolve_generic,

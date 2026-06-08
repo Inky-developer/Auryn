@@ -8,8 +8,8 @@ use crate::auryn::{
             Accessor, Air, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
             AirExpressionKind, AirFunction, AirFunctionId, AirGenericArguments, AirLocalValueId,
             AirNode, AirNodeKind, AirPlaceKind, AirStaticValue, AirStaticValueId, AirType,
-            AirValueId, Assignment, Call, Globals, Intrinsic, ReturnValue, TypeAliasId,
-            UnaryOperator, UnresolvedAirFunction, UnresolvedGlobals, Update,
+            AirValueId, Assignment, Call, Globals, ReturnValue, TypeAliasId, UnaryOperator,
+            UnresolvedAirFunction, UnresolvedGlobals, Update,
         },
         namespace::UserDefinedTypeId,
         typecheck::{
@@ -28,10 +28,10 @@ use crate::auryn::{
     diagnostics::{
         diagnostic::Diagnostics,
         errors::{
-            CircularTypeAlias, ExpectedFunction, ExpectedStruct, InferenceFailed, InvalidCast,
-            MismatchedArgumentCount, MissingFields, NonInferredGenericType, ReceiverIsTooGeneric,
-            RedefinedFunction, TypeMismatch, UndefinedProperty, UnexpectedFields,
-            UnsupportedOperationWithType, ValueOutsideRange,
+            CircularTypeAlias, ExpectedFunction, ExpectedStruct, MismatchedArgumentCount,
+            MissingFields, NonInferredGenericType, ReceiverIsTooGeneric, RedefinedFunction,
+            TypeMismatch, UndefinedProperty, UnexpectedFields, UnsupportedOperationWithType,
+            ValueOutsideRange,
         },
     },
     syntax_id::{Spanned, SyntaxId},
@@ -779,15 +779,13 @@ impl Typechecker {
                 .variables
                 .get(local_value_id)
                 .unwrap_or(&Type::Error),
-            AirValueId::Global(global_value_id) => {
-                let Some(AirStaticValue::Function(function_id)) = self.statics.get(global_value_id)
-                else {
-                    return Type::Error;
-                };
-                let function = self.functions[function_id];
-                Type::FunctionItem(function)
-            }
-            AirValueId::Intrinsic(intrinsic) => intrinsic.r#type(&mut self.ty_ctx),
+            AirValueId::Global(global_value_id) => match self.statics.get(global_value_id) {
+                Some(AirStaticValue::ExternFunction(ty)) => Type::FunctionItem(*ty),
+                Some(AirStaticValue::Function(function_id)) => {
+                    Type::FunctionItem(self.functions[function_id])
+                }
+                None => Type::Error,
+            },
         }
     }
 
@@ -837,16 +835,6 @@ impl Typechecker {
         match call.function.r#type.computed() {
             Type::FunctionItem(function_type) => {
                 self.typecheck_call_to_function_item(id, call, function_type, expected)
-            }
-            Type::Intrinsic(intrinsic_type) => {
-                // Intrinsics don't have generic arguments
-                call.generic_arguments = AirGenericArguments::Computed(Vec::new());
-                self.typecheck_call_to_intrinsic(
-                    id,
-                    self.ty_ctx.get(intrinsic_type).intrinsic,
-                    &mut call.arguments,
-                    expected,
-                )
             }
             other => {
                 self.diagnostics.add(id, ExpectedFunction { got: other });
@@ -933,283 +921,6 @@ impl Typechecker {
         call.generic_arguments = AirGenericArguments::Computed(inferred_args);
 
         result
-    }
-
-    /// Handles both inference and checking because I am lazy
-    fn typecheck_call_to_intrinsic(
-        &mut self,
-        id: SyntaxId,
-        intrinsic: Intrinsic,
-        arguments: &mut [AirExpression],
-        expected: Option<MaybeBounded>,
-    ) -> Type {
-        match intrinsic {
-            Intrinsic::Print => self.typecheck_intrinsic_print(id, arguments),
-            Intrinsic::UnsafeTransmute => {
-                self.typecheck_intrinsic_transmute(id, arguments, expected)
-            }
-            Intrinsic::Cast => self.typecheck_intrinsic_cast(id, arguments, expected),
-            Intrinsic::ArrayOf => match expected {
-                Some(expected) => self.check_intrinsic_array_of(id, arguments, expected),
-                None => self.infer_intrinsic_array_of(id, arguments),
-            },
-            Intrinsic::ArrayOfZeros => {
-                self.typecheck_intrinsic_array_of_zeros(id, arguments, expected)
-            }
-            Intrinsic::ArrayGet => self.typecheck_intrinsic_array_get(id, arguments, expected),
-            Intrinsic::ArraySet => self.typecheck_intrinsic_array_set(id, arguments),
-            Intrinsic::ArrayLen => self.typecheck_intrinsic_array_len(id, arguments),
-        }
-    }
-
-    fn typecheck_intrinsic_print(&mut self, id: SyntaxId, arguments: &mut [AirExpression]) -> Type {
-        let [first] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 1,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return self.ty_ctx.unit_type();
-        };
-        self.infer_expression(first);
-        self.ty_ctx.unit_type()
-    }
-
-    fn typecheck_intrinsic_transmute(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-        expected: Option<MaybeBounded>,
-    ) -> Type {
-        let [value] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 1,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return Type::Error;
-        };
-        self.infer_expression(value);
-        let Some(expected) = expected.and_then(|it| it.as_type()) else {
-            self.diagnostics.add(id, InferenceFailed);
-            return Type::Error;
-        };
-
-        expected
-    }
-
-    fn typecheck_intrinsic_cast(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-        expected: Option<MaybeBounded>,
-    ) -> Type {
-        let Some(MaybeBounded::Type(expected)) = expected else {
-            self.diagnostics.add(id, InferenceFailed);
-            return Type::Error;
-        };
-
-        let [value] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 1,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return expected;
-        };
-
-        self.infer_expression(value);
-        let received = value.r#type.computed();
-
-        if !matches!(
-            (received, expected),
-            (Type::I32 | Type::Bool, Type::I64) | (Type::I64 | Type::Bool, Type::I32),
-        ) {
-            self.diagnostics.add(
-                id,
-                InvalidCast {
-                    from: received,
-                    to: expected,
-                },
-            );
-        }
-
-        expected
-    }
-
-    fn check_intrinsic_array_of(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-        expected: MaybeBounded,
-    ) -> Type {
-        let Some(expected) = expected.as_type() else {
-            return self.infer_intrinsic_array_of(id, arguments);
-        };
-        let TypeView::Array(array) = expected.as_view(&self.ty_ctx) else {
-            let array_type = self.ty_ctx.array_bound_of(Bound::Top);
-            self.diagnostics.add(
-                id,
-                TypeMismatch {
-                    expected: MaybeBounded::Bounded(array_type),
-                    got: expected,
-                },
-            );
-            return self.ty_ctx.array_of(Type::Error);
-        };
-        let element_type = array.element_type;
-        for argument in arguments {
-            self.check_expression(argument, element_type.as_bounded());
-        }
-        expected
-    }
-
-    fn infer_intrinsic_array_of(&mut self, id: SyntaxId, arguments: &mut [AirExpression]) -> Type {
-        let [first, rest @ ..] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 1,
-                    got: 0,
-                    parameter_def: None,
-                },
-            );
-            return Type::Error;
-        };
-
-        self.infer_expression(first);
-        let element_type = first.r#type.computed();
-
-        for argument in rest {
-            self.check_expression(argument, element_type.as_bounded());
-        }
-
-        self.ty_ctx.array_of(element_type)
-    }
-
-    fn typecheck_intrinsic_array_of_zeros(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-        expected: Option<MaybeBounded>,
-    ) -> Type {
-        let [count] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 1,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return self.ty_ctx.array_of(Type::Error);
-        };
-
-        self.check_expression(count, Type::I32.as_bounded());
-
-        let Some(expected) = expected.and_then(|it| it.as_type()) else {
-            self.diagnostics.add(id, InferenceFailed);
-            return self.ty_ctx.array_of(Type::Error);
-        };
-        let any_array = self.ty_ctx.array_bound_of(Bound::Top);
-        self.expect_type_at(id, expected, any_array.as_bounded());
-        expected
-    }
-
-    fn typecheck_intrinsic_array_get(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-        expected: Option<MaybeBounded>,
-    ) -> Type {
-        let [array, index] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 2,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return Type::Error;
-        };
-
-        let element_bound = expected.unwrap_or(Bound::Top.as_bounded());
-        let expected_bound = match element_bound {
-            MaybeBounded::Bounded(bound) => self.ty_ctx.array_bound_of(bound).as_bounded(),
-            MaybeBounded::Type(ty) => self.ty_ctx.array_of(ty).as_bounded(),
-        };
-        self.check_expression(array, expected_bound);
-        self.check_expression(index, Type::I32.as_bounded());
-
-        let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
-            return Type::Error;
-        };
-
-        array_type.element_type
-    }
-
-    fn typecheck_intrinsic_array_set(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-    ) -> Type {
-        let [array, index, value] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 3,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return Type::Error;
-        };
-
-        let expected_bound = self.ty_ctx.array_bound_of(Bound::Top);
-        self.check_expression(array, expected_bound.as_bounded());
-        self.check_expression(index, Type::I32.as_bounded());
-
-        let TypeView::Array(array_type) = array.r#type.as_view(&self.ty_ctx) else {
-            return Type::Error;
-        };
-        let element_type = array_type.element_type;
-
-        self.check_expression(value, element_type.as_bounded());
-
-        self.ty_ctx.unit_type()
-    }
-
-    fn typecheck_intrinsic_array_len(
-        &mut self,
-        id: SyntaxId,
-        arguments: &mut [AirExpression],
-    ) -> Type {
-        let [array] = arguments else {
-            self.diagnostics.add(
-                id,
-                MismatchedArgumentCount {
-                    expected: 1,
-                    got: arguments.len(),
-                    parameter_def: None,
-                },
-            );
-            return Type::I32;
-        };
-
-        let expected_bound = self.ty_ctx.array_bound_of(Bound::Top);
-        self.check_expression(array, expected_bound.as_bounded());
-
-        Type::I32
     }
 }
 

@@ -6,7 +6,7 @@ use crate::{
             data::{
                 Accessor, AirBlock, AirBlockFinalizer, AirBlockId, AirConstant, AirExpression,
                 AirExpressionKind, AirLocalValueId, AirNode, AirNodeKind, AirPlace, AirPlaceKind,
-                AirValueId, Assignment, BinaryOperation, Call, CallKind, ExternFunctionKind,
+                AirValueId, Assignment, BinaryOperation, Call, ExternFunctionKind,
                 FunctionReference, Intrinsic, UnaryOperator, Update,
             },
             typecheck::types::TypeView,
@@ -629,8 +629,8 @@ impl FunctionGenerator<'_> {
                     self.assembler.add(Instruction::Load(variable_id));
                 }
             }
-            AirValueId::Intrinsic(_) | AirValueId::Global(_) => {
-                // Intrinsic functions and globals have no run time representation
+            AirValueId::Global(_) => {
+                // globals have no run time representation
                 // so nothing needs to be loaded
             }
         };
@@ -691,65 +691,67 @@ impl FunctionGenerator<'_> {
         self.generate_expression(&call.function);
 
         let function_type = call.function_type(self.parent.ty_ctx());
-        match function_type {
-            CallKind::Intrinsic(intrinsic) => {
-                self.generate_intrinsic_call(expression_type, intrinsic.intrinsic, &call.arguments)
+        match &function_type.reference {
+            FunctionReference::UserDefined(function_id) => {
+                for argument in &call.arguments {
+                    self.generate_expression(argument);
+                }
+
+                let generated_name = self.repr_ctx.get_method_name(
+                    self.parent.input_files,
+                    &self.parent.air.globals.functions[function_id],
+                    *function_id,
+                );
+                let method_descriptor = self.repr_ctx.get_method_descriptor(function_type);
+                self.assembler.add(Instruction::InvokeStatic {
+                    class_name: self.parent.class_name.clone(),
+                    name: generated_name.into(),
+                    method_descriptor: method_descriptor.clone(),
+                });
             }
-            CallKind::FunctionItem(function_item) => match &function_item.reference {
-                FunctionReference::UserDefined(function_id) => {
-                    for argument in &call.arguments {
-                        self.generate_expression(argument);
-                    }
-
-                    let generated_name = self.repr_ctx.get_method_name(
-                        self.parent.input_files,
-                        &self.parent.air.globals.functions[function_id],
-                        *function_id,
-                    );
-                    let method_descriptor = self.repr_ctx.get_method_descriptor(function_item);
-                    self.assembler.add(Instruction::InvokeStatic {
-                        class_name: self.parent.class_name.clone(),
-                        name: generated_name.into(),
-                        method_descriptor: method_descriptor.clone(),
-                    });
+            FunctionReference::Extern {
+                kind: ExternFunctionKind::Intrinsic(intrinsic),
+                ..
+            } => self.generate_intrinsic_call(expression_type, *intrinsic, &call.arguments),
+            FunctionReference::Extern {
+                parent,
+                extern_name,
+                kind,
+                ..
+            } => {
+                for argument in &call.arguments {
+                    self.generate_expression(argument);
                 }
-                FunctionReference::Extern {
-                    parent,
-                    extern_name,
-                    kind,
-                    ..
-                } => {
-                    for argument in &call.arguments {
-                        self.generate_expression(argument);
+
+                // parent should also be some, because the java extern target is configured to prevent extern functions
+                let parent = parent.expect("Java does not support free standing methods");
+                // Extern functions cannot be generic right now
+                let method_descriptor = self.repr_ctx.get_method_descriptor(function_type);
+                let Some(Representation::Object(class_name)) = self
+                    .repr_ctx
+                    .get_representation(parent.as_view(self.parent.ty_ctx()))
+                else {
+                    panic!("Extern function should be member of an object");
+                };
+
+                match kind {
+                    ExternFunctionKind::Method => {
+                        self.assembler.add(Instruction::InvokeVirtual {
+                            class_name,
+                            name: extern_name.clone(),
+                            method_descriptor,
+                        });
                     }
-
-                    // Extern functions cannot be generic right now
-                    let method_descriptor = self.repr_ctx.get_method_descriptor(function_item);
-                    let Some(Representation::Object(class_name)) = self
-                        .repr_ctx
-                        .get_representation(parent.as_view(self.parent.ty_ctx()))
-                    else {
-                        panic!("Extern function should be member of an object");
-                    };
-
-                    match kind {
-                        ExternFunctionKind::Method => {
-                            self.assembler.add(Instruction::InvokeVirtual {
-                                class_name,
-                                name: extern_name.clone(),
-                                method_descriptor,
-                            });
-                        }
-                        ExternFunctionKind::Static => {
-                            self.assembler.add(Instruction::InvokeStatic {
-                                class_name,
-                                name: extern_name.clone(),
-                                method_descriptor,
-                            })
-                        }
+                    ExternFunctionKind::Static => self.assembler.add(Instruction::InvokeStatic {
+                        class_name,
+                        name: extern_name.clone(),
+                        method_descriptor,
+                    }),
+                    ExternFunctionKind::Intrinsic(_) => {
+                        unreachable!("Should always be handled by the branch above")
                     }
                 }
-            },
+            }
         }
     }
 
@@ -764,8 +766,7 @@ impl FunctionGenerator<'_> {
             Intrinsic::UnsafeTransmute => {
                 self.generate_intrinsic_unsafe_transmute(r#type, arguments)
             }
-            Intrinsic::Cast => self.generate_intrinsic_cast(r#type, arguments),
-            Intrinsic::ArrayOf => self.generate_intrinsic_array_of(r#type, arguments),
+            Intrinsic::UnsafeCast => self.generate_intrinsic_cast(r#type, arguments),
             Intrinsic::ArrayOfZeros => self.generate_intrinsic_array_of_zeros(arguments, r#type),
             Intrinsic::ArrayGet => self.generate_intrinsic_array_get(arguments),
             Intrinsic::ArraySet => self.generate_intrinsic_array_set(arguments),
@@ -865,36 +866,6 @@ impl FunctionGenerator<'_> {
             (Representation::Boolean, Representation::Integer) => {}
             (Representation::Integer | Representation::Long, Representation::Boolean) => todo!(),
             other => unreachable!("Invalid cast {other:?}"),
-        }
-    }
-
-    fn generate_intrinsic_array_of(&mut self, r#type: TypeView, arguments: &[AirExpression]) {
-        let TypeView::Array(array_type) = r#type else {
-            unreachable!("Return type should be an array type");
-        };
-        let repr = self.repr_ctx.get_representation(array_type.element());
-
-        match repr {
-            Some(repr) => {
-                self.assembler.add(Instruction::LoadConstant {
-                    value: ConstantValue::Integer(arguments.len().try_into().unwrap()),
-                });
-                self.assembler.add(Instruction::NewArray(repr.clone()));
-
-                for (index, argument) in arguments.iter().enumerate() {
-                    self.assembler
-                        .add(Instruction::Dup(class::TypeCategory::Normal));
-                    self.assembler.add(Instruction::LoadConstant {
-                        value: ConstantValue::Integer(index.try_into().unwrap()),
-                    });
-                    let actual_repr = self.generate_expression(argument);
-                    assert_eq!(actual_repr.as_ref(), Some(&repr));
-                    self.assembler.add(Instruction::ArrayStore(repr.clone()));
-                }
-            }
-            None => unimplemented!(
-                "Decide how to represent arrays of zero sized types. Maybe just use an int?"
-            ),
         }
     }
 

@@ -66,7 +66,7 @@ syntax_tree:
 |||||||||||BracketClose `]`
 |||||||||||Whitespace ` `
 ||||||||||194..222 ExternTypeBodyItemKind
-|||||||||||194..222 ExternTypeFunction
+|||||||||||194..222 ExternFunction
 ||||||||||||KeywordFn `fn`
 ||||||||||||Whitespace ` `
 ||||||||||||Identifier `baz`
@@ -99,7 +99,7 @@ syntax_tree:
 |||||||||||BracketClose `]`
 |||||||||||Whitespace ` `
 ||||||||||255..273 ExternTypeBodyItemKind
-|||||||||||255..273 ExternTypeFunction
+|||||||||||255..273 ExternFunction
 ||||||||||||KeywordStatic `static`
 ||||||||||||Whitespace ` `
 ||||||||||||KeywordFn `fn`

@@ -113,6 +113,18 @@ diag! {
 
 diag! {
     #[level(DiagnosticLevel::Error)]
+    #[code("Extern types are not supported by this extern target")]
+    pub struct UnsupportedExternTargetType;
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
+    #[code("Extern functions are not supported by this extern target")]
+    pub struct UnsupportedExternTargetFunction;
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
     #[code("Extern type requires metadata")]
     #[help("Add metadata before to declare its extern name `[\"extern_name\"]`")]
     pub struct ExternTypeRequiresMetadata;

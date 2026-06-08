@@ -68,6 +68,7 @@ impl Analyzer {
                 DisplayOptions {
                     use_color: false,
                     write_debug_info: false,
+                    filter_diagnostics: true,
                 },
             )
             .displays

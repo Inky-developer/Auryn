@@ -13,6 +13,7 @@ use crate::auryn::{
 
 pub mod ast_transformer;
 pub mod data;
+pub mod extern_target;
 pub mod namespace;
 pub mod typecheck;
 pub mod unresolved_type;

@@ -12,6 +12,7 @@ use crate::{
         },
         syntax_id::{SpanExt, Spanned},
     },
+    types::FunctionItemType,
 };
 
 /// Represents a type that was defined by the user.
@@ -19,6 +20,7 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UserDefinedTypeId {
     Extern(TypeId<ExternType>),
+    ExternFunction(TypeId<FunctionItemType>),
     Module(TypeId<ModuleType>),
     Struct(TypeId<StructType>),
     TypeAlias(TypeAliasId),

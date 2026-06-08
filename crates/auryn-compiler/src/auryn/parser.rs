@@ -519,6 +519,7 @@ impl Parser<'_> {
         let inner = self.push_node();
         match self.peek().kind {
             TokenKind::KeywordType => self.parse_extern_type()?,
+            TokenKind::KeywordFn => self.parse_extern_function()?,
             _ => {
                 let got = self.peek().text.into();
                 self.push_error(ExpectedExternItem { got });
@@ -600,19 +601,30 @@ impl Parser<'_> {
     fn parse_extern_type_body_function(&mut self) -> ParseResult {
         let watcher = self.push_node();
 
+        // TODO: Stop supporting this and make function static if they don't take a self parameter
         if self.peek().kind == TokenKind::KeywordStatic {
             self.consume();
         }
 
         self.expect(TokenKind::KeywordFn)?;
         self.expect(TokenKind::Identifier)?;
+        if self.peek().kind == TokenKind::BracketOpen {
+            self.parse_recoverable(
+                bitset![TokenKind::Arrow, TokenKind::BraceOpen],
+                Self::parse_generic_parameter_list,
+            )?;
+        }
         self.parse_parameter_list()?;
         if self.peek().kind == TokenKind::Arrow {
             self.parse_return_type()?;
         }
 
-        self.finish_node(watcher, SyntaxNodeKind::ExternTypeFunction);
+        self.finish_node(watcher, SyntaxNodeKind::ExternFunction);
         Ok(())
+    }
+
+    fn parse_extern_function(&mut self) -> ParseResult {
+        self.parse_extern_type_body_function()
     }
 
     fn parse_extern_item_metadata(&mut self) -> ParseResult {
@@ -1093,10 +1105,7 @@ impl Parser<'_> {
     ) -> ParseResult<ParserFrameWatcher> {
         self.parse_value_or_postfix()?;
 
-        loop {
-            let Some(operator) = self.peek().kind.to_binary_operator() else {
-                break;
-            };
+        while let Some(operator) = self.peek().kind.to_binary_operator() {
             let binding_power = operator.binding_power();
             if binding_power <= min_binding_power {
                 break;
@@ -1515,6 +1524,14 @@ mod tests {
                     ["out"]
                     static let out: Foo
                 }
+            }
+            "#
+        ));
+        insta::assert_debug_snapshot!(verify(
+            r#"
+            unsafe extern "intrinsic" {
+                ["foo"]
+                fn foo()
             }
             "#
         ));
