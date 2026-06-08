@@ -29,7 +29,7 @@ pub fn query_air<'a>(
         .map(|file| (file.name.clone(), AirModuleId(file.file_id)));
     for input_file in input_files.clone() {
         let ast = query_ast(input_file.syntax_tree());
-        let output = query_globals(ast, included_modules.clone());
+        let output = query_globals(ast, input_file.flags, included_modules.clone());
         diagnostics.extend(output.diagnostics.take());
         globals.merge(output.globals);
 
@@ -55,6 +55,7 @@ mod tests {
         input_files::InputFiles,
         syntax_id::FileId,
     };
+    use stdx::default;
 
     #[track_caller]
     fn compile_wrapped(input: &str) -> (Air, Diagnostics) {
@@ -65,7 +66,7 @@ mod tests {
     #[track_caller]
     fn compile(input: &str) -> (Air, Diagnostics) {
         let mut input_files = InputFiles::default();
-        input_files.add("main".into(), input.into());
+        input_files.add("main".into(), input.into(), default());
         let syntax_tree = input_files.get(FileId::MAIN_FILE).syntax_tree();
         let diagnostics = syntax_tree.collect_diagnostics();
         if !diagnostics.is_empty() {

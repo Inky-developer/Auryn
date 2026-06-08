@@ -30,12 +30,13 @@ use crate::auryn::{
     diagnostics::{
         diagnostic::Diagnostics,
         errors::{
-            BreakOutsideLoop, ContinueOutsideLoop, ExternTypeRequiresMetadata,
-            ImmutableVariableUpdate, InvalidNumber, InvalidPlace, RedefinedFunction,
-            UndefinedVariable, UnexpectedExternTarget, UnsupportedAttribute,
+            BreakOutsideLoop, ContinueOutsideLoop, ExternTargetRequiresPrivileges,
+            ExternTypeRequiresMetadata, ImmutableVariableUpdate, InvalidNumber, InvalidPlace,
+            RedefinedFunction, UndefinedVariable, UnexpectedExternTarget, UnsupportedAttribute,
             UnsupportedExternTargetFunction, UnsupportedExternTargetType,
         },
     },
+    input_files::InputFileFlags,
     syntax_id::{SpanExt, Spanned, SyntaxId},
     syntax_tree::SyntaxToken,
 };
@@ -49,9 +50,10 @@ pub struct TransformerOutput {
 
 pub fn query_globals(
     ast: Root,
+    flags: InputFileFlags,
     included_modules: impl IntoIterator<Item = (SmallString, AirModuleId)>,
 ) -> TransformerOutput {
-    let mut transformer = AstTransformer::new(Namespace::new_with_modules(included_modules));
+    let mut transformer = AstTransformer::new(Namespace::new_with_modules(included_modules), flags);
     transformer.transform_root(ast);
     TransformerOutput {
         globals: transformer.globals,
@@ -65,14 +67,16 @@ struct AstTransformer {
     globals: UnresolvedGlobals,
     namespace: Namespace,
     diagnostics: Diagnostics,
+    flags: InputFileFlags,
 }
 
 impl AstTransformer {
-    fn new(namespace: Namespace) -> Self {
+    fn new(namespace: Namespace, flags: InputFileFlags) -> Self {
         Self {
             namespace,
             globals: default(),
             diagnostics: default(),
+            flags,
         }
     }
 
@@ -210,6 +214,10 @@ impl AstTransformer {
         if matches!(target, ExternTarget::Unknown) {
             let id = block.extern_target().map_or(block.id(), |it| it.id);
             self.diagnostics.add(id, UnexpectedExternTarget);
+        }
+        if target.requires_privileges() && !matches!(self.flags, InputFileFlags::Privileged) {
+            let id = block.extern_target().map_or(block.id(), |it| it.id);
+            self.diagnostics.add(id, ExternTargetRequiresPrivileges);
         }
         for item in block.items() {
             self.transform_extern_block_item(target, item);

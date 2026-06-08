@@ -113,6 +113,12 @@ diag! {
 
 diag! {
     #[level(DiagnosticLevel::Error)]
+    #[code("This extern target is an implementation detail and should not be used directly")]
+    pub struct ExternTargetRequiresPrivileges;
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
     #[code("Extern types are not supported by this extern target")]
     pub struct UnsupportedExternTargetType;
 }

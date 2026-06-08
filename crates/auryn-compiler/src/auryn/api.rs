@@ -21,6 +21,7 @@ use crate::{
     diagnostics::DisplayOptions,
 };
 
+use crate::auryn::std::load_std;
 pub use crate::auryn::{
     air::data::Air,
     environment::{Environment, FilesystemEnvironment, ProjectTree},
@@ -151,7 +152,8 @@ fn compile(
     main_file: &str,
     environment: &mut impl Environment,
 ) -> Result<CodegenOutput, AurynError> {
-    let mut world = World::new(environment.load_project(), main_file)?;
+    let std = load_std();
+    let mut world = World::new(environment.load_project(), main_file, std)?;
 
     let (mut air, diagnostics) = world.query_air();
     if !diagnostics.is_empty() {

@@ -4,7 +4,7 @@ use crate::{
         air::{data::Air, query_air},
         api::AurynError,
         diagnostics::diagnostic::Diagnostics,
-        input_files::InputFiles,
+        input_files::{InputFileFlags, InputFiles},
     },
 };
 
@@ -14,8 +14,13 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(project_tree: ProjectTree, main_file: &str) -> Result<Self, AurynError> {
-        let input_files = InputFiles::new(project_tree, main_file)?;
+    pub fn new(
+        project_tree: ProjectTree,
+        main_file: &str,
+        std_library_source: Box<str>,
+    ) -> Result<Self, AurynError> {
+        let mut input_files = InputFiles::new(project_tree, main_file)?;
+        input_files.add("std".into(), std_library_source, InputFileFlags::Privileged);
 
         Ok(Self { input_files })
     }

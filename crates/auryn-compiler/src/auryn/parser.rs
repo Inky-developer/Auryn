@@ -1333,7 +1333,7 @@ mod tests {
         diagnostics::DisplayOptions,
     };
     use std::fmt::Debug;
-    use stdx::bitset;
+    use stdx::{bitset, default};
 
     struct AnnotatedParserOutput {
         diagnostics: Vec<Diagnostic>,
@@ -1361,7 +1361,7 @@ mod tests {
 
     fn verify_with(input: &str, parse_fn: impl FnOnce(Parser) -> ParserOutput) -> impl Debug {
         let mut input_files = InputFiles::default();
-        input_files.add("main".into(), input.into());
+        input_files.add("main".into(), input.into(), default());
 
         let output = parse_fn(Parser::new(
             FileId::MAIN_FILE,

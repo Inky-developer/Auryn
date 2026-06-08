@@ -21,6 +21,10 @@ unsafe extern "intrinsics" {
 	fn arrayLen[T](array: []T) -> I32
 }
 
+// ---------------------
+// Safe APIs for casting
+// ---------------------
+
 fn i32ToI64(value: I32) -> I64 {
     return unsafeCast(value)
 }
@@ -35,4 +39,20 @@ fn i64ToI32(value: I64) -> I32 {
 
 fn boolToI32(value: Bool) -> I32 {
     return unsafeCast(value)
+}
+
+// -------------
+// Array helpers
+// -------------
+
+fn ([]T) get[T](self, index: I32) -> T{
+    return arrayGet(self, index)
+}
+
+fn ([]T) set[T](self, index: I32, value: T) {
+    return arraySet(self, index, value)
+}
+
+fn ([]T) len[T](self) -> I32 {
+    return arrayLen(self)
 }

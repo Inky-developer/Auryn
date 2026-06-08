@@ -11,21 +11,42 @@ use crate::auryn::{
     syntax_tree::SyntaxTree,
 };
 
+/// What an input file is allowed to do.
+/// If it is [`InputFileFlags::Privileged`], it is allowed to use the `extern "intrinsics"` api.
+/// This is used in the implementation of the standard library.
+#[derive(Debug, Default, Clone, Copy)]
+pub enum InputFileFlags {
+    #[default]
+    Default,
+    Privileged,
+}
+
 #[derive(Debug)]
 pub struct InputFile {
     pub name: SmallString,
     pub source: Box<str>,
     pub file_id: FileId,
     pub parser_output: OnceCell<ParserOutput>,
+    pub flags: InputFileFlags,
 }
 
 impl InputFile {
     pub fn new(file_id: FileId, name: SmallString, source: Box<str>) -> Self {
+        Self::with_flags(file_id, name, source, default())
+    }
+
+    pub fn with_flags(
+        file_id: FileId,
+        name: SmallString,
+        source: Box<str>,
+        flags: InputFileFlags,
+    ) -> Self {
         Self {
             file_id,
             name,
             source,
             parser_output: OnceCell::new(),
+            flags,
         }
     }
 
@@ -56,20 +77,20 @@ impl InputFiles {
             .source_files
             .remove_entry(main_file)
             .ok_or_else(|| AurynError::MainFileDoesNotExist(main_file.to_string()))?;
-        this.add(main_name, main_contents);
+        this.add(main_name, main_contents, default());
 
         for (name, contents) in project_tree.source_files {
-            this.add(name, contents);
+            this.add(name, contents, default());
         }
 
         Ok(this)
     }
 
-    pub fn add(&mut self, name: SmallString, source: Box<str>) -> FileId {
+    pub fn add(&mut self, name: SmallString, source: Box<str>, flags: InputFileFlags) -> FileId {
         let file_id = FileId::new(self.file_id_counter).expect("Could not create file id");
         self.file_name_to_id.insert(name.clone(), file_id);
         self.data
-            .insert(file_id, InputFile::new(file_id, name, source));
+            .insert(file_id, InputFile::with_flags(file_id, name, source, flags));
         self.file_id_counter = self.file_id_counter.checked_add(1).unwrap();
         file_id
     }
@@ -88,6 +109,7 @@ impl InputFiles {
             source,
             file_id: _,
             parser_output,
+            flags: _,
         } = self.data.get_mut(&file_id).expect("Invalid file id");
         *source = new_content;
         *parser_output = default();

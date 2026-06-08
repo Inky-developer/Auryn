@@ -33,6 +33,14 @@ impl ExternTarget {
             Intrinsic | Unknown => true,
         }
     }
+
+    pub fn requires_privileges(&self) -> bool {
+        use ExternTarget::*;
+        match self {
+            Intrinsic => true,
+            Java | Unknown => false,
+        }
+    }
 }
 
 impl ExternTarget {

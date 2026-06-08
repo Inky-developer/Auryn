@@ -7,6 +7,7 @@ pub mod environment;
 pub mod input_files;
 pub mod monomorphization;
 pub mod parser;
+pub mod std;
 pub mod syntax_id;
 pub mod syntax_tree;
 pub mod tokenizer;

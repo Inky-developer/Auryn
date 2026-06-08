@@ -38,7 +38,7 @@ impl Analyzer {
             } else {
                 fallback_main
             };
-            World::new(project_tree, main_file).unwrap()
+            World::new(project_tree, main_file, default()).unwrap()
         };
         Self {
             world,
