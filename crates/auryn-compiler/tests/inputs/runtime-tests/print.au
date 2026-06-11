@@ -5,16 +5,22 @@
 
 fn main() {
 	let a: {a: I32, b: I32, c: Bool, d: String, e: {a: I64, b: I64}} = {a: 40, b: 5, c: false, d: "Hi", e: {a: 0, b: 1}} 
-	print(a)
+	std.print(a)
 
-	let array: []I32 = arrayOf(1, 2, 3, 4)
-	print({array: array})
+	let array: []I32 = std.arrayOfZeros(4)
+	array.set(0, 1)
+	array.set(1, 2)
+	array.set(2, 3)
+	array.set(3, 4)
+	std.print({array: array})
 
-	let nested_array: [][]I32 = arrayOfZeros(5)
+	let nested_array: [][]I32 = std.arrayOfZeros(5)
 	let i: I32 = 0
-	while i < arrayLen(nested_array) {
-		arraySet(nested_array, i, arrayOf(i))
+	while i < nested_array.len() {
+		let inner: []I32 = std.arrayOfZeros(1)
+		inner.set(0, i)
+		nested_array.set(i, inner)
 		i += 1
 	}
-	print(nested_array)
+	std.print(nested_array)
 }

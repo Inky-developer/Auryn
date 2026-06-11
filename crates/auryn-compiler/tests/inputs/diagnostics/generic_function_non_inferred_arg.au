@@ -3,5 +3,5 @@ fn main() {
 }
 
 fn foo[T]() {
-	print("Foo")
+	std.print("Foo")
 }

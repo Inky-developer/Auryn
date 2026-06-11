@@ -2,5 +2,5 @@
 // Hello, World
 
 fn main() {
-	print({a: "Hello, World"}.a)
+	std.print({a: "Hello, World"}.a)
 }

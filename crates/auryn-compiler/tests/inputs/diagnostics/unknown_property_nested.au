@@ -13,5 +13,5 @@ unsafe extern "java" {
 }
 
 fn main() {
-	print(Foo.bar.oops)
+	std.print(Foo.bar.oops)
 }

@@ -1,14 +1,18 @@
 ---
 source: crates/auryn-compiler/tests/diagnostic_tests.rs
-expression: "fn main() {\n\tlet a = arrayOfZeros(50)\n}\n"
+expression: "fn main() {\n\tlet a = std.arrayOfZeros(50)\n}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/inference_failure.au
 ---
-Error: Could not infer type
-   ╭─[ main:2:10 ]
-   │
- 2 │     let a = arrayOfZeros(50)
-   │             ────────┬───────  
-   │                     ╰───────── Could not infer the type of this expression
-   │ 
-   │ Help: Try annotating the expression: `let val: ExpectedType = ...`
-───╯
+Error: Non-inferred generic type argument
+    ╭─[ main:2:10 ]
+    │
+  2 │     let a = std.arrayOfZeros(50)
+    │             ──────────┬─────────  
+    │                       ╰─────────── Could not infer the generic type argument `T`
+    │
+    ├─[ std:12:18 ]
+    │
+ 12 │     fn arrayOfZeros[T](n: I32) -> []T
+    │                     ┬  
+    │                     ╰── The argument is defined here
+────╯

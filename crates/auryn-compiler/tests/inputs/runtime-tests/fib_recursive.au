@@ -13,7 +13,7 @@
 fn main() {
 	let i: I32 = 0
 	loop {
-		print(fib(i))
+		std.print(fib(i))
 		i += 1
 
 		if i > 9 {

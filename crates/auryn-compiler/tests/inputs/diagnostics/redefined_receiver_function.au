@@ -1,9 +1,9 @@
 fn (I32) foo(self) {
-	print("Foo")
+	std.print("Foo")
 }
 
 fn (I32) foo(self) {
-	print("Bar")
+	std.print("Bar")
 }
 
 fn main() {

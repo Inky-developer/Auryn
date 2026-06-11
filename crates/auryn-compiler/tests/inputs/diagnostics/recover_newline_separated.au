@@ -7,5 +7,5 @@ unsafe extern "java" {
 }
 
 fn main() {
-	print(Foo)
+	std.print(Foo)
 }

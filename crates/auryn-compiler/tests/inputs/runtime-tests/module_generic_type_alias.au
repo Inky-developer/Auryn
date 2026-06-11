@@ -12,7 +12,7 @@ fn main() {
 }
 
 fn test[T](val: foo.Foo[T]) {
-	print(val)
+	std.print(val)
 }
 
 // file: foo

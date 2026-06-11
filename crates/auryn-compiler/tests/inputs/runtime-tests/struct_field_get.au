@@ -7,5 +7,5 @@ struct Foo {
 
 fn main() {
 	let f = Foo { a: 42 }
-	print(f.a)
+	std.print(f.a)
 }

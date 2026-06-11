@@ -4,6 +4,6 @@ unsafe extern "java" {
 }
 
 fn main() {
-	let f: Foo = unsafeTransmute({test: "test"})
-	print(f)
+	let f: Foo = std.unsafeTransmute({test: "test"})
+	std.print(f)
 }

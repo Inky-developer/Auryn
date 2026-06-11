@@ -1,12 +1,12 @@
 ---
 source: crates/auryn-compiler/tests/diagnostic_tests.rs
-expression: "fn main() {\n\tprint = 1\n}\n"
+expression: "fn main() {\n\tfoo = 1\n}\n\nfn foo() {}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/invalid_update_intrinsic.au
 ---
 Error: Immutable variable
    ╭─[ main:2:2 ]
    │
- 2 │     print = 1
-   │     ───┬──  
-   │        ╰──── Cannot write to an immutable variable
+ 2 │     foo = 1
+   │     ──┬─  
+   │       ╰─── Cannot write to an immutable variable
 ───╯

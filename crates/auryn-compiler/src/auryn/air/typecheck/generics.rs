@@ -7,7 +7,7 @@ use crate::auryn::{
         types::{GenericId, GenericType, StructuralType, Type, TypeView},
     },
     diagnostics::{diagnostic::Diagnostics, errors::MismatchedTypeInference},
-    syntax_id::{Spanned, SyntaxId},
+    syntax_id::{SpanExt, Spanned, SyntaxId},
 };
 
 #[derive(Debug)]
@@ -20,6 +20,7 @@ pub enum GenericInferenceError {
 }
 
 impl GenericInferenceError {
+    #[track_caller]
     pub fn write(self, syntax_id: SyntaxId, diagnostics: &mut Diagnostics) {
         match self {
             GenericInferenceError::MultipleInference {
@@ -177,7 +178,7 @@ impl GenericInference {
             && existing_inference != received
         {
             return Err(GenericInferenceError::MultipleInference {
-                generic_name: generic.ident.clone(),
+                generic_name: generic.ident.clone().with_span(generic.syntax_id),
                 first_inferred: existing_inference,
                 second_inferred: received,
             });

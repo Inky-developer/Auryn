@@ -1,4 +1,4 @@
 fn main() {
 	let a: I32 = foo()
-	print(a)
+	std.print(a)
 }

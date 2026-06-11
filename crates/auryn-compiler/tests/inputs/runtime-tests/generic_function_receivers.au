@@ -8,19 +8,18 @@ struct Foo[T] {
 }
 
 fn (Foo[T]) len[T](self) -> I32 {
-	return arrayLen(self.data)
+	return self.data.len()
 }
 
-fn ([]T) len[T](self) -> I32 {
-	return arrayLen(self)
-}
 
 fn main() {
-	let data = arrayOf("Hello", "World")
+    let data: []String = std.arrayOfZeros(2)
+    data.set(0, "Hello")
+    data.set(1, "World")
 
-	print(data.len())
+	std.print(data.len())
 
 	let foo = Foo { data: data }
-	print(foo)
-	print(foo.len())
+	std.print(foo)
+	std.print(foo.len())
 }

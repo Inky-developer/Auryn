@@ -34,6 +34,7 @@ use crate::auryn::{
             ExternTypeRequiresMetadata, ImmutableVariableUpdate, InvalidNumber, InvalidPlace,
             RedefinedFunction, UndefinedVariable, UnexpectedExternTarget, UnsupportedAttribute,
             UnsupportedExternTargetFunction, UnsupportedExternTargetType,
+            UnsupportedExternTargetTypeParameters,
         },
     },
     input_files::InputFileFlags,
@@ -368,7 +369,8 @@ impl AstTransformer {
             && !target.supports_type_parameters()
             && params.parameters().next().is_some()
         {
-            todo!("Throw error message");
+            self.diagnostics
+                .add(params.id(), UnsupportedExternTargetTypeParameters);
         }
         let (unresolved_function, _) = self.collect_function_signature(
             None,

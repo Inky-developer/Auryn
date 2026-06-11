@@ -7,16 +7,16 @@ struct A { a: I64, b: String }
 
 fn main() {
 	let a = A { b: getString(), a: getI64() }
-	print(a)
+	std.print(a)
 }
 
 fn getI64() -> I64 {
-	print("I64")
+	std.print("I64")
 	return 0
 }
 
 fn getString() -> String {
-	print("String")
+	std.print("String")
 	return "Handle this order"
 }
 

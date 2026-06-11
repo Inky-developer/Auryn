@@ -3,6 +3,6 @@
 // { a: true, b: false, c: Hi }
 
 fn main() {
-	print({a: 1, b: 2, c: 3})
-	print({a: true, b: false, c: "Hi"})
+	std.print({a: 1, b: 2, c: 3})
+	std.print({a: true, b: false, c: "Hi"})
 }

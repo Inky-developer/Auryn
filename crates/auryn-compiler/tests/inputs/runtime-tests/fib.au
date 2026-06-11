@@ -14,7 +14,7 @@ fn main() {
 	let a: I32 = 1
 	let b: I32 = 1
 	loop {
-		print(a)
+		std.print(a)
 		if a > 50 {
 			break
 		}

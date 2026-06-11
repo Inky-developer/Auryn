@@ -6,6 +6,6 @@ struct Foo[T] {
 }
 
 fn main() {
-	let f: Foo[Bool] = Foo { inner: arrayOfZeros(0) }
-	print(f)
+	let f: Foo[Bool] = Foo { inner: std.arrayOfZeros(0) }
+	std.print(f)
 }

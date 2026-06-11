@@ -11,43 +11,43 @@ struct List[T] {
 
 fn List_new[T]() -> List[T] {
 	return List {
-		items: arrayOfZeros(0),
+		items: std.arrayOfZeros(0),
 		len: 0
 	}
 }
 
 fn List_add[T](list: List[T], item: T) {
-	if list.len >= arrayLen(list.items) {
+	if list.len >= list.items.len() {
 		List_grow(list)
 	}
-	arraySet(list.items, list.len, item)
+	list.items.set(list.len, item)
 	list.len += 1
 }
 
 fn List_grow[T](list: List[T]) {
-	let new_capacity = arrayLen(list.items) * 2
+	let new_capacity = list.items.len() * 2
 	if new_capacity == 0 {
 		new_capacity = 4
 	}
 
 	let old_items = list.items
-	list.items = arrayOfZeros(new_capacity)
+	list.items = std.arrayOfZeros(new_capacity)
 	let i: I32 = 0
-	while i < arrayLen(old_items) {
-		arraySet(list.items, i, arrayGet(old_items, i))
+	while i < old_items.len() {
+		list.items.set(i, old_items.get(i))
 		i += 1
 	}
 }
 
 fn main() {
 	let l: List[String] = List_new()
-	print(l)
+	std.print(l)
 	List_add(l, "Hi!")
-	print(l)
+	std.print(l)
 	List_add(l, "World!")
-	print(l)
+	std.print(l)
 	List_add(l, "Foo")
 	List_add(l, "Bar")
 	List_add(l, "Baz")
-	print(l)
+	std.print(l)
 }

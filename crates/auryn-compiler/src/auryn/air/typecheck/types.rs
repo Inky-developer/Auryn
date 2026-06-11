@@ -517,14 +517,22 @@ pub struct GenericId(pub usize);
 pub struct GenericType {
     /// The id of this generic type in its defined scope
     pub id: GenericId,
-    pub ident: Spanned<SmallString>,
+    pub ident: SmallString,
+    // We store a separate [`SyntaxId`] instead of using the `Spanned` wrapper so
+    // that generic types defined at different locations are not collapsed into the same type,
+    // which would negatively impact diagnostics
+    pub syntax_id: SyntaxId,
 }
 
 impl TypeData for GenericType {
     type Storage = StructuralStorage<Self>;
 
     fn visit(&self, _: &mut impl FnMut(Type)) {
-        let Self { id: _, ident: _ } = self;
+        let Self {
+            id: _,
+            ident: _,
+            syntax_id: _,
+        } = self;
     }
 }
 
@@ -673,7 +681,7 @@ impl Display for TypeView<'_> {
             TypeView::Structural(structural_type) => Display::fmt(&structural_type, f),
             TypeView::TypeProducer(r#struct) => Display::fmt(r#struct.value, f),
             TypeView::Meta(meta_type) => Display::fmt(&meta_type, f),
-            TypeView::Generic(generic) => write!(f, "{}", generic.value.ident.value),
+            TypeView::Generic(generic) => write!(f, "{}", generic.value.ident),
             TypeView::Application(inner) => Display::fmt(&inner, f),
             TypeView::Error => f.write_str("<<Error>>"),
         }

@@ -19,7 +19,7 @@ fn parseColumn(lines: []String) {
 }
 
 fn main() {
-    parseColumn(arrayOfZeros(0))
-	print("No verification errors!")
+    parseColumn(std.arrayOfZeros(0))
+	std.print("No verification errors!")
 }
 

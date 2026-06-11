@@ -1,28 +1,24 @@
 ---
 source: crates/auryn-compiler/tests/diagnostic_tests.rs
-expression: "fn main() {\n\tfoo(arrayOf(\"a\", \"b\", \"c\"), arrayOf(false, true, true))\n}\n\nfn foo[T](first: []T, second: []T) {\n\tprint(first)\n\tprint(second)\n}\n"
+expression: "fn main() {\n\tlet a: []String = std.arrayOfZeros(0)\n\tlet b: []Bool= std.arrayOfZeros(0)\n\tfoo(a, b)\n}\n\nfn foo[T](first: []T, second: []T) {\n\tstd.print(first)\n\tstd.print(second)\n}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/generic_function_impossible_inference_2.au
 ---
 Error: Type mismatch
-   ╭─[ main:2:38 ]
+   ╭─[ main:4:9 ]
    │
- 2 │     foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
-   │                                         ──┬──  
-   │                                           ╰──── Expected `String`, but got `Bool`
+ 4 │     foo(a, b)
+   │            ┬  
+   │            ╰── Expected `[]String`, but got `[]Bool`
 ───╯
 
-Error: Type mismatch
-   ╭─[ main:2:45 ]
+Error: Mismatched inferred generic type
+   ╭─[ main:4:2 ]
    │
- 2 │     foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
-   │                                                ──┬─  
-   │                                                  ╰─── Expected `String`, but got `Bool`
-───╯
-
-Error: Type mismatch
-   ╭─[ main:2:51 ]
-   │
- 2 │     foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
-   │                                                      ──┬─  
-   │                                                        ╰─── Expected `String`, but got `Bool`
+ 4 │     foo(a, b)
+   │     ────┬────  
+   │         ╰────── Could not infer the generic type `T`
+   │ 
+ 7 │ fn foo[T](first: []T, second: []T) {
+   │        ┬  
+   │        ╰── This argument was first inferred to `String`, but later inferred to `Bool`, which are not compatible
 ───╯

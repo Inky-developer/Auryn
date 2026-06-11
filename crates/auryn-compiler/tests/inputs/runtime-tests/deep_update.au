@@ -4,7 +4,7 @@
 
 fn main() {
 	let value: {a: {b: {c: {d: I32}}}} = {a: {b: {c: {d: 5}}}}
-	print(value.a.b.c.d)
+	std.print(value.a.b.c.d)
 	value.a.b.c.d += 5
-	print(value.a.b.c.d)
+	std.print(value.a.b.c.d)
 }

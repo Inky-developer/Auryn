@@ -1,14 +1,32 @@
 ---
 source: crates/auryn-compiler/tests/diagnostic_tests.rs
-expression: "fn main() {\n\tlet a = arrayGet(arrayOfZeros(50), 25)\n}\n"
+expression: "fn main() {\n\tlet a = std.arrayGet(std.arrayOfZeros(50), 25)\n}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/inference_failure_nested_array_calls.au
 ---
-Error: Could not infer type
-   ╭─[ main:2:19 ]
-   │
- 2 │     let a = arrayGet(arrayOfZeros(50), 25)
-   │                      ────────┬───────  
-   │                              ╰───────── Could not infer the type of this expression
-   │ 
-   │ Help: Try annotating the expression: `let val: ExpectedType = ...`
-───╯
+Error: Non-inferred generic type argument
+    ╭─[ main:2:23 ]
+    │
+  2 │     let a = std.arrayGet(std.arrayOfZeros(50), 25)
+    │                          ──────────┬─────────  
+    │                                    ╰─────────── Could not infer the generic type argument `T`
+    │
+    ├─[ std:12:18 ]
+    │
+ 12 │     fn arrayOfZeros[T](n: I32) -> []T
+    │                     ┬  
+    │                     ╰── The argument is defined here
+────╯
+
+Error: Non-inferred generic type argument
+    ╭─[ main:2:10 ]
+    │
+  2 │     let a = std.arrayGet(std.arrayOfZeros(50), 25)
+    │             ───────────────────┬──────────────────  
+    │                                ╰──────────────────── Could not infer the generic type argument `T`
+    │
+    ├─[ std:15:14 ]
+    │
+ 15 │     fn arrayGet[T](array: []T, index: I32) -> T
+    │                 ┬  
+    │                 ╰── The argument is defined here
+────╯

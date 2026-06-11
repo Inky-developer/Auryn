@@ -1,0 +1,12 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "unsafe extern \"intrinsics\" {\n\n}"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/privileged_extern_target.au
+---
+Error: This extern target is an implementation detail and should not be used directly
+   ╭─[ main:1:15 ]
+   │
+ 1 │ unsafe extern "intrinsics" {
+   │               ──────┬─────  
+   │                     ╰─────── Here
+───╯

@@ -16,7 +16,7 @@ fn say_times(message: String, times: I32) {
 			break
 		}
 
-		print(message)
+		std.print(message)
 
 		i = i + 1
 	}

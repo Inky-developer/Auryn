@@ -5,10 +5,10 @@
 // true
 
 fn main() {
-	let arr: []Bool = arrayOfZeros(3)
-	print(arrayLen(arr))
-	print(arrayGet(arr, 1))
-	arraySet(arr, 1, true)
-	print(arrayGet(arr, 0))
-	print(arrayGet(arr, 1))
+	let arr: []Bool = std.arrayOfZeros(3)
+	std.print(arr.len())
+	std.print(arr.get(1))
+	arr.set(1, true)
+	std.print(arr.get(0))
+	std.print(arr.get(1))
 }

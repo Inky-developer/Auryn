@@ -215,16 +215,18 @@ mod tests {
 
     #[test]
     fn test_print() {
-        insta::assert_debug_snapshot!(generate_class_wrapped("print(2 * 3)"));
-        insta::assert_debug_snapshot!(generate_class_wrapped("print(print(\"Hallo, Welt!\"))"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("std.print(2 * 3)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            "std.print(std.print(\"Hallo, Welt!\"))"
+        ));
     }
 
     #[test]
     fn test_assignment() {
         insta::assert_debug_snapshot!(generate_class_wrapped("let a: I32 = 1"));
-        insta::assert_debug_snapshot!(generate_class_wrapped("let a: I32 = 1\nprint(a)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a: I32 = 1\nstd.print(a)"));
         insta::assert_debug_snapshot!(generate_class_wrapped(
-            "let a: I32 = 7\na = a * a\nprint(a)"
+            "let a: I32 = 7\na = a * a\nstd.print(a)"
         ));
     }
 
@@ -266,10 +268,10 @@ mod tests {
             r#"
             let i: I32 = 0
             while i < 5 {
-                print(i)
+                std.print(i)
                 i += 1
             }
-            print("Done")
+            std.print("Done")
             "#
         ));
     }
@@ -277,7 +279,7 @@ mod tests {
     #[test]
     fn test_stack_map_table_generation() {
         insta::assert_debug_snapshot!(generate_class_wrapped(
-            "loop {\nif true {\nprint(42)\n}\nprint(100)\n}"
+            "loop {\nif true {\nstd.print(42)\n}\nstd.print(100)\n}"
         ));
 
         // Tests that stack map frames are correctly deduplicated, see `convert_verification_frames` in `source_graph.rs`
@@ -298,30 +300,26 @@ mod tests {
 
     #[test]
     fn test_function() {
-        insta::assert_debug_snapshot!(generate_class("fn main() { bar() }\nfn bar() { print(1) }"));
+        insta::assert_debug_snapshot!(generate_class(
+            "fn main() { bar() }\nfn bar() { std.print(1) }"
+        ));
     }
 
     #[test]
     fn test_arrays() {
-        insta::assert_debug_snapshot!(generate_class_wrapped("let a: []I32 = arrayOfZeros(5)"));
-        insta::assert_debug_snapshot!(generate_class_wrapped("let a: [][]I32 = arrayOfZeros(5)"));
-        insta::assert_debug_snapshot!(generate_classes(
-            r#"
-            // main
-            fn main() {
-                let a: []{a: I32, b: I32} = arrayOf({a: 5, b: 6})
-            }
-            "#
+        insta::assert_debug_snapshot!(generate_class_wrapped("let a: []I32 = std.arrayOfZeros(5)"));
+        insta::assert_debug_snapshot!(generate_class_wrapped(
+            "let a: [][]I32 = std.arrayOfZeros(5)"
         ));
     }
 
     #[test]
     fn test_conversions() {
         insta::assert_debug_snapshot!(generate_class_wrapped(
-            "let a: I32 = 5\nlet b: I64 = cast(a)"
+            "let a: I32 = 5\nlet b: I64 = std.unsafeCast(a)"
         ));
         insta::assert_debug_snapshot!(generate_class_wrapped(
-            "let a: I64 = 5\nlet b: I32 = cast(a)"
+            "let a: I64 = 5\nlet b: I32 = std.unsafeCast(a)"
         ));
     }
 
@@ -334,19 +332,23 @@ mod tests {
                 let b: I64 = 65
                 let sum = a + b
                 if sum >= 100 {
-                    print("Greater or equal than 100")
+                    std.print("Greater or equal than 100")
                 }
-                printArray(arrayOf(a, b, sum))
+                let arr: []I64 = std.arrayOfZeros(3)
+                arr.set(0, a)
+                arr.set(1, b)
+                arr.set(2, sum)
+                printArray(arr)
             }
 
             fn printArray(values: []I64) {
                 let i: I32 = 0
                 loop {
-                    if i >= arrayLen(values) {
+                    if i >= values.len() {
                         break
                     }
 
-                    print(arrayGet(values, i))
+                    std.print(values.get(i))
 
                     i += 1
                 }
@@ -362,7 +364,7 @@ mod tests {
 
             fn foo(a: I64) {
                 let b = a + 1            
-                print(b % 2 == 1)
+                std.print(b % 2 == 1)
             }
             "#
         ));
@@ -414,19 +416,19 @@ mod tests {
         insta::assert_debug_snapshot!(generate_classes(
             r#"
             // main
-            fn main() { print({a: true, b: 2, c: false}) }
+            fn main() { std.print({a: true, b: 2, c: false}) }
             "#
         ));
         insta::assert_debug_snapshot!(generate_classes(
             r#"
             // main
-            fn main() { print({a: 1}.a) }
+            fn main() { std.print({a: 1}.a) }
             "#
         ));
         insta::assert_debug_snapshot!(generate_classes(
             r#"
             // main
-            fn main() { print({a: "test"}.a) }
+            fn main() { std.print({a: "test"}.a) }
             "#
         ));
         insta::assert_debug_snapshot!(generate_classes(
@@ -434,7 +436,7 @@ mod tests {
             // main
             fn main() {
                 let val: {a: I32} = {a: 42}
-                print(val.a)
+                std.print(val.a)
             }
             "#
         ));
@@ -450,7 +452,7 @@ mod tests {
                 b: []Foo
             }
             fn main() {
-                let a: []Foo = arrayOf()
+                let a: []Foo = std.arrayOfZeros(0)
             }
             "#
         ));
@@ -467,7 +469,7 @@ mod tests {
 
             // foo
             fn sayHi() {
-                print("hi")
+                std.print("hi")
             }
             "#
         ))
@@ -499,13 +501,13 @@ mod tests {
                 inner: []T
             }
 
-            fn (Foo[T]) len[T](self) -> I32 {
-                return arrayLen(self.inner)
+            fn (Foo[T]) bar[T](self) -> I32 {
+                return self.inner.len()
             }
             
             fn main() {
-                let f = Foo { inner: arrayOf("Foo", "Bar", "Baz") }
-                print(f.len())
+                let f: Foo[String] = Foo { inner: std.arrayOfZeros(3) }
+                std.print(f.bar())
             }
             "#
         ))
@@ -521,8 +523,9 @@ mod tests {
             }
 
             fn main() {
-                let data = arrayOf("TestString")
-                let transmuted: JavaString = unsafeTransmute(data)
+                let data: []String  = std.arrayOfZeros(1)
+                data.set(0, "TestString")
+                let transmuted: JavaString = std.unsafeTransmute(data)
             }
             "#
         ))

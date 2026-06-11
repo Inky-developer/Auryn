@@ -1,3 +1,5 @@
 fn main() {
-	print = 1
+	foo = 1
 }
+
+fn foo() {}

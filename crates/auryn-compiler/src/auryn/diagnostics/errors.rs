@@ -131,6 +131,12 @@ diag! {
 
 diag! {
     #[level(DiagnosticLevel::Error)]
+    #[code("Type parameters are not supported by this extern target")]
+    pub struct UnsupportedExternTargetTypeParameters;
+}
+
+diag! {
+    #[level(DiagnosticLevel::Error)]
     #[code("Extern type requires metadata")]
     #[help("Add metadata before to declare its extern name `[\"extern_name\"]`")]
     pub struct ExternTypeRequiresMetadata;

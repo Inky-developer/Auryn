@@ -1,9 +1,9 @@
 fn foo() {
-	print("Foo")
+	std.print("Foo")
 }
 
 fn foo() {
-	print("Bar")
+	std.print("Bar")
 }
 
 fn main() {

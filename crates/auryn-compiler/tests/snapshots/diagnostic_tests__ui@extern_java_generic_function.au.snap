@@ -1,0 +1,30 @@
+---
+source: crates/auryn-compiler/tests/diagnostic_tests.rs
+expression: "unsafe extern \"java\" {\n    fn hi[T]()\n}\n\nfn main() {}"
+input_file: crates/auryn-compiler/tests/inputs/diagnostics/extern_java_generic_function.au
+---
+Error: Extern type requires metadata
+   ╭─[ main:2:5 ]
+   │
+ 2 │     fn hi[T]()
+   │     ─────┬────  
+   │          ╰────── Here
+   │ 
+   │ Help: Add metadata before to declare its extern name `["extern_name"]`
+───╯
+
+Error: Extern functions are not supported by this extern target
+   ╭─[ main:2:5 ]
+   │
+ 2 │     fn hi[T]()
+   │     ─────┬────  
+   │          ╰────── Here
+───╯
+
+Error: Type parameters are not supported by this extern target
+   ╭─[ main:2:10 ]
+   │
+ 2 │     fn hi[T]()
+   │          ─┬─  
+   │           ╰─── Here
+───╯

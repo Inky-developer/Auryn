@@ -8,7 +8,7 @@ fn main() {
 }
 
 fn printFoo(foo: bar.Foo) {
-    print(foo)
+    std.print(foo)
 }
 
 // file: bar

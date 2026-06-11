@@ -1,8 +1,10 @@
 fn main() {
-	foo(arrayOf("a", "b", "c"), arrayOf(false, true, true))
+	let a: []String = std.arrayOfZeros(0)
+	let b: []Bool= std.arrayOfZeros(0)
+	foo(a, b)
 }
 
 fn foo[T](first: []T, second: []T) {
-	print(first)
-	print(second)
+	std.print(first)
+	std.print(second)
 }

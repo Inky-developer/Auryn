@@ -12,8 +12,8 @@ struct Wrapper[T] {
 }
 
 fn main() {
-	let p: Pair[I32, Bool] = Pair { first: arrayOfZeros(0), second: arrayOfZeros(0) }
-	let w: Wrapper[String] = Wrapper { value: arrayOfZeros(0) }
-	print(p)
-	print(w)
+	let p: Pair[I32, Bool] = Pair { first: std.arrayOfZeros(0), second: std.arrayOfZeros(0) }
+	let w: Wrapper[String] = Wrapper { value: std.arrayOfZeros(0) }
+	std.print(p)
+	std.print(w)
 }

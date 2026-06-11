@@ -52,7 +52,8 @@ mod tests {
     use crate::auryn::{
         air::{data::Air, query_air},
         diagnostics::diagnostic::Diagnostics,
-        input_files::InputFiles,
+        input_files::{InputFileFlags, InputFiles},
+        std::load_std,
         syntax_id::FileId,
     };
     use stdx::default;
@@ -67,6 +68,7 @@ mod tests {
     fn compile(input: &str) -> (Air, Diagnostics) {
         let mut input_files = InputFiles::default();
         input_files.add("main".into(), input.into(), default());
+        input_files.add("std".into(), load_std(), InputFileFlags::Privileged);
         let syntax_tree = input_files.get(FileId::MAIN_FILE).syntax_tree();
         let diagnostics = syntax_tree.collect_diagnostics();
         if !diagnostics.is_empty() {
@@ -79,14 +81,16 @@ mod tests {
 
     #[test]
     fn it_works() {
-        insta::assert_debug_snapshot!(compile_wrapped("print(1)"));
-        insta::assert_debug_snapshot!(compile_wrapped("if false { print(0) } else { print(1) }"));
+        insta::assert_debug_snapshot!(compile_wrapped("std.print(1)"));
+        insta::assert_debug_snapshot!(compile_wrapped(
+            "if false { std.print(0) } else { std.print(1) }"
+        ));
     }
 
     #[test]
     fn test_function_call() {
         insta::assert_debug_snapshot!(compile(
-            "fn main() { foo(1) }\nfn foo(bar: I32) -> I32 { print(bar) }"
+            "fn main() { foo(1) }\nfn foo(bar: I32) -> I32 { std.print(bar) }"
         ));
     }
 
@@ -106,15 +110,18 @@ mod tests {
 
     #[test]
     fn test_intrinsics() {
-        insta::assert_debug_snapshot!(compile_wrapped("let a: () = print(1)"));
-        insta::assert_debug_snapshot!(compile_wrapped("let a: []I64 = arrayOf(1, 2, 3)"));
-        insta::assert_debug_snapshot!(compile_wrapped("let a: []I64 = arrayOfZeros(3)"));
-        insta::assert_debug_snapshot!(compile_wrapped("let a: I64 = arrayGet(arrayOfZeros(3), 1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: () = std.print(1)"));
+        insta::assert_debug_snapshot!(compile_wrapped("let a: []I64 = std.arrayOfZeros(3)"));
+        insta::assert_debug_snapshot!(compile_wrapped(
+            "let a: I64 = std.arrayGet(std.arrayOfZeros(3), 1)"
+        ));
     }
 
     #[test]
     fn invalid_assignment() {
-        insta::assert_debug_snapshot!(compile_wrapped("let a: I32 = print(1)\nprint(a + 1)"));
+        insta::assert_debug_snapshot!(compile_wrapped(
+            "let a: I32 = std.print(1)\nstd.print(a + 1)"
+        ));
     }
 
     #[test]

@@ -125,7 +125,8 @@ impl<'a> Resolver<'a> {
                     .enumerate()
                     .map(|(index, param)| GenericType {
                         id: GenericId(index),
-                        ident: param.clone(),
+                        ident: param.value.clone(),
+                        syntax_id: param.syntax_id,
                     })
                     .collect::<Vec<_>>();
 
@@ -295,7 +296,8 @@ impl<'a> Resolver<'a> {
                     .enumerate()
                     .map(|(index, it)| GenericType {
                         id: GenericId(index),
-                        ident: it.clone(),
+                        ident: it.value.clone(),
+                        syntax_id: it.syntax_id,
                     })
                     .collect::<Vec<_>>();
 

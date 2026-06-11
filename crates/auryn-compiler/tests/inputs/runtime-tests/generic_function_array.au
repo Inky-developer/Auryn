@@ -2,10 +2,15 @@
 // 5
 
 fn main() {
-	let my_array: []I32 = arrayOf(1, 2, 3, 4, 5)
-	print(len(my_array))
+    let my_array: []I32 = std.arrayOfZeros(5)
+    my_array.set(0, 1)
+    my_array.set(1, 2)
+    my_array.set(2, 3)
+    my_array.set(3, 4)
+    my_array.set(4, 5)
+	std.print(len(my_array))
 }
 
 fn len[T](value: []T) -> I32 {
-	return arrayLen(value)
+	return value.len()
 }

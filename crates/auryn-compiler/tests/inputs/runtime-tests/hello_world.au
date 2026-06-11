@@ -2,7 +2,7 @@
 // Hello, World!
 
 fn main() {
-	print("Hello, World!")
+	std.print("Hello, World!")
 }
 
 

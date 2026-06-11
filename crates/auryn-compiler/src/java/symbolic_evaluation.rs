@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Debug};
+use std::{assert_matches, cmp::Ordering, fmt::Debug};
 
 use crate::{
     auryn::codegen_java::representation::ReturnDescriptor,
@@ -52,10 +52,7 @@ impl SymbolicEvaluator {
             BlockFinalizer::Goto(_) => {}
             BlockFinalizer::ReturnNull => {}
             BlockFinalizer::ReturnObject => {
-                assert!(matches!(
-                    self.stack.pop(),
-                    Some(VerificationTypeInfo::Object { .. })
-                ));
+                assert_matches!(self.stack.pop(), Some(VerificationTypeInfo::Object { .. }));
             }
             BlockFinalizer::ReturnInteger | BlockFinalizer::ReturnBoolean => {
                 assert_eq!(self.stack.pop(), Some(VerificationTypeInfo::Integer));
@@ -207,10 +204,7 @@ impl SymbolicEvaluator {
                     .push(id.r#type.clone().into_verification_type(pool));
             }
             Instruction::Transmute(to) => {
-                assert!(matches!(
-                    self.stack.pop(),
-                    Some(VerificationTypeInfo::Object { .. })
-                ));
+                assert_matches!(self.stack.pop(), Some(VerificationTypeInfo::Object { .. }));
                 self.stack.push(VerificationTypeInfo::Object {
                     constant_pool_index: pool.add_class(to.clone()),
                 });
@@ -265,7 +259,7 @@ impl SymbolicEvaluator {
             }
             Instruction::ArrayLength => {
                 let array = self.stack.pop();
-                assert!(matches!(array, Some(VerificationTypeInfo::Object { .. })));
+                assert_matches!(array, Some(VerificationTypeInfo::Object { .. }));
                 self.stack.push(VerificationTypeInfo::Integer);
             }
             Instruction::Dup(type_category) => {

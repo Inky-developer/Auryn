@@ -1,3 +1,3 @@
 fn main() {
-	print(a., 3)
+	std.print(a., 3)
 }

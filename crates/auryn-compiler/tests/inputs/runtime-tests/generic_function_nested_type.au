@@ -3,16 +3,17 @@
 // [Hi]
 
 fn main() {
-	print(makeArray("Hi"))
+	std.print(makeArray("Hi"))
 }
 
 fn makeArray[T](value: T) -> []T {
-	let arr = arrayOf(value)
+	let arr: []T = std.arrayOfZeros(1)
+	arr.set(0, value)
 	dbg(arr)
 	return arr
 }
 
 fn dbg[T](value: T) {
-	print(value)
+	std.print(value)
 }
 

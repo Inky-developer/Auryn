@@ -22,7 +22,7 @@ fn main() {
 }
 
 fn sieve(up_to: I32) -> []I32 {
-	let sieve: []I32 = arrayOfZeros(up_to)
+	let sieve: []I32 = std.arrayOfZeros(up_to)
 
 	let i: I32 = 2
 	loop {
@@ -31,7 +31,7 @@ fn sieve(up_to: I32) -> []I32 {
 			if n >= up_to {
 				break
 			}
-			arraySet(sieve, n, 1)
+			sieve.set(n, 1)
 			n += i
 		}
 
@@ -40,7 +40,7 @@ fn sieve(up_to: I32) -> []I32 {
 			if i >= up_to {
 				return sieve
 			}
-			if arrayGet(sieve, i) == 0 {
+			if sieve.get(i) == 0 {
 				break
 			}
 		}
@@ -50,12 +50,12 @@ fn sieve(up_to: I32) -> []I32 {
 fn printArray(array: []I32) {
 	let i: I32 = 1
 	loop {
-		if i >= arrayLen(array) {
+		if i >= array.len() {
 			break
 		}
 
-		if arrayGet(array, i) == 0 {
-			print(i)
+		if array.get(i) == 0 {
+			std.print(i)
 		}
 
 		i += 1

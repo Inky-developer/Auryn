@@ -1,14 +1,14 @@
 ---
 source: crates/auryn-compiler/tests/diagnostic_tests.rs
-expression: "fn main() {\n\tprint(a., 3)\n}\n"
+expression: "fn main() {\n\tstd.print(a., 3)\n}\n"
 input_file: crates/auryn-compiler/tests/inputs/diagnostics/recover_statement.au
 ---
 Error: Unexpected token
-   ╭─[ main:2:10 ]
+   ╭─[ main:2:14 ]
    │
- 2 │     print(a., 3)
-   │             │ 
-   │             ╰─ got ","
+ 2 │     std.print(a., 3)
+   │                 │ 
+   │                 ╰─ got ","
    │ 
    │ Note: Expected `<identifier>`
 ───╯

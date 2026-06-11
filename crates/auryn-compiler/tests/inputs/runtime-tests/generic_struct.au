@@ -10,6 +10,6 @@ fn main() {
 	let f = Foo { value: "Hi" }
 	let g: Foo[Bool] = Foo { value: true }
 
-	print(f)
-	print(g)
+	std.print(f)
+	std.print(g)
 }

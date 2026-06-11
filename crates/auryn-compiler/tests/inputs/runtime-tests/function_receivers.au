@@ -10,27 +10,25 @@ struct Foo {
 }
 
 fn (Foo) len(self) -> I32 {
-	return arrayLen(self.data)
+	return self.data.len()
 }
 
 fn ({data: []String}) len(self) -> I32 {
-	return arrayLen(self.data)
-}
-
-fn ([]String) len(self) -> I32 {
-	return arrayLen(self)
+	return self.data.len()
 }
 
 fn main() {
-	let data = arrayOf("Hello", "World")
+    let data: []String = std.arrayOfZeros(2)
+    data.set(0, "Hello")
+    data.set(1, "World")
 
-	print(data.len())
+	std.print(data.len())
 
 	let structural = { data: data }
-	print(structural)
-	print(structural.len())
+	std.print(structural)
+	std.print(structural.len())
 
 	let foo = Foo { data: data }
-	print(foo)
-	print(foo.len())
+	std.print(foo)
+	std.print(foo.len())
 }

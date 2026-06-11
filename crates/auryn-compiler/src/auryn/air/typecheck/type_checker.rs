@@ -895,7 +895,6 @@ impl Typechecker {
         for (expected, actual) in parameters.into_iter().zip(call.arguments.iter_mut()) {
             let resolved = inference.resolve_generic_type(&mut self.ty_ctx, expected);
             self.check_expression(actual, resolved);
-
             let result = inference.infer_generics(
                 expected.as_view(&self.ty_ctx),
                 actual.r#type.as_view(&self.ty_ctx),
@@ -1010,8 +1009,8 @@ pub(super) fn check_inference_types(
             diagnostics.add(
                 id,
                 NonInferredGenericType {
-                    arg_span: declared_type.ident.syntax_id,
-                    generic_name: declared_type.ident.value.clone(),
+                    arg_span: declared_type.syntax_id,
+                    generic_name: declared_type.ident.clone(),
                 },
             );
         }

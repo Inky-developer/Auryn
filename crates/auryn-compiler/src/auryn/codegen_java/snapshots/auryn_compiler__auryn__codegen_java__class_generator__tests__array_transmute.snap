@@ -1,10 +1,10 @@
 ---
 source: crates/auryn-compiler/src/auryn/codegen_java/class_generator.rs
-expression: "generate_class(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/String\"]\n                type JavaString {}\n            }\n\n            fn main() {\n                let data = arrayOf(\"TestString\")\n                let transmuted: JavaString = unsafeTransmute(data)\n            }\n            \"#)"
+expression: "generate_class(r#\"\n            unsafe extern \"java\" {\n                [\"java/lang/String\"]\n                type JavaString {}\n            }\n\n            fn main() {\n                let data: []String  = std.arrayOfZeros(1)\n                data.set(0, \"TestString\")\n                let transmuted: JavaString = std.unsafeTransmute(data)\n            }\n            \"#)"
 ---
 ClassData
   this_class:		#2	Main
-  super_class:		#20	java/lang/Object
+  super_class:		#24	java/lang/Object
 Constant pool:
   #01 = Utf8			Main
   #02 = Class		#1	Main
@@ -18,35 +18,56 @@ Constant pool:
   #10 = Integer			0
   #11 = Utf8			TestString
   #12 = String		#11	TestString
-  #13 = Utf8			Code
-  #14 = Utf8			StackMapTable
-  #15 = Utf8			main
-  #16 = Utf8			([Ljava/lang/String;)V
-  #17 = NameAndType	#3:#4	main$main:()V
-  #18 = MethodRef	#2.#17	Main:main$main:()V
-  #19 = Utf8			java/lang/Object
-  #20 = Class		#19	java/lang/Object
+  #13 = Utf8			std$set
+  #14 = Utf8			([Ljava/lang/String;ILjava/lang/String;)V
+  #15 = NameAndType	#13:#14	std$set:([Ljava/lang/String;ILjava/lang/String;)V
+  #16 = MethodRef	#2.#15	Main:std$set:([Ljava/lang/String;ILjava/lang/String;)V
+  #17 = Utf8			Code
+  #18 = Utf8			StackMapTable
+  #19 = Utf8			main
+  #20 = Utf8			([Ljava/lang/String;)V
+  #21 = NameAndType	#3:#4	main$main:()V
+  #22 = MethodRef	#2.#21	Main:main$main:()V
+  #23 = Utf8			java/lang/Object
+  #24 = Class		#23	java/lang/Object
 
 {
   fn main$main {
     descriptor: ()V
     flags: PUBLIC | STATIC
     Code:
-      stack = 4, locals = 3
+      stack = 3, locals = 3
        0: LoadConstant		#9	1
        2: ANewArray		#8	java/lang/String
-       5: Dup
-       6: LoadConstant		#10	0
-       8: LoadConstant		#12	TestString
-      10: AAStore
-      11: AStore			0
-      13: ALoad			0
-      15: AStore			1
-      17: Return
+       5: AStore			0
+       7: ALoad			0
+       9: LoadConstant		#10	0
+      11: LoadConstant		#12	TestString
+      13: InvokeStatic		#16	Main:std$set:([Ljava/lang/String;ILjava/lang/String;)V
+      16: ALoad			0
+      18: AStore			1
+      20: Return
       StackMapTable:
         Full
           offset_delta = 0
           locals = [  ]
+          Stack = [  ]
+  }
+
+  fn std$set {
+    descriptor: ([Ljava/lang/String;ILjava/lang/String;)V
+    flags: PUBLIC | STATIC
+    Code:
+      stack = 3, locals = 4
+      0: ALoad			0
+      2: ILoad			1
+      4: ALoad			2
+      6: AAStore
+      7: Return
+      StackMapTable:
+        Full
+          offset_delta = 0
+          locals = [ Object '[Ljava/lang/String;',Integer,Object 'java/lang/String' ]
           Stack = [  ]
   }
 
@@ -55,7 +76,7 @@ Constant pool:
     flags: PUBLIC | STATIC
     Code:
       stack = 0, locals = 2
-      0: InvokeStatic		#18	Main:main$main:()V
+      0: InvokeStatic		#22	Main:main$main:()V
       3: Return
       StackMapTable:
         Full

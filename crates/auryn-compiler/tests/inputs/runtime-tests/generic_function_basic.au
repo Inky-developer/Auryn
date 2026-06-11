@@ -3,7 +3,7 @@
 
 fn main() {
 	let a: I32 = identity(50)
-	print(a)
+	std.print(a)
 }
 
 fn identity[T](value: T) -> T {

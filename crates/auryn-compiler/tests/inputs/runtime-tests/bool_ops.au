@@ -11,16 +11,16 @@
 
 fn main() {
 	let a = true
-	print(a)
+	std.print(a)
 	let b = false
-	print(b)
-	print(a or b)
-	print(a and b)
-	print(not a)
-	print(not b)
-	print(not a and not b)
-	print(not a or not b)
-	print(not some_value())
+	std.print(b)
+	std.print(a or b)
+	std.print(a and b)
+	std.print(not a)
+	std.print(not b)
+	std.print(not a and not b)
+	std.print(not a or not b)
+	std.print(not some_value())
 }
 
 fn some_value() -> Bool {
