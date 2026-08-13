@@ -313,47 +313,68 @@ impl Typechecker {
             self.function.variables.insert(id, r#type);
         }
 
-        let mut visited_blocks = FastSet::default();
+        let mut non_visited_blocks = function.blocks.keys().copied().collect::<FastSet<_>>();
         let mut pending_blocks = VecDeque::default();
 
         pending_blocks.push_front(AirBlockId::ROOT);
+        let mut trace_and_infer = |pending_blocks: &mut VecDeque<AirBlockId>,
+                                   non_visited_blocks: &mut FastSet<AirBlockId>,
+                                   is_reachable: bool| {
+            while let Some(id) = pending_blocks.pop_front() {
+                let block = function.blocks.get_mut(&id).unwrap();
+                non_visited_blocks.remove(&id);
 
-        while let Some(id) = pending_blocks.pop_front() {
-            let block = function.blocks.get_mut(&id).unwrap();
-            visited_blocks.insert(id);
+                self.infer_block(block, is_reachable, |next_id| {
+                    if non_visited_blocks.contains(&next_id) && !pending_blocks.contains(&next_id) {
+                        pending_blocks.push_back(next_id);
+                    }
+                });
+            }
+        };
 
-            self.infer_block(block, |next_id| {
-                if !visited_blocks.contains(&next_id) && !pending_blocks.contains(&next_id) {
-                    pending_blocks.push_back(next_id);
-                }
-            });
+        trace_and_infer(&mut pending_blocks, &mut non_visited_blocks, true);
+        while let Some(unreachable_block) = non_visited_blocks.iter().next() {
+            let unreachable_block = *unreachable_block;
+            non_visited_blocks.remove(&unreachable_block);
+            pending_blocks.push_front(unreachable_block);
+            trace_and_infer(&mut pending_blocks, &mut non_visited_blocks, false);
         }
     }
 
-    fn infer_block(&mut self, block: &mut AirBlock, on_next_id: impl FnMut(AirBlockId)) {
+    fn infer_block(
+        &mut self,
+        block: &mut AirBlock,
+        is_reachable: bool,
+        on_next_id: impl FnMut(AirBlockId),
+    ) {
         for node in &mut block.nodes {
             self.infer_node(node);
         }
 
-        self.infer_finalizer(&mut block.finalizer, on_next_id);
+        self.infer_finalizer(&mut block.finalizer, is_reachable, on_next_id);
     }
 
     fn infer_finalizer(
         &mut self,
         finalizer: &mut AirBlockFinalizer,
+        is_reachable: bool,
         mut on_next_id: impl FnMut(AirBlockId),
     ) {
+        // If this code is unreachable, it is valid to allow any type to be returned, because the code path
+        // will never be executed anyways
+        let expected_return_type = if is_reachable {
+            self.function.return_type.as_bounded()
+        } else {
+            MaybeBounded::Bounded(Bound::Top)
+        };
+
         match finalizer {
             AirBlockFinalizer::Return(expression) => match expression {
                 ReturnValue::Expression(expression) => {
-                    self.check_expression(expression, self.function.return_type.as_bounded());
+                    self.check_expression(expression, expected_return_type);
                 }
                 ReturnValue::Null(id) => {
-                    self.expect_type_at(
-                        *id,
-                        self.ty_ctx.unit_type(),
-                        self.function.return_type.as_bounded(),
-                    );
+                    self.expect_type_at(*id, self.ty_ctx.unit_type(), expected_return_type);
                 }
             },
             AirBlockFinalizer::Goto(next_id) => on_next_id(*next_id),

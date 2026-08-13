@@ -53,6 +53,7 @@ mod tests {
         air::{data::Air, query_air},
         diagnostics::diagnostic::Diagnostics,
         input_files::{InputFileFlags, InputFiles},
+        monomorphization::monomorphize,
         std::load_std,
         syntax_id::FileId,
     };
@@ -62,6 +63,13 @@ mod tests {
     fn compile_wrapped(input: &str) -> (Air, Diagnostics) {
         let wrapped_input = format!("fn main() {{ {input} }}");
         compile(&wrapped_input)
+    }
+
+    #[track_caller]
+    fn compile_monomorphized(input: &str) -> (Air, Diagnostics) {
+        let (mut air, diagnostics) = compile(input);
+        monomorphize(&mut air);
+        (air, diagnostics)
     }
 
     #[track_caller]
@@ -197,5 +205,17 @@ mod tests {
             }
             "#
         ));
+    }
+
+    #[test]
+    fn test_diverging() {
+        insta::assert_debug_snapshot!(compile_monomorphized(
+            r#"
+            fn main() {
+                loop {}
+                std.print("unreachable")
+            }
+            "#
+        ))
     }
 }
